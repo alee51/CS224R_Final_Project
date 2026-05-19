@@ -1,0 +1,203 @@
+% CS224R Project Proposal v2: Majority and Minority Voting Optimization
+% Reframed around TA Ifdita Hasan Orney's original project pitch.
+
+\documentclass{article}
+
+\usepackage[preprint]{cs229}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{hyperref}
+\usepackage{url}
+\usepackage{booktabs}
+\usepackage{amsfonts}
+\usepackage{nicefrac}
+\usepackage{microtype}
+\usepackage{xcolor}
+\usepackage{amsmath}
+\usepackage{fancyhdr}
+
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[C]{CS224R Project Proposal}
+\renewcommand{\headrulewidth}{0.4pt}
+
+\renewcommand{\maketitle}{
+  \begin{center}
+    {\bf \large Beyond the Mean: Quantile-Conditioned Policy Optimization \\for LLM Reasoning}\\
+    \vspace{0.1cm}
+    {\bf Team Members:} Anastasia Lee, Emma Gao, Nancy Bao\\
+    {\bf Project Mentor:} Ifdita Hasan Orney\\
+    \vspace{0.1cm}
+    {\bf Emails:} alee72@stanford.edu, emmagao@stanford.edu, nbao0@stanford.edu\\
+    \vspace{0.2cm}
+  \end{center}
+}
+
+\begin{document}
+
+\maketitle
+
+\section{Objective}
+The goal of this project is to develop and evaluate Quantile-Conditioned Group-Relative Policy Optimization (QC-GRPO), a generalization of GRPO that replaces the mean reward baseline with a continuum of quantile-conditioned baselines. We pursue three objectives. First, we formally derive the QC-GRPO objective, from which   majority- and minority-voting optimization emerge as special cases. Second, we introduce an adaptive curriculum over the quantile index $\alpha$, which anneals from majority- to minority-weighting in response to reward variance collapse, and demonstrate that it restores gradient signal when standard GRPO stalls. Third, we evaluate how $\alpha$ shapes the Pass@1–Pass@k tradeoff and out-of-distribution generalization across a difficulty spectrum including MATH-500, AMC, and AIME/HMMT.
+
+Beyond algorithmic novelty, this work addresses a practical bottleneck in RLVR: diversity collapse. Standard training concentrates probability mass on a narrow solution mode, which performs well under majority voting but fails on harder, distribution-shifted problems requiring robust reasoning. QC-GRPO mitigates this by preserving the model’s ability to produce correct low-probability solutions while maintaining stable training dynamics. More broadly, it reframes the choice of baseline as a continuous design parameter interpolating between worst-case and average-case optimization.
+
+% The central objective of this project is to develop and evaluate
+% Quantile-Conditioned Group-Relative Policy Optimization (QC-GRPO), a generalization of the standard
+% GRPO objective that replaces the mean reward
+% baseline with a continuous family of quantile-conditioned baselines. First, we will formally derive the QC-GRPO objective,
+% establish its relationship to majority- and minority-voting optimization as
+% special cases, and prove that the standard GRPO mean baseline is equivalent to
+% training against the median of the within-group return distribution. Second, we
+% will implement an adaptive curriculum over the quantile index $\alpha$ that
+% anneals from majority-favoring to minority-favoring weights in response to
+% within-group reward variance collapse, and test if this curriculum recovers
+% gradient signal precisely when standard GRPO stalls. Third, we will
+% systematically evaluate the effect of $\alpha$ on the Pass@1 vs.\ Pass@$k$
+% tradeoff and on out-of-distribution generalization across a difficulty curriculum
+% spanning MATH-500, AMC, and AIME/HMMT.
+
+% These objectives are important for two reasons besides algorithmic
+% novelty. Practically, the diversity collapse induced by standard RLVR training is
+% a recognized bottleneck: models that concentrate probability mass on a narrow
+% solution mode perform well on benchmarks where majority voting suffices, but fail
+% precisely on the hard, distribution-shifted problems where reliable reasoning
+% matters most. QC-GRPO is designed to break this tradeoff by ensuring the model
+% retains the capacity to generate correct solutions even in its low-probability
+% tail, without abandoning the stable training dynamics of group-relative methods.
+% Conceptually, QC-GRPO reframes a core design choice in RLVR, the choice of
+% baseline, as a continuous knob that interpolates between worst-case and
+% average-case optimization. This unification clarifies the implicit objectives
+% encoded by existing methods and opens a principled design space that has been
+% largely unexplored.
+
+\section{Related Work}
+
+\subsection{RLVR and the Mean-Baseline Limit}
+Reinforcement Learning with Verifiable Rewards (RLVR) is the dominant paradigm for improving LLM reasoning, with Group-Relative Policy Optimization (GRPO) \citep{shao2024deepseekmathpushinglimitsmathematical} serving as the primary algorithm. GRPO computes advantages relative to the group-mean reward, a design validated by DeepSeek-R1 \citep{Guo_2025}. However, mean-relative baselines implicitly optimize for majority-vote performance (Pass@1). This encourages the model to outperform its average self but provides no direct signal to improve the rare-but-correct reasoning modes found in the distribution's tail.
+
+\subsection{Diversity-Preserving RL for Reasoning}
+A recognized failure mode of standard RLVR is ``diversity collapse,'' where the model concentrates probability mass on a narrow set of easy solution modes \citep{yue2025doesreinforcementlearningreally}. Concurrent methods attempt to mitigate this by modifying the objective to favor exploration. F-GRPO \citep{plyusov2026fgrpodontletpolicy} introduces focal weighting to up-weight rare-correct trajectories at the prompt level. SetPO \citep{li2026setposetlevelpolicyoptimization} defines a kernelized set-level diversity objective to maximize the marginal contribution of unique reasoning chains. While these methods encourage variety, they do not explicitly optimize for the risk-sensitive tail of the reward distribution.
+
+\subsection{Tail-Optimization and Pass@k}
+Most relevant to our work is \textbf{Pass@K Policy Optimization (PKPO)} \citep{walder2025passkpolicyoptimizationsolving}, which reframes the training objective as a tail-optimization problem. PKPO demonstrates that annealing the training objective from Pass@1 (mean) toward Pass@k (the tail) prevents solution collapse and recovers gradient signal on difficult reasoning tasks where correct answers are sparse. However, PKPO relies on discrete values of $k$ and fixed, non-reactive annealing schedules. Furthermore, existing tail-optimization methods result in a single static policy, lacking a mechanism for inference-time steering between conservative and exploratory reasoning modes.
+
+% \subsection{Test-Time Scaling and Majority Voting}
+% Self-consistency \citep{wang2023selfconsistencyimproveschainthought} samples multiple reasoning chains and selects the majority answer, substantially improving accuracy on reasoning benchmarks. \cite{snell2024scalingllmtesttimecompute} provide a systematic analysis of test-time compute strategies, establishing that optimal scaling is prompt-difficulty-dependent. Test-Time Reinforcement Learning \citep{zuo2025ttrltesttimereinforcementlearning} closes the loop between inference-time aggregation and training by using majority-voted pseudo-labels as reward signals for self-improvement on unlabeled data. Our work reveals an implicit connection these works leave unstated: standard GRPO, by using the group mean as a baseline, is structurally equivalent to training the model to perform well under majority-vote evaluation. QC-GRPO makes this connection explicit and generalizes it to arbitrary quantiles.
+
+% \subsection{Risk-Sensitive and Distributional RL}
+% Distributional RL methods C51 \citep{bellemare2017distributionalperspectivereinforcementlearning} and QR-DQN \citep{dabney2017distributionalreinforcementlearningquantile} demonstrate that optimizing over the full return distribution rather than its expectation yields richer learning signals. In the LLM setting,  \cite{dorka2024quantileregressiondistributionalreward} applied quantile regression to reward modeling for risk-aware RLHF, and DVPO \citep{zhu2026dvpodistributionalvaluemodelingbased} applies asymmetric tail regularization at the token-value level. QC-GRPO is, to our knowledge, the first method to apply a CVaR-style tail objective directly to the within-group correctness distribution in RLVR, without requiring distributional value estimation or a separate risk model.
+\section{Technical Outline}
+\subsection{Approach}
+
+Standard GRPO computes the advantage of a rollout $y_i$ within a group $\{y_1,\dots,y_N\}$ as $\hat{A}(y_i) = r_i - \bar{r}$, where $\bar{r}$ is the group mean reward. This implicitly optimizes majority-vote performance. We generalize this by replacing the mean with a quantile-conditioned baseline $b_\alpha$, defined as the $\alpha$-quantile of the within-group reward distribution:
+\[
+\hat{A}_\alpha(y_i) = r_i - b_\alpha(\{r_1,\dots,r_N\}).
+\]
+
+Setting $\alpha=0.5$ recovers standard GRPO (up to mean vs.\ median). As $\alpha \to 0$, the objective rewards any rollout that outperforms the worst-performing samples, encouraging correct but rare solutions (i.e., minority-voting optimization).
+
+We train with a mixture of quantiles:
+\[
+\mathcal{L}(\theta) = \sum_\alpha w(\alpha)\,\mathbb{E}\left[\hat{A}_\alpha(y_i)\log \pi_\theta(y_i \mid x)\right],
+\]
+where $w(\alpha)$ defines the quantile weighting. Top-heavy $w$ approximates best-of-$N$ training, while bottom-heavy $w$ emphasizes tail performance.
+
+Our key contribution is an adaptive curriculum over $\alpha$: $w(\alpha)$ shifts from high to low quantiles during training. The shift is triggered by collapse in reward variance, reallocating weight toward lower quantiles to recover gradient signal from rare correct rollouts.
+
+\subsection{Evaluation Plan}
+
+We evaluate QC-GRPO on reasoning performance and generalization under distribution shift.
+
+\paragraph{Baselines:}
+We compare against GRPO, DAPO, and SetPO, along with fixed-$\alpha$ variants ($\alpha \in \{0.1, 0.25, 0.5, 0.75, 0.9\}$).
+
+\paragraph{Metrics:}
+We report Pass@1 and Pass@$k$ ($k \in \{4,16,64\}$) to measure the tradeoff between majority accuracy and solution diversity. We expect low-$\alpha$ training to improve Pass@$k$ (especially on hard tasks), with a small Pass@1 tradeoff that is mitigated by the learned curriculum.
+
+\paragraph{Benchmarks:}
+We train on standard math reasoning data and evaluate across difficulty: MATH-500 (in-distribution), AMC (moderate OOD), and AIME/HMMT (hard OOD). We hypothesize that lower $\alpha$ improves performance on hard OOD problems, where correct solutions are rare.
+
+\paragraph{Ablations:}
+We study fixed vs.\ learned $w(\alpha)$, with vs.\ without $\alpha$-conditioning in the model, and variance-triggered vs.\ schedule-based curricula.
+% \section{Technical Outline}
+
+% \subsection{Approach}
+
+% Standard GRPO computes the advantage of a rollout $y_i$ within a group $\{y_1, \dots, y_N\}$
+% as $\hat{A}(y_i) = r_i - \bar{r}$, where $\bar{r}$ is the group mean reward. This mean baseline
+% is an implicit choice: it trains the model to be better than its average self, which is
+% structurally equivalent to optimizing majority-vote performance. We generalize this by
+% replacing the mean with a quantile-conditioned baseline $b_\alpha$, defined as the
+% $\alpha$-quantile of the within-group reward distribution. The resulting advantage is:
+% %
+% \begin{equation*}
+%     \hat{A}_\alpha(y_i) \;=\; r_i - b_\alpha\!\left(\{r_1, \dots, r_N\}\right).
+% \end{equation*}
+% %
+% Training with a fixed $\alpha = 0.5$ recovers standard GRPO (up to the distinction between
+% mean and median). Training with $\alpha \to 0$---a low quantile baseline---assigns positive
+% advantage to \emph{any} rollout that beats even the worst minority of the group, pushing the
+% model to produce correct answers even in its hardest-to-reach modes. This is the formal
+% instantiation of minority-voting optimization: the model is rewarded for being right when
+% evaluated against its own worst-case generations.
+
+% The full QC-GRPO objective trains with a mixture of quantile levels:
+% %
+% \begin{equation*}
+%     \mathcal{L}(\theta) \;=\; \sum_{\alpha} w(\alpha)\cdot
+%     \mathbb{E}\!\left[\hat{A}_\alpha(y_i)\cdot\log \pi_\theta(y_i \mid x)\right],
+% \end{equation*}
+% %
+% where the weights $w(\alpha)$ over the quantile grid constitute the primary design variable.
+% A fixed top-heavy $w$ (concentrated at high $\alpha$) approximates best-of-$N$ training; a
+% bottom-heavy $w$ implements the tail-risk objective. The key novel contribution is a learned curriculum over $\alpha$: we treat $w(\alpha)$ as adaptive, annealing from
+% majority-favoring weights early in training (when the signal is stable) toward
+% minority-favoring weights as the model improves (when the mean-relative signal saturates).
+% This annealing is triggered by monitoring the variance of the within-group reward
+% distribution---when reward variance collapses, a signature of diversity collapse, the
+% curriculum shifts weight toward lower quantiles to restore gradient signal from rare-correct
+% rollouts.
+
+% % Crucially, the quantile index $\alpha$ is fed as a conditioning token to the model
+% % at training time, teaching it to produce calibrated diversity: it learns that being evaluated
+% % as a minority voter demands a qualitatively different reasoning strategy than being evaluated
+% % as a majority voter. At inference time, this conditioning can be dropped (recovering standard
+% % decoding) or retained to steer the model toward exploratory versus conservative outputs.
+
+% \subsection{Evaluation Plan}
+
+% We evaluate QC-GRPO on absolute reasoning performance and generalization under distribution shift.
+
+% \textbf{Baselines:} We compare against standard GRPO, DAPO, and SetPO as the closest
+% competitors, along with fixed-$\alpha$ ablations at
+% $\alpha \in \{0.1,\, 0.25,\, 0.5,\, 0.75,\, 0.9\}$ to isolate the effect of the quantile
+% curriculum from the mixture objective.
+
+% \textbf{Metrics:} We report \textsc{Pass@1} (majority-vote accuracy) and
+% \textsc{Pass@}$k$ for $k \in \{4, 16, 64\}$ to directly measure whether QC-GRPO preserves
+% diversity that GRPO collapses. We expect low-$\alpha$ training to maintain or improve
+% \textsc{Pass@}$k$ relative to GRPO while slightly trading off \textsc{Pass@1} on easy
+% benchmarks, with the learned curriculum dominating both.
+
+% \textbf{Benchmarks:} We train on standard mathematical reasoning data and evaluate on a
+% difficulty curriculum: MATH-500 (in-distribution), AMC (moderate OOD), and AIME 2024/2025
+% and HMMT (hard OOD). The central hypothesis is that lower-$\alpha$ training
+% disproportionately improves hard OOD generalization, where correct solutions are rare even
+% within a well-trained model's rollout distribution.
+
+% \textbf{Ablations:} We ablate fixed vs.\ learned $w(\alpha)$, with vs.\ without
+% $\alpha$-conditioning at the model level, and the variance-collapse trigger vs.\
+% epoch-based annealing schedules for the curriculum.
+
+\section{Team Contributions}
+\begin{itemize}
+    \item \textbf{Emma Gao} will lead theoretical development: deriving the QC-GRPO objective, proving the equivalence between the mean baseline and median-quantile training, and connecting the low-$\alpha$ limit to CVaR-style optimization.
+    \item \textbf{Anastasia Lee} will lead implementation: building the quantile-conditioned advantage estimator on top of an existing GRPO codebase, implementing the adaptive curriculum with the variance-collapse trigger, and integrating the $\alpha$-conditioning token interface for inference-time steering.
+    \item \textbf{Nancy Bao} will lead evaluation: setting up the benchmark pipeline across MATH-500, AMC, and AIME/HMMT, computing Pass@1 and Pass@$k$ metrics, and producing ablation results.
+\end{itemize}
+
+\bibliographystyle{ACM-Reference-Format}
+\bibliography{references}
+
+\end{document}

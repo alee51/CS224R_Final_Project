@@ -1,0 +1,211 @@
+======================================================================
+POLY-EPO MARGINAL SET ADVANTAGE,  N=8,  varying n in {2, 4, 6}
+======================================================================
+
+======================================================================
+S1: Diverse-correct, diverse-wrong
+======================================================================
+  2 correct strategies (2x A, 2x B) + 2 wrong strategies (2x C, 2x D)
+  rewards:  [1, 1, 1, 1, 0, 0, 0, 0]
+  clusters: ['A', 'A', 'B', 'B', 'C', 'C', 'D', 'D']
+  cluster sizes: {'A': 2, 'B': 2, 'C': 2, 'D': 2}, #correct = 4/8
+
+  >> standard GRPO  (== Poly-EPO at n=1):
+    CORRECT  cluster=A (x2):  A = +0.5000
+    CORRECT  cluster=B (x2):  A = +0.5000
+    wrong    cluster=C (x2):  A = -0.5000
+    wrong    cluster=D (x2):  A = -0.5000
+
+  >> Poly-EPO  n=2  (K=28 subsets, baseline f_hat=0.4643):
+    CORRECT  cluster=A (x2):  A = +0.1786
+    CORRECT  cluster=B (x2):  A = +0.1786
+    wrong    cluster=C (x2):  A = -0.1786
+    wrong    cluster=D (x2):  A = -0.1786
+
+  >> Poly-EPO  n=4  (K=70 subsets, baseline f_hat=0.3929):
+    CORRECT  cluster=A (x2):  A = +0.0500
+    CORRECT  cluster=B (x2):  A = +0.0500
+    wrong    cluster=C (x2):  A = -0.0500
+    wrong    cluster=D (x2):  A = -0.0500
+
+  >> Poly-EPO  n=6  (K=28 subsets, baseline f_hat=0.3214):
+    CORRECT  cluster=A (x2):  A = +0.0146
+    CORRECT  cluster=B (x2):  A = +0.0146
+    wrong    cluster=C (x2):  A = -0.0146
+    wrong    cluster=D (x2):  A = -0.0146
+
+======================================================================
+S2: Collapsed correct  (mid-training, model converged on one strategy)
+======================================================================
+  5x A correct, 3 unique wrongs (B, C, D)
+  rewards:  [1, 1, 1, 1, 1, 0, 0, 0]
+  clusters: ['A', 'A', 'A', 'A', 'A', 'B', 'C', 'D']
+  cluster sizes: {'A': 5, 'B': 1, 'C': 1, 'D': 1}, #correct = 5/8
+
+  >> standard GRPO  (== Poly-EPO at n=1):
+    CORRECT  cluster=A (x5):  A = +0.3750
+    wrong    cluster=B (x1):  A = -0.6250
+    wrong    cluster=C (x1):  A = -0.6250
+    wrong    cluster=D (x1):  A = -0.6250
+
+  >> Poly-EPO  n=2  (K=28 subsets, baseline f_hat=0.4464):
+    CORRECT  cluster=A (x5):  A = +0.0536
+    wrong    cluster=B (x1):  A = -0.0893
+    wrong    cluster=C (x1):  A = -0.0893
+    wrong    cluster=D (x1):  A = -0.0893
+
+  >> Poly-EPO  n=4  (K=70 subsets, baseline f_hat=0.3571):
+    CORRECT  cluster=A (x5):  A = -0.0000
+    wrong    cluster=B (x1):  A = -0.0000
+    wrong    cluster=C (x1):  A = -0.0000
+    wrong    cluster=D (x1):  A = -0.0000
+
+  >> Poly-EPO  n=6  (K=28 subsets, baseline f_hat=0.3274):
+    CORRECT  cluster=A (x5):  A = -0.0020
+    wrong    cluster=B (x1):  A = +0.0033
+    wrong    cluster=C (x1):  A = +0.0033
+    wrong    cluster=D (x1):  A = +0.0033
+
+======================================================================
+S3: Rare correct  (hard problem, early training)
+======================================================================
+  1x A correct, 4x B wrong (dominant wrong), 3 unique wrongs (C, D, E)
+  rewards:  [1, 0, 0, 0, 0, 0, 0, 0]
+  clusters: ['A', 'B', 'B', 'B', 'B', 'C', 'D', 'E']
+  cluster sizes: {'A': 1, 'B': 4, 'C': 1, 'D': 1, 'E': 1}, #correct = 1/8
+
+  >> standard GRPO  (== Poly-EPO at n=1):
+    CORRECT  cluster=A (x1):  A = +0.8750
+    wrong    cluster=B (x4):  A = -0.1250
+    wrong    cluster=C (x1):  A = -0.1250
+    wrong    cluster=D (x1):  A = -0.1250
+    wrong    cluster=E (x1):  A = -0.1250
+
+  >> Poly-EPO  n=2  (K=28 subsets, baseline f_hat=0.1250):
+    CORRECT  cluster=A (x1):  A = +0.3750
+    wrong    cluster=B (x4):  A = -0.0536
+    wrong    cluster=C (x1):  A = -0.0536
+    wrong    cluster=D (x1):  A = -0.0536
+    wrong    cluster=E (x1):  A = -0.0536
+
+  >> Poly-EPO  n=4  (K=70 subsets, baseline f_hat=0.1018):
+    CORRECT  cluster=A (x1):  A = +0.1018
+    wrong    cluster=B (x4):  A = -0.0214
+    wrong    cluster=C (x1):  A = -0.0054
+    wrong    cluster=D (x1):  A = -0.0054
+    wrong    cluster=E (x1):  A = -0.0054
+
+  >> Poly-EPO  n=6  (K=28 subsets, baseline f_hat=0.0863):
+    CORRECT  cluster=A (x1):  A = +0.0288
+    wrong    cluster=B (x4):  A = -0.0069
+    wrong    cluster=C (x1):  A = -0.0003
+    wrong    cluster=D (x1):  A = -0.0003
+    wrong    cluster=E (x1):  A = -0.0003
+
+======================================================================
+S4: Common-correct + rare-correct  (your question.md RQ1)
+======================================================================
+  4x A correct (common), 1x B correct (rare), 3 unique wrongs (C, D, E)
+  rewards:  [1, 1, 1, 1, 1, 0, 0, 0]
+  clusters: ['A', 'A', 'A', 'A', 'B', 'C', 'D', 'E']
+  cluster sizes: {'A': 4, 'B': 1, 'C': 1, 'D': 1, 'E': 1}, #correct = 5/8
+
+  >> standard GRPO  (== Poly-EPO at n=1):
+    CORRECT  cluster=A (x4):  A = +0.3750
+    CORRECT  cluster=B (x1):  A = +0.3750
+    wrong    cluster=C (x1):  A = -0.6250
+    wrong    cluster=D (x1):  A = -0.6250
+    wrong    cluster=E (x1):  A = -0.6250
+
+  >> Poly-EPO  n=2  (K=28 subsets, baseline f_hat=0.5179):
+    CORRECT  cluster=A (x4):  A = +0.0536
+    CORRECT  cluster=B (x1):  A = +0.2679
+    wrong    cluster=C (x1):  A = -0.1607
+    wrong    cluster=D (x1):  A = -0.1607
+    wrong    cluster=E (x1):  A = -0.1607
+
+  >> Poly-EPO  n=4  (K=70 subsets, baseline f_hat=0.4411):
+    CORRECT  cluster=A (x4):  A = -0.0036
+    CORRECT  cluster=B (x1):  A = +0.0839
+    wrong    cluster=C (x1):  A = -0.0232
+    wrong    cluster=D (x1):  A = -0.0232
+    wrong    cluster=E (x1):  A = -0.0232
+
+  >> Poly-EPO  n=6  (K=28 subsets, baseline f_hat=0.4077):
+    CORRECT  cluster=A (x4):  A = -0.0030
+    CORRECT  cluster=B (x1):  A = +0.0248
+    wrong    cluster=C (x1):  A = -0.0043
+    wrong    cluster=D (x1):  A = -0.0043
+    wrong    cluster=E (x1):  A = -0.0043
+
+======================================================================
+S5: Zero diversity  (all same cluster)
+======================================================================
+  8x A, mixed correctness (4 correct, 4 wrong, all same cluster)
+  rewards:  [1, 1, 1, 1, 0, 0, 0, 0]
+  clusters: ['A', 'A', 'A', 'A', 'A', 'A', 'A', 'A']
+  cluster sizes: {'A': 8}, #correct = 4/8
+
+  >> standard GRPO  (== Poly-EPO at n=1):
+    CORRECT  cluster=A (x4):  A = +0.5000
+    wrong    cluster=A (x4):  A = -0.5000
+
+  >> Poly-EPO  n=2  (K=28 subsets, baseline f_hat=0.2500):
+    CORRECT  cluster=A (x4):  A = +0.1071
+    wrong    cluster=A (x4):  A = -0.1071
+
+  >> Poly-EPO  n=4  (K=70 subsets, baseline f_hat=0.1250):
+    CORRECT  cluster=A (x4):  A = +0.0179
+    wrong    cluster=A (x4):  A = -0.0179
+
+  >> Poly-EPO  n=6  (K=28 subsets, baseline f_hat=0.0833):
+    CORRECT  cluster=A (x4):  A = +0.0040
+    wrong    cluster=A (x4):  A = -0.0040
+
+======================================================================
+S6: Maximum diversity  (every generation in its own cluster)
+======================================================================
+  8 unique clusters, 4 correct, 4 wrong
+  rewards:  [1, 1, 1, 1, 0, 0, 0, 0]
+  clusters: ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H']
+  cluster sizes: {'A': 1, 'B': 1, 'C': 1, 'D': 1, 'E': 1, 'F': 1, 'G': 1, 'H': 1}, #correct = 4/8
+
+  >> standard GRPO  (== Poly-EPO at n=1):
+    CORRECT  cluster=A (x1):  A = +0.5000
+    CORRECT  cluster=B (x1):  A = +0.5000
+    CORRECT  cluster=C (x1):  A = +0.5000
+    CORRECT  cluster=D (x1):  A = +0.5000
+    wrong    cluster=E (x1):  A = -0.5000
+    wrong    cluster=F (x1):  A = -0.5000
+    wrong    cluster=G (x1):  A = -0.5000
+    wrong    cluster=H (x1):  A = -0.5000
+
+  >> Poly-EPO  n=2  (K=28 subsets, baseline f_hat=0.5000):
+    CORRECT  cluster=A (x1):  A = +0.2143
+    CORRECT  cluster=B (x1):  A = +0.2143
+    CORRECT  cluster=C (x1):  A = +0.2143
+    CORRECT  cluster=D (x1):  A = +0.2143
+    wrong    cluster=E (x1):  A = -0.2143
+    wrong    cluster=F (x1):  A = -0.2143
+    wrong    cluster=G (x1):  A = -0.2143
+    wrong    cluster=H (x1):  A = -0.2143
+
+  >> Poly-EPO  n=4  (K=70 subsets, baseline f_hat=0.5000):
+    CORRECT  cluster=A (x1):  A = +0.0714
+    CORRECT  cluster=B (x1):  A = +0.0714
+    CORRECT  cluster=C (x1):  A = +0.0714
+    CORRECT  cluster=D (x1):  A = +0.0714
+    wrong    cluster=E (x1):  A = -0.0714
+    wrong    cluster=F (x1):  A = -0.0714
+    wrong    cluster=G (x1):  A = -0.0714
+    wrong    cluster=H (x1):  A = -0.0714
+
+  >> Poly-EPO  n=6  (K=28 subsets, baseline f_hat=0.5000):
+    CORRECT  cluster=A (x1):  A = +0.0238
+    CORRECT  cluster=B (x1):  A = +0.0238
+    CORRECT  cluster=C (x1):  A = +0.0238
+    CORRECT  cluster=D (x1):  A = +0.0238
+    wrong    cluster=E (x1):  A = -0.0238
+    wrong    cluster=F (x1):  A = -0.0238
+    wrong    cluster=G (x1):  A = -0.0238
+    wrong    cluster=H (x1):  A = -0.0238
