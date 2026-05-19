@@ -4,7 +4,8 @@ Orchestrator entry: launch a pilot run with frozen config and budget caps.
 
 Examples:
   python pilot/scripts/launch_run.py --run-id run1_grpo --dry-run
-  python pilot/scripts/launch_run.py --run-id run0_proxy
+  modal run --detach pilot/infra/modal_app.py --run-id run0_proxy   # production
+  modal run pilot/infra/modal_app.py --run-id run0_proxy --wait     # interactive
 """
 
 from __future__ import annotations

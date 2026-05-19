@@ -52,13 +52,13 @@ Discrimination study: GRPO (majority) vs `inverse_freq` (minority) vs F-GRPO (ne
 
 | Run | ID | Objective | Seed | Budget cap |
 |-----|-----|-----------|------|------------|
-| 0 | `run0_proxy` | None (rollouts only) | 42 | $4 |
-| 1 | `run1_grpo` | `grpo` | 42 | $12 |
-| 1b | `run1b_grpo` | `grpo` | 43 | $12 |
-| 2 | `run2_inverse_freq` | `inverse_freq` (γ=1, w_max=8) | 42 | $12 |
-| 3 | `run3_f_grpo` | `f_grpo` | 42 | $12 |
+| 0 | `run0_proxy` | None (rollouts only) | 42 | $24 |
+| 1 | `run1_grpo` | `grpo` | 42 | $36 |
+| 1b | `run1b_grpo` | `grpo` | 43 | $36 |
+| 2 | `run2_inverse_freq` | `inverse_freq` (γ=1, w_max=8) | 42 | $36 |
+| 3 | `run3_f_grpo` | `f_grpo` | 42 | $36 |
 
-**Pilot total ceiling:** $210 (~15% of $1400).
+**Pilot total ceiling:** $405 (~29% of $1400).
 
 ## Execution sequence
 

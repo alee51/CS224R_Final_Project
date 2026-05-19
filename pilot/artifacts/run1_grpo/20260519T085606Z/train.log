@@ -1,0 +1,66 @@
+2026-05-19 08:08:59,402 INFO debug_max_prompts=1
+2026-05-19 08:08:59,403 INFO GRPO run1_grpo objective=grpo steps=100 batch=32 N=8 model=Qwen/Qwen3-1.7B-Base seed=42
+2026-05-19 08:08:59,446 INFO HTTP Request: HEAD https://huggingface.co/Qwen/Qwen3-1.7B-Base/resolve/main/config.json "HTTP/1.1 307 Temporary Redirect"
+2026-05-19 08:08:59,452 INFO HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/Qwen/Qwen3-1.7B-Base/ea980cb0a6c2ae4b936e82123acc929f1cec04c1/config.json "HTTP/1.1 200 OK"
+2026-05-19 08:08:59,578 INFO HTTP Request: HEAD https://huggingface.co/Qwen/Qwen3-1.7B-Base/resolve/main/tokenizer_config.json "HTTP/1.1 307 Temporary Redirect"
+2026-05-19 08:08:59,584 INFO HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/Qwen/Qwen3-1.7B-Base/ea980cb0a6c2ae4b936e82123acc929f1cec04c1/tokenizer_config.json "HTTP/1.1 200 OK"
+2026-05-19 08:08:59,636 INFO HTTP Request: GET https://huggingface.co/api/models/Qwen/Qwen3-1.7B-Base/tree/main/additional_chat_templates?recursive=false&expand=false "HTTP/1.1 404 Not Found"
+2026-05-19 08:08:59,672 INFO HTTP Request: GET https://huggingface.co/api/models/Qwen/Qwen3-1.7B-Base/tree/main?recursive=true&expand=false "HTTP/1.1 200 OK"
+2026-05-19 08:09:00,267 INFO HTTP Request: GET https://huggingface.co/api/models/Qwen/Qwen3-1.7B-Base "HTTP/1.1 200 OK"
+2026-05-19 08:09:00,309 INFO HTTP Request: HEAD https://huggingface.co/Qwen/Qwen3-1.7B-Base/resolve/main/config.json "HTTP/1.1 307 Temporary Redirect"
+2026-05-19 08:09:00,315 INFO HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/Qwen/Qwen3-1.7B-Base/ea980cb0a6c2ae4b936e82123acc929f1cec04c1/config.json "HTTP/1.1 200 OK"
+2026-05-19 08:09:14,079 INFO HTTP Request: HEAD https://huggingface.co/Qwen/Qwen3-1.7B-Base/resolve/main/generation_config.json "HTTP/1.1 307 Temporary Redirect"
+2026-05-19 08:09:14,084 INFO HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/Qwen/Qwen3-1.7B-Base/ea980cb0a6c2ae4b936e82123acc929f1cec04c1/generation_config.json "HTTP/1.1 200 OK"
+2026-05-19 08:09:14,124 INFO HTTP Request: HEAD https://huggingface.co/Qwen/Qwen3-1.7B-Base/resolve/main/custom_generate/generate.py "HTTP/1.1 404 Not Found"
+2026-05-19 08:19:12,603 INFO debug_max_prompts=2
+2026-05-19 08:19:12,740 INFO GRPO run1_grpo objective=grpo steps=100 batch=32 N=8 model=Qwen/Qwen3-1.7B-Base seed=42
+2026-05-19 08:19:12,806 INFO HTTP Request: HEAD https://huggingface.co/Qwen/Qwen3-1.7B-Base/resolve/main/config.json "HTTP/1.1 307 Temporary Redirect"
+2026-05-19 08:19:12,814 INFO HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/Qwen/Qwen3-1.7B-Base/ea980cb0a6c2ae4b936e82123acc929f1cec04c1/config.json "HTTP/1.1 200 OK"
+2026-05-19 08:19:12,859 INFO HTTP Request: HEAD https://huggingface.co/Qwen/Qwen3-1.7B-Base/resolve/main/tokenizer_config.json "HTTP/1.1 307 Temporary Redirect"
+2026-05-19 08:19:12,873 INFO HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/Qwen/Qwen3-1.7B-Base/ea980cb0a6c2ae4b936e82123acc929f1cec04c1/tokenizer_config.json "HTTP/1.1 200 OK"
+2026-05-19 08:19:12,930 INFO HTTP Request: GET https://huggingface.co/api/models/Qwen/Qwen3-1.7B-Base/tree/main/additional_chat_templates?recursive=false&expand=false "HTTP/1.1 404 Not Found"
+2026-05-19 08:19:12,959 INFO HTTP Request: GET https://huggingface.co/api/models/Qwen/Qwen3-1.7B-Base/tree/main?recursive=true&expand=false "HTTP/1.1 200 OK"
+2026-05-19 08:19:13,490 INFO HTTP Request: GET https://huggingface.co/api/models/Qwen/Qwen3-1.7B-Base "HTTP/1.1 200 OK"
+2026-05-19 08:19:13,521 INFO HTTP Request: HEAD https://huggingface.co/Qwen/Qwen3-1.7B-Base/resolve/main/config.json "HTTP/1.1 307 Temporary Redirect"
+2026-05-19 08:19:13,530 INFO HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/Qwen/Qwen3-1.7B-Base/ea980cb0a6c2ae4b936e82123acc929f1cec04c1/config.json "HTTP/1.1 200 OK"
+2026-05-19 08:22:08,700 INFO debug_max_prompts=2
+2026-05-19 08:22:08,797 INFO GRPO run1_grpo objective=grpo steps=100 batch=32 N=8 model=Qwen/Qwen3-1.7B-Base seed=42
+2026-05-19 08:22:08,841 INFO HTTP Request: HEAD https://huggingface.co/Qwen/Qwen3-1.7B-Base/resolve/main/config.json "HTTP/1.1 307 Temporary Redirect"
+2026-05-19 08:22:08,847 INFO HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/Qwen/Qwen3-1.7B-Base/ea980cb0a6c2ae4b936e82123acc929f1cec04c1/config.json "HTTP/1.1 200 OK"
+2026-05-19 08:22:08,880 INFO HTTP Request: HEAD https://huggingface.co/Qwen/Qwen3-1.7B-Base/resolve/main/tokenizer_config.json "HTTP/1.1 307 Temporary Redirect"
+2026-05-19 08:22:08,886 INFO HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/Qwen/Qwen3-1.7B-Base/ea980cb0a6c2ae4b936e82123acc929f1cec04c1/tokenizer_config.json "HTTP/1.1 200 OK"
+2026-05-19 08:22:08,926 INFO HTTP Request: GET https://huggingface.co/api/models/Qwen/Qwen3-1.7B-Base/tree/main/additional_chat_templates?recursive=false&expand=false "HTTP/1.1 404 Not Found"
+2026-05-19 08:22:08,963 INFO HTTP Request: GET https://huggingface.co/api/models/Qwen/Qwen3-1.7B-Base/tree/main?recursive=true&expand=false "HTTP/1.1 200 OK"
+2026-05-19 08:22:09,489 INFO HTTP Request: GET https://huggingface.co/api/models/Qwen/Qwen3-1.7B-Base "HTTP/1.1 200 OK"
+2026-05-19 08:22:09,520 INFO HTTP Request: HEAD https://huggingface.co/Qwen/Qwen3-1.7B-Base/resolve/main/config.json "HTTP/1.1 307 Temporary Redirect"
+2026-05-19 08:22:09,526 INFO HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/Qwen/Qwen3-1.7B-Base/ea980cb0a6c2ae4b936e82123acc929f1cec04c1/config.json "HTTP/1.1 200 OK"
+2026-05-19 08:22:19,817 INFO HTTP Request: HEAD https://huggingface.co/Qwen/Qwen3-1.7B-Base/resolve/main/generation_config.json "HTTP/1.1 307 Temporary Redirect"
+2026-05-19 08:22:19,823 INFO HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/Qwen/Qwen3-1.7B-Base/ea980cb0a6c2ae4b936e82123acc929f1cec04c1/generation_config.json "HTTP/1.1 200 OK"
+2026-05-19 08:22:19,861 INFO HTTP Request: HEAD https://huggingface.co/Qwen/Qwen3-1.7B-Base/resolve/main/custom_generate/generate.py "HTTP/1.1 404 Not Found"
+2026-05-19 08:56:19,820 INFO debug_max_prompts=2
+2026-05-19 08:56:19,895 INFO GRPO run1_grpo objective=grpo steps=100 batch=32 N=8 model=Qwen/Qwen3-1.7B-Base seed=42
+2026-05-19 08:56:19,949 INFO HTTP Request: HEAD https://huggingface.co/Qwen/Qwen3-1.7B-Base/resolve/main/config.json "HTTP/1.1 307 Temporary Redirect"
+2026-05-19 08:56:19,958 INFO HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/Qwen/Qwen3-1.7B-Base/ea980cb0a6c2ae4b936e82123acc929f1cec04c1/config.json "HTTP/1.1 200 OK"
+2026-05-19 08:56:20,020 INFO HTTP Request: HEAD https://huggingface.co/Qwen/Qwen3-1.7B-Base/resolve/main/tokenizer_config.json "HTTP/1.1 307 Temporary Redirect"
+2026-05-19 08:56:20,028 INFO HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/Qwen/Qwen3-1.7B-Base/ea980cb0a6c2ae4b936e82123acc929f1cec04c1/tokenizer_config.json "HTTP/1.1 200 OK"
+2026-05-19 08:56:20,073 INFO HTTP Request: GET https://huggingface.co/api/models/Qwen/Qwen3-1.7B-Base/tree/main/additional_chat_templates?recursive=false&expand=false "HTTP/1.1 404 Not Found"
+2026-05-19 08:56:20,100 INFO HTTP Request: GET https://huggingface.co/api/models/Qwen/Qwen3-1.7B-Base/tree/main?recursive=true&expand=false "HTTP/1.1 200 OK"
+2026-05-19 08:56:20,645 INFO HTTP Request: GET https://huggingface.co/api/models/Qwen/Qwen3-1.7B-Base "HTTP/1.1 200 OK"
+2026-05-19 08:56:20,676 INFO HTTP Request: HEAD https://huggingface.co/Qwen/Qwen3-1.7B-Base/resolve/main/config.json "HTTP/1.1 307 Temporary Redirect"
+2026-05-19 08:56:20,685 INFO HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/Qwen/Qwen3-1.7B-Base/ea980cb0a6c2ae4b936e82123acc929f1cec04c1/config.json "HTTP/1.1 200 OK"
+2026-05-19 09:06:26,542 INFO debug_max_prompts=2
+2026-05-19 09:06:26,764 INFO GRPO run1_grpo objective=grpo steps=100 batch=32 N=8 model=Qwen/Qwen3-1.7B-Base seed=42
+2026-05-19 09:06:26,871 INFO HTTP Request: HEAD https://huggingface.co/Qwen/Qwen3-1.7B-Base/resolve/main/config.json "HTTP/1.1 307 Temporary Redirect"
+2026-05-19 09:06:26,900 INFO HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/Qwen/Qwen3-1.7B-Base/ea980cb0a6c2ae4b936e82123acc929f1cec04c1/config.json "HTTP/1.1 200 OK"
+2026-05-19 09:06:27,013 INFO HTTP Request: HEAD https://huggingface.co/Qwen/Qwen3-1.7B-Base/resolve/main/tokenizer_config.json "HTTP/1.1 307 Temporary Redirect"
+2026-05-19 09:06:27,042 INFO HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/Qwen/Qwen3-1.7B-Base/ea980cb0a6c2ae4b936e82123acc929f1cec04c1/tokenizer_config.json "HTTP/1.1 200 OK"
+2026-05-19 09:06:27,150 INFO HTTP Request: GET https://huggingface.co/api/models/Qwen/Qwen3-1.7B-Base/tree/main/additional_chat_templates?recursive=false&expand=false "HTTP/1.1 404 Not Found"
+2026-05-19 09:06:27,209 INFO HTTP Request: GET https://huggingface.co/api/models/Qwen/Qwen3-1.7B-Base/tree/main?recursive=true&expand=false "HTTP/1.1 200 OK"
+2026-05-19 09:06:28,252 INFO HTTP Request: GET https://huggingface.co/api/models/Qwen/Qwen3-1.7B-Base "HTTP/1.1 200 OK"
+2026-05-19 09:06:28,309 INFO HTTP Request: HEAD https://huggingface.co/Qwen/Qwen3-1.7B-Base/resolve/main/config.json "HTTP/1.1 307 Temporary Redirect"
+2026-05-19 09:06:28,327 INFO HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/Qwen/Qwen3-1.7B-Base/ea980cb0a6c2ae4b936e82123acc929f1cec04c1/config.json "HTTP/1.1 200 OK"
+2026-05-19 09:06:37,330 INFO HTTP Request: HEAD https://huggingface.co/Qwen/Qwen3-1.7B-Base/resolve/main/generation_config.json "HTTP/1.1 307 Temporary Redirect"
+2026-05-19 09:06:37,350 INFO HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/Qwen/Qwen3-1.7B-Base/ea980cb0a6c2ae4b936e82123acc929f1cec04c1/generation_config.json "HTTP/1.1 200 OK"
+2026-05-19 09:06:37,454 INFO HTTP Request: HEAD https://huggingface.co/Qwen/Qwen3-1.7B-Base/resolve/main/custom_generate/generate.py "HTTP/1.1 404 Not Found"
+2026-05-19 09:06:38,330 INFO step 1/100 start: building groups (batch_prompts=32, rollouts=8, max_new_tokens=2048)
+2026-05-19 09:25:51,401 WARNING Received a cancellation signal while processing input ('in-01KRZQRMZSNFJ4NYSTXC1JHKKQ:1779181573114-0',)

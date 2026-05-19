@@ -55,11 +55,11 @@
     ]
   },
   "budget_caps_usd": {
-    "run0_proxy": 4,
-    "run1_grpo": 12,
-    "run1b_grpo": 12,
-    "run2_inverse_freq": 12,
-    "run3_f_grpo": 12,
-    "pilot_total": 210
+    "run0_proxy": 24,
+    "run1_grpo": 36,
+    "run1b_grpo": 36,
+    "run2_inverse_freq": 36,
+    "run3_f_grpo": 36,
+    "pilot_total": 405
   }
 }

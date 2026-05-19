@@ -6,5 +6,5 @@ inverse_freq:
   per_prompt_normalize: true
   w_max: 8.0
 seed: 42
-budget_cap_usd: 12
-budget_cap_gpu_hours: 4.0
+budget_cap_usd: 36
+budget_cap_gpu_hours: 12.0

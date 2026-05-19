@@ -89,8 +89,10 @@ def launch_run(
         print("--- budget guard (simulated) ---")
         print(json.dumps(sim, indent=2))
         print(f"artifact_dir: {artifact_dir(run_id, artifacts_root=artifacts_root)}")
-        print("\nTo run on Modal GPU:")
-        print(f"  modal run pilot/infra/modal_app.py --run-id {run_id}")
+        print("\nTo run on Modal GPU (detached, survives laptop off):")
+        print(f"  modal run --detach pilot/infra/modal_app.py --run-id {run_id}")
+        print("\nInteractive (blocks + auto-pull; laptop must stay on):")
+        print(f"  modal run pilot/infra/modal_app.py --run-id {run_id} --wait")
         return artifact_dir(run_id, artifacts_root=artifacts_root)
 
     out = bootstrap_run_artifacts(

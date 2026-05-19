@@ -36,6 +36,8 @@ Orchestrator uses `pilot/scripts/launch_run.py` to schedule Run0–3 with per-ru
 
 ## Launching runs
 
+**Default:** detached spawn — survives laptop sleep/shutdown. Always pass Modal’s `--detach` flag.
+
 Dry-run (resolved config + budget cap, no files written):
 
 ```bash
@@ -47,25 +49,32 @@ python pilot/scripts/launch_run.py --run-id run1_grpo --dry-run
 From repo root, after `modal setup` and `modal secret create huggingface HF_TOKEN=...`:
 
 ```bash
-# Full Run0: 500 prompts × 8 rollouts, ~$4 cap
-modal run pilot/infra/modal_app.py --run-id run0_proxy
+# Full Run0: 500 prompts × 8 rollouts, ~$24 cap
+modal run --detach pilot/infra/modal_app.py --run-id run0_proxy
 
 # Quick smoke (5 prompts) before full run:
-modal run pilot/infra/modal_app.py --run-id run0_proxy --debug-max-prompts 5
+modal run --detach pilot/infra/modal_app.py --run-id run0_proxy --debug-max-prompts 5
 ```
 
-Or via launch wrapper (same Modal job):
+Wait until you see `Spawned function call id:` — then safe to close the laptop.
+
+**Interactive** (blocks, auto-pulls; laptop must stay connected):
 
 ```bash
-python pilot/scripts/launch_run.py --run-id run0_proxy
+modal run pilot/infra/modal_app.py --run-id run0_proxy --wait
 ```
 
-Writes `pilot/artifacts/run0_proxy/metrics.json` with `minority_correct_prompt_rate`.
+After a detached run completes, pull artifacts into the timestamped dir printed at launch:
 
-Modal runs persist outputs on Volume `pilot-artifacts` and auto-pull to a new
-timestamped folder `pilot/artifacts/<run_id>/<UTC-timestamp>/` each time;
-`pilot/artifacts/<run_id>/latest` points at the newest run. Gate scripts use
-`resolve_latest_run_dir()`. Weights cache on Volume `hf-cache`.
+```bash
+python pilot/scripts/pull_run_artifacts.py --run-id run0_proxy \
+  --local-dir pilot/artifacts/run0_proxy/<UTC-timestamp>
+```
+
+`launch_run.py` uses blocking `.remote()` and is not safe for long unattended runs.
+
+Modal runs persist outputs on Volume `pilot-artifacts`. Gate scripts use
+`resolve_latest_run_dir()` after pull. Weights cache on Volume `hf-cache`.
 
 Local GPU only (CUDA machine):
 
@@ -95,7 +104,7 @@ Runs **run1_grpo**, **run1b_grpo**, **run2_inverse_freq**, and **run3_f_grpo** a
 **run0_proxy is separate** — proxy rollouts only, not part of the matrix. Launch it before or after the matrix as needed:
 
 ```bash
-modal run pilot/infra/modal_app.py --run-id run0_proxy
+modal run --detach pilot/infra/modal_app.py --run-id run0_proxy
 ```
 
 ### Shell launcher (recommended)
@@ -113,37 +122,28 @@ The script checks venv + `modal` CLI, prints per-run caps from `pilot/preflight_
 
 ### Manual / single process
 
-One run:
+One run (detached spawn):
 
 ```bash
-modal run pilot/infra/modal_app.py --run-id run1_grpo
+modal run --detach pilot/infra/modal_app.py --run-id run1_grpo
 ```
 
-Sequential matrix in one local Modal entrypoint (remote jobs still one GPU each, back-to-back):
+Parallel matrix (four background spawns):
 
 ```bash
-modal run pilot/infra/modal_app.py \
-  --run-ids run1_grpo,run1b_grpo,run2_inverse_freq,run3_f_grpo
+for rid in run1_grpo run1b_grpo run2_inverse_freq run3_f_grpo; do
+  modal run --detach pilot/infra/modal_app.py --run-id "$rid" &
+done
 ```
 
-Parallel matrix (four terminals or background `&`):
-
-```bash
-modal run pilot/infra/modal_app.py --run-id run1_grpo &
-modal run pilot/infra/modal_app.py --run-id run1b_grpo &
-modal run pilot/infra/modal_app.py --run-id run2_inverse_freq &
-modal run pilot/infra/modal_app.py --run-id run3_f_grpo &
-wait
-```
-
-Each invocation bootstraps a new **timestamped** local dir `pilot/artifacts/<run_id>/<UTC-timestamp>/`, runs on Modal, pulls from Volume `pilot-artifacts`, and updates `pilot/artifacts/<run_id>/latest`.
+Each invocation bootstraps a **timestamped** local dir `pilot/artifacts/<run_id>/<UTC-timestamp>/` and spawns GPU work on Modal. Pull when done with `pull_run_artifacts.py`.
 
 ## Budget guards
 
 | Run ID | Cap (USD) | Hard abort (1.5×) |
 |--------|-----------|-------------------|
-| `run0_proxy` | 4 | 6 |
-| `run1_grpo`, `run1b_grpo`, `run2_inverse_freq`, `run3_f_grpo` | 12 each | 18 |
+| `run0_proxy` | 24 | 36 |
+| `run1_grpo`, `run1b_grpo`, `run2_inverse_freq`, `run3_f_grpo` | 36 each | 54 |
 
 Pricing default: A100-80GB @ `$0.000694`/sec (`shared_train.yaml`). `budget_guard.check_cost` raises if estimated spend exceeds 1.5× the run cap.
 

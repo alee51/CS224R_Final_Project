@@ -30,12 +30,12 @@ TAIL_KEYS = ("cover_at_tau", "worst_subset_accuracy")
 
 
 def _eval_run_on_splits(
-    artifacts_dir: Path,
+    run_dir: Path,
     run_id: str,
     lock: dict,
     gate_splits: list[str],
 ) -> dict[str, Any]:
-    pred = artifacts_dir / run_id / "raw_predictions.jsonl"
+    pred = run_dir / "raw_predictions.jsonl"
     if not pred.exists():
         return {"status": "missing", "run_id": run_id}
 
@@ -217,6 +217,8 @@ def _pack(decision: str, rationale: list[str], checks: dict, runs: dict) -> dict
 
 
 def main() -> None:
+    from pilot.infra.artifacts import resolve_latest_run_dir
+
     ap = argparse.ArgumentParser()
     ap.add_argument("--artifacts-dir", type=Path, default=Path("pilot/artifacts"))
     ap.add_argument("--lock", type=Path, default=Path("pilot/preflight_lock.json"))
@@ -227,16 +229,16 @@ def main() -> None:
     lock = load_lock(args.lock)
     gate_splits = pilot_gate_splits(lock)
     run_ids = ["run0_proxy", "run1_grpo", "run1b_grpo", "run2_inverse_freq", "run3_f_grpo"]
-    runs = {
-        rid: _eval_run_on_splits(args.artifacts_dir, rid, lock, gate_splits)
-        for rid in run_ids
-        if rid != "run0_proxy"
-    }
-    runs["run0_proxy"] = {"status": "proxy", "run_id": "run0_proxy"}
+    runs: dict[str, dict[str, Any]] = {"run0_proxy": {"status": "proxy", "run_id": "run0_proxy"}}
+    for rid in run_ids:
+        if rid == "run0_proxy":
+            continue
+        run_dir = resolve_latest_run_dir(rid, artifacts_root=args.artifacts_dir)
+        runs[rid] = _eval_run_on_splits(run_dir, rid, lock, gate_splits)
 
     for rid, data in runs.items():
         if data.get("status") == "ok":
-            out_dir = args.artifacts_dir / rid
+            out_dir = resolve_latest_run_dir(rid, artifacts_root=args.artifacts_dir)
             write_metrics(out_dir / "metrics.json", data)
             write_metrics(out_dir / "metrics_ci.json", data["bootstrap_ci"])
 

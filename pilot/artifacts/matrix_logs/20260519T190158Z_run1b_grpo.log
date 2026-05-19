@@ -1,0 +1,25 @@
+Note that running a local entrypoint in detached mode only keeps the last triggered Modal function alive after the parent process has been killed or disconnected.
+✓ Initialized. View run at 
+https://modal.com/apps/chicken602/main/ap-EWhmIPbGpflmnM2IcrKp77
+✓ Created objects.
+├── 🔨 Created mount 
+│   /Users/nancybao/Desktop/dev/cs224r_finalproject/pilot/infra/modal_app.py
+├── 🔨 Created mount /Users/nancybao/Desktop/dev/cs224r_finalproject/pilot
+└── 🔨 Created function run_pilot_remote.
+Spawning run1b_grpo on Modal A100 (detached spawn — survives laptop off)...
+  local artifact dir: 
+/Users/nancybao/Desktop/dev/cs224r_finalproject/pilot/artifacts/run1b_grpo/20260
+519T190201Z
+  artifacts volume: pilot-artifacts
+  hf cache volume: hf-cache
+  NOTE: launch with `modal run --detach ...` so the ephemeral app stays up after
+this process exits.
+Spawned function call id: fc-01KS0SVM2JZVP5D5WG2ZEZR6Q7
+Monitor: `modal app list` and `modal app logs <app-id>` (dashboard URL above).
+After completion, pull artifacts:
+  python pilot/scripts/pull_run_artifacts.py --run-id run1b_grpo --local-dir 
+/Users/nancybao/Desktop/dev/cs224r_finalproject/pilot/artifacts/run1b_grpo/20260
+519T190201Z
+[modal-client] 2026-05-19T12:02:12-0700 Timed out waiting for final app logs.
+✓ App completed. View run at 
+https://modal.com/apps/chicken602/main/ap-EWhmIPbGpflmnM2IcrKp77

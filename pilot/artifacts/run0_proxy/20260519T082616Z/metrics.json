@@ -1,0 +1,8 @@
+{
+  "run_id": "run0_proxy",
+  "minority_correct_prompt_rate": 0.0,
+  "n_prompts": 2,
+  "n_rollouts_per_prompt": 8,
+  "fraction_with_correct": 0.0,
+  "mean_distinct_clusters": 7.0
+}

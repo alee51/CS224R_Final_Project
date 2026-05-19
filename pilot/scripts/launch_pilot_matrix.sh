@@ -88,34 +88,41 @@ echo ""
 echo "Runs are independent (different objectives/seeds) and may run in parallel."
 echo ""
 
+MODAL_LAUNCH=(modal run --detach pilot/infra/modal_app.py)
+
 if [[ "$DRY_RUN" -eq 1 ]]; then
   echo "DRY RUN — commands that would run:"
   if [[ "$MODE" == "parallel" ]]; then
     for rid in "${MATRIX_RUNS[@]}"; do
-      echo "  modal run pilot/infra/modal_app.py --run-id $rid"
+      echo "  modal run --detach pilot/infra/modal_app.py --run-id $rid"
     done
     echo "  (each in background; logs under pilot/artifacts/matrix_logs/)"
   else
-    ids_csv=$(IFS=,; echo "${MATRIX_RUNS[*]}")
-    echo "  modal run pilot/infra/modal_app.py --run-ids $ids_csv"
+    for rid in "${MATRIX_RUNS[@]}"; do
+      echo "  modal run --detach pilot/infra/modal_app.py --run-id $rid"
+    done
   fi
   exit 0
 fi
 
 if [[ "$MODE" == "sequential" ]]; then
-  ids_csv=$(IFS=,; echo "${MATRIX_RUNS[*]}")
-  echo "Launching sequential matrix in one Modal local entrypoint..."
-  exec modal run pilot/infra/modal_app.py --run-ids "$ids_csv"
+  echo "Launching sequential matrix (detached spawn per run)..."
+  for rid in "${MATRIX_RUNS[@]}"; do
+    echo "=== $rid ==="
+    "${MODAL_LAUNCH[@]}" --run-id "$rid"
+  done
+  echo "All matrix runs spawned. Monitor with: modal app list"
+  exit 0
 fi
 
 mkdir -p "$LOG_DIR"
 stamp="$(date -u +%Y%m%dT%H%M%SZ)"
-echo "Launching ${#MATRIX_RUNS[@]} parallel Modal jobs (logs: $LOG_DIR/${stamp}_*.log)"
+echo "Launching ${#MATRIX_RUNS[@]} detached Modal spawns (logs: $LOG_DIR/${stamp}_*.log)"
 pids=()
 for rid in "${MATRIX_RUNS[@]}"; do
   log="${LOG_DIR}/${stamp}_${rid}.log"
   echo "  $rid -> $log"
-  modal run pilot/infra/modal_app.py --run-id "$rid" >"$log" 2>&1 &
+  "${MODAL_LAUNCH[@]}" --run-id "$rid" >"$log" 2>&1 &
   pids+=($!)
 done
 
@@ -124,15 +131,17 @@ for i in "${!MATRIX_RUNS[@]}"; do
   rid="${MATRIX_RUNS[$i]}"
   pid="${pids[$i]}"
   if wait "$pid"; then
-    echo "OK: $rid"
+    echo "Spawned: $rid (see ${LOG_DIR}/${stamp}_${rid}.log for call id + local dir)"
   else
-    echo "FAILED: $rid (see ${LOG_DIR}/${stamp}_${rid}.log)" >&2
+    echo "SPAWN FAILED: $rid (see ${LOG_DIR}/${stamp}_${rid}.log)" >&2
     failed=$((failed + 1))
   fi
 done
 
 if [[ "$failed" -gt 0 ]]; then
-  echo "$failed / ${#MATRIX_RUNS[@]} matrix runs failed." >&2
+  echo "$failed / ${#MATRIX_RUNS[@]} matrix spawns failed." >&2
   exit 1
 fi
-echo "All matrix runs finished. Check pilot/artifacts/<run_id>/latest per run."
+echo "All matrix runs spawned on Modal (GPU work continues if laptop disconnects)."
+echo "Monitor: modal app list"
+echo "After each run completes, pull: python pilot/scripts/pull_run_artifacts.py --run-id <id> --local-dir <dir>"

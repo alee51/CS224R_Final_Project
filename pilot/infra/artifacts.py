@@ -79,17 +79,18 @@ def resolve_latest_run_dir(
 
 def git_sha(*, repo_root: Path | None = None) -> str:
     root = repo_root or PILOT_ROOT.parent
-    result = subprocess.run(
-        ["git", "rev-parse", "HEAD"],
-        cwd=root,
-        capture_output=True,
-        text=True,
-        check=False,
-    )
-    if result.returncode != 0:
-        raise RuntimeError(
-            f"git rev-parse failed in {root}: {result.stderr.strip() or 'unknown error'}"
+    try:
+        result = subprocess.run(
+            ["git", "rev-parse", "HEAD"],
+            cwd=root,
+            capture_output=True,
+            text=True,
+            check=False,
         )
+    except FileNotFoundError:
+        return "unknown"
+    if result.returncode != 0:
+        return "unknown"
     return result.stdout.strip()
 
 

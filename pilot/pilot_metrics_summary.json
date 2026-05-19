@@ -1,0 +1,47 @@
+{
+  "lock_version": "1.1.0",
+  "model_id": "Qwen/Qwen3-1.7B-Base",
+  "gate_splits": [
+    "aime25_eval_30",
+    "hmmt_nov25_eval_30"
+  ],
+  "runs": {
+    "run0_proxy": {
+      "status": "proxy",
+      "run_id": "run0_proxy"
+    },
+    "run1_grpo": {
+      "status": "missing",
+      "run_id": "run1_grpo"
+    },
+    "run1b_grpo": {
+      "status": "missing",
+      "run_id": "run1b_grpo"
+    },
+    "run2_inverse_freq": {
+      "status": "missing",
+      "run_id": "run2_inverse_freq"
+    },
+    "run3_f_grpo": {
+      "status": "missing",
+      "run_id": "run3_f_grpo"
+    }
+  },
+  "gate": {
+    "decision": "PIVOT_WORST_SUBSET",
+    "rationale": [
+      "Run0 minority-correct rate 0.000 < 0.15"
+    ],
+    "checks": {
+      "run0_minority_ok": false
+    },
+    "tier": "pilot_eval",
+    "runs_evaluated": {
+      "run0_proxy": "proxy",
+      "run1_grpo": "missing",
+      "run1b_grpo": "missing",
+      "run2_inverse_freq": "missing",
+      "run3_f_grpo": "missing"
+    }
+  }
+}

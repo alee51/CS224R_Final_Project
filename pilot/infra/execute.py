@@ -1,8 +1,7 @@
-"""Dispatch pilot runs (Run0 proxy, future GRPO training)."""
+"""Dispatch pilot runs (Run0 proxy, GRPO training + tier-1 eval)."""
 
 from __future__ import annotations
 
-import json
 import logging
 import time
 from pathlib import Path
@@ -10,13 +9,14 @@ from typing import Any
 
 import yaml
 
-from pilot.eval.io import write_metrics
-from pilot.infra.artifacts import artifact_dir
+from pilot.eval.splits import pilot_eval_paths
+from pilot.infra.artifacts import artifact_dir, bootstrap_run_artifacts
 from pilot.infra.budget_guard import record_cost
 from pilot.infra.config_resolver import resolve_run_config
 from pilot.train.answer_parse import extract_answer, is_correct
 from pilot.train.canonicalize import cluster_id
-from pilot.train.hf_grpo_train import GRPO_RUN_IDS, run_grpo_training
+from pilot.train.eval_rollouts import run_tier1_eval
+from pilot.train.rollout_engine import ROLLOUT_MICRO_BATCH_SIZE
 from pilot.train.run_proxy import (
     PromptProxyResult,
     RolloutRecord,
@@ -28,6 +28,10 @@ from pilot.train.run_proxy import (
 
 logger = logging.getLogger(__name__)
 
+TRAINING_RUN_IDS = frozenset(
+    {"run1_grpo", "run1b_grpo", "run2_inverse_freq", "run3_f_grpo"}
+)
+
 
 def repo_root_from_here() -> Path:
     return Path(__file__).resolve().parents[2]
@@ -37,6 +41,76 @@ def _load_merged_config(run_id: str, config: dict[str, Any] | None) -> dict[str,
     if config is not None:
         return config
     return resolve_run_config(run_id)
+
+
+def _setup_run_logging(log_path: Path) -> None:
+    log_path.parent.mkdir(parents=True, exist_ok=True)
+    root = logging.getLogger()
+    if not any(isinstance(h, logging.FileHandler) and h.baseFilename == str(log_path) for h in root.handlers):
+        logging.basicConfig(
+            level=logging.INFO,
+            format="%(asctime)s %(levelname)s %(message)s",
+            handlers=[logging.FileHandler(log_path), logging.StreamHandler()],
+            force=True,
+        )
+
+
+def _rollout_engine_config(config: dict[str, Any]) -> Any:
+    from pilot.train.rollout_engine import RolloutEngineConfig
+
+    return RolloutEngineConfig(
+        model_id=str(config["model_id"]),
+        max_new_tokens=min(int(config.get("max_new_tokens", 2048)), 1024),
+        temperature=float(config.get("temperature", 1.0)),
+        top_p=float(config.get("top_p", 0.95)),
+        micro_batch_size=int(config.get("rollout_micro_batch_size", ROLLOUT_MICRO_BATCH_SIZE)),
+        allow_seeded_prompt_batching=bool(
+            config.get("allow_seeded_prompt_batching", False)
+        ),
+    )
+
+
+def _engine_for_eval(config: dict[str, Any], train_dir: Path) -> Any:
+    """Use in-memory engine when exposed; otherwise reload checkpoint or base weights."""
+    from pilot.train.rollout_engine import HFRolloutEngine
+
+    try:
+        from pilot.train.hf_grpo_train import get_trained_rollout_engine
+
+        engine = get_trained_rollout_engine()
+        if engine is not None:
+            return engine
+    except ImportError:
+        pass
+
+    ckpt = train_dir / "checkpoint"
+    cfg = _rollout_engine_config(config)
+    if ckpt.is_dir():
+        return HFRolloutEngine.from_checkpoint(ckpt, cfg)
+    return HFRolloutEngine(cfg)
+
+
+def _tier1_eval_paths(repo_root: Path | None = None) -> dict[str, Path]:
+    root = repo_root or repo_root_from_here()
+    paths = pilot_eval_paths()
+    return {
+        "aime25_eval_30": (root / paths["primary"]).resolve(),
+        "hmmt_nov25_eval_30": (root / paths["secondary"]).resolve(),
+    }
+
+
+def _objective_overrides(config: dict[str, Any]) -> dict[str, Any]:
+    overrides: dict[str, Any] = {}
+    inv = config.get("inverse_freq")
+    if isinstance(inv, dict):
+        if "gamma" in inv:
+            overrides["inverse_gamma"] = float(inv["gamma"])
+        if "w_max" in inv:
+            overrides["w_max"] = float(inv["w_max"])
+    fg = config.get("f_grpo")
+    if isinstance(fg, dict) and "focal_gamma" in fg:
+        overrides["focal_gamma"] = float(fg["focal_gamma"])
+    return overrides
 
 
 def run0_proxy(
@@ -55,11 +129,7 @@ def run0_proxy(
     out_dir = artifact_dir(run_id, artifacts_root=artifacts_root)
     out_dir.mkdir(parents=True, exist_ok=True)
     log_path = out_dir / "train.log"
-    logging.basicConfig(
-        level=logging.INFO,
-        format="%(asctime)s %(levelname)s %(message)s",
-        handlers=[logging.FileHandler(log_path), logging.StreamHandler()],
-    )
+    _setup_run_logging(log_path)
 
     t0 = time.time()
     n_rollouts = int(shared.get("rollouts_per_prompt", 8))
@@ -82,42 +152,57 @@ def run0_proxy(
             max_new_tokens=min(int(shared.get("max_new_tokens", 2048)), 1024),
             temperature=float(shared.get("temperature", 1.0)),
             top_p=float(shared.get("top_p", 0.95)),
+            micro_batch_size=int(
+                config.get("rollout_micro_batch_size", ROLLOUT_MICRO_BATCH_SIZE)
+            ),
+            allow_seeded_prompt_batching=bool(
+                config.get("allow_seeded_prompt_batching", False)
+            ),
         )
     )
 
     results: list[PromptProxyResult] = []
-    for i, row in enumerate(prompts):
-        pid = row["prompt_id"]
-        gold = str(row["answer"])
-        problem = row["problem"]
-        texts = engine.sample_rollouts(problem, n_rollouts, seed=seed + i)
-        rollouts: list[RolloutRecord] = []
-        for text in texts:
-            parsed = extract_answer(text)
-            rollouts.append(
-                RolloutRecord(
+    mb = max(1, int(config.get("rollout_micro_batch_size", ROLLOUT_MICRO_BATCH_SIZE)))
+    for mb_start in range(0, len(prompts), mb):
+        chunk = prompts[mb_start : mb_start + mb]
+        problems = [row["problem"] for row in chunk]
+        chunk_seeds = [seed + mb_start + j for j in range(len(chunk))]
+        texts_batch = engine.sample_rollouts_batch(
+            problems, n_rollouts, seeds=chunk_seeds
+        )
+        for j, row in enumerate(chunk):
+            pid = row["prompt_id"]
+            gold = str(row["answer"])
+            problem = row["problem"]
+            texts = texts_batch[j]
+            rollouts: list[RolloutRecord] = []
+            for text in texts:
+                parsed = extract_answer(text)
+                rollouts.append(
+                    RolloutRecord(
+                        prompt_id=pid,
+                        parsed_answer=parsed,
+                        correct=is_correct(text, gold),
+                        cluster_id=cluster_id(parsed),
+                        completion=text,
+                    )
+                )
+            correct = [r.correct for r in rollouts]
+            cluster_ids = [r.cluster_id for r in rollouts]
+            results.append(
+                PromptProxyResult(
                     prompt_id=pid,
-                    parsed_answer=parsed,
-                    correct=is_correct(text, gold),
-                    cluster_id=cluster_id(parsed),
-                    completion=text,
+                    gold_answer=gold,
+                    problem=problem,
+                    rollouts=rollouts,
+                    n_distinct_clusters=len(set(cluster_ids)),
+                    has_correct=any(correct),
+                    has_minority_correct=has_minority_correct_cluster(correct, cluster_ids),
                 )
             )
-        correct = [r.correct for r in rollouts]
-        cluster_ids = [r.cluster_id for r in rollouts]
-        results.append(
-            PromptProxyResult(
-                prompt_id=pid,
-                gold_answer=gold,
-                problem=problem,
-                rollouts=rollouts,
-                n_distinct_clusters=len(set(cluster_ids)),
-                has_correct=any(correct),
-                has_minority_correct=has_minority_correct_cluster(correct, cluster_ids),
-            )
-        )
-        if (i + 1) % 25 == 0:
-            logger.info("completed %s/%s prompts", i + 1, len(prompts))
+        done = mb_start + len(chunk)
+        if done % 25 == 0 or done == len(prompts):
+            logger.info("completed %s/%s prompts", done, len(prompts))
 
     metrics_path = write_run0_artifacts(artifacts_root, results, run_id=run_id)
     gpu_seconds = time.time() - t0
@@ -136,6 +221,70 @@ def run0_proxy(
     return out_dir
 
 
+def run_training_with_eval(
+    config: dict[str, Any],
+    *,
+    repo_root: Path,
+    artifacts_root: Path,
+) -> Path:
+    """GRPO training from base model, then tier-1 eval artifacts."""
+    from pilot.train.hf_grpo_train import run_grpo_training
+
+    run_id = str(config["run_id"])
+    out_dir = artifact_dir(run_id, artifacts_root=artifacts_root)
+    out_dir.mkdir(parents=True, exist_ok=True)
+    bootstrap_run_artifacts(
+        config,
+        artifacts_root=artifacts_root,
+        repo_root=repo_root,
+        out_dir=out_dir,
+    )
+    _setup_run_logging(out_dir / "train.log")
+
+    overrides = _objective_overrides(config)
+    train_cfg = dict(config)
+    if overrides:
+        train_cfg["objective_overrides"] = overrides
+        logger.info("objective=%s overrides=%s", config.get("objective"), overrides)
+    train_cfg["defer_cost_record"] = True
+
+    seed = int(config.get("seed", 42))
+    n_rollouts = int(config.get("rollouts_per_prompt", 8))
+    max_prompts = config.get("debug_max_prompts")
+    price = float(config.get("modal_price_per_sec", 0.000694))
+
+    t0 = time.time()
+    out_dir = run_grpo_training(
+        train_cfg,
+        repo_root=repo_root,
+        artifacts_root=artifacts_root,
+    )
+    logger.info("training finished: %s", out_dir)
+
+    engine = _engine_for_eval(config, out_dir)
+    eval_paths = _tier1_eval_paths(repo_root)
+    logger.info("starting tier-1 eval on %s", list(eval_paths.keys()))
+    run_tier1_eval(
+        engine,
+        eval_paths,
+        run_id=run_id,
+        out_dir=out_dir,
+        seed=seed,
+        n_rollouts=n_rollouts,
+        debug_max_prompts=max_prompts,
+    )
+
+    gpu_seconds = time.time() - t0
+    record_cost(
+        out_dir,
+        gpu_seconds=gpu_seconds,
+        price_per_sec=price,
+        run_id=run_id,
+    )
+    logger.info("Run %s done: gpu_seconds=%.1f artifacts=%s", run_id, gpu_seconds, out_dir)
+    return out_dir
+
+
 def execute_run(
     config: dict[str, Any],
     *,
@@ -150,6 +299,10 @@ def execute_run(
     if run_id == "run0_proxy" or mode == "proxy_rollout_only":
         return run0_proxy(config, repo_root=root, artifacts_root=art)
 
+    if run_id in TRAINING_RUN_IDS:
+        return run_training_with_eval(config, repo_root=root, artifacts_root=art)
+
     raise NotImplementedError(
-        f"execute_run does not yet implement run_id={run_id!r}. Run0 only."
+        f"execute_run does not yet implement run_id={run_id!r}. "
+        f"Known: run0_proxy, {', '.join(sorted(TRAINING_RUN_IDS))}."
     )
