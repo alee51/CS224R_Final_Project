@@ -1,0 +1,65 @@
+{
+  "version": "1.1.0",
+  "locked_at": "2026-05-18",
+  "git_sha_required": true,
+  "model_id": "Qwen/Qwen3-1.7B-Base",
+  "train": {
+    "path": "pilot/data/dapo_slice_3k.jsonl",
+    "sha256": "9bebe9962bbe20d457b1d40ca5efb22d8b95804bf150d11f6af6f609bc98bf1b",
+    "n_prompts": 3000,
+    "selection": "stable_sort(prompt_id) -> shuffle(seed=42) -> first 3000 from open-r1/DAPO-Math-17k-Processed config=en",
+    "source_hf": "open-r1/DAPO-Math-17k-Processed:en",
+    "run0_slice": "rows 0-499 inclusive of same file"
+  },
+  "pilot_eval": {
+    "primary": "pilot/data/aime25_eval_30.jsonl",
+    "primary_sha256": "82d7ebea66721cb93ffd6b185da123bd8e0261992a48cbba9f162cbcde0bb9a7",
+    "primary_hf": "MathArena/aime_2025",
+    "secondary": "pilot/data/hmmt_nov25_eval_30.jsonl",
+    "secondary_sha256": "f8e905c82ee32eb6ac0efde98198c69249b0feb9aa9fe627ec8af49e87c7bf81",
+    "secondary_hf": "MathArena/hmmt_nov_2025",
+    "sanity": "pilot/data/math500_sanity_100.jsonl",
+    "sanity_sha256": "243377d3af102d4b86075b4c8285276831955c0a5785a00483a46d5ab6255d3f",
+    "sanity_hf": "HuggingFaceH4/MATH-500",
+    "sanity_sampling": "100 prompts proportional level x subject, seed=42"
+  },
+  "paper_eval": {
+    "primary_hard": "pilot/data/beyond_aime_eval_100.jsonl",
+    "primary_hard_sha256": "10cff0e081aaddf2042b9b41db6cfdd1870623782cea12f7023a5c7c54e69ae7",
+    "primary_hard_hf": "ByteDance-Seed/BeyondAIME",
+    "secondary_hard": "pilot/data/hmmt_feb25_eval_30.jsonl",
+    "secondary_hard_sha256": "ca8be4f6de71f9497d9b5d1f3303383ca6625a84c7d3ca9d7cf42070d42c9e10",
+    "secondary_hard_hf": "MathArena/hmmt_feb_2025",
+    "math500_full": "pilot/data/math500_eval_500.jsonl",
+    "math500_full_sha256": "b858527c17650323c8b404d1214e8bc0b5da65c1d88601c03903a09a4d382074",
+    "math500_full_hf": "HuggingFaceH4/MATH-500"
+  },
+  "metrics_frozen": {
+    "pass_at_k": 8,
+    "cover_tau": 0.15,
+    "worst_subset_quantile": 0.25,
+    "bootstrap_samples": 2000,
+    "bootstrap_seed": 42,
+    "ci_level": 0.95
+  },
+  "gates_frozen": {
+    "run0_minority_correct_rate_min": 0.15,
+    "tail_gain_pp_min": 3.0,
+    "pass1_regression_pp_max": 2.0,
+    "noise_floor_multiplier": 2.0,
+    "noise_floor_pp_max": 6.0,
+    "f_grpo_equivalence_pp": 1.5,
+    "gate_eval_splits": [
+      "aime25_eval_30",
+      "hmmt_nov25_eval_30"
+    ]
+  },
+  "budget_caps_usd": {
+    "run0_proxy": 4,
+    "run1_grpo": 12,
+    "run1b_grpo": 12,
+    "run2_inverse_freq": 12,
+    "run3_f_grpo": 12,
+    "pilot_total": 210
+  }
+}

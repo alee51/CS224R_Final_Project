@@ -1,0 +1,9 @@
+{
+  "decision": "PENDING",
+  "rationale": [
+    "Preflight and training pipeline not complete. No GPU runs executed.",
+    "Orchestrator blocked at Phase A until preflight_check.py exits 0."
+  ],
+  "checks": {},
+  "runs_evaluated": {}
+}

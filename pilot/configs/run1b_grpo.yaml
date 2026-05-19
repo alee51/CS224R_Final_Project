@@ -1,0 +1,6 @@
+run_id: run1b_grpo
+objective: grpo
+inherits: shared_train.yaml
+seed: 43
+budget_cap_usd: 12
+budget_cap_gpu_hours: 4.0

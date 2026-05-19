@@ -1,0 +1,13 @@
+{
+  "description": "10-prompt fixture; Cover@tau and worst-subset hand-checked",
+  "tau": 0.15,
+  "k": 8,
+  "worst_quantile": 0.25,
+  "expected_aggregate": {
+    "pass_at_1": 0.2625,
+    "pass_at_8": 0.8,
+    "cover_at_tau": 0.6,
+    "worst_subset_accuracy": 0.0,
+    "n_prompts": 10
+  }
+}

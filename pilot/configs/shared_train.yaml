@@ -1,0 +1,18 @@
+# Frozen across Run1 / Run1b / Run2 / Run3 — objective field only may differ.
+model_id: "Qwen/Qwen3-1.7B-Base"
+train_data: "pilot/data/dapo_slice_3k.jsonl"
+max_steps: 100
+rollouts_per_prompt: 8
+batch_prompts: 32
+learning_rate: 1.0e-6
+kl_coef: 0.001
+clip_eps: 0.2
+max_new_tokens: 2048
+temperature: 1.0
+top_p: 0.95
+verifier: "binary_rlvr"
+clustering: "exact_canonical"
+advantage_norm: "per_prompt_grpo"
+seed: 42
+gpu: "A100-80GB"
+modal_price_per_sec: 0.000694

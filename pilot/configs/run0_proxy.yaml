@@ -1,0 +1,10 @@
+run_id: run0_proxy
+objective: null
+mode: proxy_rollout_only
+# Rows 0-499 of dapo_slice_3k.jsonl (same file as training; no separate draw)
+run0_slice_start: 0
+run0_slice_end: 500
+audit_prompts: 50
+inherits: shared_train.yaml
+budget_cap_usd: 4
+budget_cap_gpu_hours: 1.5

@@ -1,0 +1,10 @@
+run_id: run2_inverse_freq
+objective: inverse_freq
+inherits: shared_train.yaml
+inverse_freq:
+  gamma: 1.0
+  per_prompt_normalize: true
+  w_max: 8.0
+seed: 42
+budget_cap_usd: 12
+budget_cap_gpu_hours: 4.0
