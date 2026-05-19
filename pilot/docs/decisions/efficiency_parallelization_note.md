@@ -1,5 +1,6 @@
 > **Superseded note (2026-05-19):** This document is kept for historical context.  
-> Use `pilot/training_parallelization_plan.md` as the current execution plan.
+> Use `./training_parallelization_plan.md` as the current execution plan,
+> and `../operations/MAIN_RUNS_PLAYBOOK.md` for main-run guidance.
 
 # Efficiency & parallelization (agent spec)
 

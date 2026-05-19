@@ -201,7 +201,11 @@ def run0_proxy(
                 )
             )
         done = mb_start + len(chunk)
-        if done % 25 == 0 or done == len(prompts):
+        prev_done = mb_start
+        # Log at 25/50/75… even when done advances by rollout_micro_batch_size (e.g. 8).
+        if (done // 25) > (prev_done // 25):
+            logger.info("completed %s/%s prompts", (done // 25) * 25, len(prompts))
+        elif done == len(prompts):
             logger.info("completed %s/%s prompts", done, len(prompts))
 
     metrics_path = write_run0_artifacts(artifacts_root, results, run_id=run_id)

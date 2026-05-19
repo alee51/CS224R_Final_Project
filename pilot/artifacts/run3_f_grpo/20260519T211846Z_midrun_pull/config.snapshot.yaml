@@ -1,0 +1,29 @@
+model_id: Qwen/Qwen3-1.7B-Base
+train_data: pilot/data/dapo_slice_3k.jsonl
+max_steps: 100
+rollouts_per_prompt: 8
+batch_prompts: 32
+learning_rate: 1.0e-06
+kl_coef: 0.001
+clip_eps: 0.2
+max_new_tokens: 2048
+temperature: 1.0
+top_p: 0.95
+verifier: binary_rlvr
+clustering: exact_canonical
+advantage_norm: per_prompt_grpo
+seed: 42
+gpu: A100-80GB
+modal_price_per_sec: 0.000694
+run_id: run3_f_grpo
+objective: f_grpo
+f_grpo:
+  focal_gamma: 2.0
+rollout_micro_batch_size: 8
+completion_logprob_micro_batch_size: 16
+allow_seeded_prompt_batching: false
+budget_cap_usd: 36
+budget_cap_gpu_hours: 12.0
+objective_overrides:
+  focal_gamma: 2.0
+defer_cost_record: true

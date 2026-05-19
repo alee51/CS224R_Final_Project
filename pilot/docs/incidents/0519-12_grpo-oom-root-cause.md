@@ -1,6 +1,6 @@
 # GRPO OOM Root-Cause Analysis (May 19, 2026)
 
-Companion to `pilot/grpo_smoke_debug_history.md`. That file is a chronological
+Companion to `./0519-11_grpo-smoke-debug-history.md`. That file is a chronological
 ledger of what was tried. **This file is the diagnosis**: what is actually
 broken, why every YAML reduction failed, the memory math that proves it, and
 the ordered set of fixes from least to most experimentally invasive.
@@ -523,7 +523,7 @@ issue.
 - Failed-attempt artifacts:
   - `pilot/artifacts/run1b_grpo/20260519T112004Z/` — smallest reproducible failure
   - `pilot/artifacts/run1b_grpo/20260519T110958Z/` — penultimate reduction
-  - Full ledger in `pilot/grpo_smoke_debug_history.md`
+  - Full ledger in `./0519-11_grpo-smoke-debug-history.md`
 
 - Config files referenced:
   - `pilot/configs/shared_train.yaml`

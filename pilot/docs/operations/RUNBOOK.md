@@ -2,6 +2,11 @@
 
 **Orchestrator-owned.** Subagents may not change frozen fields without orchestrator approval.
 
+> Operational guidance:
+> - Pre-/post-pilot, GPU util, Modal workspace, OOM checklist → `./MAIN_RUNS_PLAYBOOK.md`
+> - Incident postmortems → `../incidents/`
+> - Decisions, plans, frozen scope → `../decisions/`
+
 ## Objective
 
 Discrimination study: GRPO (majority) vs `inverse_freq` (minority) vs F-GRPO (nearest neighbor), at fixed compute. One decision token after pilot: `ESCALATE` | `PIVOT_WORST_SUBSET` | `PIVOT_SUBSTRATE_OR_ARCH` | `STOP_NO_SIGNAL`.

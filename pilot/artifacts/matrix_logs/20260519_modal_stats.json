@@ -1,0 +1,182 @@
+{
+  "pulled_at_utc": "2026-05-19T21:10:16.028336+00:00",
+  "window": {
+    "start_utc": "2026-05-19T00:00:00+00:00",
+    "end_utc": "2026-05-20T00:00:00+00:00"
+  },
+  "note": "Modal billing API returns cost per app per hour, not raw GPU count. est_gpu_hours = cost / A100_80GB_USD_PER_HR. Values >1.0 in an hour usually mean two containers billed briefly (e.g. preemption restart).",
+  "runs": {
+    "run1_grpo": {
+      "app_id": "ap-CpcEIWjwiNMb8MvGCZFpAT",
+      "hourly": [
+        {
+          "interval_start_utc": "2026-05-19T19:00:00+00:00",
+          "cost_usd": 2.51090204,
+          "est_gpu_hours": 1.004,
+          "est_avg_gpus_in_hour": 1.0
+        },
+        {
+          "interval_start_utc": "2026-05-19T20:00:00+00:00",
+          "cost_usd": 2.66403206,
+          "est_gpu_hours": 1.066,
+          "est_avg_gpus_in_hour": 1.07
+        },
+        {
+          "interval_start_utc": "2026-05-19T21:00:00+00:00",
+          "cost_usd": 0.46866644,
+          "est_gpu_hours": 0.187,
+          "est_avg_gpus_in_hour": 0.19
+        }
+      ],
+      "cost_usd_total": 5.6436005399999996,
+      "est_gpu_hours_total": 2.2574402159999996,
+      "containers": [
+        {
+          "Container ID": "ta-01KS10CZW6AVARRHJBW8XPYYTY",
+          "App ID": "ap-CpcEIWjwiNMb8MvGCZFpAT",
+          "App Name": "cs224r-pilot",
+          "Start Time": "2026-05-19 13:56:25-07:00"
+        }
+      ],
+      "preemption_log_lines": [
+        "Runner interrupted due to worker preemption. Your Function will be restarted with the same input. For more details, see https://modal.com/docs/guide/preemption"
+      ]
+    },
+    "run1b_grpo": {
+      "app_id": "ap-EWhmIPbGpflmnM2IcrKp77",
+      "hourly": [
+        {
+          "interval_start_utc": "2026-05-19T19:00:00+00:00",
+          "cost_usd": 2.51050321,
+          "est_gpu_hours": 1.004,
+          "est_avg_gpus_in_hour": 1.0
+        },
+        {
+          "interval_start_utc": "2026-05-19T20:00:00+00:00",
+          "cost_usd": 2.66885168,
+          "est_gpu_hours": 1.068,
+          "est_avg_gpus_in_hour": 1.07
+        },
+        {
+          "interval_start_utc": "2026-05-19T21:00:00+00:00",
+          "cost_usd": 0.41748995,
+          "est_gpu_hours": 0.167,
+          "est_avg_gpus_in_hour": 0.17
+        }
+      ],
+      "cost_usd_total": 5.59684484,
+      "est_gpu_hours_total": 2.238737936,
+      "containers": [
+        {
+          "Container ID": "ta-01KS0SVMMXCBNKV9VAN58VGDM1",
+          "App ID": "ap-EWhmIPbGpflmnM2IcrKp77",
+          "App Name": "cs224r-pilot",
+          "Start Time": "2026-05-19 12:02:07-07:00"
+        }
+      ],
+      "preemption_log_lines": []
+    },
+    "run3_f_grpo": {
+      "app_id": "ap-MO0JD72gMTybU9Sv7VCSrn",
+      "hourly": [
+        {
+          "interval_start_utc": "2026-05-19T19:00:00+00:00",
+          "cost_usd": 2.51069263,
+          "est_gpu_hours": 1.004,
+          "est_avg_gpus_in_hour": 1.0
+        },
+        {
+          "interval_start_utc": "2026-05-19T20:00:00+00:00",
+          "cost_usd": 2.66452595,
+          "est_gpu_hours": 1.066,
+          "est_avg_gpus_in_hour": 1.07
+        },
+        {
+          "interval_start_utc": "2026-05-19T21:00:00+00:00",
+          "cost_usd": 0.41930034,
+          "est_gpu_hours": 0.168,
+          "est_avg_gpus_in_hour": 0.17
+        }
+      ],
+      "cost_usd_total": 5.59451892,
+      "est_gpu_hours_total": 2.2378075679999996,
+      "containers": [
+        {
+          "Container ID": "ta-01KS0SVMHPDZVFNZMXEER9367B",
+          "App ID": "ap-MO0JD72gMTybU9Sv7VCSrn",
+          "App Name": "cs224r-pilot",
+          "Start Time": "2026-05-19 12:02:05-07:00"
+        }
+      ],
+      "preemption_log_lines": []
+    },
+    "run0_proxy": {
+      "app_id": "ap-Zk6zAIs9tWpGerJHufSud1",
+      "hourly": [
+        {
+          "interval_start_utc": "2026-05-19T19:00:00+00:00",
+          "cost_usd": 2.47409512,
+          "est_gpu_hours": 0.99,
+          "est_avg_gpus_in_hour": 0.99
+        },
+        {
+          "interval_start_utc": "2026-05-19T20:00:00+00:00",
+          "cost_usd": 2.56132773,
+          "est_gpu_hours": 1.025,
+          "est_avg_gpus_in_hour": 1.02
+        },
+        {
+          "interval_start_utc": "2026-05-19T21:00:00+00:00",
+          "cost_usd": 0.41572971,
+          "est_gpu_hours": 0.166,
+          "est_avg_gpus_in_hour": 0.17
+        }
+      ],
+      "cost_usd_total": 5.45115256,
+      "est_gpu_hours_total": 2.180461024,
+      "containers": [
+        {
+          "Container ID": "ta-01KS0SVMY535DZG98J582C9X5E",
+          "App ID": "ap-Zk6zAIs9tWpGerJHufSud1",
+          "App Name": "cs224r-pilot",
+          "Start Time": "2026-05-19 12:02:06-07:00"
+        }
+      ],
+      "preemption_log_lines": []
+    },
+    "run2_inverse_freq": {
+      "app_id": "ap-aAYroxfDF3TuZY5NJ1pbOP",
+      "hourly": [
+        {
+          "interval_start_utc": "2026-05-19T19:00:00+00:00",
+          "cost_usd": 2.51371407,
+          "est_gpu_hours": 1.005,
+          "est_avg_gpus_in_hour": 1.01
+        },
+        {
+          "interval_start_utc": "2026-05-19T20:00:00+00:00",
+          "cost_usd": 2.6704979,
+          "est_gpu_hours": 1.068,
+          "est_avg_gpus_in_hour": 1.07
+        },
+        {
+          "interval_start_utc": "2026-05-19T21:00:00+00:00",
+          "cost_usd": 0.42409765,
+          "est_gpu_hours": 0.17,
+          "est_avg_gpus_in_hour": 0.17
+        }
+      ],
+      "cost_usd_total": 5.60830962,
+      "est_gpu_hours_total": 2.243323848,
+      "containers": [
+        {
+          "Container ID": "ta-01KS0SVMMSQDG1PZSXNE297SSF",
+          "App ID": "ap-aAYroxfDF3TuZY5NJ1pbOP",
+          "App Name": "cs224r-pilot",
+          "Start Time": "2026-05-19 12:02:05-07:00"
+        }
+      ],
+      "preemption_log_lines": []
+    }
+  }
+}
