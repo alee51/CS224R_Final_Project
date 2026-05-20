@@ -1,0 +1,290 @@
+[
+  {
+    "prompt_id": "01428ba8-e58e-4670-8a06-e5f569c0d668",
+    "prompt": "In triangle $ABC$, $\\angle C=90^\\circ$, $AC=6$ and $BC=8$. Points $D$ and $E$ are on $\\overline{AB}$ and $\\overline{BC}$, respectively, and $\\angle BED=90^\\circ$. If $DE=4$, then what is the length of $BD$? [asy]\nimport olympiad; import geometry; size(150); defaultpen(linewidth(0.8));\ndraw(origin--(6,0)--(6,8)--cycle);\ndraw((2,8/3)--(6,8/3));\ndot(\"$A$\",origin,SW); dot(\"$B$\",(6,8),NE); dot(\"$C$\",(6,0),SE); dot(\"$D$\",(2,8/3),W); dot(\"$E$\",(6,8/3),E);\ndraw(rightanglemark((6,8),(6,8/3),(2,8/3),12));\ndraw(rightanglemark((6,8),(6,0),(origin),12));\n[/asy]The answer is in the form \frac{m}{n}, where gcd(m, n) = 1. Please provide the value of m + n.",
+    "gold": "23",
+    "answer": "23",
+    "split": "train",
+    "source_hf": "open-r1/DAPO-Math-17k-Processed:en",
+    "resolved": true
+  },
+  {
+    "prompt_id": "146bc3eb-f75b-4015-9a51-86f9ea624864",
+    "prompt": "Let $\\mathcal{A}$ denote the set of all polynomials in three variables $x, y, z$ with integer coefficients. Let $\\mathcal{B}$ denote the subset of $\\mathcal{A}$ formed by all polynomials which can be expressed as\n\\[\n(x + y + z)P(x, y, z) + (xy + yz + zx)Q(x, y, z) + xyzR(x, y, z)\n\\]\nwith $P, Q, R \\in \\mathcal{A}$. Find the smallest non-negative integer $n$ such that $x^i y^j z^k \\in \\mathcal{B}$ for all non-negative integers $i, j, k$ satisfying $i + j + k \\geq n$.",
+    "gold": "4",
+    "answer": "4",
+    "split": "train",
+    "source_hf": "open-r1/DAPO-Math-17k-Processed:en",
+    "resolved": true
+  },
+  {
+    "prompt_id": "156145aa-fef1-40d1-96b5-45da7f1a617a",
+    "prompt": "What is the sum of all real numbers $x$ that are not in the domain of the function $$f(x) = \\frac{1}{x^2-7} + \\frac{1}{x^3-8} + \\frac{1}{x^4-9}~?$$",
+    "gold": "2",
+    "answer": "2",
+    "split": "train",
+    "source_hf": "open-r1/DAPO-Math-17k-Processed:en",
+    "resolved": true
+  },
+  {
+    "prompt_id": "2c858da1-672f-439d-8c93-b6b55e263ae2",
+    "prompt": "Triangle $ABC$ has side lengths $AB=4$, $BC=5$, and $CA=6$. Points $D$ and $E$ are on ray $AB$ with $AB<AD<AE$. The point $F \\neq C$ is a point of intersection of the circumcircles of $\\triangle ACD$ and $\\triangle EBC$ satisfying $DF=2$ and $EF=7$. Then $BE$ can be expressed as $\\tfrac{a+b\\sqrt{c}}{d}$, where $a$, $b$, $c$, and $d$ are positive integers such that $a$ and $d$ are relatively prime, and $c$ is not divisible by the square of any prime. Find $a+b+c+d$.",
+    "gold": "32",
+    "answer": "32",
+    "split": "train",
+    "source_hf": "open-r1/DAPO-Math-17k-Processed:en",
+    "resolved": true
+  },
+  {
+    "prompt_id": "2dac37fd-5558-4428-9af0-adfdae561476",
+    "prompt": "Let $p$ be the greatest prime factor of 9991. What is the sum of the digits of $p$?",
+    "gold": "4",
+    "answer": "4",
+    "split": "train",
+    "source_hf": "open-r1/DAPO-Math-17k-Processed:en",
+    "resolved": true
+  },
+  {
+    "prompt_id": "3624db0e-a7fc-4fc6-884b-b71efc624eaa",
+    "prompt": "Distinct prime numbers $p$, $q$, and $r$ satisfy the following equation:\n\n$$2pqr + 50pq = 7pqr + 55pr = 8pqr + 12qr = A$$\n\nfor some positive integer $A$. What is the value of $A$?",
+    "gold": "1980",
+    "answer": "1980",
+    "split": "train",
+    "source_hf": "open-r1/DAPO-Math-17k-Processed:en",
+    "resolved": true
+  },
+  {
+    "prompt_id": "367ce22f-986c-43ed-be0d-d1c05a0648e3",
+    "prompt": "Positive integers $a$, $b$, $c$, $d$, and $e$ satisfy the equations:\n\n1. $(a + 1)(3bc + 1) = d + 3e + 1$\n2. $(b + 1)(3ca + 1) = 3d + e + 13$\n3. $(c + 1)(3ab + 1) = 4(26 - d - e) - 1$\n\nFind $d^2 + e^2$.",
+    "gold": "146",
+    "answer": "146",
+    "split": "train",
+    "source_hf": "open-r1/DAPO-Math-17k-Processed:en",
+    "resolved": true
+  },
+  {
+    "prompt_id": "40da682c-a68f-4d2d-ae7f-ef06d4d80d69",
+    "prompt": "Find the largest divisor of $2800$ that is a perfect square.",
+    "gold": "400",
+    "answer": "400",
+    "split": "train",
+    "source_hf": "open-r1/DAPO-Math-17k-Processed:en",
+    "resolved": true
+  },
+  {
+    "prompt_id": "465d77a0-90e6-4dc1-ba6c-289e0e17e12a",
+    "prompt": "The sequence $\\{a_n\\}$ is defined by  \n$$a_0 = 1,a_1 = 1, \\text{ and } a_n = a_{n - 1} + \\frac {a_{n - 1}^2}{a_{n - 2}}\\text{ for }n\\ge2.$$ \nThe sequence $\\{b_n\\}$ is defined by  \n$$b_0 = 1,b_1 = 3, \\text{ and } b_n = b_{n - 1} + \\frac {b_{n - 1}^2}{b_{n - 2}}\\text{ for }n\\ge2.$$\nFind $\\frac {b_{32}}{a_{32}}$.",
+    "gold": "561",
+    "answer": "561",
+    "split": "train",
+    "source_hf": "open-r1/DAPO-Math-17k-Processed:en",
+    "resolved": true
+  },
+  {
+    "prompt_id": "5eda9da4-98df-4697-abc8-a174a5c313dd",
+    "prompt": "What is the sum of all real numbers $x$ for which the median of the numbers $4,6,8,17,$ and $x$ is equal to the mean of those five numbers?",
+    "gold": "-5",
+    "answer": "-5",
+    "split": "train",
+    "source_hf": "open-r1/DAPO-Math-17k-Processed:en",
+    "resolved": true
+  },
+  {
+    "prompt_id": "6298021e-7bef-4fe2-9a5c-fb90b40744de",
+    "prompt": "Consider the sequence of numbers defined recursively by $t_1=1$ and for $n>1$ by $t_n=1+t_{n/2}$ when $n$ is even and by $t_n=\\frac{1}{t_{n-1}}$ when $n$ is odd. Given that $t_n=\\frac{19}{87}$, find $n.$",
+    "gold": "1905",
+    "answer": "1905",
+    "split": "train",
+    "source_hf": "open-r1/DAPO-Math-17k-Processed:en",
+    "resolved": true
+  },
+  {
+    "prompt_id": "6414be5f-fcd0-4e76-926b-9beb61d26a24",
+    "prompt": "Compute $99(99^2+3) + 3 \\cdot 99^2$.",
+    "gold": "999999",
+    "answer": "999999",
+    "split": "train",
+    "source_hf": "open-r1/DAPO-Math-17k-Processed:en",
+    "resolved": true
+  },
+  {
+    "prompt_id": "6d0b145b-d3bc-4855-b513-58047b718c69",
+    "prompt": "Two congruent equilateral triangles $\\triangle ABC$ and $\\triangle DEF$ lie on the same side of line $BC$ so that $B$, $C$, $E$, and $F$ are collinear as shown. A line intersects $\\overline{AB}$, $\\overline{AC}$, $\\overline{DE}$, and $\\overline{EF}$ at $W$, $X$, $Y$, and $Z$, respectively, such that $\\frac{AW}{BW} = \\frac{2}{9}$, $\\frac{AX}{CX} = \\frac{5}{6}$, and $\\frac{DY}{EY} = \\frac{9}{2}$. The ratio $\\frac{EZ}{FZ}$ can then be written as $\\frac{m}{n}$, where $m$ and $n$ are relatively prime positive integers. Find $m + n$.",
+    "gold": "33",
+    "answer": "33",
+    "split": "train",
+    "source_hf": "open-r1/DAPO-Math-17k-Processed:en",
+    "resolved": true
+  },
+  {
+    "prompt_id": "71fb6079-2cab-4682-8015-8915cd11e52b",
+    "prompt": "Solve the congruence $6n \\equiv 7 \\pmod{13}$, as a residue modulo 13.  (That is, find the value of $n$ that satisfies the congruence such that $0\\le n \\le 12$.)",
+    "gold": "12",
+    "answer": "12",
+    "split": "train",
+    "source_hf": "open-r1/DAPO-Math-17k-Processed:en",
+    "resolved": true
+  },
+  {
+    "prompt_id": "7faf93b7-254b-42d9-a63a-61e6fa63a2b4",
+    "prompt": "For each integer $n \\ge 2$, let $A(n)$ be the area of the region in the coordinate plane defined by the inequalities $1\\le x \\le n$ and $0\\le y \\le x \\left\\lfloor \\sqrt x \\right\\rfloor$, where $\\left\\lfloor \\sqrt x \\right\\rfloor$ is the greatest integer not exceeding $\\sqrt x$. Find the number of values of $n$ with $2\\le n \\le 1000$ for which $A(n)$ is an integer.",
+    "gold": "483",
+    "answer": "483",
+    "split": "train",
+    "source_hf": "open-r1/DAPO-Math-17k-Processed:en",
+    "resolved": true
+  },
+  {
+    "prompt_id": "847da05d-9a0a-4696-b186-2d50ef50ce71",
+    "prompt": "Let $a_n$ be the least positive integer the sum of whose digits is $n$. Find $a_1 + a_2 + a_3 + \\dots + a_{20}$.",
+    "gold": "1074",
+    "answer": "1074",
+    "split": "train",
+    "source_hf": "open-r1/DAPO-Math-17k-Processed:en",
+    "resolved": true
+  },
+  {
+    "prompt_id": "888936ba-5184-4009-b614-b7401c51038c",
+    "prompt": "A permutation \\((a_1, a_2, a_3, \\dots, a_{2012})\\) of \\((1, 2, 3, \\dots, 2012)\\) is selected at random. If \\(S\\) is the expected value of \n\\[\n\\sum_{i = 1}^{2012} | a_i - i |\n\\],\nthen compute the sum of the prime factors of \\(S\\).",
+    "gold": "2083",
+    "answer": "2083",
+    "split": "train",
+    "source_hf": "open-r1/DAPO-Math-17k-Processed:en",
+    "resolved": true
+  },
+  {
+    "prompt_id": "8ad4462b-2dcc-49cc-8fa0-37439eb8f9c0",
+    "prompt": "$DEB$ is a chord of a circle such that $DE=3$ and $EB=5$. Let $O$ be the center of the circle. Join $OE$ and extend $OE$ to cut the circle at $C$. Given $EC=1$, find the radius of the circle.",
+    "gold": "8",
+    "answer": "8",
+    "split": "train",
+    "source_hf": "open-r1/DAPO-Math-17k-Processed:en",
+    "resolved": true
+  },
+  {
+    "prompt_id": "9e6520c5-0699-41a8-9848-a09a68e462c5",
+    "prompt": "Call a positive integer $N \\ge 2$ \"special\" if for every $k$ such that $2 \\leq k \\leq N$, $N$ can be expressed as a sum of $k$ positive integers that are relatively prime to $N$ (although not necessarily relatively prime to each other). How many special integers are there less than $100$?",
+    "gold": "50",
+    "answer": "50",
+    "split": "train",
+    "source_hf": "open-r1/DAPO-Math-17k-Processed:en",
+    "resolved": true
+  },
+  {
+    "prompt_id": "a5d4dc54-8e5e-4ff6-9b58-cdaa695955e4",
+    "prompt": "Triangle $ABC$ has $AB = AC$. Point $D$ is on side $\\overline{BC}$ so that $AD = CD$ and $\\angle BAD = 36^o$. Find the degree measure of $\\angle BAC$.",
+    "gold": "84",
+    "answer": "84",
+    "split": "train",
+    "source_hf": "open-r1/DAPO-Math-17k-Processed:en",
+    "resolved": true
+  },
+  {
+    "prompt_id": "a7c0b5bc-5838-43ba-8c21-775b40f77d59",
+    "prompt": "If $a$, $b$, $c$, $d$, and $e$ are constants such that for every $x > 0$:\n\\[\n\\frac{5x^4 - 8x^3 + 2x^2 + 4x + 7}{(x + 2)^4} = a + \\frac{b}{x + 2} + \\frac{c}{(x + 2)^2} + \\frac{d}{(x + 2)^3} + \\frac{e}{(x + 2)^4} \\, ,\n\\]\nthen what is the value of $a + b + c + d + e$?",
+    "gold": "18",
+    "answer": "18",
+    "split": "train",
+    "source_hf": "open-r1/DAPO-Math-17k-Processed:en",
+    "resolved": true
+  },
+  {
+    "prompt_id": "ac30fdd3-d3b4-44a5-88f9-20d375206d73",
+    "prompt": "Determine the number of ordered pairs $(a,b)$ of integers such that $\\log_a b + 6\\log_b a=5, 2 \\leq a \\leq 2005,$ and $2 \\leq b \\leq 2005.$",
+    "gold": "54",
+    "answer": "54",
+    "split": "train",
+    "source_hf": "open-r1/DAPO-Math-17k-Processed:en",
+    "resolved": true
+  },
+  {
+    "prompt_id": "b84654f5-6965-4982-a524-0b4bc44a3aae",
+    "prompt": "There are $4$ pairs of men and women, and all $8$ people are arranged in a row such that in each pair, the woman is somewhere to the left of the man. How many such arrangements are there?",
+    "gold": "2520",
+    "answer": "2520",
+    "split": "train",
+    "source_hf": "open-r1/DAPO-Math-17k-Processed:en",
+    "resolved": true
+  },
+  {
+    "prompt_id": "b999584f-29ad-4a68-a7cf-a57ce1c45691",
+    "prompt": "A game of solitaire is played as follows. After each play, according to the outcome, the player receives either $a$ or $b$ points ( $a$ and $b$ are positive integers with $a$ greater than $b$ ), and his score accumulates from play to play. It has been noticed that there are thirty-five non-attainable scores and that one of these is 58. Find the sum of $a$ and $b$.",
+    "gold": "19",
+    "answer": "19",
+    "split": "train",
+    "source_hf": "open-r1/DAPO-Math-17k-Processed:en",
+    "resolved": true
+  },
+  {
+    "prompt_id": "bce021e7-7b57-4417-864f-8b5e4078a34c",
+    "prompt": "The Binomial Expansion is valid for exponents that are not integers. That is, for all real numbers $x$, $y$, and $r$ with $|x|>|y|$,\n\\[(x+y)^r=x^r+rx^{r-1}y^1+\\frac{r(r-1)}2x^{r-2}y^2+\\frac{r(r-1)(r-2)}{3!}x^{r-3}y^3+\\cdots\\]What are the first three digits to the right of the decimal point in the decimal representation of $\\left(10^{2002}+1\\right)^{10/7}$?",
+    "gold": "428",
+    "answer": "428",
+    "split": "train",
+    "source_hf": "open-r1/DAPO-Math-17k-Processed:en",
+    "resolved": true
+  },
+  {
+    "prompt_id": "bdcb50c2-6208-4137-b218-e311fad2e41c",
+    "prompt": "Find the sum of the values of $x$ for which $\\binom{x}{0}-\\binom{x}{1}+\\binom{x}{2}-...+\\binom{x}{2008}=0$",
+    "gold": "2017036",
+    "answer": "2017036",
+    "split": "train",
+    "source_hf": "open-r1/DAPO-Math-17k-Processed:en",
+    "resolved": true
+  },
+  {
+    "prompt_id": "c8c311a4-e4c9-4011-8667-b7c84c4c3515",
+    "prompt": "A beam of light strikes $\\overline{BC}\\,$ at point $C\\,$ with angle of incidence $\\alpha=19.94^\\circ\\,$ and reflects with an equal angle of reflection as shown.  The light beam continues its path, reflecting off line segments $\\overline{AB}\\,$ and $\\overline{BC}\\,$ according to the rule: angle of incidence equals angle of reflection.  Given that $\\beta=\\alpha/10=1.994^\\circ\\,$ and $AB=BC,\\,$ determine the number of times the light beam will bounce off the two line segments.  Include the first reflection at $C\\,$ in your count.\n\nAIME 1994 Problem 14.png",
+    "gold": "71",
+    "answer": "71",
+    "split": "train",
+    "source_hf": "open-r1/DAPO-Math-17k-Processed:en",
+    "resolved": true
+  },
+  {
+    "prompt_id": "d1724284-9d2e-4c61-9dae-26bae8de9b02",
+    "prompt": "There exists a unique positive integer $a$ for which the sum \\[U=\\sum_{n=1}^{2023}\\left\\lfloor\\dfrac{n^{2}-na}{5}\\right\\rfloor\\] is an integer strictly between $-1000$ and $1000$. For that unique $a$, find $a+U$.\n\n(Note that $\\lfloor x\\rfloor$ denotes the greatest integer that is less than or equal to $x$.)",
+    "gold": "944",
+    "answer": "944",
+    "split": "train",
+    "source_hf": "open-r1/DAPO-Math-17k-Processed:en",
+    "resolved": true
+  },
+  {
+    "prompt_id": "d4214c5f-4d1a-4930-9c18-3c59814c5cd2",
+    "prompt": "Find the sum of all positive integers $n$ such that \\( \\frac{2020}{n^3 + n} \\) is an integer.",
+    "gold": "13",
+    "answer": "13",
+    "split": "train",
+    "source_hf": "open-r1/DAPO-Math-17k-Processed:en",
+    "resolved": true
+  },
+  {
+    "prompt_id": "d73ba4fd-fdbc-4b46-990a-5084f3b71821",
+    "prompt": "There are constants $\\alpha$ and $\\beta$ such that $\\frac{x-\\alpha}{x+\\beta} = \\frac{x^2-80x+1551}{x^2+57x-2970}$. What is $\\alpha+\\beta$?",
+    "gold": "137",
+    "answer": "137",
+    "split": "train",
+    "source_hf": "open-r1/DAPO-Math-17k-Processed:en",
+    "resolved": true
+  },
+  {
+    "prompt_id": "f5f4e1c4-7f01-43ea-8026-1e4e3e06b072",
+    "prompt": "A positive integer is written on each corner of a square such that numbers on opposite vertices are relatively prime while numbers on adjacent vertices are not relatively prime. What is the smallest possible value of the sum of these $4$ numbers?",
+    "gold": "60",
+    "answer": "60",
+    "split": "train",
+    "source_hf": "open-r1/DAPO-Math-17k-Processed:en",
+    "resolved": true
+  },
+  {
+    "prompt_id": "fd497f82-ac8b-4ac7-ac25-d657d1ace344",
+    "prompt": "How many diagonals are in the fifth polygon of this sequence of regular polygons below?\n\n[asy]unitsize(0.5inch);\ndraw((0,0)--(0.8,0)--(0.4,0.6)--cycle);\nlabel(\"0\",(0.4,0),S);\ndraw((1,0)--(1.8,0)--(1.8,0.8)--(1,0.8)--cycle);\nlabel(\"2\",(1.4,0),S);\ndraw((2.2,0)--(1.9,0.7)--(2.6,1.1)--(3.3,0.7)--(3,0)--cycle);\nlabel(\"5\",(2.6,0),S);\ndraw((3.6,0)--(3.3,0.5)--(3.6,1)--(4,1)--(4.3,0.5)--(4,0)--cycle);\nlabel(\"9\",(3.8,0),S);\ndraw((4.7,0)--(4.4,0.4)--(4.6,0.9)--(5.2,1.2)--(5.8,0.9)--(6,0.4)--(5.7,0)--cycle);\nlabel(\"?\",(5.1,0),S);\nlabel(\"Polygon\",(-0.1,0.5),W);\nlabel(\"diagonals\",(-0.1,-0.2),W);\n[/asy]",
+    "gold": "14",
+    "answer": "14",
+    "split": "train",
+    "source_hf": "open-r1/DAPO-Math-17k-Processed:en",
+    "resolved": true
+  }
+]

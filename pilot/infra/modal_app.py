@@ -54,7 +54,12 @@ hf_cache_volume = modal.Volume.from_name(HF_CACHE_VOLUME_NAME, create_if_missing
 
 image = (
     modal.Image.debian_slim(python_version="3.11")
-    .env({"PYTORCH_CUDA_ALLOC_CONF": "expandable_segments:True"})
+    .env(
+        {
+            "PYTORCH_CUDA_ALLOC_CONF": "expandable_segments:True",
+            "PYTHONUNBUFFERED": "1",
+        }
+    )
     .pip_install(
         "torch>=2.2",
         "transformers>=4.51",

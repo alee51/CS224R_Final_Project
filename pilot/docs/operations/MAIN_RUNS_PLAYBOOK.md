@@ -1,32 +1,57 @@
 # Main-Runs Playbook
 
+**STATUS: POST-MORTEM REFERENCE (First Pilot Matrix, 2026-05-19, FAILED)**
+
+The first pilot matrix launched on 2026-05-19 was killed after structural failures
+(cost overrun, no mid-run durability, logging gaps, substrate parser bug). This doc
+describes that matrix and lessons learned. **It is NOT the playbook for the next
+pilot attempt.**
+
+**For guidance on the Stage 1 redesign and next pilot launch:** see
+`./PILOT_REDESIGN.md`.
+
+**For root-cause synthesis:** see `../analysis/0519_perf_consolidated.md`.
+
+**For chronological incident log:** see `../incidents/0519-11` through `0519-25`.
+
+---
+
 Last updated: 2026-05-19
 
-This is the doc for **planning main runs after the pilot completes**. It exists
-because three issues from the pilot are likely to recur if you don't address
-them up front:
+This doc originally existed as a checklist for **planning main runs after the
+first pilot**. The first pilot failed structurally, so the prescriptive guidance
+has been superseded. The sections below are preserved as **post-mortem
+observations and lessons learned** — they document three recurring issues that
+nearly broke the pilot and are likely to recur if not addressed up front in
+future iterations:
 
-1. **A100 only ~40% utilized** during pilot decode.
+1. **A100 only ~40% utilized** during pilot decode (perf antipattern).
 2. **Modal billing on a personal workspace** when the project should be on the
-   shared team workspace.
+   shared team workspace (ops antipattern).
 3. **OOM "lever not wired" antipattern** — overnight runs crashing repeatedly
-   while a knob that didn't actually affect peak memory was being tweaked.
+   while a knob that didn't actually affect peak memory was being tweaked
+   (debugging antipattern).
 
-Scope of this doc: the *what-to-do-differently* checklist. Background and
-diagnoses live in `../incidents/` and `../decisions/`. Pointers below.
+Scope of this doc: **post-mortem observations and lessons** from the first matrix.
+This is not prescriptive for the next attempt. Background and diagnoses live in
+`../incidents/` and `../decisions/`. Pointers below.
 
 Related docs:
 - `./RUNBOOK.md` — frozen pilot scope (do not edit without orchestrator sign-off)
 - `../decisions/training_parallelization_plan.md` — current parallelization plan (P0–P3)
 - `../incidents/0519-12_grpo-oom-root-cause.md` — full memory math + ordered fixes
 - `../incidents/0519-14_main-run-preemption-no-resume.md` — preemption, no mid-run checkpoint, preds wipe on restart
+- `../incidents/0519-22_main-matrix-operator-notes.md` — detached launch ops: timing, mid-run pull, Modal UI containers
+- `../incidents/0519-23_per-app-gpu-chart-spike.md` — per-app GPU chart 1→2 (preemption overlap)
+- `../incidents/0519-24_modal-observability-budget-gaps.md` — billing API, no wandb, YAML budget enforcement gaps
+- `../incidents/0519-25_blocking-launch-client-abort.md` — never use blocking `modal run` for long jobs
 - `../incidents/0519-11_grpo-smoke-debug-history.md` — chronological "what we tried" ledger
 - `../decisions/efficiency_parallelization_note.md` — superseded; historical
 - `../decisions/decision_memo.md` — pilot decision token (PENDING)
 
 ---
 
-## 1) A100 utilization — what's wired vs. still leaving headroom
+## 1) A100 utilization — post-mortem: what was wired, why it was still only ~40%
 
 ### What is actually wired in the code today
 
@@ -64,236 +89,159 @@ Secondary contributors (smaller, listed for completeness):
 - No prompt-length bucketing before `generate` (P2-1 in the parallelization
   plan). Helps only once true batching is on.
 
-### What to try for main runs (in order)
+### Lessons for the next pilot: measured bottlenecks and known opt opportunities
 
-Each step should run on a labelled perf-only branch and be gated on
-`preflight_lock.json` tolerances before promoting. Do not silently overwrite
-`latest` for a baseline run.
+The pilot achieved 40% A100 utilization despite multiple knobs in place. Here's
+what was true, what was wired, and what remains low-hanging fruit for the next
+attempt:
 
-1. **Flip seeded prompt batching on for one labelled run.**
-   In a per-run config under `pilot/configs/`, add:
-   ```yaml
-   allow_seeded_prompt_batching: true
-   ```
-   Then launch only that run and compare wall-clock + `gpu_seconds` against the
-   matching baseline run on the same prompt slice. If gate metrics stay within
-   tolerances, promote to all main runs.
-   *Files touched:* `pilot/configs/run*.yaml`.
+**What was true in the first pilot:**
+- `_train_step_microbatch_backward` (per-micro-batch gradient freeing) was wired and working. Original OOM bug was gone.
+- `policy.gradient_checkpointing_enable()` was wired.
+- `PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True` was set.
+- At the first pilot's config (`batch_prompts=32, rollouts=8, max_new_tokens=2048`), memory was safe.
 
-2. **If (1) holds, tune `rollout_micro_batch_size`.**
-   Default is `ROLLOUT_MICRO_BATCH_SIZE = 8` (hard-coded in
-   `pilot/train/rollout_engine.py:22` but overridable via the `run_grpo_training`
-   config key). Try 12 and 16 on a fixed debug slice. Stop at the first OOM and
-   step back one.
+**Why utilization was still ~40%:**
+The dominant cost is decode (`model.generate`), and decode remained **effectively serial-per-prompt**:
+- Per-prompt seed is `seed + i` (different seed per row).
+- `allow_seeded_prompt_batching: false` was the default.
+- `batch_generate_rollouts()` chunked prompts but the inner loop fell back to per-prompt `model.generate()`.
 
-3. **Tune `completion_logprob_micro_batch_size`.**
-   Default 16 (`pilot/train/hf_grpo_train.py:48`). With per-mb backward, raising
-   this lowers wall-clock without changing peak memory much. Try 24, 32 on the
-   same slice.
+**Known optimization opportunities (for the next pilot):**
+The `PILOT_REDESIGN.md` §4.B addresses these under the "perf bundle":
+1. **Enable seeded prompt batching** — expected rollout time ~26 min → ~10-12 min.
+2. **Raise `completion_logprob_micro_batch_size`** (with per-mb backward) — expected train time ~73 min → ~40-48 min.
+3. **FlashAttention-2** — expected ~15-25% across both phases.
+4. **Fused AdamW** — expected ~10-15% on optimizer step.
 
-4. **(Optional, ~30 min) Land T2.a from the OOM doc**: replace
-   `F.log_softmax`-then-index with `F.cross_entropy(..., reduction='none')` or a
-   `gather` on logits. Saves ~1 GB headroom per micro-batch. Math is identical
-   so this is gate-safe.
-
-5. **(Optional, ~1–2 hr) Length-bucket prompts inside `batch_generate_rollouts`**
-   (P2-1 in `../decisions/training_parallelization_plan.md`). Only useful once
-   step 1 is on.
-
-6. **(Post-pilot only) vLLM rollout backend** (`P3-1`). Material throughput win
-   on the same hardware, but requires a parity gate on the 50-prompt slice.
-
-### Acceptance bar for any of these
-
-- `gpu_seconds` in `cost.json` drops at the same `debug_max_prompts`, OR
-  measured `nvidia-smi` utilization rises materially during decode.
-- Pilot-eval gate metrics stay within `preflight_lock.json` tolerances on the
-  baseline slice — no silent regressions.
-- Rollback path is a single-line config flip (or a single-file revert).
+All four are folded into Stage 1's redesign spec. See `./PILOT_REDESIGN.md` §4.B for
+acceptance criteria, fallback logic (grad checkpointing OOM handling), and implementation order.
 
 ---
 
-## 2) Modal — switch to the shared team workspace
+## 2) Modal workspace — post-mortem: the first pilot billed to personal workspace
 
-### Where pilot runs are billing today
+### What happened in the first pilot
 
-`modal profile list` shows only `chicken602` (personal). Spawn manifests under
-`pilot/artifacts/matrix_logs/` confirm pilot runs are on `chicken602`:
-e.g. `https://modal.com/apps/chicken602/main/ap-...`.
+The first pilot matrix ran entirely on `chicken602` (personal workspace) instead of
+the team workspace. This was a known mistake at launch time, deferred for "after the
+pilot decision token." The matrix failed before getting far enough to make
+justification moot.
 
-### One-time team-workspace setup
+`modal profile list` confirmed: only `chicken602`. Spawn manifests under
+`pilot/artifacts/matrix_logs/` show URLs like
+`https://modal.com/apps/chicken602/main/ap-...`.
 
-1. **In the Modal web UI**, accept the team workspace invite (or have a
-   teammate add you). Note the workspace slug (e.g. `cs224r-rl-pilot`).
+### Key gotcha for the next pilot: volumes and secrets are workspace-scoped
 
-2. **Create a profile bound to that workspace** (uses the modal CLI; the exact
-   subcommand surface depends on your client version — `modal token --help` to
-   confirm):
+If you flip `MODAL_PROFILE=team` without prep, you will get fresh, empty volumes:
 
-   ```bash
-   # Open a browser auth flow against the team workspace and save under a new profile.
-   modal token new --profile team --workspace <team-workspace-slug>
-   ```
-
-   If `--workspace` is not supported by your client version, switch the active
-   workspace in the Modal web UI before running `modal token new --profile team`,
-   and the token will be minted against whichever workspace the web UI has
-   selected. Verify with `modal profile list` — both `chicken602` and `team`
-   should appear.
-
-3. **Verify the active workspace before launching anything:**
-   ```bash
-   MODAL_PROFILE=team modal profile current
-   # Should print the team workspace name, NOT chicken602.
-   ```
-
-### Volumes and secrets do **not** carry over across workspaces
-
-This is the part that bites if you just flip `MODAL_PROFILE` and launch.
-
-- `pilot/infra/modal_volumes.py` references `ARTIFACTS_VOLUME_NAME =
-  "pilot-artifacts"` and `HF_CACHE_VOLUME_NAME = "hf-cache"`. Volumes are
-  **workspace-scoped**. Under `MODAL_PROFILE=team`, `modal.Volume.from_name(...,
-  create_if_missing=True)` will create *new, empty* volumes in the team
-  workspace. Pilot artifacts on `chicken602` will not appear.
+- `pilot/infra/modal_volumes.py` references `ARTIFACTS_VOLUME_NAME = "pilot-artifacts"`
+  and `HF_CACHE_VOLUME_NAME = "hf-cache"`. These are created per workspace.
+  Under `MODAL_PROFILE=team`, you get a new, empty pair. Artifacts from
+  `chicken602` do NOT carry over.
 - `pilot/infra/modal_app.py:80` uses `modal.Secret.from_name("huggingface")`.
-  Secrets are also workspace-scoped. You must recreate the secret in the team
-  workspace or runs will fail at `from_pretrained`.
+  Secrets are also workspace-scoped. You must recreate the HF token secret in
+  the team workspace or runs fail at `from_pretrained`.
 
-### Migration checklist (before the first team-workspace launch)
+### Workspace migration for Stage 1 (from the redesign)
 
-```bash
-# 1) HF token secret in the team workspace
-MODAL_PROFILE=team modal secret create huggingface HF_TOKEN=hf_xxxxxxxx
+`PILOT_REDESIGN.md` §2 ("Infra discipline") prescribes:
+- Team workspace switch **before** matrix launch, verified with `modal profile current`.
+- Pre-create secrets and volumes in the team workspace.
+- Smoke gate mandatory before the matrix launches (validates the switch is live).
 
-# 2) Confirm fresh (empty) volumes will be created on first use; or pre-create:
-MODAL_PROFILE=team modal volume create pilot-artifacts
-MODAL_PROFILE=team modal volume create hf-cache
-
-# 3) (Optional) Copy HF weights cache from chicken602 → team to avoid re-download.
-#    Cheaper to just let Modal re-download into hf-cache on first run for
-#    Qwen3-1.7B (~3.4 GB). Skip this unless you have a reason.
-
-# 4) Dry-run a tiny smoke against the team workspace
-MODAL_PROFILE=team modal run pilot/infra/modal_app.py \
-  --run-id run0_proxy --debug-max-prompts 2 --wait
-```
-
-### Make the workspace explicit in launch scripts
-
-`pilot/scripts/launch_pilot_matrix.sh` does not set or check `MODAL_PROFILE`.
-Two options, in order of preference:
-
-- **Per-invocation env var** (simplest, no code change):
-  ```bash
-  MODAL_PROFILE=team ./pilot/scripts/launch_pilot_matrix.sh
-  ```
-
-- **Add a guardrail to `launch_pilot_matrix.sh`** that aborts if
-  `MODAL_PROFILE` is unset or equals `chicken602` for main runs. One-liner near
-  the top of the script after the venv-activation block:
-  ```bash
-  if [[ "${MODAL_PROFILE:-}" != "team" ]]; then
-    echo "ERROR: MODAL_PROFILE must be 'team' for main runs (got '${MODAL_PROFILE:-unset}')." >&2
-    exit 1
-  fi
-  ```
-  Implement this *before* the first main run, not during it.
-
-### Pilot vs. main split
-
-The current pilot matrix is already running on `chicken602`. Don't switch
-mid-flight — re-pulling artifacts from a different workspace is a needless
-mess. Switch the launcher to `MODAL_PROFILE=team` **after** the pilot decision
-token is set and before the first main run.
+Detailed migration steps are in `./PILOT_REDESIGN.md` §2. This playbook's
+original checklist is **historical reference only**; follow the redesign doc for
+the next attempt.
 
 ---
 
-## 3) OOM — what went wrong overnight and how to avoid it on main runs
+## 3) OOM debugging — post-mortem: the "lever not wired" antipattern
 
-The pilot wasted real hours on this. The lesson generalizes.
+The pilot wasted real hours on this. The lesson generalizes and is critical for
+the next iteration.
 
-### The antipattern
+### The antipattern that almost broke the pilot
 
-Overnight runs OOM'd repeatedly. The fix-attempt loop kept reducing the same
-YAML knob (`completion_logprob_micro_batch_size`), going 16 → 8 → 4 → 2, plus
+Overnight runs OOM'd repeatedly. The debugging loop kept reducing the same YAML
+knob (`completion_logprob_micro_batch_size`), going 16 → 8 → 4 → 2, plus
 shrinking `batch_prompts` and `max_new_tokens`. Every reduction still OOM'd.
 
-The reason — fully written up in `../incidents/0519-12_grpo-oom-root-cause.md` —
-is that the differentiable completion-logprob path was accumulating every
-micro-batch's autograd graph in a Python list and only calling `.backward()`
-once at the very end of the step. The peak scaled with the *total* completion
-count, not with the *per-iteration* micro-batch size. So reducing
-`completion_logprob_micro_batch_size` actually made it strictly worse on the
-iteration-count axis while the ceiling stayed pinned at ~80 GB.
+**Root cause:** The differentiable completion-logprob path was accumulating every
+micro-batch's autograd graph in a Python list and only calling `.backward()` once
+at the very end of the step. Peak memory scaled with the *total* completion count,
+not with the *per-iteration* micro-batch size. Reducing `completion_logprob_micro_batch_size`
+actually made things worse on the iteration-count axis while the ceiling stayed
+pinned at ~80 GB.
 
-**The knob being tweaked was not on the critical memory path.**
+**The knob being tweaked was not on the critical memory path.** Full analysis in
+`../incidents/0519-12_grpo-oom-root-cause.md` §4 (memory math).
 
-### Pre-launch checklist for main runs
+### How to avoid this antipattern in the next pilot
 
-Before kicking off a main-run matrix, walk through this list. If any item
-doesn't pass, do not launch.
+Before you shrink a knob to fix an OOM:
 
-- [ ] **Run the 64-prompt smoke** end-to-end on the current main-run config:
-      `MODAL_PROFILE=team modal run --wait pilot/infra/modal_app.py
-      --run-id <main-run-id> --debug-max-prompts 64`.
-      Confirm step 1 actually completes (not just "groups ready"). Confirm peak
-      `nvidia-smi` < 60 GB. If it OOMs here, stop and diagnose; do not just
-      shrink batch sizes.
-- [ ] **Verify the per-micro-batch backward is still wired.** Grep for
-      `_train_step_microbatch_backward` in `pilot/train/hf_grpo_train.py` and
-      confirm it's called inside `run_grpo_training`. The fix is easy to break
-      accidentally with a refactor.
-- [ ] **Verify `policy.gradient_checkpointing_enable()` is still called** after
-      model load.
-- [ ] **Verify the Modal image env still sets**
-      `PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True`.
-- [ ] **If you're tempted to shrink a knob to make an OOM go away**, first
-      answer: *which line of code allocates the tensor that fails to fit?* If
-      you can't name the line, the knob is probably not on the critical path —
-      stop and read `../incidents/0519-12_grpo-oom-root-cause.md` §4 (memory
-      math) instead of guessing.
-- [ ] **Don't run an unattended overnight matrix on a config that has not
-      passed the 64-prompt smoke first.** This is the single highest-leverage
-      rule in this doc.
+1. **Answer this question:** *Which line of code allocates the tensor that fails to fit?*
+   If you can't name the line, the knob is probably not on the critical path.
+2. **Use the memory math from `../incidents/0519-12_grpo-oom-root-cause.md` §4.**
+   The analysis predicts peak memory for any given config. Compare predicted peak
+   to observed peak. If they disagree, there is a *new* bug.
+3. **Only after math agrees with observation** should you reduce a knob, and only
+   the knob that the math says is on the critical path.
 
-### If an OOM happens on a main run
+### Smoke gate for the next pilot
 
-1. Pull `train.log` and the last `nvidia-smi` line if logged.
-2. Read `../incidents/0519-12_grpo-oom-root-cause.md` §4. The memory math
-   predicts peak for any given config; compute the predicted peak and compare
-   to observed peak. If they disagree, there is a *new* bug — find it before
-   touching knobs.
-3. Only after the math agrees with observation should you reduce a knob, and
-   only the knob that the math says is on the critical path.
+`PILOT_REDESIGN.md` §6 prescribes a **32-prompt smoke** end-to-end before the
+matrix launches:
+- 5 training steps, single A100, forced preemption mid-step-3.
+- Pass criteria: step 1 completes in <60 min, peak `nvidia-smi` < 60 GB, mechanism
+  checks pass.
+- **Do not launch the matrix without passing the smoke.** This is the highest-leverage
+  insurance against silent OOM loops.
+
+For detailed smoke spec, see `./PILOT_REDESIGN.md` §6.
 
 ---
 
-## 4) After the pilot finishes — what to do next
+## 4) Lessons archive — technical details from the first pilot
 
-This section is intentionally a stub. Detailed planning happens once
-`../decisions/decision_memo.md` lands a decision token. Outline:
+This section preserves technical observations from the first pilot that do not
+roll into Stage 1's redesign but remain valuable as post-mortem reference.
 
-1. **Read the gate decision** in `pilot/gate_decision.json` (written by
-   `pilot/eval/gate.py`). It will be one of:
-   `ESCALATE` / `PIVOT_WORST_SUBSET` / `PIVOT_SUBSTRATE_OR_ARCH` /
-   `STOP_NO_SIGNAL`.
-2. **Branch on the decision** — each branch has different next steps; spelling
-   them out now is premature.
-   - `ESCALATE`: run the paper tier-2 eval (`beyond_aime_eval_100`,
-     `hmmt_feb25_eval_30`, `math500_eval_500`) against the winning objective at
-     scaled compute. **At this point: switch to the team workspace per §2 and
-     apply throughput fixes per §1 before scaling.**
-   - `PIVOT_WORST_SUBSET`: re-scope on the worst-subset signal; design the
-     next pilot.
-   - `PIVOT_SUBSTRATE_OR_ARCH`: F-GRPO equivalence detected; pick a new
-     direction from the synthesis notes (`research/` or wherever the early
-     direction docs live).
-   - `STOP_NO_SIGNAL`: don't escalate; write up the negative result.
-3. **Re-freeze scope** before the first main run. The pilot
-   `preflight_lock.json` is for the pilot; main runs need their own lock
-   covering the tier-2 splits and scaled budget caps.
-4. **Migrate the launcher to the team workspace** per §2 *before* the first
-   main run, not during it.
+### Observed failure modes (first pilot only)
 
-Worry about the specifics in this section when you reach it.
+**Cost blowout.** Measured ~99 min/step × 100 planned steps × 4 runs ≈ ~$1,275,
+against an intended ~$210 pilot budget and a $1,400 team total. The pilot was
+never affordable as written. Stage 1's redesign budget-caps individual runs to
+$50 and the matrix to $200.
+
+**No mid-run durability.** `artifacts_volume.commit()` ran only in the `finally` block;
+no per-step checkpoint; preemption produced zero salvageable weights. `run1_grpo`
+entered a death spiral: preempt → restart → bootstrap wipes `raw_predictions.jsonl`
+→ replay step 1 → preempt mid-step-2 → repeat. Stage 1 prescribes time-gated
+checkpointing (Branch A in §4.A of `PILOT_REDESIGN.md`) and resume-on-boot logic.
+
+**Logging gaps.** Completed-step milestone math broke (`done % 25 == 0` with mb=8);
+first log fired 200/500 instead of 25/500. No mid-rollout heartbeat. No wandb.
+Modal volume not committed mid-run, so `volume get` returned stale data.
+Stage 1 prescribes per-rollout and per-step diagnostics + wandb (Branch C in
+§4.C of `PILOT_REDESIGN.md`).
+
+**Substrate parser bug.** `canonicalize_answer` is documented broken
+(`nancy_explore/decisions.md` 2026-05-18: "strips all `}` and breaks LaTeX").
+Salvaged step-1 data showed `"12"` and `"\\( 12 \\)"` in different exact-match
+clusters — a known bug, not a new finding. Stage 1 includes a rewritten
+canonicalization (Branch C, §4.C.3 of `PILOT_REDESIGN.md`).
+
+### What the next pilot (Stage 1) addresses
+
+See `./PILOT_REDESIGN.md`:
+- **§2**: Locked constraints (scope, budget, step count, eval, infra).
+- **§3**: End-to-end pipeline (3 implementation branches, smoke, matrix launch).
+- **§4.A**: Checkpoint/resume + dead-code deletion.
+- **§4.B**: Perf bundle (seeded batching, gradient-checkpointing vs. logprob micro-batch trade-off, FlashAttention-2, fused AdamW).
+- **§4.C**: Substrate fix + logging + mechanism diagnostics.
+- **§5**: Kill rules (mechanism layer, outcome layer).
+- **§6**: Smoke spec and pass criteria.
+- **§7**: Implementation order and timeline.

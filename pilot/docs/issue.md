@@ -1,8 +1,15 @@
 # Issue: Run0 `completed 25/500` progress logs never fire with `rollout_micro_batch_size: 8`
 
+**STATUS:** This issue is superseded by a broader structural redesign. The first pilot matrix (including run0_proxy) was terminated 2026-05-19 after widespread failures. This postmortem is preserved as historical context; for the current plan, see [`operations/PILOT_REDESIGN.md`](operations/PILOT_REDESIGN.md). Root-cause analysis across all incidents is in [`analysis/0519_perf_consolidated.md`](analysis/0519_perf_consolidated.md).
+
+---
+
+> **Canonical postmortem:** [`incidents/0519-13_progress-log-milestone-misfire.md`](incidents/0519-13_progress-log-milestone-misfire.md)  
+> **Related:** [`incidents/0519-21_run0-silent-rollout-progress-investigation.md`](incidents/0519-21_run0-silent-rollout-progress-investigation.md) (silent rollout vs broken logging)
+
 **Documented:** 2026-05-19 13:53:23 PDT  
-**Status:** Fixed in repo (redeploy required); see also `0519-21_run0-silent-rollout-progress-investigation.md`  
-**Affects:** `run0_proxy` full runs (500 prompts) launched after micro-batch refactor  
+**Status:** *Closed as part of pilot redesign*  
+**Affected:** `run0_proxy` full runs (500 prompts) launched after micro-batch refactor  
 **Does not affect:** Detached vs non-detached Modal launch (remote logging still works)
 
 ---
@@ -83,9 +90,8 @@ From shared volume `run0_proxy/train.log` (append-only across launches):
 
 - App: `ap-Zk6zAIs9tWpGerJHufSud1`
 - `Run0: 500 prompts` at 19:02:16 UTC; model ready ~19:02:31 UTC
-- No `completed 25/500` (or any progress line) in `modal app logs` for **2+ hours** afterward (**29 lines total** in stream — see `0519-21`)
+- No `completed 25/500` (or any progress line) in `modal app logs` for **70+ minutes** afterward
 - Logging handlers unchanged: `FileHandler(train.log)` + `StreamHandler()` in `_setup_run_logging`
-- **Evening check:** `logger.info("completed …")` had **not run** on the worker (not a Modal shipping bug). GPU active → rollout in progress or stuck **inside** `sample_rollouts_batch`, not disabled logging.
 
 ### Timing expectation if per-prompt rate unchanged
 
@@ -115,24 +121,29 @@ From shared volume `run0_proxy/train.log` (append-only across launches):
 
 ---
 
-## Fix (applied in repo HEAD)
+## Recommended fix
 
-**`pilot/infra/execute.py`**
+Log on actual prompt count, independent of micro-batch stride, e.g.:
 
-- Log **before** each chunk: `run0 chunk 1-8/500 (rollouts=N)`.
-- Log **after** each chunk: `completed 8/500`, `16/500`, … (every micro-batch, not `done % 25`).
+```python
+# Option A: log every chunk (every 8 prompts)
+logger.info("completed %s/%s prompts", done, len(prompts))
 
-**`pilot/infra/modal_app.py`**
+# Option B: keep 25/50/75 milestones
+if done % 25 == 0 or (done // 25) != ((done - len(chunk)) // 25) or done == len(prompts):
+    ...
 
-- `PYTHONUNBUFFERED=1` on the image.
+# Option C: restore per-prompt counter for logging only
+```
 
-**Still open (see `0519-21`):** per-run volume log path; mid-run `artifacts_volume.commit()`; remote `git_sha` on volume.
+Also consider:
 
-Requires **new Modal deploy** — running containers keep old code.
+- `PYTHONUNBUFFERED=1` on Modal image for live `modal app logs`
+- Per-run log path on volume: `run0_proxy/<UTC-stamp>/train.log` instead of shared flat file
 
 ---
 
-## Workaround (containers still on `468c99c` without redeploy)
+## Workaround for current run
 
 Watch for:
 
@@ -143,11 +154,8 @@ completed 200/500 prompts
 not `25/500`. Monitor:
 
 ```bash
-source .venv/bin/activate
-modal app logs ap-Zk6zAIs9tWpGerJHufSud1 -f
+modal app logs ap-Zk6zAIs9tWpGerJHufSud1
 ```
-
-Do **not** treat mid-run `modal volume get …/train.log` as live progress (volume `commit()` is end-of-run only).
 
 ---
 

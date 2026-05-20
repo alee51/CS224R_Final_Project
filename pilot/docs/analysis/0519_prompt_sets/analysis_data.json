@@ -1,0 +1,1045 @@
+{
+  "batch_X_summary": {
+    "label": "X",
+    "n": 32,
+    "mean_difficulty": 2.94625,
+    "median_difficulty": 2.68,
+    "mean_structural": 0.84375,
+    "mean_steps": 1.875,
+    "mean_problem_len": 260.4375,
+    "domain_counts": {
+      "number_theory": 9,
+      "geometry": 8,
+      "uncategorized": 17,
+      "algebra": 2,
+      "probability": 1,
+      "combinatorics": 2
+    },
+    "marker_counts": {
+      "olympiad_style": 1,
+      "asy_diagram": 2,
+      "aime_style": 9,
+      "contest_integer": 3
+    },
+    "answer_type_counts": {
+      "integer": 32
+    },
+    "olympiad_count": 1,
+    "proof_count": 0,
+    "aime_count": 9,
+    "high_struct_count": 1,
+    "max_difficulty": 9.59,
+    "min_difficulty": 0.92
+  },
+  "batch_Y_summary": {
+    "label": "Y",
+    "n": 32,
+    "mean_difficulty": 3.3003125,
+    "median_difficulty": 2.87,
+    "mean_structural": 1.0,
+    "mean_steps": 2.21875,
+    "mean_problem_len": 289.34375,
+    "domain_counts": {
+      "geometry": 8,
+      "algebra": 2,
+      "combinatorics": 2,
+      "uncategorized": 17,
+      "number_theory": 8
+    },
+    "marker_counts": {
+      "aime_style": 6,
+      "asy_diagram": 2,
+      "contest_integer": 1,
+      "olympiad_style": 2,
+      "find_all": 2
+    },
+    "answer_type_counts": {
+      "integer": 32
+    },
+    "olympiad_count": 2,
+    "proof_count": 0,
+    "aime_count": 6,
+    "high_struct_count": 0,
+    "max_difficulty": 8.2,
+    "min_difficulty": 0.92
+  },
+  "empirical": {
+    "X": {
+      "mean_pass8": 0.0625,
+      "median": 0.0,
+      "zeros": 24,
+      "any_correct": 8,
+      "max": 0.375
+    },
+    "Y": {
+      "mean_pass8": 0.171875,
+      "median": 0.0,
+      "zeros": 17,
+      "any_correct": 15,
+      "max": 0.75
+    }
+  },
+  "batch_X_prompts": [
+    {
+      "prompt_id": "01428ba8-e58e-4670-8a06-e5f569c0d668",
+      "problem_len": 647,
+      "domains": [
+        "number_theory",
+        "geometry"
+      ],
+      "markers": [
+        "olympiad_style",
+        "asy_diagram"
+      ],
+      "structural": 4,
+      "steps_est": 4,
+      "answer_type": "integer",
+      "answer_complexity": 1,
+      "difficulty_score": 9.59,
+      "answer": "23"
+    },
+    {
+      "prompt_id": "146bc3eb-f75b-4015-9a51-86f9ea624864",
+      "problem_len": 469,
+      "domains": [
+        "uncategorized"
+      ],
+      "markers": [],
+      "structural": 2,
+      "steps_est": 2,
+      "answer_type": "integer",
+      "answer_complexity": 1,
+      "difficulty_score": 4.24,
+      "answer": "4"
+    },
+    {
+      "prompt_id": "156145aa-fef1-40d1-96b5-45da7f1a617a",
+      "problem_len": 147,
+      "domains": [
+        "uncategorized"
+      ],
+      "markers": [],
+      "structural": 0,
+      "steps_est": 2,
+      "answer_type": "integer",
+      "answer_complexity": 1,
+      "difficulty_score": 1.59,
+      "answer": "2"
+    },
+    {
+      "prompt_id": "2c858da1-672f-439d-8c93-b6b55e263ae2",
+      "problem_len": 469,
+      "domains": [
+        "number_theory",
+        "geometry"
+      ],
+      "markers": [
+        "aime_style"
+      ],
+      "structural": 2,
+      "steps_est": 1,
+      "answer_type": "integer",
+      "answer_complexity": 1,
+      "difficulty_score": 4.74,
+      "answer": "32"
+    },
+    {
+      "prompt_id": "2dac37fd-5558-4428-9af0-adfdae561476",
+      "problem_len": 83,
+      "domains": [
+        "number_theory",
+        "algebra"
+      ],
+      "markers": [],
+      "structural": 0,
+      "steps_est": 3,
+      "answer_type": "integer",
+      "answer_complexity": 1,
+      "difficulty_score": 1.97,
+      "answer": "4"
+    },
+    {
+      "prompt_id": "3624db0e-a7fc-4fc6-884b-b71efc624eaa",
+      "problem_len": 179,
+      "domains": [
+        "number_theory",
+        "algebra"
+      ],
+      "markers": [
+        "aime_style"
+      ],
+      "structural": 1,
+      "steps_est": 2,
+      "answer_type": "integer",
+      "answer_complexity": 1,
+      "difficulty_score": 3.66,
+      "answer": "1980"
+    },
+    {
+      "prompt_id": "367ce22f-986c-43ed-be0d-d1c05a0648e3",
+      "problem_len": 201,
+      "domains": [
+        "uncategorized"
+      ],
+      "markers": [],
+      "structural": 1,
+      "steps_est": 1,
+      "answer_type": "integer",
+      "answer_complexity": 1,
+      "difficulty_score": 2.2,
+      "answer": "146"
+    },
+    {
+      "prompt_id": "40da682c-a68f-4d2d-ae7f-ef06d4d80d69",
+      "problem_len": 60,
+      "domains": [
+        "uncategorized"
+      ],
+      "markers": [],
+      "structural": 0,
+      "steps_est": 1,
+      "answer_type": "integer",
+      "answer_complexity": 1,
+      "difficulty_score": 0.92,
+      "answer": "400"
+    },
+    {
+      "prompt_id": "465d77a0-90e6-4dc1-ba6c-289e0e17e12a",
+      "problem_len": 311,
+      "domains": [
+        "uncategorized"
+      ],
+      "markers": [],
+      "structural": 1,
+      "steps_est": 1,
+      "answer_type": "integer",
+      "answer_complexity": 1,
+      "difficulty_score": 2.42,
+      "answer": "561"
+    },
+    {
+      "prompt_id": "5eda9da4-98df-4697-abc8-a174a5c313dd",
+      "problem_len": 139,
+      "domains": [
+        "uncategorized"
+      ],
+      "markers": [],
+      "structural": 0,
+      "steps_est": 2,
+      "answer_type": "integer",
+      "answer_complexity": 1,
+      "difficulty_score": 1.58,
+      "answer": "-5"
+    },
+    {
+      "prompt_id": "6298021e-7bef-4fe2-9a5c-fb90b40744de",
+      "problem_len": 203,
+      "domains": [
+        "uncategorized"
+      ],
+      "markers": [],
+      "structural": 1,
+      "steps_est": 4,
+      "answer_type": "integer",
+      "answer_complexity": 1,
+      "difficulty_score": 3.71,
+      "answer": "1905"
+    },
+    {
+      "prompt_id": "6414be5f-fcd0-4e76-926b-9beb61d26a24",
+      "problem_len": 36,
+      "domains": [
+        "uncategorized"
+      ],
+      "markers": [
+        "aime_style"
+      ],
+      "structural": 0,
+      "steps_est": 1,
+      "answer_type": "integer",
+      "answer_complexity": 1,
+      "difficulty_score": 1.87,
+      "answer": "999999"
+    },
+    {
+      "prompt_id": "6d0b145b-d3bc-4855-b513-58047b718c69",
+      "problem_len": 533,
+      "domains": [
+        "number_theory",
+        "geometry"
+      ],
+      "markers": [
+        "aime_style"
+      ],
+      "structural": 3,
+      "steps_est": 2,
+      "answer_type": "integer",
+      "answer_complexity": 1,
+      "difficulty_score": 6.37,
+      "answer": "33"
+    },
+    {
+      "prompt_id": "71fb6079-2cab-4682-8015-8915cd11e52b",
+      "problem_len": 160,
+      "domains": [
+        "number_theory"
+      ],
+      "markers": [],
+      "structural": 0,
+      "steps_est": 1,
+      "answer_type": "integer",
+      "answer_complexity": 1,
+      "difficulty_score": 1.12,
+      "answer": "12"
+    },
+    {
+      "prompt_id": "7faf93b7-254b-42d9-a63a-61e6fa63a2b4",
+      "problem_len": 366,
+      "domains": [
+        "geometry"
+      ],
+      "markers": [],
+      "structural": 1,
+      "steps_est": 2,
+      "answer_type": "integer",
+      "answer_complexity": 1,
+      "difficulty_score": 3.03,
+      "answer": "483"
+    },
+    {
+      "prompt_id": "847da05d-9a0a-4696-b186-2d50ef50ce71",
+      "problem_len": 112,
+      "domains": [
+        "uncategorized"
+      ],
+      "markers": [
+        "aime_style"
+      ],
+      "structural": 0,
+      "steps_est": 2,
+      "answer_type": "integer",
+      "answer_complexity": 1,
+      "difficulty_score": 2.52,
+      "answer": "1074"
+    },
+    {
+      "prompt_id": "888936ba-5184-4009-b614-b7401c51038c",
+      "problem_len": 229,
+      "domains": [
+        "number_theory",
+        "probability"
+      ],
+      "markers": [
+        "aime_style",
+        "contest_integer"
+      ],
+      "structural": 0,
+      "steps_est": 2,
+      "answer_type": "integer",
+      "answer_complexity": 1,
+      "difficulty_score": 2.76,
+      "answer": "2083"
+    },
+    {
+      "prompt_id": "8ad4462b-2dcc-49cc-8fa0-37439eb8f9c0",
+      "problem_len": 191,
+      "domains": [
+        "geometry"
+      ],
+      "markers": [],
+      "structural": 1,
+      "steps_est": 2,
+      "answer_type": "integer",
+      "answer_complexity": 1,
+      "difficulty_score": 2.68,
+      "answer": "8"
+    },
+    {
+      "prompt_id": "9e6520c5-0699-41a8-9848-a09a68e462c5",
+      "problem_len": 289,
+      "domains": [
+        "number_theory"
+      ],
+      "markers": [
+        "aime_style"
+      ],
+      "structural": 1,
+      "steps_est": 3,
+      "answer_type": "integer",
+      "answer_complexity": 1,
+      "difficulty_score": 4.38,
+      "answer": "50"
+    },
+    {
+      "prompt_id": "a5d4dc54-8e5e-4ff6-9b58-cdaa695955e4",
+      "problem_len": 150,
+      "domains": [
+        "geometry"
+      ],
+      "markers": [],
+      "structural": 1,
+      "steps_est": 1,
+      "answer_type": "integer",
+      "answer_complexity": 1,
+      "difficulty_score": 2.1,
+      "answer": "84"
+    },
+    {
+      "prompt_id": "a7c0b5bc-5838-43ba-8c21-775b40f77d59",
+      "problem_len": 265,
+      "domains": [
+        "uncategorized"
+      ],
+      "markers": [],
+      "structural": 1,
+      "steps_est": 3,
+      "answer_type": "integer",
+      "answer_complexity": 1,
+      "difficulty_score": 3.33,
+      "answer": "18"
+    },
+    {
+      "prompt_id": "ac30fdd3-d3b4-44a5-88f9-20d375206d73",
+      "problem_len": 139,
+      "domains": [
+        "uncategorized"
+      ],
+      "markers": [
+        "contest_integer"
+      ],
+      "structural": 0,
+      "steps_est": 1,
+      "answer_type": "integer",
+      "answer_complexity": 1,
+      "difficulty_score": 1.08,
+      "answer": "54"
+    },
+    {
+      "prompt_id": "b84654f5-6965-4982-a524-0b4bc44a3aae",
+      "problem_len": 187,
+      "domains": [
+        "uncategorized"
+      ],
+      "markers": [],
+      "structural": 0,
+      "steps_est": 2,
+      "answer_type": "integer",
+      "answer_complexity": 1,
+      "difficulty_score": 1.67,
+      "answer": "2520"
+    },
+    {
+      "prompt_id": "b999584f-29ad-4a68-a7cf-a57ce1c45691",
+      "problem_len": 366,
+      "domains": [
+        "uncategorized"
+      ],
+      "markers": [],
+      "structural": 1,
+      "steps_est": 1,
+      "answer_type": "integer",
+      "answer_complexity": 1,
+      "difficulty_score": 2.53,
+      "answer": "19"
+    },
+    {
+      "prompt_id": "bce021e7-7b57-4417-864f-8b5e4078a34c",
+      "problem_len": 358,
+      "domains": [
+        "combinatorics"
+      ],
+      "markers": [],
+      "structural": 1,
+      "steps_est": 2,
+      "answer_type": "integer",
+      "answer_complexity": 1,
+      "difficulty_score": 3.02,
+      "answer": "428"
+    },
+    {
+      "prompt_id": "bdcb50c2-6208-4137-b218-e311fad2e41c",
+      "problem_len": 106,
+      "domains": [
+        "uncategorized"
+      ],
+      "markers": [],
+      "structural": 0,
+      "steps_est": 1,
+      "answer_type": "integer",
+      "answer_complexity": 1,
+      "difficulty_score": 1.01,
+      "answer": "2017036"
+    },
+    {
+      "prompt_id": "c8c311a4-e4c9-4011-8667-b7c84c4c3515",
+      "problem_len": 558,
+      "domains": [
+        "combinatorics",
+        "geometry"
+      ],
+      "markers": [
+        "contest_integer"
+      ],
+      "structural": 2,
+      "steps_est": 2,
+      "answer_type": "integer",
+      "answer_complexity": 1,
+      "difficulty_score": 4.42,
+      "answer": "71"
+    },
+    {
+      "prompt_id": "d1724284-9d2e-4c61-9dae-26bae8de9b02",
+      "problem_len": 308,
+      "domains": [
+        "uncategorized"
+      ],
+      "markers": [
+        "aime_style"
+      ],
+      "structural": 1,
+      "steps_est": 1,
+      "answer_type": "integer",
+      "answer_complexity": 1,
+      "difficulty_score": 3.42,
+      "answer": "944"
+    },
+    {
+      "prompt_id": "d4214c5f-4d1a-4930-9c18-3c59814c5cd2",
+      "problem_len": 93,
+      "domains": [
+        "uncategorized"
+      ],
+      "markers": [],
+      "structural": 0,
+      "steps_est": 1,
+      "answer_type": "integer",
+      "answer_complexity": 1,
+      "difficulty_score": 0.99,
+      "answer": "13"
+    },
+    {
+      "prompt_id": "d73ba4fd-fdbc-4b46-990a-5084f3b71821",
+      "problem_len": 138,
+      "domains": [
+        "uncategorized"
+      ],
+      "markers": [],
+      "structural": 0,
+      "steps_est": 2,
+      "answer_type": "integer",
+      "answer_complexity": 1,
+      "difficulty_score": 1.58,
+      "answer": "137"
+    },
+    {
+      "prompt_id": "f5f4e1c4-7f01-43ea-8026-1e4e3e06b072",
+      "problem_len": 246,
+      "domains": [
+        "number_theory"
+      ],
+      "markers": [
+        "aime_style"
+      ],
+      "structural": 0,
+      "steps_est": 2,
+      "answer_type": "integer",
+      "answer_complexity": 1,
+      "difficulty_score": 2.79,
+      "answer": "60"
+    },
+    {
+      "prompt_id": "fd497f82-ac8b-4ac7-ac25-d657d1ace344",
+      "problem_len": 596,
+      "domains": [
+        "geometry"
+      ],
+      "markers": [
+        "asy_diagram"
+      ],
+      "structural": 2,
+      "steps_est": 3,
+      "answer_type": "integer",
+      "answer_complexity": 1,
+      "difficulty_score": 4.99,
+      "answer": "14"
+    }
+  ],
+  "batch_Y_prompts": [
+    {
+      "prompt_id": "09695fe4-8db7-4852-8748-1ef0ad23a057",
+      "problem_len": 462,
+      "domains": [
+        "geometry"
+      ],
+      "markers": [],
+      "structural": 1,
+      "steps_est": 2,
+      "answer_type": "integer",
+      "answer_complexity": 1,
+      "difficulty_score": 3.22,
+      "answer": "121"
+    },
+    {
+      "prompt_id": "0b4478a7-8a73-4d82-8a1b-1a6b7ff27196",
+      "problem_len": 62,
+      "domains": [
+        "algebra"
+      ],
+      "markers": [],
+      "structural": 0,
+      "steps_est": 1,
+      "answer_type": "integer",
+      "answer_complexity": 1,
+      "difficulty_score": 0.92,
+      "answer": "0"
+    },
+    {
+      "prompt_id": "0ba04ed5-8af6-42b3-9d59-d4fab41ef124",
+      "problem_len": 445,
+      "domains": [
+        "combinatorics"
+      ],
+      "markers": [
+        "aime_style"
+      ],
+      "structural": 2,
+      "steps_est": 3,
+      "answer_type": "integer",
+      "answer_complexity": 1,
+      "difficulty_score": 5.69,
+      "answer": "112"
+    },
+    {
+      "prompt_id": "0db0e2d7-0db7-4409-9e72-bb191583853c",
+      "problem_len": 278,
+      "domains": [
+        "uncategorized"
+      ],
+      "markers": [],
+      "structural": 1,
+      "steps_est": 1,
+      "answer_type": "integer",
+      "answer_complexity": 1,
+      "difficulty_score": 2.36,
+      "answer": "1"
+    },
+    {
+      "prompt_id": "1290feb7-5b64-4b25-86b8-41c57ade2c87",
+      "problem_len": 100,
+      "domains": [
+        "uncategorized"
+      ],
+      "markers": [],
+      "structural": 0,
+      "steps_est": 2,
+      "answer_type": "integer",
+      "answer_complexity": 1,
+      "difficulty_score": 1.5,
+      "answer": "27"
+    },
+    {
+      "prompt_id": "1870bf5d-9dde-4be6-b56f-cd202966f0d4",
+      "problem_len": 286,
+      "domains": [
+        "uncategorized"
+      ],
+      "markers": [],
+      "structural": 1,
+      "steps_est": 2,
+      "answer_type": "integer",
+      "answer_complexity": 1,
+      "difficulty_score": 2.87,
+      "answer": "-3"
+    },
+    {
+      "prompt_id": "229faedd-7eb3-4435-98d6-f8e19ab687ac",
+      "problem_len": 156,
+      "domains": [
+        "uncategorized"
+      ],
+      "markers": [],
+      "structural": 0,
+      "steps_est": 2,
+      "answer_type": "integer",
+      "answer_complexity": 1,
+      "difficulty_score": 1.61,
+      "answer": "3"
+    },
+    {
+      "prompt_id": "2c5f3b85-8eca-4fe3-82fe-c96318babd13",
+      "problem_len": 362,
+      "domains": [
+        "number_theory",
+        "geometry"
+      ],
+      "markers": [
+        "aime_style"
+      ],
+      "structural": 1,
+      "steps_est": 3,
+      "answer_type": "integer",
+      "answer_complexity": 1,
+      "difficulty_score": 4.52,
+      "answer": "601"
+    },
+    {
+      "prompt_id": "33d75f47-cbba-456c-a880-7d925c17ac1f",
+      "problem_len": 115,
+      "domains": [
+        "uncategorized"
+      ],
+      "markers": [],
+      "structural": 0,
+      "steps_est": 2,
+      "answer_type": "integer",
+      "answer_complexity": 1,
+      "difficulty_score": 1.53,
+      "answer": "6"
+    },
+    {
+      "prompt_id": "378aa451-b1ad-4d52-b683-f639eb7563f2",
+      "problem_len": 161,
+      "domains": [
+        "geometry"
+      ],
+      "markers": [],
+      "structural": 1,
+      "steps_est": 2,
+      "answer_type": "integer",
+      "answer_complexity": 1,
+      "difficulty_score": 2.62,
+      "answer": "145"
+    },
+    {
+      "prompt_id": "3cf3efc1-7105-47d7-8081-6a87d8f612e2",
+      "problem_len": 86,
+      "domains": [
+        "uncategorized"
+      ],
+      "markers": [],
+      "structural": 0,
+      "steps_est": 1,
+      "answer_type": "integer",
+      "answer_complexity": 1,
+      "difficulty_score": 0.97,
+      "answer": "8"
+    },
+    {
+      "prompt_id": "40a686fc-c7c3-457e-b80a-52ee961cbf37",
+      "problem_len": 84,
+      "domains": [
+        "uncategorized"
+      ],
+      "markers": [],
+      "structural": 0,
+      "steps_est": 2,
+      "answer_type": "integer",
+      "answer_complexity": 1,
+      "difficulty_score": 1.47,
+      "answer": "16"
+    },
+    {
+      "prompt_id": "6a32bb9f-0051-4021-803a-52106f3fd173",
+      "problem_len": 140,
+      "domains": [
+        "uncategorized"
+      ],
+      "markers": [
+        "aime_style"
+      ],
+      "structural": 1,
+      "steps_est": 4,
+      "answer_type": "integer",
+      "answer_complexity": 1,
+      "difficulty_score": 4.58,
+      "answer": "60"
+    },
+    {
+      "prompt_id": "6be576a1-cb79-4524-974c-5fe1eacc38a0",
+      "problem_len": 526,
+      "domains": [
+        "uncategorized"
+      ],
+      "markers": [
+        "aime_style"
+      ],
+      "structural": 2,
+      "steps_est": 6,
+      "answer_type": "integer",
+      "answer_complexity": 1,
+      "difficulty_score": 7.35,
+      "answer": "256"
+    },
+    {
+      "prompt_id": "6d272d1b-723d-47eb-baa3-57b26c4f092e",
+      "problem_len": 174,
+      "domains": [
+        "uncategorized"
+      ],
+      "markers": [],
+      "structural": 0,
+      "steps_est": 1,
+      "answer_type": "integer",
+      "answer_complexity": 1,
+      "difficulty_score": 1.15,
+      "answer": "3"
+    },
+    {
+      "prompt_id": "778ace6f-b49c-46b7-86c7-102f5dd6ccbe",
+      "problem_len": 1094,
+      "domains": [
+        "number_theory",
+        "combinatorics"
+      ],
+      "markers": [
+        "asy_diagram"
+      ],
+      "structural": 3,
+      "steps_est": 2,
+      "answer_type": "integer",
+      "answer_complexity": 1,
+      "difficulty_score": 6.49,
+      "answer": "13"
+    },
+    {
+      "prompt_id": "7f416338-1b94-4549-bd62-653c92b467af",
+      "problem_len": 564,
+      "domains": [
+        "number_theory"
+      ],
+      "markers": [],
+      "structural": 3,
+      "steps_est": 3,
+      "answer_type": "integer",
+      "answer_complexity": 1,
+      "difficulty_score": 5.93,
+      "answer": "27"
+    },
+    {
+      "prompt_id": "8293a91f-ba6b-4bda-8f45-50b982a122c6",
+      "problem_len": 757,
+      "domains": [
+        "number_theory",
+        "geometry"
+      ],
+      "markers": [
+        "asy_diagram"
+      ],
+      "structural": 2,
+      "steps_est": 2,
+      "answer_type": "integer",
+      "answer_complexity": 1,
+      "difficulty_score": 4.81,
+      "answer": "9"
+    },
+    {
+      "prompt_id": "88805301-10fa-4e50-8342-8c8731e5682f",
+      "problem_len": 103,
+      "domains": [
+        "uncategorized"
+      ],
+      "markers": [],
+      "structural": 0,
+      "steps_est": 1,
+      "answer_type": "integer",
+      "answer_complexity": 1,
+      "difficulty_score": 1.01,
+      "answer": "7960"
+    },
+    {
+      "prompt_id": "8b31ca5d-6799-4ded-941b-af5fcfe8e825",
+      "problem_len": 209,
+      "domains": [
+        "number_theory",
+        "geometry"
+      ],
+      "markers": [
+        "aime_style"
+      ],
+      "structural": 1,
+      "steps_est": 2,
+      "answer_type": "integer",
+      "answer_complexity": 1,
+      "difficulty_score": 3.72,
+      "answer": "62"
+    },
+    {
+      "prompt_id": "93a42f60-3f7f-4e31-aa66-3bf52d05c69a",
+      "problem_len": 96,
+      "domains": [
+        "uncategorized"
+      ],
+      "markers": [],
+      "structural": 0,
+      "steps_est": 2,
+      "answer_type": "integer",
+      "answer_complexity": 1,
+      "difficulty_score": 1.49,
+      "answer": "2"
+    },
+    {
+      "prompt_id": "a3703b22-bc6b-45f4-9d7a-31d8a971cc1a",
+      "problem_len": 286,
+      "domains": [
+        "uncategorized"
+      ],
+      "markers": [
+        "contest_integer"
+      ],
+      "structural": 1,
+      "steps_est": 2,
+      "answer_type": "integer",
+      "answer_complexity": 1,
+      "difficulty_score": 2.87,
+      "answer": "660"
+    },
+    {
+      "prompt_id": "ae3eba10-4b2a-48ab-9144-406a1e2f931a",
+      "problem_len": 124,
+      "domains": [
+        "uncategorized"
+      ],
+      "markers": [],
+      "structural": 0,
+      "steps_est": 2,
+      "answer_type": "integer",
+      "answer_complexity": 1,
+      "difficulty_score": 1.55,
+      "answer": "116"
+    },
+    {
+      "prompt_id": "b08fcf4f-ce88-42af-8e51-4ba1a8ab449c",
+      "problem_len": 722,
+      "domains": [
+        "number_theory"
+      ],
+      "markers": [],
+      "structural": 2,
+      "steps_est": 2,
+      "answer_type": "integer",
+      "answer_complexity": 1,
+      "difficulty_score": 4.74,
+      "answer": "7"
+    },
+    {
+      "prompt_id": "b7590bfe-37d7-4de3-850d-92522f4d1904",
+      "problem_len": 199,
+      "domains": [
+        "number_theory"
+      ],
+      "markers": [
+        "olympiad_style",
+        "aime_style",
+        "find_all"
+      ],
+      "structural": 3,
+      "steps_est": 3,
+      "answer_type": "integer",
+      "answer_complexity": 1,
+      "difficulty_score": 8.2,
+      "answer": "2"
+    },
+    {
+      "prompt_id": "b7bb834b-2a42-4baf-843b-14995e15b533",
+      "problem_len": 183,
+      "domains": [
+        "uncategorized"
+      ],
+      "markers": [],
+      "structural": 0,
+      "steps_est": 2,
+      "answer_type": "integer",
+      "answer_complexity": 1,
+      "difficulty_score": 1.67,
+      "answer": "3"
+    },
+    {
+      "prompt_id": "b8aa6d8a-9dd6-401e-8bd8-ae66de4295ce",
+      "problem_len": 427,
+      "domains": [
+        "number_theory",
+        "geometry"
+      ],
+      "markers": [],
+      "structural": 1,
+      "steps_est": 2,
+      "answer_type": "integer",
+      "answer_complexity": 1,
+      "difficulty_score": 3.15,
+      "answer": "17"
+    },
+    {
+      "prompt_id": "bf2cddfc-c4c0-4067-b320-3bb506875cf5",
+      "problem_len": 303,
+      "domains": [
+        "geometry"
+      ],
+      "markers": [],
+      "structural": 2,
+      "steps_est": 4,
+      "answer_type": "integer",
+      "answer_complexity": 1,
+      "difficulty_score": 4.91,
+      "answer": "40"
+    },
+    {
+      "prompt_id": "c3e0a3fe-1c42-4a54-ae63-2e35268249e3",
+      "problem_len": 253,
+      "domains": [
+        "uncategorized"
+      ],
+      "markers": [
+        "olympiad_style",
+        "find_all"
+      ],
+      "structural": 2,
+      "steps_est": 3,
+      "answer_type": "integer",
+      "answer_complexity": 1,
+      "difficulty_score": 6.31,
+      "answer": "1"
+    },
+    {
+      "prompt_id": "c67a46a6-a612-49f1-95b5-432975155f15",
+      "problem_len": 272,
+      "domains": [
+        "geometry"
+      ],
+      "markers": [],
+      "structural": 2,
+      "steps_est": 2,
+      "answer_type": "integer",
+      "answer_complexity": 1,
+      "difficulty_score": 3.84,
+      "answer": "54"
+    },
+    {
+      "prompt_id": "dc0272d8-cd32-4c4b-b336-5b2d188b5ee9",
+      "problem_len": 139,
+      "domains": [
+        "algebra"
+      ],
+      "markers": [],
+      "structural": 0,
+      "steps_est": 1,
+      "answer_type": "integer",
+      "answer_complexity": 1,
+      "difficulty_score": 1.08,
+      "answer": "-2"
+    },
+    {
+      "prompt_id": "ece1f315-081c-4a30-8c11-70908139e5c1",
+      "problem_len": 91,
+      "domains": [
+        "uncategorized"
+      ],
+      "markers": [],
+      "structural": 0,
+      "steps_est": 2,
+      "answer_type": "integer",
+      "answer_complexity": 1,
+      "difficulty_score": 1.48,
+      "answer": "266"
+    }
+  ]
+}

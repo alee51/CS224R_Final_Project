@@ -1,0 +1,12 @@
+{
+  "assignment_method": "sha256('2026-05-19-blind-prompt-difficulty') mod 2",
+  "hash_mod_2": 0,
+  "mapping": {
+    "X": "seed43_run1b",
+    "Y": "seed42_run2"
+  },
+  "files": {
+    "seed43_run1b": "set_a_seed43_run1b.json",
+    "seed42_run2": "set_b_seed42_run2.json"
+  }
+}

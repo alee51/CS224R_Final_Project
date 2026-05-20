@@ -167,6 +167,14 @@ def run0_proxy(
         chunk = prompts[mb_start : mb_start + mb]
         problems = [row["problem"] for row in chunk]
         chunk_seeds = [seed + mb_start + j for j in range(len(chunk))]
+        done_after = mb_start + len(chunk)
+        logger.info(
+            "run0 chunk %s-%s/%s (rollouts=%s)",
+            mb_start + 1,
+            done_after,
+            len(prompts),
+            n_rollouts,
+        )
         texts_batch = engine.sample_rollouts_batch(
             problems, n_rollouts, seeds=chunk_seeds
         )
@@ -200,13 +208,8 @@ def run0_proxy(
                     has_minority_correct=has_minority_correct_cluster(correct, cluster_ids),
                 )
             )
-        done = mb_start + len(chunk)
-        prev_done = mb_start
-        # Log at 25/50/75… even when done advances by rollout_micro_batch_size (e.g. 8).
-        if (done // 25) > (prev_done // 25):
-            logger.info("completed %s/%s prompts", (done // 25) * 25, len(prompts))
-        elif done == len(prompts):
-            logger.info("completed %s/%s prompts", done, len(prompts))
+        done = done_after
+        logger.info("completed %s/%s prompts", done, len(prompts))
 
     metrics_path = write_run0_artifacts(artifacts_root, results, run_id=run_id)
     gpu_seconds = time.time() - t0

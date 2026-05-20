@@ -98,6 +98,17 @@ See `pilot/artifacts/matrix_logs/20260519T190158Z_LAUNCH_MANIFEST.md`.
 
 **This main matrix:** one detached spawn → one app ID → one active task. Only `run1_grpo` has had a **second** physical container (preemption @ 13:56 PDT). The other four apps are still on their original container from 12:02 PDT.
 
+### Short “second” containers (not all are preemption)
+
+| Cause | Main matrix? | Details |
+|-------|--------------|---------|
+| **Draining worker** | **run1 only** | First container ran ~2 h, died ~15 min into step 2; UI shows draining + new worker. |
+| **Smoke / debug apps** | **Separate app IDs** | Same display name `cs224r-pilot`; e.g. smoke `ap-tl9o0I5MMUpfcyXBjMxXmr` (run1b), `ap-U5KNv40LGvxP4ootXQP1hS` (run2, stopped via CLI after `groups ready` only). Not a second box inside `ap-EWhmIPbGpflmnM2IcrKp77`. |
+| **Local “App completed” @ 12:02:12** | **All five spawns** | `modal run --detach` client timed out on logs; **remote job kept running**. Not a short GPU container. |
+| **Append-only `train.log`** | Volume artifact | Many `GRPO run…` boots = many **past** jobs on `pilot-artifacts/<run_id>/train.log`, not live containers. |
+
+Full operator tables (step timing, mid-run pull script, monitoring): **`0519-22_main-matrix-operator-notes.md`**.
+
 ### run1_grpo timeline (first container, preempted)
 
 | UTC | Event |
@@ -166,7 +177,7 @@ See `pilot/artifacts/matrix_logs/20260519T190158Z_LAUNCH_MANIFEST.md`.
 2. **After each completed step:** `policy.save_pretrained(checkpoint/step_N/)` + `training_state.json` + `_append_predictions` + **`artifacts_volume.commit()`**.
 3. **Wall-clock checkpoint hook** (~30 min): commit volume + optional lightweight heartbeat file even if step not done (so preemption during the 73 min train phase loses at most ~30 min, not the whole step).
 4. **On startup:** read `training_state.json`; resume from `steps_done` and load latest `checkpoint/step_N/`; **do not** call `write_text("")` if resuming.
-5. **Modal:** review [preemption docs](https://modal.com/docs/guide/preemption); consider reserved GPUs if preemption rate is high.
+5. **Modal:** review [preemption docs](https://modal.com/docs/guide/preemption). **`nonpreemptible=True` is not available for GPU Functions** (CPU/memory only, 3× price). Application checkpointing is required.
 6. **Ops (today):** mid-run pull via `modal volume get` (see below) — does not require job to finish.
 
 ---
@@ -188,7 +199,12 @@ From repo root with venv active:
 
 `pull_run_artifacts.py` expects **finished** runs (`metrics.json` required) — use **`modal volume get`** per file mid-run, or pull into `pilot/artifacts/<run_id>/<UTC>_midrun_pull/` manually.
 
-**Pulled @ 20260519T211846Z** into `pilot/artifacts/<run_id>/20260519T211846Z_midrun_pull/` (agent run).
+**Agent mid-run pulls (timestamped, not overwritten):**
+
+- `pilot/artifacts/<run_id>/20260519T211846Z_midrun_pull/`
+- `pilot/artifacts/<run_id>/20260519T212216Z_midrun_pull/`
+
+Full pull recipe: `0519-22_main-matrix-operator-notes.md` § Mid-run artifact pull.
 
 ### Containers vs dashboard
 
@@ -210,4 +226,5 @@ From repo root with venv active:
 - `pilot/train/hf_grpo_train.py` — `pred_path.write_text("")`, `_append_predictions`, checkpoint at end only
 - `pilot/infra/execute.py` — `run0_proxy` end-only `write_run0_artifacts`
 - `pilot/scripts/launch_pilot_matrix.sh` — one detached spawn per run → one app per run
-- Related: `0519-13_progress-log-milestone-misfire.md` (run0 logging)
+- Related: `0519-13_progress-log-milestone-misfire.md` (run0 milestone bug), `0519-21_run0-silent-rollout-progress-investigation.md` (GPU active, zero logs — not broken handlers)
+- Related: `0519-22_main-matrix-operator-notes.md` (step timing, mid-run pull, containers FAQ, monitoring)

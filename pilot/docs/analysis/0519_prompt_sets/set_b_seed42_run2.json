@@ -1,0 +1,290 @@
+[
+  {
+    "prompt_id": "09695fe4-8db7-4852-8748-1ef0ad23a057",
+    "prompt": "A bug starts at a vertex of a grid made of equilateral triangles of side length \\(1\\). At each step, the bug moves in one of the \\(6\\) possible directions along the grid lines randomly and independently with equal probability. What is the probability that after \\(5\\) moves the bug never will have been more than \\(1\\) unit away from the starting position? Provide your answer as a fraction in simplest form \\(\\frac{k}{m}\\), and calculate the value of \\(k + m\\).",
+    "gold": "121",
+    "answer": "121",
+    "split": "train",
+    "source_hf": "open-r1/DAPO-Math-17k-Processed:en",
+    "resolved": true
+  },
+  {
+    "prompt_id": "0b4478a7-8a73-4d82-8a1b-1a6b7ff27196",
+    "prompt": "Solve in the real numbers the equation $3^{x+1} = (x-1)(x-3)$.",
+    "gold": "0",
+    "answer": "0",
+    "split": "train",
+    "source_hf": "open-r1/DAPO-Math-17k-Processed:en",
+    "resolved": true
+  },
+  {
+    "prompt_id": "0ba04ed5-8af6-42b3-9d59-d4fab41ef124",
+    "prompt": "Let $D(n)$ denote the number of ways of writing the positive integer $n$ as a product\\[n = f_1\\cdot f_2\\cdots f_k,\\]where $k\\ge1$, the $f_i$ are integers strictly greater than $1$, and the order in which the factors are listed matters (that is, two representations that differ only in the order of the factors are counted as distinct). For example, the number $6$ can be written as $6$, $2\\cdot 3$, and $3\\cdot2$, so $D(6) = 3$. What is $D(96)$?",
+    "gold": "112",
+    "answer": "112",
+    "split": "train",
+    "source_hf": "open-r1/DAPO-Math-17k-Processed:en",
+    "resolved": true
+  },
+  {
+    "prompt_id": "0db0e2d7-0db7-4409-9e72-bb191583853c",
+    "prompt": "Determine all functions f : $\\mathbb{R}\\to\\mathbb{R}$ such that the equality $f([x]y)=f(x)[f(y)].\\quad(1)$ holds for all $x,y\\in\\mathbb{R}$. Here, by $[x]$ we denote the greatest integer not exceeding $x$. Please provide the sum of all possible integer values of the constant C.",
+    "gold": "1",
+    "answer": "1",
+    "split": "train",
+    "source_hf": "open-r1/DAPO-Math-17k-Processed:en",
+    "resolved": true
+  },
+  {
+    "prompt_id": "1290feb7-5b64-4b25-86b8-41c57ade2c87",
+    "prompt": "For how many integers $n$ between 1 and 100 is the greatest common divisor of 15 and $n$ equal to 3?",
+    "gold": "27",
+    "answer": "27",
+    "split": "train",
+    "source_hf": "open-r1/DAPO-Math-17k-Processed:en",
+    "resolved": true
+  },
+  {
+    "prompt_id": "1870bf5d-9dde-4be6-b56f-cd202966f0d4",
+    "prompt": "Let $f : \\mathbb{R} \\to \\mathbb{R}$ be a function such that $f(1) = 1$ and\n\\[f(x + f(y + z)) + f(f(x + y) + z) = 2y\\]for all real numbers $x,$ $y,$ and $z.$\n\nLet $n$ be the number of possible values of $f(5),$ and let $s$ be the sum of all possible values of $f(5).$  Find $n \\times s.$",
+    "gold": "-3",
+    "answer": "-3",
+    "split": "train",
+    "source_hf": "open-r1/DAPO-Math-17k-Processed:en",
+    "resolved": true
+  },
+  {
+    "prompt_id": "229faedd-7eb3-4435-98d6-f8e19ab687ac",
+    "prompt": "How many positive integers $n < 10^6$ are there such that $n$ is equal to twice the square of an integer and is equal to three times the cube of an integer?",
+    "gold": "3",
+    "answer": "3",
+    "split": "train",
+    "source_hf": "open-r1/DAPO-Math-17k-Processed:en",
+    "resolved": true
+  },
+  {
+    "prompt_id": "2c5f3b85-8eca-4fe3-82fe-c96318babd13",
+    "prompt": "In a $25 \\times n$ grid, each square is colored with a color chosen among $8$ different colors. Let $n$ be as minimal as possible such that, independently from the coloration used, it is always possible to select $4$ columns and $4$ rows such that the $16$ squares of the intersections are all of the same color. Find the remainder when $n$ is divided by $1000$.",
+    "gold": "601",
+    "answer": "601",
+    "split": "train",
+    "source_hf": "open-r1/DAPO-Math-17k-Processed:en",
+    "resolved": true
+  },
+  {
+    "prompt_id": "33d75f47-cbba-456c-a880-7d925c17ac1f",
+    "prompt": "The sequence $6075, 2025, 675 \\ldots$, is made by repeatedly dividing by 3. How many integers are in this sequence?",
+    "gold": "6",
+    "answer": "6",
+    "split": "train",
+    "source_hf": "open-r1/DAPO-Math-17k-Processed:en",
+    "resolved": true
+  },
+  {
+    "prompt_id": "378aa451-b1ad-4d52-b683-f639eb7563f2",
+    "prompt": "In triangle $ABC$, $\\angle ABC = 90^\\circ$, and point $D$ lies on segment $BC$ such that $AD$ is an angle bisector.  If $AB = 105$ and $BD = 42$, then find $AC$.",
+    "gold": "145",
+    "answer": "145",
+    "split": "train",
+    "source_hf": "open-r1/DAPO-Math-17k-Processed:en",
+    "resolved": true
+  },
+  {
+    "prompt_id": "3cf3efc1-7105-47d7-8081-6a87d8f612e2",
+    "prompt": "Find the number of positive integers $n \\le 1000$ such that $15n$ is a perfect square.",
+    "gold": "8",
+    "answer": "8",
+    "split": "train",
+    "source_hf": "open-r1/DAPO-Math-17k-Processed:en",
+    "resolved": true
+  },
+  {
+    "prompt_id": "40a686fc-c7c3-457e-b80a-52ee961cbf37",
+    "prompt": "How many integers $m \\neq 0$ satisfy the inequality $\\frac{1}{|m|}\\geq \\frac{1}{8}$?",
+    "gold": "16",
+    "answer": "16",
+    "split": "train",
+    "source_hf": "open-r1/DAPO-Math-17k-Processed:en",
+    "resolved": true
+  },
+  {
+    "prompt_id": "6a32bb9f-0051-4021-803a-52106f3fd173",
+    "prompt": "Let $s(n)$ denote the sum of digits of a positive integer $n$ in base $10$. If $s(m) = 20$ and $s(33m) = 120$, what is the value of $s(3m)$?",
+    "gold": "60",
+    "answer": "60",
+    "split": "train",
+    "source_hf": "open-r1/DAPO-Math-17k-Processed:en",
+    "resolved": true
+  },
+  {
+    "prompt_id": "6be576a1-cb79-4524-974c-5fe1eacc38a0",
+    "prompt": "For every positive integer $k$, let $\\mathbf{T}_k = (k(k+1), 0)$, and define $\\mathcal{H}_k$ as the homothety centered at $\\mathbf{T}_k$ with ratio $\\frac{1}{2}$ if $k$ is odd and $\\frac{2}{3}$ if $k$ is even. Suppose $P = (x,y)$ is a point such that\n$$(\\mathcal{H}_{4} \\circ \\mathcal{H}_{3} \\circ \\mathcal{H}_2 \\circ \\mathcal{H}_1)(P) = (20, 20).$$\nWhat is $x+y$?\n\nA homothety $\\mathcal{H}$ with nonzero ratio $r$ centered at a point $P$ maps each point $X$ to the point $Y$ on ray $\\overrightarrow{PX}$ such that $PY = rPX$.",
+    "gold": "256",
+    "answer": "256",
+    "split": "train",
+    "source_hf": "open-r1/DAPO-Math-17k-Processed:en",
+    "resolved": true
+  },
+  {
+    "prompt_id": "6d272d1b-723d-47eb-baa3-57b26c4f092e",
+    "prompt": "Find the minimum value of the function\n\\[f(x) = \\sqrt{-x^2 + 4x + 21} - \\sqrt{-x^2 + 3x + 10}.\\]The answer is in the form k\\sqrt{m}+n,. Please provide the value of k + m + n.",
+    "gold": "3",
+    "answer": "3",
+    "split": "train",
+    "source_hf": "open-r1/DAPO-Math-17k-Processed:en",
+    "resolved": true
+  },
+  {
+    "prompt_id": "778ace6f-b49c-46b7-86c7-102f5dd6ccbe",
+    "prompt": "A unit cube is cut twice to form three triangular prisms, two of which are congruent, as shown in Figure 1. The cube is then cut in the same manner along the dashed lines shown in Figure 2. This creates nine pieces. What is the volume of the piece that contains vertex $W$?\n\n[asy]\npath a=(0,0)--(10,0)--(10,10)--(0,10)--cycle;\npath b = (0,10)--(6,16)--(16,16)--(16,6)--(10,0);\npath c= (10,10)--(16,16);\npath d= (0,0)--(3,13)--(13,13)--(10,0);\npath e= (13,13)--(16,6);\ndraw(a,linewidth(0.7));\ndraw(b,linewidth(0.7));\ndraw(c,linewidth(0.7));\ndraw(d,linewidth(0.7));\ndraw(e,linewidth(0.7));\ndraw(shift((20,0))*a,linewidth(0.7));\ndraw(shift((20,0))*b,linewidth(0.7));\ndraw(shift((20,0))*c,linewidth(0.7));\ndraw(shift((20,0))*d,linewidth(0.7));\ndraw(shift((20,0))*e,linewidth(0.7));\ndraw((20,0)--(25,10)--(30,0),dashed);\ndraw((25,10)--(31,16)--(36,6),dashed);\ndraw((15,0)--(10,10),Arrow);\ndraw((15.5,0)--(30,10),Arrow);\nlabel(\"$W$\",(15.2,0),S);\nlabel(\"Figure 1\",(5,0),S);\nlabel(\"Figure 2\",(25,0),S);\n[/asy]The answer is in the form \frac{m}{n}, where gcd(m, n) = 1. Please provide the value of m + n.",
+    "gold": "13",
+    "answer": "13",
+    "split": "train",
+    "source_hf": "open-r1/DAPO-Math-17k-Processed:en",
+    "resolved": true
+  },
+  {
+    "prompt_id": "7f416338-1b94-4549-bd62-653c92b467af",
+    "prompt": "Circles $\\mathcal{C}_1, \\mathcal{C}_2,$ and $\\mathcal{C}_3$ have their centers at $(0,0), (12,0)$, and $(24,0)$, and have radii $1, 2$, and $4$, respectively. Line $t_1$ is a common internal tangent to $\\mathcal{C}_1$ and $\\mathcal{C}_2$ and has a positive slope, and line $t_2$ is a common internal tangent to $\\mathcal{C}_2$ and $\\mathcal{C}_3$ and has a negative slope. Given that lines $t_1$ and $t_2$ intersect at $(x,y),$ and that $x=p-q\\sqrt{r},$ where $p, q,$ and $r$ are positive integers and $r$ is not divisible by the square of any prime, find $p+q+r.$",
+    "gold": "27",
+    "answer": "27",
+    "split": "train",
+    "source_hf": "open-r1/DAPO-Math-17k-Processed:en",
+    "resolved": true
+  },
+  {
+    "prompt_id": "8293a91f-ba6b-4bda-8f45-50b982a122c6",
+    "prompt": "What is the ratio of the area of the shaded square to the area of the large square? (The figure is drawn to scale.) [asy]\n/* AMC8 1998 #13P */\nsize(1inch,1inch);\npair r1c1=(0,0), r1c2=(10,0), r1c3=(20,0), r1c4=(30, 0), r1c5=(40, 0);\npair r2c1=(0,10), r2c2=(10,10), r2c3=(20,10), r2c4=(30, 10), r2c5=(40, 10);\npair r3c1=(0,20), r3c2=(10,20), r3c3=(20,20), r3c4=(30, 20), r3c5=(40, 20);\npair r4c1=(0,30), r4c2=(10,30), r4c3=(20,30), r4c4=(30, 30), r4c5=(40, 30);\npair r5c1=(0,40), r5c2=(10,40), r5c3=(20,40), r5c4=(30, 40), r5c5=(40, 40);\ndraw(r1c1--r5c1--r5c5--r1c5--r1c1--r5c5);\ndraw(r5c1--r3c3);\ndraw(r4c4--r2c4--r3c5);\nfill(r2c2--r3c3--r2c4--r1c3--cycle);\n[/asy]The answer is in the form \frac{m}{n}, where gcd(m, n) = 1. Please provide the value of m + n.",
+    "gold": "9",
+    "answer": "9",
+    "split": "train",
+    "source_hf": "open-r1/DAPO-Math-17k-Processed:en",
+    "resolved": true
+  },
+  {
+    "prompt_id": "88805301-10fa-4e50-8342-8c8731e5682f",
+    "prompt": "Determine the least possible value of the natural number $n$ such that $n!$ ends in exactly 1987 zeros.",
+    "gold": "7960",
+    "answer": "7960",
+    "split": "train",
+    "source_hf": "open-r1/DAPO-Math-17k-Processed:en",
+    "resolved": true
+  },
+  {
+    "prompt_id": "8b31ca5d-6799-4ded-941b-af5fcfe8e825",
+    "prompt": "Let $ABCD$ be a convex quadrilateral inscribed in a circle with $AC = 7$, $AB = 3$, $CD = 5$, and $AD - BC = 3$. Then $BD = \\frac{m}{n}$, where $m$ and $n$ are relatively prime positive integers. Find $m + n$.",
+    "gold": "62",
+    "answer": "62",
+    "split": "train",
+    "source_hf": "open-r1/DAPO-Math-17k-Processed:en",
+    "resolved": true
+  },
+  {
+    "prompt_id": "93a42f60-3f7f-4e31-aa66-3bf52d05c69a",
+    "prompt": "If the five-digit number $3AB76$ is divisible by $9$ and $A < B < 6$, find the value of $B - A$.",
+    "gold": "2",
+    "answer": "2",
+    "split": "train",
+    "source_hf": "open-r1/DAPO-Math-17k-Processed:en",
+    "resolved": true
+  },
+  {
+    "prompt_id": "a3703b22-bc6b-45f4-9d7a-31d8a971cc1a",
+    "prompt": "The function $f(n)$ is defined on the positive integers and takes non-negative integer values. It is given that $f(2)=0$, $f(3)>0$, and $f(9999)=3333$. For all integers $m$ and $n$, the following condition holds:\n\\[\nf(m+n)-f(m)-f(n)=0 \\text{ or } 1.\n\\]\nDetermine the value of $f(1982)$.",
+    "gold": "660",
+    "answer": "660",
+    "split": "train",
+    "source_hf": "open-r1/DAPO-Math-17k-Processed:en",
+    "resolved": true
+  },
+  {
+    "prompt_id": "ae3eba10-4b2a-48ab-9144-406a1e2f931a",
+    "prompt": "How many sequences of $5$ positive integers $(a, b, c, d, e)$ satisfy the inequality $abcde \\leq a + b + c + d + e \\leq 10$?",
+    "gold": "116",
+    "answer": "116",
+    "split": "train",
+    "source_hf": "open-r1/DAPO-Math-17k-Processed:en",
+    "resolved": true
+  },
+  {
+    "prompt_id": "b08fcf4f-ce88-42af-8e51-4ba1a8ab449c",
+    "prompt": "In the additive group of ordered pairs of integers ( $m, n$ ) [with addition defined componentwise: $\\left.(m, n)+\\left(m^{\\prime}, n^{\\prime}\\right)=\\left(m+m^{\\prime}, n+n^{\\prime}\\right)\\right]$ consider the subgroup $H$ generated by the three elements\n$$\n(3,8), \\quad(4,-1)\n$$\nThen $H$ has another set of generators of the form\n$$\n(1, b), \\quad(0, a)\n$$\nfor some integers $a, b$ with $a>0$. Find $a$.\n[Elements $g_{i}, \\ldots, g_{k}$ are said to generate a subgroup $H$ if (i) each $g_{i} \\in H$, and (ii) every $h \\in H$ can be written as a sum $h=n_{1} g_{1}+\\cdots+n_{k} g_{k}$ where the $n_{i}$ are integers (and where, for example, $3 g_{1}-2 g_{2}$ means $\\left.\\left.g_{1}+g_{1}+g_{1}-g_{2}-g_{2}\\right)\\right]$",
+    "gold": "7",
+    "answer": "7",
+    "split": "train",
+    "source_hf": "open-r1/DAPO-Math-17k-Processed:en",
+    "resolved": true
+  },
+  {
+    "prompt_id": "b7590bfe-37d7-4de3-850d-92522f4d1904",
+    "prompt": "Find all positive integers $n$ such that there exists a prime number $p$ where $p^n - (p-1)^n$ is a power of $3$.\n\nNote: A power of $3$ is a number of the form $3^a$, where $a$ is a positive integer.",
+    "gold": "2",
+    "answer": "2",
+    "split": "train",
+    "source_hf": "open-r1/DAPO-Math-17k-Processed:en",
+    "resolved": true
+  },
+  {
+    "prompt_id": "b7bb834b-2a42-4baf-843b-14995e15b533",
+    "prompt": "Let $a$ and $b$ be positive real numbers.  Find the minimum value of\n\\[a^2 + b^2 + \\frac{1}{(a + b)^2}.\\]The answer is in the form k\\sqrt{m}+n,. Please provide the value of k + m + n.",
+    "gold": "3",
+    "answer": "3",
+    "split": "train",
+    "source_hf": "open-r1/DAPO-Math-17k-Processed:en",
+    "resolved": true
+  },
+  {
+    "prompt_id": "b8aa6d8a-9dd6-401e-8bd8-ae66de4295ce",
+    "prompt": "An equilateral triangle is placed inside a larger equilateral triangle so that the region between them can be divided into three congruent trapezoids, as shown below. The side length of the inner triangle is \\(\\frac{2}{3}\\) the side length of the larger triangle. What is the ratio of the area of one trapezoid to the area of the inner triangle? The original answer is in \\(\\frac{k}{m}\\) format, please give the value of k + m.",
+    "gold": "17",
+    "answer": "17",
+    "split": "train",
+    "source_hf": "open-r1/DAPO-Math-17k-Processed:en",
+    "resolved": true
+  },
+  {
+    "prompt_id": "bf2cddfc-c4c0-4067-b320-3bb506875cf5",
+    "prompt": "Triangle $\\triangle{ABC}$ is isosceles with $AB = AC$. Let the incircle of $\\triangle{ABC}$ intersect $BC$ and $AC$ at $D$ and $E$ respectively. Let $F \\neq A$ be the point such that $DF = DA$ and $EF = EA$. If $AF = 8$ and the circumradius of $\\triangle{AED}$ is $5$, find the area of $\\triangle{ABC}$.",
+    "gold": "40",
+    "answer": "40",
+    "split": "train",
+    "source_hf": "open-r1/DAPO-Math-17k-Processed:en",
+    "resolved": true
+  },
+  {
+    "prompt_id": "c3e0a3fe-1c42-4a54-ae63-2e35268249e3",
+    "prompt": "Find all positive integers $n$ such that all positive divisors of $n$ can be arranged in a rectangular table with the following constraints:\n\n- Each cell contains a distinct divisor.\n- The sums of all rows are equal.\n- The sums of all columns are equal.",
+    "gold": "1",
+    "answer": "1",
+    "split": "train",
+    "source_hf": "open-r1/DAPO-Math-17k-Processed:en",
+    "resolved": true
+  },
+  {
+    "prompt_id": "c67a46a6-a612-49f1-95b5-432975155f15",
+    "prompt": "Right triangle $\\triangle ABC$ with a right angle at $A$ has $AB = 20$ and $AC = 15$. Point $D$ is on $AB$ with $BD = 2$. Points $E$ and $F$ are placed on ray $CA$ and ray $CB$, respectively, such that $CD$ is a median of $\\triangle CEF$. Find the area of $\\triangle CEF$.",
+    "gold": "54",
+    "answer": "54",
+    "split": "train",
+    "source_hf": "open-r1/DAPO-Math-17k-Processed:en",
+    "resolved": true
+  },
+  {
+    "prompt_id": "dc0272d8-cd32-4c4b-b336-5b2d188b5ee9",
+    "prompt": "Find the product of the real roots of the equation $x^4+3x^3+5x^2 + 21x -14=0$. The answer is an integer. Please provide the integer value.",
+    "gold": "-2",
+    "answer": "-2",
+    "split": "train",
+    "source_hf": "open-r1/DAPO-Math-17k-Processed:en",
+    "resolved": true
+  },
+  {
+    "prompt_id": "ece1f315-081c-4a30-8c11-70908139e5c1",
+    "prompt": "How many natural numbers $n$ less than $2015$ are divisible by $\\lfloor\\sqrt[3]{n}\\rfloor$?",
+    "gold": "266",
+    "answer": "266",
+    "split": "train",
+    "source_hf": "open-r1/DAPO-Math-17k-Processed:en",
+    "resolved": true
+  }
+]

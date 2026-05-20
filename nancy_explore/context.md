@@ -46,11 +46,32 @@ study generalization to harder reasoning test sets."
   (`nancy_explore/why_stop_poly_epo.md`, `nancy_explore/decisions.md`).
   Poly-EPO remains the closest related work and primary baseline, but it
   is not the project. The project is minority voting.
-- Implementation state: nothing built. No training loop, no weights
-  pulled, no eval pipeline, no VeRL-style trainer. Anastasia has begun
-  exploratory tooling around Cover@tau evaluation; treat this as a
-  candidate primitive, not a locked-in dependency. The team is in the
-  "decide and build" phase.
+- **Chosen research direction (as of 2026-05-19): "kill the LM-judge."**
+  Keep Poly-EPO's set-RL + minority-voting objective structure; replace
+  the expensive Qwen-3-4B-Instruct clustering judge with a cheap
+  substrate (Stage 1 uses exact-match canonicalization on `\boxed{}`
+  integer extraction). Tests whether the LM-judge in Poly-EPO is
+  load-bearing. `inverse_freq` (per-prompt inverse-cluster-frequency
+  advantage weighting) is the specific objective instantiation being
+  tested in Stage 1, with vanilla GRPO as baseline and F-GRPO as
+  novelty separator.
+- Implementation state: a first pilot was built and launched on
+  2026-05-19 (4-run matrix on Qwen-1.7B-Base + DaPO 3k subset). It
+  failed structurally — cost mismatch (~$1,275 projected vs ~$210
+  budgeted), no mid-run checkpointing/resume, missing logging during
+  long rollouts, broken `canonicalize_answer` parser, milestone-log
+  math bug — and was killed mid-run. Only `run0_proxy` was left running
+  to completion. Root causes consolidated in
+  `pilot/docs/analysis/0519_perf_consolidated.md`. A redesigned **Stage 1
+  pilot** is specified in `pilot/docs/operations/PILOT_REDESIGN.md`:
+  $200 matrix budget, ~25 steps/run, $50/run hard cap, time-gated
+  checkpointing, wandb + structured diagnostics, mechanism-layer + outcome-
+  layer decision rules. Not yet re-launched. Stage 1 gates a **Stage 2**
+  headline run at the mentor-prescribed scale (400 steps × DaPO 17k ×
+  1 epoch, 64-sample Pass@k eval on AIME-25/26 + Beyond-AIME + HMMT +
+  Minerva).
+- Anastasia has begun exploratory tooling around Cover@tau evaluation;
+  treat this as a candidate primitive, not a locked-in dependency.
 - Roles are flexible and not locked in. The proposal sketched
   Emma → theory, Anastasia → implementation, Nancy → evaluation, but in
   practice work is being shared based on what each person is currently
@@ -124,3 +145,12 @@ resolve:
 6. `nancy_explore/poly-epo paper.pdf` — the mentor's paper. The
    mentor will mentally compare any proposal to this; the agent should
    too.
+7. `pilot/docs/operations/PILOT_REDESIGN.md` — current Stage 1 spec
+   (2026-05-19). Source of truth for the next pilot launch. Supersedes
+   the prior matrix runbook.
+8. `pilot/docs/analysis/0519_perf_consolidated.md` — synthesis of why
+   the first pilot failed. Read before proposing any change to the
+   training rig.
+9. `pilot/docs/analysis/0519_poly_epo_methodology.md` — extracted
+   methodology from the Poly-EPO paper; documents where our pilot
+   intentionally diverges from the paper.
