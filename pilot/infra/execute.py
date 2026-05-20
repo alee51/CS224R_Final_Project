@@ -60,7 +60,7 @@ def _rollout_engine_config(config: dict[str, Any]) -> Any:
 
     return RolloutEngineConfig(
         model_id=str(config["model_id"]),
-        max_new_tokens=min(int(config.get("max_new_tokens", 2048)), 1024),
+        max_new_tokens=min(int(config.get("max_new_tokens", 2048)), 1536),
         temperature=float(config.get("temperature", 1.0)),
         top_p=float(config.get("top_p", 0.95)),
         micro_batch_size=int(config.get("rollout_micro_batch_size", ROLLOUT_MICRO_BATCH_SIZE)),
@@ -149,7 +149,7 @@ def run0_proxy(
     engine = HFRolloutEngine(
         RolloutEngineConfig(
             model_id=str(shared["model_id"]),
-            max_new_tokens=min(int(shared.get("max_new_tokens", 2048)), 1024),
+            max_new_tokens=min(int(shared.get("max_new_tokens", 2048)), 1536),
             temperature=float(shared.get("temperature", 1.0)),
             top_p=float(shared.get("top_p", 0.95)),
             micro_batch_size=int(

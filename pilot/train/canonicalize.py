@@ -2,14 +2,13 @@
 
 from __future__ import annotations
 
-import re
-
 
 def canonicalize_answer(text: str) -> str:
-    s = text.strip().lower()
-    s = re.sub(r"\s+", " ", s)
-    s = s.replace("$", "").replace("\\boxed{", "").replace("}", "")
-    return s
+    s = (text or "").strip().replace(",", "")
+    try:
+        return str(int(s))
+    except ValueError:
+        return s.lower()
 
 
 def cluster_id(answer: str) -> int:

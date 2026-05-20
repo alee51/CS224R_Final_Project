@@ -6,7 +6,6 @@ run0_slice_start: 0
 run0_slice_end: 500
 audit_prompts: 50
 inherits: shared_train.yaml
-budget_cap_usd: 24
+budget_cap_usd: 50
 budget_cap_gpu_hours: 9.0
 rollout_micro_batch_size: 8
-allow_seeded_prompt_batching: false

@@ -7,17 +7,17 @@ Integration: launch scripts in `pilot/infra/` load YAML configs and call
 
 from __future__ import annotations
 
-import math
 from dataclasses import dataclass, field
 from typing import Any, Callable, Protocol
 
-from pilot.train.objectives import ObjectiveName, weighted_advantages
+from pilot.train.objectives import ObjectiveName, _clip_surrogate_scalar, weighted_advantages
 
 
 @dataclass
 class GRPOConfig:
-    clip_eps: float = 0.2
-    kl_coef: float = 0.001
+    clip_ratio_low: float = 0.2
+    clip_ratio_high: float = 0.28
+    kl_coef: float = 0.0
     rollouts_per_prompt: int = 8
     inverse_gamma: float = 1.0
     w_max: float = 8.0
@@ -72,27 +72,6 @@ class MockPolicyModel:
 
     def logprobs_for_rollouts(self, groups: list[PromptRolloutGroup]) -> list[list[float]]:
         return [g.old_logprobs for g in groups]
-
-
-def _clip_surrogate(
-    logprobs: list[float],
-    old_logprobs: list[float],
-    advantages: list[float],
-    clip_eps: float,
-) -> tuple[float, float]:
-    """Mean clipped policy-gradient surrogate and clip fraction."""
-    if not logprobs:
-        return 0.0, 0.0
-    losses: list[float] = []
-    clipped = 0
-    for lp, old_lp, adv in zip(logprobs, old_logprobs, advantages):
-        ratio = math.exp(lp - old_lp)
-        unclipped = ratio * adv
-        clipped_ratio = min(max(ratio, 1.0 - clip_eps), 1.0 + clip_eps) * adv
-        losses.append(-min(unclipped, clipped_ratio))
-        if ratio != min(max(ratio, 1.0 - clip_eps), 1.0 + clip_eps):
-            clipped += 1
-    return sum(losses) / len(losses), clipped / len(losses)
 
 
 def _kl_penalty(
@@ -150,8 +129,12 @@ class GRPOTrainer:
                 focal_gamma=overrides.get("focal_gamma", step_cfg.focal_gamma),
             )
             all_advantages.extend(adv)
-            pg_loss, clip_frac = _clip_surrogate(
-                logprobs, group.old_logprobs, adv, step_cfg.clip_eps
+            pg_loss, clip_frac = _clip_surrogate_scalar(
+                logprobs,
+                group.old_logprobs,
+                adv,
+                step_cfg.clip_ratio_low,
+                step_cfg.clip_ratio_high,
             )
             policy_losses.append(pg_loss)
             clip_fracs.append(clip_frac)

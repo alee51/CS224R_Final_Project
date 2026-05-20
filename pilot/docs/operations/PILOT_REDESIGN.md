@@ -124,7 +124,7 @@ Replaces the current "Answer: " template in `pilot/train/rollout_engine.py:15-19
 
 ## 4. Code changes — by branch
 
-Each branch is independently implementable. Hand each to a Sonnet or Haiku agent. Branches touch mostly disjoint files; conflicts resolved in the merge step before smoke.
+Each branch is independently implementable. The orchestrator may spawn a Cursor agent per branch (§4.A / §4.B / §4.C) with that section as context — no model pinning. Branches touch mostly disjoint files; conflicts resolved in the merge step before smoke.
 
 ### Branch A — Checkpoint/resume + dead code removal
 
@@ -540,12 +540,12 @@ Cost target: **≤$10**. Implement as a new `pilot/configs/smoke.yaml` (copy of 
 ## 7. Implementation order
 
 ```
-T+0   Spawn 3 parallel implementation agents (one per branch)
-        ├── Branch A — Sonnet — checkpoint/resume + dead-code deletion
-        ├── Branch B — Sonnet — perf bundle (config flips + FA2 + fused AdamW + param alignment)
-        └── Branch C — Sonnet — substrate fix + logging + mechanism diagnostics
+T+0   Orchestrator spawns Cursor agents as needed (often one per branch, parallel OK)
+        ├── Branch A — checkpoint/resume + dead-code deletion
+        ├── Branch B — perf bundle (config flips + FA2 + fused AdamW + param alignment)
+        └── Branch C — substrate fix + logging + mechanism diagnostics
 
-T+1d  Branch merge — operator-owned. Conflicts to resolve manually before handing to smoke agent:
+T+1d  Branch merge — operator-owned. Conflicts to resolve manually before smoke:
         - shared_train.yaml (all three branches touch it)
         - hf_grpo_train.py (Branches A and C both touch the training loop)
         - modal_app.py (Branches B and C both add image deps)
@@ -602,11 +602,11 @@ These are out of scope for the Stage 1 implementation but listed so they are not
 
 ## 10. Hand-off to implementing agents
 
-Each branch agent should receive: this doc, the relevant section (§4.A, §4.B, or §4.C), and a constraint that they may not change anything outside their branch's "files touched" list without an explicit handoff back to the operator.
+Each implementing Cursor agent should receive: this doc, the relevant section (§4.A, §4.B, or §4.C), and a constraint that it may not change anything outside that branch's "files touched" list without an explicit handoff back to the operator. Model and tooling are chosen by the orchestrator from context — this doc does not prescribe one.
 
-Branch A and Branch B are pure Sonnet jobs. Branch C is Sonnet because mechanism check spec derivation requires reading `objectives.py` and `final_decision.md` simultaneously.
+Branch C additionally needs `objectives.py` and `nancy_explore/agent_outputs/final_decision.md` in context for mechanism-check derivation (same agent session is fine).
 
-After all three branches are complete, the merge + audit + smoke is a single Sonnet job. The matrix launch is operator-driven, not agent-driven (per `MAIN_RUNS_PLAYBOOK.md` — operator owns the launch button).
+After all three branches are complete, merge + audit + smoke are further Cursor agent tasks (or the same orchestrator session). Matrix launch is operator-driven, not agent-driven (per `MAIN_RUNS_PLAYBOOK.md` — operator owns the launch button).
 
 ---
 

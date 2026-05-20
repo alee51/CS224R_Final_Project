@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+import time
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -13,8 +14,8 @@ from transformers import AutoModelForCausalLM, AutoTokenizer
 logger = logging.getLogger(__name__)
 
 PROMPT_TEMPLATE = (
-    "Solve the following math problem step by step. "
-    "The last line of your response must be of the form Answer: <answer>.\n\n"
+    "Solve the following math problem. Reason step by step, "
+    "and put your final answer within \\boxed{}.\n\n"
     "{problem}\n\n"
 )
 
@@ -41,6 +42,28 @@ def _apply_torch_seed(seed: int | None, device: str) -> None:
         torch.cuda.manual_seed_all(seed)
 
 
+def _maybe_rollout_heartbeat(
+    *,
+    step: int | None,
+    completions_done: int,
+    total_completions: int,
+    last_heartbeat: float,
+    hb_seconds: float,
+    hb_completions: int,
+) -> float:
+    if step is None or total_completions <= 0:
+        return last_heartbeat
+    if time.monotonic() - last_heartbeat >= hb_seconds or completions_done % hb_completions == 0:
+        logger.info(
+            "rollout heartbeat: step=%s completions=%s/%s",
+            step,
+            completions_done,
+            total_completions,
+        )
+        return time.monotonic()
+    return last_heartbeat
+
+
 def batch_generate_rollouts(
     model: torch.nn.Module,
     tokenizer: AutoTokenizer,
@@ -54,6 +77,9 @@ def batch_generate_rollouts(
     seeds: list[int] | None = None,
     micro_batch_size: int = ROLLOUT_MICRO_BATCH_SIZE,
     allow_seeded_prompt_batching: bool = False,
+    heartbeat_step: int | None = None,
+    heartbeat_seconds: float = 60.0,
+    heartbeat_completions: int = 32,
 ) -> list[list[str]]:
     """Batched HF `generate` over problems; each problem returns ``n`` completions."""
     if not problems:
@@ -67,6 +93,11 @@ def batch_generate_rollouts(
     was_training = model.training
     model.eval()
     all_texts: list[list[str]] = []
+    total_completions = len(problems) * n
+    completions_done = 0
+    last_heartbeat = time.monotonic()
+    hb_s = float(heartbeat_seconds)
+    hb_c = max(1, int(heartbeat_completions))
 
     try:
         for start in range(0, len(problems), micro_batch_size):
@@ -104,6 +135,15 @@ def batch_generate_rollouts(
                         for j in range(n)
                     ]
                     all_texts.append(texts)
+                    completions_done += len(texts)
+                    last_heartbeat = _maybe_rollout_heartbeat(
+                        step=heartbeat_step,
+                        completions_done=completions_done,
+                        total_completions=total_completions,
+                        last_heartbeat=last_heartbeat,
+                        hb_seconds=hb_s,
+                        hb_completions=hb_c,
+                    )
             elif allow_seeded_prompt_batching:
                 prompts = [PROMPT_TEMPLATE.format(problem=p) for p in chunk_probs]
                 with torch.no_grad():
@@ -146,6 +186,15 @@ def batch_generate_rollouts(
                                     )
                                 )
                     all_texts.extend(row_outputs)
+                    completions_done += len(chunk_probs) * n
+                    last_heartbeat = _maybe_rollout_heartbeat(
+                        step=heartbeat_step,
+                        completions_done=completions_done,
+                        total_completions=total_completions,
+                        last_heartbeat=last_heartbeat,
+                        hb_seconds=hb_s,
+                        hb_completions=hb_c,
+                    )
                 except Exception as exc:
                     logger.warning(
                         "Falling back to per-prompt generate for mixed seeds: %s",
@@ -166,11 +215,19 @@ def batch_generate_rollouts(
                                 pad_token_id=tokenizer.pad_token_id,
                             )
                         plen = row_inputs["input_ids"].shape[1]
-                        all_texts.append(
-                            [
-                                tokenizer.decode(seq[plen:], skip_special_tokens=True)
-                                for seq in out
-                            ]
+                        row_texts = [
+                            tokenizer.decode(seq[plen:], skip_special_tokens=True)
+                            for seq in out
+                        ]
+                        all_texts.append(row_texts)
+                        completions_done += len(row_texts)
+                        last_heartbeat = _maybe_rollout_heartbeat(
+                            step=heartbeat_step,
+                            completions_done=completions_done,
+                            total_completions=total_completions,
+                            last_heartbeat=last_heartbeat,
+                            hb_seconds=hb_s,
+                            hb_completions=hb_c,
                         )
             else:
                 # Per-prompt seeds (run0: seed+i, GRPO: step_seed+i) keep strict legacy RNG semantics.
@@ -189,11 +246,19 @@ def batch_generate_rollouts(
                             pad_token_id=tokenizer.pad_token_id,
                         )
                     plen = inputs["input_ids"].shape[1]
-                    all_texts.append(
-                        [
-                            tokenizer.decode(seq[plen:], skip_special_tokens=True)
-                            for seq in out
-                        ]
+                    row_texts = [
+                        tokenizer.decode(seq[plen:], skip_special_tokens=True)
+                        for seq in out
+                    ]
+                    all_texts.append(row_texts)
+                    completions_done += len(row_texts)
+                    last_heartbeat = _maybe_rollout_heartbeat(
+                        step=heartbeat_step,
+                        completions_done=completions_done,
+                        total_completions=total_completions,
+                        last_heartbeat=last_heartbeat,
+                        hb_seconds=hb_s,
+                        hb_completions=hb_c,
                     )
     finally:
         if was_training:

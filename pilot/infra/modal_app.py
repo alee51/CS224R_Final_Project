@@ -30,6 +30,7 @@ from typing import Any
 
 import modal
 
+from pilot.infra.artifacts import artifact_dir
 from pilot.infra.modal_volumes import (
     ARTIFACTS_VOLUME_NAME,
     HF_CACHE_VOLUME_NAME,
@@ -68,7 +69,9 @@ image = (
         "safetensors",
         "pyyaml>=6.0",
         "huggingface_hub>=0.23",
+        "wandb",
     )
+    .pip_install("flash-attn==2.6.3", extra_options="--no-build-isolation")
     # Exclude artifacts/ — mounted separately via pilot-artifacts Volume.
     .add_local_dir(
         str(_LOCAL_PILOT_DIR),
@@ -77,51 +80,85 @@ image = (
     )
 )
 
-
-@app.function(
+_PILOT_FUNCTION_KWARGS = dict(
     image=image,
     gpu="A100-80GB",
     timeout=24 * 60 * 60,
-    secrets=[modal.Secret.from_name("huggingface")],
+    secrets=[
+        modal.Secret.from_name("huggingface"),
+        modal.Secret.from_name("wandb-api-key"),
+    ],
     volumes={
         REMOTE_ARTIFACTS_ROOT: artifacts_volume,
         REMOTE_HF_CACHE_ROOT: hf_cache_volume,
     },
 )
-def run_pilot_remote(config_json: str) -> dict[str, Any]:
-    os.environ.setdefault("HF_HOME", REMOTE_HF_CACHE_ROOT)
-    sys.path.insert(0, str(_REMOTE_REPO_ROOT))
 
-    from pilot.infra.execute import execute_run
 
-    config = json.loads(config_json)
-    had_error = False
-    try:
-        out = execute_run(
-            config,
-            repo_root=_REMOTE_REPO_ROOT,
-            artifacts_root=_REMOTE_ARTIFACTS,
-        )
-    except Exception:
-        had_error = True
-        raise
-    finally:
+@app.cls(**_PILOT_FUNCTION_KWARGS)
+class PilotRunner:
+    """Modal GPU runner with preempt-time artifact flush via @modal.exit."""
+
+    @modal.method()
+    def run_pilot_remote(self, config_json: str) -> dict[str, Any]:
+        os.environ.setdefault("HF_HOME", REMOTE_HF_CACHE_ROOT)
+        sys.path.insert(0, str(_REMOTE_REPO_ROOT))
+
+        from pilot.infra.execute import execute_run
+
+        config = json.loads(config_json)
+        run_id = str(config["run_id"])
+        run_dir = artifact_dir(run_id, artifacts_root=_REMOTE_ARTIFACTS)
+        state_path = run_dir / "training_state.json"
+        if state_path.exists():
+            state = json.loads(state_path.read_text())
+            print(
+                f"Resuming {run_id} from training_state.json step={state.get('step')} "
+                f"-> resume at step {int(state['step']) + 1}",
+                flush=True,
+            )
+
+        had_error = False
+        try:
+            out = execute_run(
+                config,
+                repo_root=_REMOTE_REPO_ROOT,
+                artifacts_root=_REMOTE_ARTIFACTS,
+            )
+        except Exception:
+            had_error = True
+            raise
+        finally:
+            try:
+                artifacts_volume.commit()
+            except Exception as exc:
+                if had_error:
+                    print(
+                        f"WARNING: artifacts volume commit failed after run error: {exc}",
+                        file=sys.stderr,
+                    )
+                else:
+                    raise
+
+        metrics_path = out / "metrics.json"
+        metrics: dict[str, Any] | None = None
+        if metrics_path.exists():
+            metrics = json.loads(metrics_path.read_text())
+        return {"artifact_dir": str(out), "run_id": run_id, "metrics": metrics}
+
+    @modal.exit()
+    def flush_artifacts_on_exit(self) -> None:
         try:
             artifacts_volume.commit()
         except Exception as exc:
-            if had_error:
-                print(
-                    f"WARNING: artifacts volume commit failed after run error: {exc}",
-                    file=sys.stderr,
-                )
-            else:
-                raise
+            print(
+                f"WARNING: @modal.exit artifacts_volume.commit failed: {exc}",
+                file=sys.stderr,
+            )
 
-    metrics_path = out / "metrics.json"
-    metrics: dict[str, Any] | None = None
-    if metrics_path.exists():
-        metrics = json.loads(metrics_path.read_text())
-    return {"artifact_dir": str(out), "run_id": str(config["run_id"]), "metrics": metrics}
+
+# Backward-compatible remote entry (Modal Method on PilotRunner).
+run_pilot_remote = PilotRunner.run_pilot_remote
 
 
 def _launch_and_pull_one(
@@ -159,7 +196,7 @@ def _launch_and_pull_one(
     remote_exc: Exception | None = None
     pull_exc: Exception | None = None
     try:
-        result = run_pilot_remote.remote(json.dumps(config))
+        result = PilotRunner().run_pilot_remote.remote(json.dumps(config))
         print(f"Done. Remote: {result['artifact_dir']}")
         if result.get("metrics"):
             print(json.dumps(result["metrics"], indent=2))
@@ -228,7 +265,7 @@ def _spawn_only_one(
         "  NOTE: launch with `modal run --detach ...` so the ephemeral app stays up "
         "after this process exits."
     )
-    function_call = run_pilot_remote.spawn(json.dumps(config))
+    function_call = PilotRunner().run_pilot_remote.spawn(json.dumps(config))
     call_id = str(getattr(function_call, "object_id", "unknown"))
     print(f"Spawned function call id: {call_id}")
     print("Monitor: `modal app list` and `modal app logs <app-id>` (dashboard URL above).")

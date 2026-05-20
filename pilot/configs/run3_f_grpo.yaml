@@ -5,7 +5,6 @@ f_grpo:
   focal_gamma: 2.0
 rollout_micro_batch_size: 8
 completion_logprob_micro_batch_size: 16
-allow_seeded_prompt_batching: false
 seed: 42
-budget_cap_usd: 36
+budget_cap_usd: 50
 budget_cap_gpu_hours: 12.0

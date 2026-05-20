@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Run 0 Review Dashboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css"
+    />
+  </head>
+  <body>
+    <div id="app">
+      <aside class="sidebar">
+        <header class="sidebar-header">
+          <h1>Run 0 Review</h1>
+          <p class="meta">Local dashboard · <span id="list-count">—</span> prompts</p>
+        </header>
+        <div class="controls">
+          <label for="search">Search prompt_id</label>
+          <input id="search" type="search" placeholder="substring…" autocomplete="off" />
+          <div class="filter-row">
+            <div>
+              <label for="filter">Filter</label>
+              <select id="filter">
+                <option value="all">All</option>
+                <option value="has_correct">Has correct (≥1)</option>
+                <option value="no_correct">No correct (0)</option>
+                <option value="partial">Partial (1–7)</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        <details class="info-panel" id="panel-about">
+          <summary>What is Run 0? <kbd class="key-hint">i</kbd></summary>
+          <div class="panel-body">
+            <p>
+              <strong>Run 0</strong> (<code>run0_proxy</code>) was a <em>no-training</em> proxy rollout pass:
+              the frozen base model (<code>Qwen/Qwen3-1.7B-Base</code>) sampled 8 completions per prompt on
+              rows 0–499 of <code>dapo_slice_3k.jsonl</code> (same train pool as the later GRPO runs).
+            </p>
+            <p>
+              Purpose: validate whether cheap <strong>exact-match answer clustering</strong> (not an LM judge)
+              produces diverse enough rollouts for minority-based RL—before spending on training runs.
+            </p>
+            <p><strong>This dashboard shows:</strong></p>
+            <ul>
+              <li>Each problem, gold answer, and all 8 raw model completions</li>
+              <li>Stored <code>parsed_answer</code>, <code>correct</code>, and <code>cluster_id</code> from the Run 0 artifact pipeline</li>
+              <li>Filters to browse prompts by how many rollouts were marked correct</li>
+            </ul>
+            <p class="panel-note">
+              For completion-based re-analysis, see
+              <code>analysis_v2_quant.md</code> and <code>analysis_v2_qual.md</code> in the parent artifact folder.
+            </p>
+          </div>
+        </details>
+        <details class="info-panel" id="panel-stats">
+          <summary>Quick stats <kbd class="key-hint">s</kbd></summary>
+          <div class="panel-body">
+            <p class="panel-caveat">
+              <strong>Caveat:</strong> These aggregates use stored labels from the original Run 0 parser
+              (<code>boxed</code> + <code>canonicalize_answer</code>). They may be outdated or unfair vs
+              reading completions—see v2 analysis before trusting cluster/correct counts.
+            </p>
+            <dl class="stats-dl">
+              <div><dt>Prompts</dt><dd>500</dd></div>
+              <div><dt>Rollouts</dt><dd>4,000 (8 / prompt)</dd></div>
+              <div><dt>Prompts with ≥1 correct</dt><dd>163 (32.6%)</dd></div>
+              <div><dt>Rollout accuracy (stored)</dt><dd>324 / 4,000 (8.1%)</dd></div>
+              <div><dt>Mean distinct clusters / prompt</dt><dd>7.18</dd></div>
+              <div><dt>Minority correct-cluster rate</dt><dd>0.0%</dd></div>
+              <div><dt>GPU time</dt><dd>~6.35 hr (22,849 s)</dd></div>
+              <div><dt>Est. cost</dt><dd>~$15.86</dd></div>
+              <div><dt>Artifact run</dt><dd>20260519T190202Z</dd></div>
+            </dl>
+          </div>
+        </details>
+        <ul id="prompt-list" class="prompt-list" aria-label="Prompt list"></ul>
+      </aside>
+      <main class="main">
+        <header class="main-header">
+          <h2 id="detail-title">Select a prompt</h2>
+          <div class="nav-buttons">
+            <label class="expand-all-label" title="Toggle all rollout completions on this prompt (l)">
+              <input type="checkbox" id="expand-all" />
+              Expand all completions <kbd class="key-hint">l</kbd>
+            </label>
+            <span class="nav-hint">j/k nav · l expand · i info · s stats</span>
+            <button type="button" id="btn-prev" aria-label="Previous prompt">← Prev</button>
+            <button type="button" id="btn-next" aria-label="Next prompt">Next →</button>
+          </div>
+        </header>
+        <div class="detail-scroll">
+          <section class="problem-card">
+            <h3>Problem</h3>
+            <div id="problem-text" class="problem-text math-content"></div>
+            <p class="gold-row">
+              <strong>Gold answer</strong>
+              <span id="gold-answer" class="math-content"></span>
+            </p>
+          </section>
+          <section>
+            <h3 style="margin: 0 0 12px; font-size: 0.85rem; color: var(--muted)">Rollouts (8)</h3>
+            <div id="rollouts" class="rollouts-grid"></div>
+          </section>
+        </div>
+      </main>
+    </div>
+    <script defer src="data.js"></script>
+    <script
+      defer
+      src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"
+    ></script>
+    <script
+      defer
+      src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"
+    ></script>
+    <script defer src="app.js"></script>
+  </body>
+</html>
