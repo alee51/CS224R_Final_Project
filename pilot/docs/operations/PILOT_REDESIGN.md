@@ -58,7 +58,8 @@ These are not re-negotiable in the implementing agent's scope.
 
 **Infra discipline.**
 
-- **Team workspace** (`MODAL_PROFILE=team`) before matrix launch. Verify with `modal profile current`.
+- **Personal Modal workspace per operator** — no shared team workspace for Stage 1 (see `nancy_explore/decisions.md` 2026-05-19). Each member runs on their own profile (`modal profile current` should show their GitHub-username workspace, e.g. `chicken602`). Secrets and volumes (`pilot-artifacts`, `hf-cache`) are **per workspace**; teammates do not share Modal volumes. After runs, pull artifacts locally (`pilot/scripts/pull_run_artifacts.py`); share checkpoints and large eval outputs via git LFS, shared drive, or HuggingFace Hub — not by assuming a shared Modal volume.
+- **Cross-team observability:** wandb project `cs224r-minority-voting` (same project name for all operators; run names include operator + `run_id`). Offline `wandb` on Modal + `wandb sync` locally is fine. See `./PERSONAL_WORKSPACE_COLLAB.md` for a command cheat sheet.
 - **Detached launches only** (`modal run --detach` or equivalent). No client-bound runs.
 - **Smoke gate mandatory** before matrix launch. Spec in §6.
 
@@ -108,9 +109,8 @@ Replaces the current "Answer: " template in `pilot/train/rollout_engine.py:15-19
             │   pass
             ▼
    ┌────────────────┐
-   │  Team workspace│   modal profile activate team
-   │  switch + cap  │   verify budget_cap_usd enforcement live
-   │  audit         │
+   │  Personal ws   │   modal profile current (your profile)
+   │  + cap audit   │   secrets/volumes on *your* workspace; budget_cap live
    └────────┬───────┘
             │
             ▼
@@ -557,12 +557,13 @@ T+1d  Provision Modal secrets
 
 T+1d  Run audit prompt against this doc + the merged code
 
-T+2d  Smoke run on team workspace
+T+2d  Smoke run on operator personal workspace
+        - modal profile current → your GitHub-username profile (not a shared team workspace)
         - Pass criteria from §6
         - If fail: fix offending branch, re-smoke. Do not skip.
 
 T+2d  Pre-matrix checks
-        - modal profile current → "team"
+        - modal profile current → expected personal profile; secrets (`huggingface`, `wandb-api-key`) exist in *that* workspace
         - grep budget_cap enforcement is wired into the train loop, not only between steps
         - confirm wandb secret bundle attached to the training function
         - confirm all 4 run yamls have budget_cap_usd: 50 (per-run wins over shared — verify the merged config in a dry run)
@@ -582,7 +583,7 @@ Listed here so the implementing agent does not silently absorb them.
 
 1. **Perf bundle may underdeliver.** If grad-checkpointing-off OOMs *and* seeded batching's reward parity test fails, step time stays near baseline. Pilot scope shrinks to ~10-15 steps. Decision rules v2 still apply but the "early-stage signal" interpretation gets weaker. No mitigation other than vLLM, which is deferred.
 2. **Mechanism check spec for F-GRPO depends on the current objective implementation.** If the F-GRPO code path in `objectives.py` differs from the published formulation, the mechanism correlation will fail even on a "correct" implementation. The implementing agent must verify the F-GRPO formula matches the citation before building the mechanism check.
-3. **wandb may be inaccessible from Modal.** If outbound HTTPS to `api.wandb.ai` is blocked in the team workspace, fall back to `wandb.init(mode="offline")` + periodic `wandb sync` on the local Modal volume. Diagnostics still land in `step_diagnostics.jsonl` regardless.
+3. **wandb may be inaccessible from Modal.** If outbound HTTPS to `api.wandb.ai` is blocked from your personal workspace, fall back to `wandb.init(mode="offline")` + periodic `wandb sync` after pulling artifacts locally. Diagnostics still land in `step_diagnostics.jsonl` regardless.
 4. **Single-seed risk.** Per-run reward at small N (32 prompts) has high variance. A bad seed could starve a variant of minority-correct prompts and produce a false negative. Multi-seed is deferred to Stage 2 per mentor steer, but the implementing agent should record the seed prominently in the writeup so this caveat is explicit.
 5. **DaPO 3k subset vs prescribed 17k.** Mentor prescribed 17k for the 1-epoch run. Stage 1 uses 3k for budget. Stage 2 must switch to 17k. The implementing agent should not silently keep 3k for Stage 2.
 

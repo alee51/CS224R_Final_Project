@@ -9,7 +9,7 @@ Documentation for the small-compute RL pilot. Organized by *kind*, not chronolog
 ## Layout
 
 - `incidents/` — postmortems and debug logs from things that went wrong. One file per incident, named `MMDD-HH_short-slug.md` (month-day-hour, since the pilot spans only a few days).
-- `operations/` — how to run the pilot: `RUNBOOK.md` (frozen scope) and `MAIN_RUNS_PLAYBOOK.md` (pre-launch checklist + main-run migration plan).
+- `operations/` — how to run the pilot: `RUNBOOK.md` (frozen scope), `MAIN_RUNS_PLAYBOOK.md` (first-matrix post-mortem), `PERSONAL_WORKSPACE_COLLAB.md` (personal Modal profile ops).
 - `decisions/` — decision memos and execution plans. Things we chose and why.
 
 ## Current contents
@@ -31,10 +31,12 @@ Documentation for the small-compute RL pilot. Organized by *kind*, not chronolog
 
 ### Operations
 - **`operations/PILOT_REDESIGN.md`** — **CURRENT SOURCE OF TRUTH** — redesigned 2-stage pilot plan post-structural failures
+- `operations/PERSONAL_WORKSPACE_COLLAB.md` — personal Modal profile: launch, pull, wandb sync, sharing weights
 - `operations/RUNBOOK.md` — *historical* — original frozen pilot scope (orchestrator-owned)
-- `operations/MAIN_RUNS_PLAYBOOK.md` — *handled by separate agent; do not edit*
+- `operations/MAIN_RUNS_PLAYBOOK.md` — *post-mortem* — first matrix lessons (workspace §2 superseded 2026-05-19)
 
 ### Decisions
+- `nancy_explore/decisions.md` — canonical decision log (incl. 2026-05-19 personal Modal workspace)
 - `decisions/decision_memo.md` — pilot decision token (currently `PENDING`)
 - `decisions/training_parallelization_plan.md` — P0–P3 throughput plan
 - `decisions/efficiency_parallelization_note.md` *(superseded; kept for context)*

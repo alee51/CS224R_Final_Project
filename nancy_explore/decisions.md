@@ -1,5 +1,27 @@
 # Decisions
 
+## 2026-05-19: No shared Modal team workspace (Stage 1 pilot)
+
+**Status:** Accepted. Supersedes team-workspace bullets in `pilot/docs/operations/PILOT_REDESIGN.md` until those doc edits landed (now aligned).
+
+**Decision:** The team will **not** use a shared Modal team workspace for the Stage 1 pilot. Each member runs detached jobs on their **personal** Modal workspace (GitHub-username profile).
+
+**Rationale:**
+
+- Modal credits are allocated per personal workspace (~$400 per teammate, ~$600 for the primary operator); credits do not transfer between workspaces.
+- The first pilot attempt already provisioned secrets and volumes (`pilot-artifacts`, `hf-cache`, `huggingface`, `wandb-api-key`) on the operator's personal profile; migrating to a team profile would create empty workspace-scoped resources with no credit benefit.
+
+**Process:**
+
+1. **Launch:** `modal profile current` on your personal profile; `modal run --detach pilot/infra/modal_app.py --run-id <run_id>`.
+2. **Artifacts:** Pull from your workspace volume with `pilot/scripts/pull_run_artifacts.py` into your local clone. Cheat sheet: `pilot/docs/operations/PERSONAL_WORKSPACE_COLLAB.md`.
+3. **Share checkpoints / eval outputs:** HuggingFace Hub, shared drive, or git LFS (mind size limits) — not cross-workspace Modal volumes.
+4. **Metrics:** wandb project `cs224r-minority-voting` for all operators; run names include operator + `run_id`. Offline wandb on Modal + `wandb sync` after pull is acceptable.
+
+**Supersedes:** Early `PILOT_REDESIGN.md` / `MAIN_RUNS_PLAYBOOK.md` guidance requiring `MODAL_PROFILE=team` and team-workspace migration before the matrix.
+
+---
+
 ## 2026-05-18: Answer grading — integer match vs math equivalence
 
 **Status:** Open implementation item for eval; not blocking train reward today.

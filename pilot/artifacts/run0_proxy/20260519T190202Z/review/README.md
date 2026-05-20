@@ -17,15 +17,23 @@ You can also `open index.html` directly, but `file://` may block the KaTeX CDN; 
 
 ## Regenerate after jsonl changes
 
-The build script reads parent artifact files:
+The build script reads parent artifact files (default: **both** raw and cleaned labels):
 
 - `../raw_predictions.jsonl`
+- `../cleaned/predictions.jsonl`
 - `../prompt_inputs.jsonl`
 
 and writes `data.js`. Re-run whenever those files change:
 
 ```bash
 python build_review_dashboard.py
+```
+
+Single-source builds (backward compatible):
+
+```bash
+python build_review_dashboard.py --source raw
+python build_review_dashboard.py --source cleaned
 ```
 
 Then refresh the browser tab.
@@ -42,19 +50,22 @@ Then refresh the browser tab.
 |--------|---------|
 | Select prompt | Click in left list |
 | Next / previous (filtered list) | `j` / `↓` or **Next**; `k` / `↑` or **Prev** |
+| Switch label source (raw ↔ cleaned) | `;` (header pill shows **RAW** / **CLEAN**) |
 | Toggle “What is Run 0?” panel | `i` or click summary in sidebar |
 | Toggle quick stats panel | `s` or click summary in sidebar |
 | Expand / collapse all completions (current prompt) | `l` or checkbox in header |
-| Filter | All · Has correct · No correct · Partial (1–7) |
+| Filter | All · Has correct · No correct · Partial (1–7) — uses **active** source counts |
 | Search | `prompt_id` substring |
 
 Each prompt shows the problem, gold answer, parsed answer, and completions rendered with **KaTeX** (`$...$`, `$$...$$`, `\(...\)`, `\[...\]`). Math in long completions is typeset when you expand a rollout (or press `l` for all eight).
+
+**Delta highlighting:** Amber highlight when **parsed** or **correct** differs between raw and clean (not cluster id; not run-on fallback rejections). Prompts with any such delta show **Δ** in the sidebar.
 
 ## Files
 
 | File | Role |
 |------|------|
-| `build_review_dashboard.py` | Builds `data.js` from jsonl |
+| `build_review_dashboard.py` | Builds `data.js` from jsonl (default `--source both`) |
 | `index.html` | Main UI shell |
 | `app.js` | Client logic |
 | `styles.css` | Layout and theme |

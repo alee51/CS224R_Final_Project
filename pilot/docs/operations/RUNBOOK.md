@@ -3,7 +3,8 @@
 **Orchestrator-owned.** Subagents may not change frozen fields without orchestrator approval.
 
 > Operational guidance:
-> - Pre-/post-pilot, GPU util, Modal workspace, OOM checklist → `./MAIN_RUNS_PLAYBOOK.md`
+> - Pre-/post-pilot, GPU util, Modal workspace history, OOM checklist → `./MAIN_RUNS_PLAYBOOK.md`
+> - Personal Modal profile ops → `./PERSONAL_WORKSPACE_COLLAB.md`
 > - Incident postmortems → `../incidents/`
 > - Decisions, plans, frozen scope → `../decisions/`
 

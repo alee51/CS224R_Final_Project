@@ -34,6 +34,11 @@ Orchestrator uses `pilot/scripts/launch_run.py` to schedule Run0–3 with per-ru
    modal profile current
    ```
 
+   Stage 1 uses each operator's **personal** profile (not a shared team workspace).
+   Secrets and volumes are created on that profile. See
+   `pilot/docs/operations/PERSONAL_WORKSPACE_COLLAB.md` and
+   `nancy_explore/decisions.md` (2026-05-19).
+
 ## Launching runs
 
 **Default:** detached spawn — survives laptop sleep/shutdown. Always pass Modal’s `--detach` flag.

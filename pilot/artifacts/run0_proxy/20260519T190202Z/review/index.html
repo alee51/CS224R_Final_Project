@@ -53,7 +53,8 @@
             <p><strong>This dashboard shows:</strong></p>
             <ul>
               <li>Each problem, gold answer, and all 8 raw model completions</li>
-              <li>Stored <code>parsed_answer</code>, <code>correct</code>, and <code>cluster_id</code> from the Run 0 artifact pipeline</li>
+              <li>Dual labels: stored raw vs cleaned (<code>answer_clean.py</code>) — press <kbd>;</kbd> to switch</li>
+              <li>Fields that differ between sources are highlighted in amber</li>
               <li>Filters to browse prompts by how many rollouts were marked correct</li>
             </ul>
             <p class="panel-note">
@@ -87,13 +88,16 @@
       </aside>
       <main class="main">
         <header class="main-header">
-          <h2 id="detail-title">Select a prompt</h2>
+          <div class="main-header-title">
+            <span id="source-pill" class="source-pill raw" title="Press ; to switch raw ↔ cleaned labels">RAW</span>
+            <h2 id="detail-title">Select a prompt</h2>
+          </div>
           <div class="nav-buttons">
             <label class="expand-all-label" title="Toggle all rollout completions on this prompt (l)">
               <input type="checkbox" id="expand-all" />
               Expand all completions <kbd class="key-hint">l</kbd>
             </label>
-            <span class="nav-hint">j/k nav · l expand · i info · s stats</span>
+            <span class="nav-hint">j/k nav · ; switch source · l expand · i info · s stats</span>
             <button type="button" id="btn-prev" aria-label="Previous prompt">← Prev</button>
             <button type="button" id="btn-next" aria-label="Next prompt">Next →</button>
           </div>

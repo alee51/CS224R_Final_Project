@@ -26,8 +26,10 @@ nearly broke the pilot and are likely to recur if not addressed up front in
 future iterations:
 
 1. **A100 only ~40% utilized** during pilot decode (perf antipattern).
-2. **Modal billing on a personal workspace** when the project should be on the
-   shared team workspace (ops antipattern).
+2. **Modal billing on a personal workspace** — at first launch this was treated as
+   an ops mistake vs. a planned shared team workspace. **Superseded (2026-05-19):**
+   Stage 1 intentionally uses **personal Modal workspaces per operator**; see
+   `nancy_explore/decisions.md` and `./PERSONAL_WORKSPACE_COLLAB.md`.
 3. **OOM "lever not wired" antipattern** — overnight runs crashing repeatedly
    while a knob that didn't actually affect peak memory was being tweaked
    (debugging antipattern).
@@ -119,41 +121,50 @@ acceptance criteria, fallback logic (grad checkpointing OOM handling), and imple
 
 ---
 
-## 2) Modal workspace — post-mortem: the first pilot billed to personal workspace
+## 2) Modal workspace — post-mortem: first pilot on personal workspace
+
+> **Supersession (2026-05-19):** The team will **not** migrate to a shared Modal
+> team workspace for Stage 1. Each operator uses their **personal** workspace
+> (~$400/teammate credits; operator ~$600). Modal credits do not transfer across
+> workspaces. Decision record: `nancy_explore/decisions.md` (2026-05-19). Ops
+> cheat sheet: `./PERSONAL_WORKSPACE_COLLAB.md`. Current spec: `./PILOT_REDESIGN.md`
+> §2 ("Infra discipline").
 
 ### What happened in the first pilot
 
-The first pilot matrix ran entirely on `chicken602` (personal workspace) instead of
-the team workspace. This was a known mistake at launch time, deferred for "after the
-pilot decision token." The matrix failed before getting far enough to make
-justification moot.
+The first pilot matrix ran entirely on `chicken602` (personal workspace). At the
+time, early docs treated that as a mistake vs. a planned shared team workspace;
+the matrix failed for structural reasons (cost, durability, logging) before any
+team-workspace migration happened.
 
 `modal profile list` confirmed: only `chicken602`. Spawn manifests under
 `pilot/artifacts/matrix_logs/` show URLs like
 `https://modal.com/apps/chicken602/main/ap-...`.
 
-### Key gotcha for the next pilot: volumes and secrets are workspace-scoped
+### Key gotcha (still true): volumes and secrets are workspace-scoped
 
-If you flip `MODAL_PROFILE=team` without prep, you will get fresh, empty volumes:
+Modal volumes and secrets are **per workspace**, not global to the GitHub org:
 
-- `pilot/infra/modal_volumes.py` references `ARTIFACTS_VOLUME_NAME = "pilot-artifacts"`
-  and `HF_CACHE_VOLUME_NAME = "hf-cache"`. These are created per workspace.
-  Under `MODAL_PROFILE=team`, you get a new, empty pair. Artifacts from
-  `chicken602` do NOT carry over.
-- `pilot/infra/modal_app.py:80` uses `modal.Secret.from_name("huggingface")`.
-  Secrets are also workspace-scoped. You must recreate the HF token secret in
-  the team workspace or runs fail at `from_pretrained`.
+- `pilot/infra/modal_volumes.py` — `ARTIFACTS_VOLUME_NAME = "pilot-artifacts"`,
+  `HF_CACHE_VOLUME_NAME = "hf-cache"`. Each operator's profile has its own pair.
+  Another teammate's volume does **not** see your artifacts.
+- `pilot/infra/modal_app.py` — `modal.Secret.from_name("huggingface")` and
+  `wandb-api-key` must exist on **the profile you launch from** or runs fail at
+  `from_pretrained` / wandb init.
 
-### Workspace migration for Stage 1 (from the redesign)
+**Historical note:** An early redesign draft required `MODAL_PROFILE=team` and
+`modal profile activate team` before the matrix. That requirement is **withdrawn**.
+Do not switch profiles expecting shared pilot state — use artifact pull + agreed
+off-Modal sharing (HF Hub, Drive, git LFS) instead.
 
-`PILOT_REDESIGN.md` §2 ("Infra discipline") prescribes:
-- Team workspace switch **before** matrix launch, verified with `modal profile current`.
-- Pre-create secrets and volumes in the team workspace.
-- Smoke gate mandatory before the matrix launches (validates the switch is live).
+### Stage 1 collaboration model (current)
 
-Detailed migration steps are in `./PILOT_REDESIGN.md` §2. This playbook's
-original checklist is **historical reference only**; follow the redesign doc for
-the next attempt.
+- **Launch:** `modal profile current` → your personal profile; detached runs only.
+- **During/after run:** `pull_run_artifacts.py` into your local repo clone; optional
+  mid-run volume pull per `../incidents/0519-22_main-matrix-operator-notes.md`.
+- **Share weights/checkpoints:** HuggingFace repo, shared drive, or git LFS (mind
+  size limits) — not cross-workspace Modal volumes.
+- **Metrics:** wandb project `cs224r-minority-voting`; include operator in run name.
 
 ---
 

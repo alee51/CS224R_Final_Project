@@ -35,11 +35,15 @@
   const panelAbout = document.getElementById("panel-about");
   const panelStats = document.getElementById("panel-stats");
   const expandAllEl = document.getElementById("expand-all");
+  const sourcePillEl = document.getElementById("source-pill");
 
   let filteredIndices = prompts.map((_, i) => i);
   let selectedPromptIndex = 0;
   let activeListPos = 0;
   let expandAll = false;
+  let activeSource = "raw";
+
+  const dualSource = Boolean(data.dual_source);
 
   if (location.protocol === "file:") {
     showFileProtocolBanner();
@@ -60,15 +64,40 @@
     return pid.length <= 12 ? pid : pid.slice(0, 8) + "…";
   }
 
+  function getPromptCounts(p) {
+    if (activeSource === "clean") {
+      return {
+        n_correct: p.n_correct_clean ?? p.n_correct ?? 0,
+        n_clusters: p.n_clusters_clean ?? p.n_clusters ?? 0,
+      };
+    }
+    return {
+      n_correct: p.n_correct_raw ?? p.n_correct ?? 0,
+      n_clusters: p.n_clusters_raw ?? p.n_clusters ?? 0,
+    };
+  }
+
+  function getRolloutDisplay(r) {
+    if (r.raw && r.clean) {
+      return activeSource === "clean" ? r.clean : r.raw;
+    }
+    return r;
+  }
+
+  function rolloutHasDelta(r) {
+    if (!r.delta) return false;
+    return r.delta.parsed || r.delta.correct;
+  }
+
   function matchesFilter(p) {
-    const n = p.n_correct;
+    const { n_correct } = getPromptCounts(p);
     switch (filterEl.value) {
       case "has_correct":
-        return n > 0;
+        return n_correct > 0;
       case "no_correct":
-        return n === 0;
+        return n_correct === 0;
       case "partial":
-        return n >= 1 && n <= 7;
+        return n_correct >= 1 && n_correct <= 7;
       default:
         return true;
     }
@@ -106,6 +135,24 @@
     typesetMath(el);
   }
 
+  function updateSourcePill() {
+    if (!sourcePillEl) return;
+    sourcePillEl.textContent = activeSource === "clean" ? "CLEAN" : "RAW";
+    sourcePillEl.className =
+      "source-pill " + (activeSource === "clean" ? "clean" : "raw");
+    sourcePillEl.title = dualSource
+      ? "Press ; to switch raw ↔ cleaned labels"
+      : "Single-source build";
+  }
+
+  function toggleSource() {
+    if (!dualSource) return;
+    activeSource = activeSource === "raw" ? "clean" : "raw";
+    updateSourcePill();
+    renderList();
+    renderDetail();
+  }
+
   function applyFilters() {
     filteredIndices = [];
     for (let i = 0; i < prompts.length; i++) {
@@ -127,19 +174,27 @@
     listEl.innerHTML = "";
     filteredIndices.forEach((promptIdx, pos) => {
       const p = prompts[promptIdx];
+      const { n_correct, n_clusters } = getPromptCounts(p);
       const li = document.createElement("li");
-      li.className = "prompt-item" + (promptIdx === selectedPromptIndex ? " active" : "");
+      let cls = "prompt-item";
+      if (promptIdx === selectedPromptIndex) cls += " active";
+      if (p.has_delta) cls += " has-delta";
+      li.className = cls;
       li.dataset.promptIndex = String(promptIdx);
       li.dataset.listPos = String(pos);
+      const deltaMark = p.has_delta
+        ? '<span class="delta-badge" title="Parsed or correct differs raw vs clean (excl. cluster, run-on)">Δ</span>'
+        : "";
       li.innerHTML = `
         <div class="row-top">
           <span class="idx">#${p.index + 1}</span>
           <span class="pid" title="${escapeAttr(p.prompt_id)}">${escapeHtml(truncateId(p.prompt_id))}</span>
+          ${deltaMark}
         </div>
         <div class="row-bottom">
           <span class="badge badge-gold">gold: ${escapeHtml(p.gold_answer)}</span>
-          <span class="badge badge-correct ${correctBadgeClass(p.n_correct)}">${p.n_correct}/8</span>
-          <span class="badge badge-clusters">${p.n_clusters} clusters</span>
+          <span class="badge badge-correct ${correctBadgeClass(n_correct)}">${n_correct}/8</span>
+          <span class="badge badge-clusters">${n_clusters} clusters</span>
         </div>`;
       li.addEventListener("click", () => selectPrompt(promptIdx, pos));
       listEl.appendChild(li);
@@ -221,21 +276,38 @@
   }
 
   function buildRolloutCard(r, num) {
+    const disp = getRolloutDisplay(r);
     const card = document.createElement("article");
-    card.className = "rollout-card";
-    const statusClass = r.correct ? "status-correct" : "status-wrong";
-    const statusLabel = r.correct ? "Correct" : "Wrong";
+    let cardCls = "rollout-card";
+    if (rolloutHasDelta(r)) cardCls += " has-delta";
+    card.className = cardCls;
+
+    const statusClass = disp.correct ? "status-correct" : "status-wrong";
+    const statusLabel = disp.correct ? "Correct" : "Wrong";
     const toggleId = `completion-${selectedPromptIndex}-${num}`;
+
+    const delta = r.delta || {};
+    const parsedDelta = delta.parsed ? " field-delta" : "";
+    const correctDelta = delta.correct ? " field-delta" : "";
+
+    const isRunon = activeSource === "clean" && Boolean(disp.is_runon_fallback);
+    const answerLabel = isRunon ? "run-on:" : "parsed:";
+
+    let extraMeta = "";
+    if (activeSource === "clean" && disp.extract_path_clean != null && !isRunon) {
+      extraMeta += `<div><dt>extract:</dt><dd>${escapeHtml(String(disp.extract_path_clean))}</dd></div>`;
+    }
 
     card.innerHTML = `
       <div class="rollout-header">
         <span class="rollout-num">Rollout ${num}</span>
-        <span class="badge ${statusClass}">${statusLabel}</span>
+        <span class="badge ${statusClass}${correctDelta}">${statusLabel}</span>
       </div>
       <dl class="rollout-meta">
-        <div><dt>parsed:</dt><dd class="math-content parsed-dd"></dd></div>
-        <div><dt>cluster:</dt><dd>${escapeHtml(String(r.cluster_id))}</dd></div>
-        <div><dt>chars:</dt><dd>${r.char_count}</dd></div>
+        <div><dt>${answerLabel}</dt><dd class="math-content parsed-dd${parsedDelta}"></dd></div>
+        <div><dt>cluster:</dt><dd class="cluster-dd">${escapeHtml(String(disp.cluster_id))}</dd></div>
+        <div><dt>chars:</dt><dd>${r.char_count != null ? r.char_count : (r.completion || "").length}</dd></div>
+        ${extraMeta}
       </dl>
       <button type="button" class="completion-toggle" aria-expanded="false" aria-controls="${toggleId}">
         Show full completion
@@ -245,7 +317,13 @@
       </div>`;
 
     const parsedDd = card.querySelector(".parsed-dd");
-    setMathText(parsedDd, r.parsed_answer);
+    if (isRunon) {
+      parsedDd.classList.add("runon-value");
+      const text = String(disp.parsed_answer || "").trim();
+      parsedDd.textContent = text || "(rejected)";
+    } else {
+      setMathText(parsedDd, disp.parsed_answer);
+    }
 
     const content = card.querySelector(".completion-content");
     content.textContent = r.completion;
@@ -318,10 +396,14 @@
     } else if (key === "s") {
       e.preventDefault();
       toggleDetailsPanel(panelStats);
+    } else if (e.key === ";") {
+      e.preventDefault();
+      toggleSource();
     }
   });
 
   function start() {
+    updateSourcePill();
     applyFilters();
   }
 

@@ -1,0 +1,21 @@
+{
+  "n_rollouts": 4000,
+  "n_prompts": 500,
+  "n_parsed_changed": 514,
+  "n_correct_flipped": 6,
+  "n_correct_stored": 324,
+  "n_correct_clean": 330,
+  "n_correct_gained": 6,
+  "n_correct_lost": 0,
+  "extract_path_clean": {
+    "boxed_balanced": 2016,
+    "answer_line": 853,
+    "runon_rejected": 426,
+    "last_line": 705
+  },
+  "n_runon_rejected": 426,
+  "n_truncated_boxed": 8,
+  "n_nested_boxed_mismatch": 88,
+  "mean_distinct_cluster_stored": 7.176,
+  "mean_distinct_cluster_clean": 6.862
+}
