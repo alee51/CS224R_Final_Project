@@ -29,7 +29,7 @@ future iterations:
 2. **Modal billing on a personal workspace** — at first launch this was treated as
    an ops mistake vs. a planned shared team workspace. **Superseded (2026-05-19):**
    Stage 1 intentionally uses **personal Modal workspaces per operator**; see
-   `nancy_explore/decisions.md` and `./PERSONAL_WORKSPACE_COLLAB.md`.
+   `nancy_explore/narrative/decisions.md` and `./PERSONAL_WORKSPACE_COLLAB.md`.
 3. **OOM "lever not wired" antipattern** — overnight runs crashing repeatedly
    while a knob that didn't actually affect peak memory was being tweaked
    (debugging antipattern).
@@ -126,7 +126,7 @@ acceptance criteria, fallback logic (grad checkpointing OOM handling), and imple
 > **Supersession (2026-05-19):** The team will **not** migrate to a shared Modal
 > team workspace for Stage 1. Each operator uses their **personal** workspace
 > (~$400/teammate credits; operator ~$600). Modal credits do not transfer across
-> workspaces. Decision record: `nancy_explore/decisions.md` (2026-05-19). Ops
+> workspaces. Decision record: `nancy_explore/narrative/decisions.md` (2026-05-19). Ops
 > cheat sheet: `./PERSONAL_WORKSPACE_COLLAB.md`. Current spec: `./PILOT_REDESIGN.md`
 > §2 ("Infra discipline").
 
@@ -225,7 +225,7 @@ roll into Stage 1's redesign but remain valuable as post-mortem reference.
 **Cost blowout.** Measured ~99 min/step × 100 planned steps × 4 runs ≈ ~$1,275,
 against an intended ~$210 pilot budget and a $1,400 team total. The pilot was
 never affordable as written. Stage 1's redesign budget-caps individual runs to
-$50 and the matrix to $200.
+$50 and the matrix burst to $150 for three GRPO runs (`pilot_total` $200 ceiling; see `PILOT_REDESIGN.md` §2). Run 0 is not in the redesign matrix.
 
 **No mid-run durability.** `artifacts_volume.commit()` ran only in the `finally` block;
 no per-step checkpoint; preemption produced zero salvageable weights. `run1_grpo`
@@ -240,7 +240,7 @@ Stage 1 prescribes per-rollout and per-step diagnostics + wandb (Branch C in
 §4.C of `PILOT_REDESIGN.md`).
 
 **Substrate parser bug.** `canonicalize_answer` is documented broken
-(`nancy_explore/decisions.md` 2026-05-18: "strips all `}` and breaks LaTeX").
+(`nancy_explore/narrative/decisions.md` 2026-05-18: "strips all `}` and breaks LaTeX").
 Salvaged step-1 data showed `"12"` and `"\\( 12 \\)"` in different exact-match
 clusters — a known bug, not a new finding. Stage 1 includes a rewritten
 canonicalization (Branch C, §4.C.3 of `PILOT_REDESIGN.md`).

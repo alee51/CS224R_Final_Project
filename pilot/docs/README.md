@@ -1,6 +1,12 @@
 # pilot/docs/
 
-**STATUS:** First matrix pilot launched 2026-05-19, hit multiple structural issues across all 4 GRPO runs, and was terminated mid-run on 2026-05-19. This directory now serves primarily as a historical postmortem archive. **For the current redesigned pilot plan, see [`operations/PILOT_REDESIGN.md`](operations/PILOT_REDESIGN.md)** (this is the source of truth for what runs next).
+**Read first:** [`STATUS.md`](STATUS.md) — operational + research status (2026-05-20).
+
+**Research:** Stage 1 objective lineup is **pending mentor alignment**; do not assume the `inverse_freq` 3-run matrix is final. See [`../../nancy_explore/narrative/briefs/ta_office_hours_20260521.md`](../../nancy_explore/narrative/briefs/ta_office_hours_20260521.md).
+
+**History:** First matrix (2026-05-19) failed structurally; Run 0 complete. Timeline: [`../../nancy_explore/narrative/timeline.md`](../../nancy_explore/narrative/timeline.md).
+
+**Implementation (when cleared):** [`operations/PILOT_REDESIGN.md`](operations/PILOT_REDESIGN.md) — infra spec (caps, smoke, checkpointing); objective may change.
 
 ---
 
@@ -25,18 +31,15 @@ Documentation for the small-compute RL pilot. Organized by *kind*, not chronolog
 - `incidents/0519-24_modal-observability-budget-gaps.md` — billing API vs UI metrics, no wandb, YAML budget gaps
 - `incidents/0519-25_blocking-launch-client-abort.md` — first Run0 killed by blocking client; use `--detach` + spawn
 
-> **Note:** `pilot/docs/issue.md` duplicates `0519-13`; prefer the incident file for postmortem structure.
-- `incidents/0519-21_run0-silent-rollout-progress-investigation.md` — GPU active but zero logs after model load; logging vs silent `generate`
-- `incidents/0519-22_main-matrix-operator-notes.md` — main-matrix monitoring, step timing, mid-run pull, containers FAQ
-
 ### Operations
-- **`operations/PILOT_REDESIGN.md`** — **CURRENT SOURCE OF TRUTH** — redesigned 2-stage pilot plan post-structural failures
+- **`operations/PILOT_REDESIGN.md`** — **infra / runbook** — caps, smoke, checkpointing (objectives may change; see `STATUS.md`)
 - `operations/PERSONAL_WORKSPACE_COLLAB.md` — personal Modal profile: launch, pull, wandb sync, sharing weights
 - `operations/RUNBOOK.md` — *historical* — original frozen pilot scope (orchestrator-owned)
 - `operations/MAIN_RUNS_PLAYBOOK.md` — *post-mortem* — first matrix lessons (workspace §2 superseded 2026-05-19)
 
 ### Decisions
-- `nancy_explore/decisions.md` — canonical decision log (incl. 2026-05-19 personal Modal workspace)
+- `decisions/20260519_skip_run0_stage1_redesign.md` — Stage 1 matrix excludes `run0_proxy`; use `20260519T190202Z` artifacts
+- `nancy_explore/narrative/decisions.md` — canonical decision log (incl. 2026-05-19 personal Modal workspace)
 - `decisions/decision_memo.md` — pilot decision token (currently `PENDING`)
 - `decisions/training_parallelization_plan.md` — P0–P3 throughput plan
 - `decisions/efficiency_parallelization_note.md` *(superseded; kept for context)*

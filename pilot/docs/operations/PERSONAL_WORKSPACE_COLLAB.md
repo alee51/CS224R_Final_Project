@@ -1,6 +1,6 @@
 # Personal Modal workspace — operator cheat sheet
 
-**Decision:** Stage 1 pilot runs on each operator's **personal** Modal profile, not a shared team workspace. See `nancy_explore/decisions.md` (2026-05-19).
+**Decision:** Stage 1 pilot runs on each operator's **personal** Modal profile, not a shared team workspace. See `nancy_explore/narrative/decisions.md` (2026-05-19).
 
 ---
 
@@ -16,14 +16,30 @@ One-time per machine/profile: `modal token new`, `modal secret create huggingfac
 
 ---
 
-## Detached run
+## Config dry-run (before smoke / matrix)
 
 ```bash
-modal run --detach pilot/infra/modal_app.py --run-id run1_grpo
+python -c "from pilot.infra.modal_launch import launch_run; launch_run('smoke', dry_run=True)"
+```
+
+## Smoke gate (§6 — run before matrix)
+
+```bash
+./pilot/scripts/modal_run_pilot.sh --run-id smoke
+```
+
+Config: `pilot/configs/smoke.yaml` (3 steps, 32 prompts, `$10` cap). Preempt/resume test: kill app mid step 2, then re-run same command.
+
+## Detached run (default)
+
+```bash
+./pilot/scripts/modal_run_pilot.sh --run-id run1_grpo
 # wait for "Spawned function call id:" — safe to close laptop
 ```
 
-Matrix (four parallel): `./pilot/scripts/launch_pilot_matrix.sh` or repeat `--detach` per `run_id`.
+Interactive debug (laptop must stay on): add `--wait`.
+
+Matrix: `./pilot/scripts/launch_pilot_matrix.sh` (three GRPO runs; no `run0_proxy` — see `pilot/docs/decisions/20260519_skip_run0_stage1_redesign.md`).
 
 ---
 

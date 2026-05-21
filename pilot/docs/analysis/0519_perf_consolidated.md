@@ -52,7 +52,7 @@ Sources crawled: `0519_perf_audit.md`, `0519_salvage_step1_analysis.md`, `0519_r
   - `0519-12_grpo-oom-root-cause.md` §5.3.a calls the KL term "sub-noise" at 0.001 and marks experiment impact as negligible.
   - No other document takes a position, and `shared_train.yaml` freezes `kl_coef: 0.001` as a shared hyperparameter across all four matrix runs. Setting it to 0 would require a labeled branch and should not be done silently.
 5. **A100 utilization quoted as ~30% vs ~40%**
-  - `0519-21_run0-silent-rollout-progress-investigation.md` and `pilot/docs/issue.md` report GPU utilization "~30%" during Run0 rollouts.
+  - `0519-21_run0-silent-rollout-progress-investigation.md` and `pilot/docs/incidents/0519-13_progress-log-milestone-misfire.md` report GPU utilization "~30%" during Run0 rollouts.
   - `MAIN_RUNS_PLAYBOOK.md` §1 states "~40% utilized" during pilot decode.
   - These may refer to different measurement windows or runs (Run0 at 1024 tokens vs GRPO at 2048 tokens). Neither is precisely defined.
 

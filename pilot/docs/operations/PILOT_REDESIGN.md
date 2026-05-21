@@ -1,5 +1,7 @@
 # Pilot Redesign — Stage 1 Spec
 
+> **2026-05-20:** Research direction under review. This doc is the **infra + runbook** source of truth; the **3-run objective set** (`inverse_freq` etc.) may change after mentor office hours. See [`../../nancy_explore/narrative/briefs/ta_office_hours_20260521.md`](../../nancy_explore/narrative/briefs/ta_office_hours_20260521.md) and [`../STATUS.md`](../STATUS.md).
+
 Status: **drafted 2026-05-19, ready for independent audit**. Supersedes the matrix-launch instructions in `MAIN_RUNS_PLAYBOOK.md` for the next pilot attempt. The original `final_decision.md` framing (Tier 1 vs Tier 2 escalation) is preserved; this doc revises the implementation, budget, decision rules, and observability stack only.
 
 ---
@@ -8,17 +10,19 @@ Status: **drafted 2026-05-19, ready for independent audit**. Supersedes the matr
 
 The first pilot launch (2026-05-19, runs `run0_proxy`, `run1_grpo`, `run1b_grpo`, `run2_inverse_freq`, `run3_f_grpo`) failed structurally, not by bad luck. Root causes documented in `pilot/docs/incidents/0519-11` through `0519-25` and synthesized in `pilot/docs/analysis/0519_perf_consolidated.md`:
 
+**Run 0 waived for Stage 1.** Pre-redesign `run0_proxy` already completed and was analyzed; do not re-run in the redesign matrix. Use artifacts `pilot/artifacts/run0_proxy/20260519T190202Z/` and handoff `RUN0_HANDOFF_FOR_REVIEW.md` there. Decision: [`../decisions/20260519_skip_run0_stage1_redesign.md`](../decisions/20260519_skip_run0_stage1_redesign.md).
+
 - **Cost mismatch.** Measured ~99 min/step × 100 planned steps × 4 runs ≈ ~$1,275, against an intended ~$210 pilot budget and a $1,400 team total. The pilot was never affordable as written.
 - **No mid-run durability.** `artifacts_volume.commit()` ran only in the `finally` block; no per-step checkpoint; preemption produced zero salvageable weights. `run1_grpo` entered a death spiral: preempt → restart → bootstrap wipes `raw_predictions.jsonl` → replay step 1 → preempt mid-step-2 → repeat.
 - **Logging gaps.** `completed N/500` milestone math broke after the OOM patch (`done % 25 == 0` with mb=8); first log fired 200/500 instead of 25/500. No mid-rollout heartbeat. No wandb. Modal volume not committed mid-run, so `volume get` returned stale data.
-- **Substrate parser bug.** `canonicalize_answer` is documented broken (`nancy_explore/decisions.md` 2026-05-18: "strips all `}` and breaks LaTeX"). Salvaged step-1 data showed `"12"` and `"\\( 12 \\)"` in different exact-match clusters — a known bug, not a new finding.
+- **Substrate parser bug.** `canonicalize_answer` is documented broken (`nancy_explore/narrative/decisions.md` 2026-05-18: "strips all `}` and breaks LaTeX"). Salvaged step-1 data showed `"12"` and `"\\( 12 \\)"` in different exact-match clusters — a known bug, not a new finding.
 
 The current redesign is **Stage 1 of a 2-stage plan**:
 
-- **Stage 1 (this doc):** ~$200 matrix to validate the rig, the substrate, and the mechanism. Decides which variant gets Stage 2.
+- **Stage 1 (this doc):** ~$150 GRPO matrix burst (3 × $50/run) plus smoke (~$10) to validate the rig, training mechanisms, and eval stack. Decides which variant gets Stage 2. Run 0 validity evidence comes from pre-redesign artifacts only (no matrix slot).
 - **Stage 2 (post-pilot):** mentor-prescribed 400-step / DaPO-17k / 1-epoch headline run on the winning variant, evaluated on AIME-25 + AIME-26 + Beyond-AIME + HMMT + Minerva at 64-sample Pass@k + Cover@τ. Not in scope here.
 
-Research framing: the project is **"kill the LM-judge"** — keep Poly-EPO's set-RL + minority-voting objective structure, replace the expensive Qwen-3-4B-Instruct clustering judge with a cheap substrate (exact-match canonicalization for Stage 1). Reference: `nancy_explore/why_stop_poly_epo.md`, `nancy_explore/context.md`. `inverse_freq` is **one mathematical instantiation** of "minority-weight × reward" — not the only one, but the one Stage 1 tests.
+Research framing: the project is **"kill the LM-judge"** — keep Poly-EPO's set-RL + minority-voting objective structure, replace the expensive Qwen-3-4B-Instruct clustering judge with a cheap substrate (exact-match canonicalization for Stage 1). Reference: `nancy_explore/archive/poly_epo/why_stop.md`, `nancy_explore/narrative/context.md`. `inverse_freq` is **one mathematical instantiation** of "minority-weight × reward" — not the only one, but the one Stage 1 tests.
 
 ---
 
@@ -28,21 +32,21 @@ These are not re-negotiable in the implementing agent's scope.
 
 **Scope.**
 
-- Single-direction Tier 1 framing (per `nancy_explore/agent_outputs/final_decision.md`).
-- Four runs: `run0_proxy` (validity check, no training), `run1_grpo` (vanilla GRPO baseline), `run2_inverse_freq` (per-prompt inverse-cluster-frequency advantage weighting), `run3_f_grpo` (F-GRPO novelty separator).
+- Single-direction Tier 1 framing (per `nancy_explore/agents/outputs/final_decision.md`).
+- Three GRPO matrix runs: `run1_grpo` (vanilla GRPO baseline), `run2_inverse_freq` (per-prompt inverse-cluster-frequency advantage weighting), `run3_f_grpo` (F-GRPO novelty separator). `run0_proxy` is **out of matrix scope** (see §1 and [`../decisions/20260519_skip_run0_stage1_redesign.md`](../decisions/20260519_skip_run0_stage1_redesign.md)).
 - Single seed: **42** across all matrix runs. No multi-seed.
 
 **Budget.**
 
 - **$50/run hard cap.** Enforced in code, including during the train phase (current `budget_cap_usd` is only checked between GRPO steps; this changes).
-- **$200 matrix burst cap.** Total bundle of in-flight runs cannot exceed this.
-- Team total: $1,400 (Modal credits). Stage 1 takes ~$200; Stage 2 reserved ~$720; ~$480 slack.
+- **$150 matrix burst cap** (3 GRPO runs × $50). Total in-flight matrix spend cannot exceed this.
+- **`pilot_total` $200** in `preflight_lock.json` is the Stage 1 ceiling (smoke + matrix + headroom); matrix nominal is $150.
+- Team total: $1,400 (Modal credits). Stage 1 matrix + smoke ≈ ~$160 nominal; Stage 2 reserved ~$720; remainder slack.
 
 **Step / token budget.**
 
 - **Target ~25 steps/run** for `inverse_freq`, `f_grpo`, and `grpo` baseline. Actual stop is whichever hits first: 25 steps OR $50 cap.
-- `run0_proxy`: 500 prompts, no training (validity gate only).
-- `**max_new_tokens = 1536`** for both train and eval. Aligned across both. Tile-aligned for A100 bf16. Justification: salvage data shows median completion 636, p90 1531; completions past 1500 in the salvage exhibited repetition pathology (not signal we lose by truncating). Note: `execute.py:63,152` currently clamps to 1024 — Branch B lifts the clamp to 1536 so train/eval/Run0 all share the same horizon.
+- `**max_new_tokens = 1536`** for both train and eval. Aligned across both. Tile-aligned for A100 bf16. Justification: salvage data shows median completion 636, p90 1531; completions past 1500 in the salvage exhibited repetition pathology (not signal we lose by truncating). Note: `execute.py:63,152` currently clamps to 1024 — Branch B lifts the clamp to 1536 so train and eval share the same horizon. (Optional manual `run0_proxy` re-runs use the same cap via yaml.)
 - `batch_prompts = 32`, `rollouts_per_prompt = 8`. Unchanged.
 
 **Data pinning.**
@@ -54,11 +58,11 @@ These are not re-negotiable in the implementing agent's scope.
 - **Pilot eval: AIME-25 only, 16-sample Pass@k.** Cover@τ computed on those 16 samples.
 - Full mentor-prescribed eval (AIME-26 + Beyond-AIME + HMMT + Minerva at 64-sample) is **Stage 2 only**.
 - **Mini-eval every 5 steps** during training (at steps 5, 10, 15, 20). ~5 min/eval, ~$0.85/run total mid-training eval cost. Full end-of-run eval at step 25 (or $50 cap, whichever first); no mini-eval at step 25 to avoid double-eval.
-- **Qualitative CoT diversity sample** at end of run: emit 16 generations × 5 random prompts to a separate artifact file for manual inspection (mentor-prescribed in `ifdita_meeting_transcript.md`).
+- **Qualitative CoT diversity sample** at end of run: emit 16 generations × 5 random prompts to a separate artifact file for manual inspection (mentor-prescribed in `nancy_explore/reference/mentor_meeting_20260507.md`).
 
 **Infra discipline.**
 
-- **Personal Modal workspace per operator** — no shared team workspace for Stage 1 (see `nancy_explore/decisions.md` 2026-05-19). Each member runs on their own profile (`modal profile current` should show their GitHub-username workspace, e.g. `chicken602`). Secrets and volumes (`pilot-artifacts`, `hf-cache`) are **per workspace**; teammates do not share Modal volumes. After runs, pull artifacts locally (`pilot/scripts/pull_run_artifacts.py`); share checkpoints and large eval outputs via git LFS, shared drive, or HuggingFace Hub — not by assuming a shared Modal volume.
+- **Personal Modal workspace per operator** — no shared team workspace for Stage 1 (see `nancy_explore/narrative/decisions.md` 2026-05-19). Each member runs on their own profile (`modal profile current` should show their GitHub-username workspace, e.g. `chicken602`). Secrets and volumes (`pilot-artifacts`, `hf-cache`) are **per workspace**; teammates do not share Modal volumes. After runs, pull artifacts locally (`pilot/scripts/pull_run_artifacts.py`); share checkpoints and large eval outputs via git LFS, shared drive, or HuggingFace Hub — not by assuming a shared Modal volume.
 - **Cross-team observability:** wandb project `cs224r-minority-voting` (same project name for all operators; run names include operator + `run_id`). Offline `wandb` on Modal + `wandb sync` locally is fine. See `./PERSONAL_WORKSPACE_COLLAB.md` for a command cheat sheet.
 - **Detached launches only** (`modal run --detach` or equivalent). No client-bound runs.
 - **Smoke gate mandatory** before matrix launch. Spec in §6.
@@ -115,8 +119,8 @@ Replaces the current "Answer: " template in `pilot/train/rollout_engine.py:15-19
             │
             ▼
    ┌────────────────────────────────────────────────────────────┐
-   │  Matrix launch (4 parallel runs, detached, single seed 42) │
-   │   run0_proxy  +  run1_grpo  +  run2_inverse_freq  +  run3  │
+   │  Matrix launch (3 parallel runs, detached, single seed 42) │
+   │   run1_grpo  +  run2_inverse_freq  +  run3_f_grpo        │
    └────────────────────────────────────────────────────────────┘
 ```
 
@@ -244,7 +248,7 @@ budget_cap_usd: 50.0          # ENFORCED at every step boundary AND every 60s du
 
 (Optional: remove `budget_cap_usd` from per-run yamls and rely on shared. Pick one approach and apply uniformly.)
 
-**Checkpoint retention.** Implement GC after each successful new checkpoint: list `checkpoint_step*` dirs, keep step 1 and the two most-recent, delete the rest. A 25-step run otherwise produces ~85 GB of stale checkpoints × 4 runs = ~340 GB, which will exhaust the artifacts volume.
+**Checkpoint retention.** Implement GC after each successful new checkpoint: list `checkpoint_step*` dirs, keep step 1 and the two most-recent, delete the rest. A 25-step run otherwise produces ~85 GB of stale checkpoints × 3 matrix runs = ~255 GB, which can exhaust the artifacts volume without GC.
 
 **Acceptance:** in smoke, kill the container mid-step-2 (per §6). Restart. Verify `training_state.json` cursor is read, training resumes at step 2 (not step 1), step 1's completions in `raw_predictions.jsonl` are retained, and final file has 3×256=768 lines after the run finishes step 3.
 
@@ -483,7 +487,7 @@ Two layers: **mechanism layer** (checked from step 1, cheap, observable in train
 | Training `mean_reward` rolling-mean over last 3 steps drops > 40% below the step-1 baseline **AND** `advantage_var` has also collapsed > 50% | Kill that variant. (Two-signal AND avoids unlucky-sampling false alarms.)                     |
 | Mini-eval Pass@1 drops > 5pt below the step-5 baseline for **2 consecutive eval checkpoints**                                                | Kill that variant. (Patient — single bad eval is noise; two is signal.)                       |
 | Any single run hits `$50` cap before step 25                                                                                                 | Stop run, log, debug. Do not push through the cap.                                            |
-| Matrix burst projected > `$200` based on extrapolated step time                                                                              | Pause launch, reconsider.                                                                     |
+| Matrix burst projected > `$150` based on extrapolated step time                                                                              | Pause launch, reconsider.                                                                     |
 
 
 ### End-of-pilot outcome interpretation
@@ -502,7 +506,7 @@ After step ~25 (or $50 cap, whichever first), all surviving runs end with a full
 
 ### Qualitative artifact
 
-At end of every surviving run, dump 16 generations × 5 random AIME-25 prompts to `qual_diversity_sample.jsonl`. Manual inspection check: do the generations show *different reasoning paths* or are they all the same chain with minor token-level perturbations? Mentor-prescribed signal for CoT diversity (`ifdita_meeting_transcript.md`). This does not gate the Stage 2 decision but informs the writeup.
+At end of every surviving run, dump 16 generations × 5 random AIME-25 prompts to `qual_diversity_sample.jsonl`. Manual inspection check: do the generations show *different reasoning paths* or are they all the same chain with minor token-level perturbations? Mentor-prescribed signal for CoT diversity (`nancy_explore/reference/mentor_meeting_20260507.md`). This does not gate the Stage 2 decision but informs the writeup.
 
 ---
 
@@ -566,13 +570,13 @@ T+2d  Pre-matrix checks
         - modal profile current → expected personal profile; secrets (`huggingface`, `wandb-api-key`) exist in *that* workspace
         - grep budget_cap enforcement is wired into the train loop, not only between steps
         - confirm wandb secret bundle attached to the training function
-        - confirm all 4 run yamls have budget_cap_usd: 50 (per-run wins over shared — verify the merged config in a dry run)
+        - confirm all 3 matrix run yamls have budget_cap_usd: 50 (per-run wins over shared — verify the merged config in a dry run)
         - confirm execute.py:63 and :152 read max_new_tokens=1536, not 1024
 
 T+3d  Matrix launch
-        - run0_proxy + run1_grpo + run2_inverse_freq + run3_f_grpo, all 4 detached, single seed 42
+        - run1_grpo + run2_inverse_freq + run3_f_grpo, all 3 detached, single seed 42 (`./pilot/scripts/launch_pilot_matrix.sh`)
         - Operator monitors wandb in real time; volume pulls if any run looks anomalous
-        - Matrix burst projection updated every 5 minutes against the $200 cap
+        - Matrix burst projection updated every 5 minutes against the $150 cap
 ```
 
 ---
@@ -594,7 +598,7 @@ Listed here so the implementing agent does not silently absorb them.
 These are out of scope for the Stage 1 implementation but listed so they are not lost.
 
 - **Math-Verify grader** for HMMT-Nov / Beyond-AIME / MATH-500 (per `decisions.md` 2026-05-18). Stage 2 prerequisite, not Stage 1.
-- `**gate_decision.json` re-evaluation.** Current state is `PIVOT_WORST_SUBSET` based on `minority_correct_rate=0.000` from a broken-parser run0. After Stage 1's `run0_proxy` completes with the fixed parser, re-run the gate; the 0.000 was likely a parser artifact. Decide then whether the gate stays load-bearing or is retired.
+- **`gate_decision.json` re-evaluation.** Current state is `PIVOT_WORST_SUBSET` based on `minority_correct_rate=0.000` from pre-redesign Run 0 (`pilot/artifacts/run0_proxy/20260519T190202Z/`). Re-run or revise the gate using those artifacts plus cleaned offline analysis — **do not** schedule a redesign matrix re-run of `run0_proxy` for this. Decide whether the gate stays load-bearing or is retired after review of `RUN0_HANDOFF_FOR_REVIEW.md`.
 - **Stage 2 rollback plan** if the escalated 400-step run also fails to differentiate variants. Documented fallbacks in `final_decision.md` (substrate-ablation paper, head-to-head minority-objectives paper, pre-registered negative-result paper). Choose post-pilot, with eval data in hand.
 - **Pass@k k-value bump for Stage 2.** Mentor prescribes 64-sample at eval; Stage 2 should use this; Stage 1 uses 16. Confirm at Stage 2 planning.
 - **Multi-seed for Stage 2.** Probably 2 seeds on the Stage 1 winner per mentor practice; not in Stage 1.
@@ -605,7 +609,7 @@ These are out of scope for the Stage 1 implementation but listed so they are not
 
 Each implementing Cursor agent should receive: this doc, the relevant section (§4.A, §4.B, or §4.C), and a constraint that it may not change anything outside that branch's "files touched" list without an explicit handoff back to the operator. Model and tooling are chosen by the orchestrator from context — this doc does not prescribe one.
 
-Branch C additionally needs `objectives.py` and `nancy_explore/agent_outputs/final_decision.md` in context for mechanism-check derivation (same agent session is fine).
+Branch C additionally needs `objectives.py` and `nancy_explore/agents/outputs/final_decision.md` in context for mechanism-check derivation (same agent session is fine).
 
 After all three branches are complete, merge + audit + smoke are further Cursor agent tasks (or the same orchestrator session). Matrix launch is operator-driven, not agent-driven (per `MAIN_RUNS_PLAYBOOK.md` — operator owns the launch button).
 
