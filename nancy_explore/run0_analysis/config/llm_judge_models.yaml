@@ -1,0 +1,22 @@
+# LLM judge tier → API model IDs per provider.
+# Used by Run 0 offline Analysis A (see nancy_explore/run0_analysis/run0_offline_analyses_20260521.md).
+#
+# Executor sets `provider` to one of: google | anthropic | openai
+# Analysis A primary run uses tier `cheap`; optional cross-check uses `moderate`.
+
+default_provider: google
+
+providers:
+  google:
+    # AI Studio free tier (2026-05): 2.0-flash quota exhausted; UI "3.1 flash" → API id below.
+    cheap: gemini-3.1-flash-lite
+    moderate: gemini-2.5-flash
+    expensive: gemini-2.5-pro
+  anthropic:
+    cheap: claude-haiku-4-5
+    moderate: claude-sonnet-4-6
+    expensive: claude-opus-4-6
+  openai:
+    cheap: gpt-4o-mini
+    moderate: gpt-4.1-mini
+    expensive: gpt-4.1

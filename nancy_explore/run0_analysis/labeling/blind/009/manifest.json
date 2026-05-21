@@ -1,0 +1,9 @@
+{
+  "chunk": "009",
+  "chunk_index": 9,
+  "n_rows": 336,
+  "input": "chunks/chunk_009_in.tsv",
+  "keys": "chunks/chunk_009_keys.tsv",
+  "output_a": "blind/009/fbf3234c.tsv",
+  "output_b": "blind/009/2aa9b77c.tsv"
+}

@@ -1,0 +1,82 @@
+id	problem	gold	tail	result_A	result_B
+115	A harmonic progression is a sequence of numbers such that their reciprocals are in arithmetic progression. Let $S_n$ represent the sum of the first $n$ terms of the harmonic progression; for example, $S_3$ represents the sum of the first three terms. If the first three terms of a harmonic progression are $3, 4, 6$, find the value of $S_4$.	25	"irst four terms of the harmonic progression: $3 + 4 + 6 + \frac{3}{2} = 13\frac{1}{2}$.
+
+Answer: $\boxed{13\frac{1}{2}}$"	13\frac{1}{2}	13 1/2
+124	Find $n$ so that $4^{4^{4^2}}=2^{8^n}$.	11	"both expressions have the same exponent, the equation holds true for any value of n. 
+
+Answer: n can be any real number."	no_answer	n can be any real number
+157	"The two figures shown are made of unit squares. What is the positive difference of the perimeters, in units?
+
+[asy]
+draw((0,0)--(0,1)--(5,1)--(5,0)--cycle,linewidth(1));
+draw((1,0)--(1,2)--(4,2)--(4,0),linewidth(1));
+draw((2,-1)--(2,3)--(3,3)--(3,-1)--cycle,linewidth(1));
+draw((7,0)--(7,2)--(12,2)--(12,0)--cycle,linewidth(1));
+draw((7,1)--(12,1),linewidth(1));
+draw((8,0)--(8,2),linewidth(1));
+draw((9,0)--(9,2),linewidth(1));
+draw((10,0)--(10,2),linewidth(1));
+draw((11,0)--(11,2),linewidth(1));
+
+[/asy]"	4	" 2 + 12 \div 2 = 13$ units.
+The positive difference of the perimeters is $42 - 13 = \boxed{29}$ units.
+The answer is: 29"	29	10
+158	"The two figures shown are made of unit squares. What is the positive difference of the perimeters, in units?
+
+[asy]
+draw((0,0)--(0,1)--(5,1)--(5,0)--cycle,linewidth(1));
+draw((1,0)--(1,2)--(4,2)--(4,0),linewidth(1));
+draw((2,-1)--(2,3)--(3,3)--(3,-1)--cycle,linewidth(1));
+draw((7,0)--(7,2)--(12,2)--(12,0)--cycle,linewidth(1));
+draw((7,1)--(12,1),linewidth(1));
+draw((8,0)--(8,2),linewidth(1));
+draw((9,0)--(9,2),linewidth(1));
+draw((10,0)--(10,2),linewidth(1));
+draw((11,0)--(11,2),linewidth(1));
+
+[/asy]"	4	"from the larger perimeter.
+Step 9: The positive difference of the perimeters is 14 units - 14 units = 0 units.
+Answer: 0"	0	29
+159	"The two figures shown are made of unit squares. What is the positive difference of the perimeters, in units?
+
+[asy]
+draw((0,0)--(0,1)--(5,1)--(5,0)--cycle,linewidth(1));
+draw((1,0)--(1,2)--(4,2)--(4,0),linewidth(1));
+draw((2,-1)--(2,3)--(3,3)--(3,-1)--cycle,linewidth(1));
+draw((7,0)--(7,2)--(12,2)--(12,0)--cycle,linewidth(1));
+draw((7,1)--(12,1),linewidth(1));
+draw((8,0)--(8,2),linewidth(1));
+draw((9,0)--(9,2),linewidth(1));
+draw((10,0)--(10,2),linewidth(1));
+draw((11,0)--(11,2),linewidth(1));
+
+[/asy]"	4	"eters:
+\[ \text{Positive Difference} = \text{Perimeter}_1 - \text{Perimeter}_2 = 12 - 10 = 2 \text{ units} \]
+
+Answer: 2"	2	0
+199	"All students at Adams High School and at Baker High School take a certain exam. The average scores for boys, for girls, and for boys and girls combined, at Adams HS and Baker HS are shown in the table, as is the average for boys at the two schools combined. What is the average score for the girls at the two schools combined?
+
+\[
+\begin{array}{c c c c} 
+{} & \textbf{Adams} & \textbf{Baker} & \textbf{Adams \text{ and } Baker}  \\
+\textbf{Boys:} & 71 & 81 & 79   \\
+\textbf{Girls:} & 76 & 90 & ?   \\
+\textbf{Boys \text{ and } Girls:} & 74 & 84 &   \\
+\end{array}
+\]
+
+Find the average score for the girls at the two schools combined."	84	"17: We get G_avg = 82.
+Step 18: Therefore, the average score for the girls at the two schools combined is 82.
+Answer: 82"	82	runon
+349	A cross-pentomino is a shape that consists of a unit square and four other unit squares, each sharing a different edge with the first square. If a cross-pentomino is inscribed in a circle of radius $R$, what is $100R^2$?	250	"^2$:
+\[
+100R^2 = 100(3 + 2\sqrt{2}) = 300 + 200\sqrt{2}
+\]
+Thus, the value of $100R^2$ is \(\boxed{300 + 200\sqrt{2}}\)."	300+200\sqrt{2}	300 + 200\sqrt{2}
+371	At summer camp, there are $20$ campers in each of the swimming class, the archery class, and the rock climbing class. Each camper is in at least one of these classes. If $4$ campers are in all three classes, and $24$ campers are in exactly one of the classes, how many campers are in exactly two classes?	12	"\).
+Step 7:  Checking the options provided:
+A. $4$
+B. $6$
+C. $8$
+D. $10$
+Step 8:  The correct answer is \( \boxed{D} \)."	needs_review	D

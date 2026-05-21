@@ -1,0 +1,171 @@
+id	problem	gold	tail	result_A	result_B
+43	Find a positive integer $n$ such that if you place the digit $2$ on the left and the digit $1$ on the right of $n$, the resulting number is equal to $33n$.	87	refore, the problem as stated has no solution under the given constraints. However, if we re-evaluate the problem with a	no_answer	runon
+49	Sides \(\overline{AB}\) and \(\overline{AC}\) of equilateral triangle \(ABC\) are tangent to a circle at points \(B\) and \(C\) respectively. Find the fraction of the area of \(\triangle ABC\) that lies outside the circle. The original answer is in the form \(\frac{k}{m}-\frac{n\sqrt{3}\pi}{p}\). Please give the value of \(k + m + n + p\).	38	"d \(AC = 3x\), we can use the tangent-secant theorem to find the ratio.
+
+**Answer:**
+\[ \frac{EF}{AB} = \frac{4}{5} \]
+
+"	runon	needs_review
+55	Sides \(\overline{AB}\) and \(\overline{AC}\) of equilateral triangle \(ABC\) are tangent to a circle at points \(B\) and \(C\) respectively. Find the fraction of the area of \(\triangle ABC\) that lies outside the circle. The original answer is in the form \(\frac{k}{m}-\frac{n\sqrt{3}\pi}{p}\). Please give the value of \(k + m + n + p\).	38	"nd \( p = 9 \). Therefore, the value of \( k + m + n + p \) is:
+\[ 9 + 9 + 1 + 9 = 28. \]
+
+The final answer is \( \boxed"	28	needs_review
+60	A scanning code consists of a $7 \times 7$ grid of squares, with some of its squares colored black and the rest colored white. There must be at least one square of each color in this grid of $49$ squares. A scanning code is called symmetric if its look does not change when the entire square is rotated by a multiple of $90 ^{\circ}$ counterclockwise around its center, nor when it is reflected across a line joining opposite corners or a line joining midpoints of opposite sides. What is the total number of possible symmetric scanning codes?	1022	"mes 8^8$ from our total.
+
+Therefore, the total number of possible symmetric scanning codes is $8^{32} - 7^7 \times 8^8$."	runon	needs_review
+79	"In preparation for a game of Fish, Carl must deal $48$ cards to $6$ players. For each card that he deals, he runs through the entirety of the following process:
+
+1. He gives a card to a random player.
+2. A player $Z$ is randomly chosen from the set of players who have at least as many cards as every other player (i.e., $Z$ has the most cards or is tied for having the most cards).
+3. A player $D$ is randomly chosen from the set of players other than $Z$ who have at most as many cards as every other player (i.e., $D$ has the fewest cards or is tied for having the fewest cards).
+4. $Z$ gives one card to $D$.
+
+He repeats steps $1-4$ for each card dealt, including the last card. After all the cards have been dealt, what is the probability that each player has exactly $8$ cards?"	1	"t and applying mathematical reasoning to arrive at the correct answer.
+
+Answer: $\frac{48!}{(8!)^7 \cdot 4782969000000}$"	48!/(8!)^7*4782969000000	needs_review
+80	"In preparation for a game of Fish, Carl must deal $48$ cards to $6$ players. For each card that he deals, he runs through the entirety of the following process:
+
+1. He gives a card to a random player.
+2. A player $Z$ is randomly chosen from the set of players who have at least as many cards as every other player (i.e., $Z$ has the most cards or is tied for having the most cards).
+3. A player $D$ is randomly chosen from the set of players other than $Z$ who have at most as many cards as every other player (i.e., $D$ has the fewest cards or is tied for having the fewest cards).
+4. $Z$ gives one card to $D$.
+
+He repeats steps $1-4$ for each card dealt, including the last card. After all the cards have been dealt, what is the probability that each player has exactly $8$ cards?"	1	"{8} \times \binom{40}{8} \times \binom{32}{8} \times \binom{24}{8} \times \binom{16}{8} \times \binom{8}{8}}{6^{48}}}
+\]"	runon	needs_review
+128	Let $ABCDEF$ be a regular hexagon with side length $6$, and construct squares $ABGH$, $BCIJ$, $CDKL$, $DEMN$, $EFOP$, and $FAQR$ outside the hexagon. Find the perimeter of the dodecagon $HGJILKNMPORQ$.	72	" 12 \times 6\sqrt{2} = 72\sqrt{2} \]
+
+Thus, the perimeter of the dodecagon \(HGJILKNMPORQ\) is:
+\[ \boxed{72\sqrt{2}} \]"	72sqrt2	72\sqrt{2}
+146	The circle centered at $(2,-1)$ and with radius $4$ intersects the circle centered at $(2,5)$ and with radius $\sqrt{10}$ at two points $A$ and $B$. Find $(AB)^2$.	15	"'s square this result to find $(AB)^2$:
+\[
+(AB)^2 = 10 + 8\sqrt{10}
+\]
+
+So, the answer is:
+\[
+\boxed{10 + 8\sqrt{10}}
+\]"	10+8sqrt10	10+8\sqrt{10}
+147	The circle centered at $(2,-1)$ and with radius $4$ intersects the circle centered at $(2,5)$ and with radius $\sqrt{10}$ at two points $A$ and $B$. Find $(AB)^2$.	15	"4\sqrt{10}\).
+
+Step 6:  Combining like terms, we get \((AB)^2 = 14 - 4\sqrt{10}\).
+
+Answer: \((AB)^2 = 14 - 4\sqrt{10}\)"	14-4sqrt10	14-4\sqrt{10}
+148	The circle centered at $(2,-1)$ and with radius $4$ intersects the circle centered at $(2,5)$ and with radius $\sqrt{10}$ at two points $A$ and $B$. Find $(AB)^2$.	15	"get $XY^2 = 448 + 160\sqrt{10}$, which is $(AB)^2$.
+   Simplifying this, we get $(AB)^2 = 200 + 32\sqrt{10}$.
+Answer: 32"	200+32sqrt10	32
+151	The circle centered at $(2,-1)$ and with radius $4$ intersects the circle centered at $(2,5)$ and with radius $\sqrt{10}$ at two points $A$ and $B$. Find $(AB)^2$.	15	"t{10} + 64$$
+
+Combining like terms, we get:
+$$(AB)^2 = 168 - 32\sqrt{10}$$
+
+So, the final answer is:
+Answer: 168 - 32√10"	168-32sqrt10	168-32\sqrt{10}
+166	"The following list shows every number for which more than half of its digits are the digit $2$, in increasing order:
+\[
+2, 22, 122, 202, 212, 220, 221, 222, 223, 224, \dots
+\]
+If the $n$th term in the list is $2022$, what is $n$?"	31	")
+```
+```output
+210
+```
+The value of \( n \) for which the \( n \)-th term in the list is \( 2022 \) is \(\boxed{210}\)."	210	runon
+167	"The following list shows every number for which more than half of its digits are the digit $2$, in increasing order:
+\[
+2, 22, 122, 202, 212, 220, 221, 222, 223, 224, \dots
+\]
+If the $n$th term in the list is $2022$, what is $n$?"	31	"- \( n = 19 \) (for 2022)
+
+After completing the loop and checking \( 2022 \), the value of \( n \) is:
+
+\[
+\boxed{19}
+\]"	19	210
+173	Suppose sequence $\{a_i\} = a_1, a_2, a_3, \ldots$ satisfies $a_{n+1} = \frac{1}{a_n+1}$ for all positive integers $n$. Define $b_k$ for positive integers $k \ge 2$ to be the minimum real number such that the product $a_1 \cdot a_2 \cdot \ldots \cdot a_k$ does not exceed $b_k$ for any positive integer choice of $a_1$. Find $\frac{1}{b_2}+\frac{1}{b_3}+\frac{1}{b_4}+\ldots+\frac{1}{b_{10}}.$	88	"} \frac{1}{k} = \left(1 - \frac{1}{10}\right) = \frac{9}{10}\]
+
+Therefore, the final answer is:
+\[\boxed{\frac{9}{10}}\]"	9/10	runon
+174	Suppose sequence $\{a_i\} = a_1, a_2, a_3, \ldots$ satisfies $a_{n+1} = \frac{1}{a_n+1}$ for all positive integers $n$. Define $b_k$ for positive integers $k \ge 2$ to be the minimum real number such that the product $a_1 \cdot a_2 \cdot \ldots \cdot a_k$ does not exceed $b_k$ for any positive integer choice of $a_1$. Find $\frac{1}{b_2}+\frac{1}{b_3}+\frac{1}{b_4}+\ldots+\frac{1}{b_{10}}.$	88	"+ \frac{1}{b_4} + \ldots + \frac{1}{b_{10}} = 1 + 1 + 1 + \ldots + 1 = 10.\]
+
+Therefore, the answer is:
+
+\[\boxed{10}.\]"	10	9/10
+175	Suppose sequence $\{a_i\} = a_1, a_2, a_3, \ldots$ satisfies $a_{n+1} = \frac{1}{a_n+1}$ for all positive integers $n$. Define $b_k$ for positive integers $k \ge 2$ to be the minimum real number such that the product $a_1 \cdot a_2 \cdot \ldots \cdot a_k$ does not exceed $b_k$ for any positive integer choice of $a_1$. Find $\frac{1}{b_2}+\frac{1}{b_3}+\frac{1}{b_4}+\ldots+\frac{1}{b_{10}}.$	88	"} + \frac{1}{b_4} + \ldots + \frac{1}{b_{10}}$ is approximately \(3.8455\).
+
+Thus, the final answer is:
+
+\[
+\boxed{4}
+\]"	4	10
+176	Suppose sequence $\{a_i\} = a_1, a_2, a_3, \ldots$ satisfies $a_{n+1} = \frac{1}{a_n+1}$ for all positive integers $n$. Define $b_k$ for positive integers $k \ge 2$ to be the minimum real number such that the product $a_1 \cdot a_2 \cdot \ldots \cdot a_k$ does not exceed $b_k$ for any positive integer choice of $a_1$. Find $\frac{1}{b_2}+\frac{1}{b_3}+\frac{1}{b_4}+\ldots+\frac{1}{b_{10}}.$	88	"bk)
+```
+```output
+9
+```
+The sum of $\frac{1}{b_2}+\frac{1}{b_3}+\frac{1}{b_4}+\ldots+\frac{1}{b_{10}}$ is \(\boxed{9}\)."	9	4
+180	Let $ABCD$ be a parallelogram with an area of 160. The diagonals $AC$ and $BD$ intersect at point $E$. Point $P$ is located on the segment $\overline{AE}$ such that $EC = 4EP$. If line $DP$ intersects $AB$ at point $F$, find the area of quadrilateral $BFPC$.	62	" the area of DPB, which is 160 - $\frac{2}{3} \cdot 160 = 160 - 106\frac{2}{3} = 53\frac{1}{3}$.
+Answer: 53$\frac{1}{3}$"	160/3	53 1/3
+199	"How many positive integers at most $420$ leave different remainders when divided by each of $5$, $6$, and $7$?
+
+[i]Proposed by Milan Haiman.[/i]"	250	"result = count_valid_numbers(limit, divisors)
+print(result)
+```
+
+Running the code, we get the result:
+
+\[ \boxed{210} \]"	210	runon
+215	"Find all positive integers $k$ such that there exist positive integers $a$ and $b$ satisfying the equation:
+\[
+a^2 + 4 = (k^2 - 4)b^2.
+\]"	3	"rs \(k\) that satisfy the given equation are \(k = 3\), \(k = 4\), and \(k = 5\).
+
+The answer is:
+
+\[
+\boxed{3, 4, 5}
+\]"	3,4,5	3, 4, 5
+216	"Find all positive integers $k$ such that there exist positive integers $a$ and $b$ satisfying the equation:
+\[
+a^2 + 4 = (k^2 - 4)b^2.
+\]"	3	"integers \(k\) that satisfy the original equation.
+
+The final answer is:
+\[
+\boxed{\text{No such } k \text{ exists.}}
+\]"	no_answer	No such k exists.
+237	Kermit the frog enjoys hopping around the inﬁnite square grid in his backyard. It takes him $ 1$ Joule of energy to hop one step north or one step south, and $ 1$ Joule of energy to hop one step east or one step west. He wakes up one morning on the grid with $ 100$ Joules of energy, and hops till he falls asleep with $ 0$ energy. How many different places could he have gone to sleep?	10201	ltiply these values to get the total number of distinct combinations, which is 101 * 101. The final answer is 101 * 101.	10201	needs_review
+238	Kermit the frog enjoys hopping around the inﬁnite square grid in his backyard. It takes him $ 1$ Joule of energy to hop one step north or one step south, and $ 1$ Joule of energy to hop one step east or one step west. He wakes up one morning on the grid with $ 100$ Joules of energy, and hops till he falls asleep with $ 0$ energy. How many different places could he have gone to sleep?	10201	\) distinct combinations. Hence, the number of different places Kermit could have gone to sleep is \( \boxed{2^{50}} \).	2^50	2^{50}
+239	Kermit the frog enjoys hopping around the inﬁnite square grid in his backyard. It takes him $ 1$ Joule of energy to hop one step north or one step south, and $ 1$ Joule of energy to hop one step east or one step west. He wakes up one morning on the grid with $ 100$ Joules of energy, and hops till he falls asleep with $ 0$ energy. How many different places could he have gone to sleep?	10201	", the number of different places Kermit could have gone to sleep is \( 2^{50} \).
+
+The final answer is: $\boxed{2^{50}}$"	2^50	2^{50}
+244	"Find the number of points $P \in Z^2$ that satisfy the following two conditions:
+1) If $Q$ is a point on the circle of radius $\sqrt{2020}$ centered at the origin such that the line $PQ$ is tangent to the circle at $Q$, then $PQ$ has integral length.
+2) The x-coordinate of $P$ is $38$."	16	"t satisfy the given conditions.
+
+Answer: The number of points $P \in Z^2$ that satisfy the given conditions is <number>."	needs_review	no_answer
+278	Four ambassadors and one advisor for each of them are to be seated at a round table with $12$ chairs numbered in order $1$ to $12$. Each ambassador must sit in an even-numbered chair. Each advisor must sit in a chair adjacent to his or her ambassador. There are $N$ ways for the $8$ people to be seated at the table under these conditions. Find the remainder when $N$ is divided by $1000$.	520	") is divided by 1000.
+Step 11:  So, the final answer will be the remainder when N is divided by 1000.
+Answer: N mod 1000"	runon	needs_review
+304	Taotao wants to buy a bracelet. The bracelets have 7 different beads on them, arranged in a circle. Two bracelets are considered the same if one can be rotated or flipped to become the other. If she can choose the colors and placement of the beads, and the beads come in orange, white, and black, how many possible bracelets can she buy?	198	"umber of unique bracelets Taotao can buy is: 3^7 / 2.
+
+Answer: The number of unique bracelets Taotao can buy is 3^7 / 2."	3^7/2	needs_review
+307	"There exists a unique pair of polynomials $P(x)$ and $Q(x)$ such that:
+\[ \begin{align*} P(Q(x)) &= P(x)(x^2-6x+7) \\ Q(P(x)) &= Q(x)(x^2-3x-2) \end{align*} \]
+Compute $P(10) + Q(-10)$."	-90	"]
+
+# Calculate P(10) + Q(-10)
+P_10 = P_x.subs(x, 10)
+Q_neg10 = Q_x.subs(x, -10)
+result = P_10 + Q_neg10
+Answer: <answer>"	needs_review	no_answer
+323	"Suppose $ABC$ is a scalene right triangle, and $P$ is the point on   hypotenuse $\overline{AC}$ such that $\angle{ABP} =
+45^{\circ}$. Given that $AP = 1$ and $CP = 2$, compute the area of   $ABC$.The answer is in the form rac{m}{n}, where gcd(m, n) = 1. Please provide the value of m + n."	14	ea of the triangle \(ABC\) is \(\frac{81}{5}\), which is equivalent to \(16.2\). This confirms our previous calculations	81/5	needs_review
+324	"Suppose $ABC$ is a scalene right triangle, and $P$ is the point on   hypotenuse $\overline{AC}$ such that $\angle{ABP} =
+45^{\circ}$. Given that $AP = 1$ and $CP = 2$, compute the area of   $ABC$.The answer is in the form rac{m}{n}, where gcd(m, n) = 1. Please provide the value of m + n."	14	"e. Thus, $m = \sqrt{6}$ and $n = 8$.
+Step 14:  Therefore, the value of $m + n$ is $\sqrt{6} + 8$.
+Answer: $\sqrt{6} + 8$"	sqrt6+8	\sqrt{6}+8
+358	Jesse cuts a circular paper disk of radius \(12\) along two radii to form two sectors, the smaller having a central angle of \(120\) degrees. He makes two circular cones, using each sector to form the lateral surface of a cone. What is the ratio of the volume of the smaller cone to that of the larger? Express your answer in the form \(\frac{\sqrt{k}}{m}\), where k and m are integers, and provide the value of k + m.	20	"ionships and calculations, ultimately obtaining the value of \(k + m\) based on the simplified ratio.
+Answer: $\sqrt{3}$"	sqrt3	\sqrt{3}
+397	Let $\phi(n)$ denote the number of positive integers less than or equal to $n$ that are coprime to $n$. Find the sum of all $1 < n < 100$ such that $\phi(n) \mid n$.	492	"ecial_numbers = find_special_numbers(100)
+sum_of_special_numbers = sum(special_numbers)
+Answer: <sum_of_special_numbers>"	needs_review	no_answer

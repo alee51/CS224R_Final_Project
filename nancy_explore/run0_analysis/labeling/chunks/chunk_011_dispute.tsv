@@ -1,0 +1,4 @@
+id	problem	gold	tail	result_A	result_B
+18	Two circles of radius $5$ are externally tangent to each other and are internally tangent to a circle of radius $13$ at points $A$ and $B$, as shown in the diagram. The distance $AB$ can be written in the form $\frac{k}{l}$, where $k$ and $l$ are relatively prime positive integers. Find the value of $k+l$.	69	"1\), the value of \(k + l\) is \(2 \sqrt{105} + 1\).
+
+Therefore, the value of \(k + l\) is \(\boxed{1 + 2 \sqrt{105}}\)."	1+2\sqrt{105}	1 + 2\sqrt{105}

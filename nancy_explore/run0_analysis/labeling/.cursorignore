@@ -1,0 +1,6 @@
+# Archived labeling — hide merge/orchestrator artifacts from agents
+labels_archive/
+blind/**/manifest.json
+chunks/*_keys.tsv
+chunks/*_dispute.tsv
+chunks/*_out_*.tsv

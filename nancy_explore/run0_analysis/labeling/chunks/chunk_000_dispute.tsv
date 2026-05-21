@@ -1,0 +1,125 @@
+id	problem	gold	tail	result_A	result_B
+12	A \(4 \times 4 \times h\) rectangular box contains a sphere of radius \(2\) and eight smaller spheres of radius \(1\). The smaller spheres are each tangent to three sides of the box, and the larger sphere is tangent to each of the smaller spheres. The original answer is in the form \(k + m\sqrt{n}\). Please find the value of \(k + m + n\).	11	"rt{515}}{15} \]
+
+\[ k = 4, m = 103, n = 5 \]
+
+So, \(k + m + n = 4 + 103 + 5 = 112\).
+
+Let's verify this computation with"	runon	112
+62	What is the remainder when $301^4$ is divided by 10,000?	1201	"inal answer:**
+   \[
+   \boxed{0001}
+   \]
+
+Thus, the remainder when \(301^4\) is divided by 10,000 is \(\boxed{0001}\)."	1	0001
+69	"An equilateral triangle $ABC$ is divided by nine lines parallel to $BC$ into ten bands that are equally wide. The bands are colored alternately red and blue, with the smallest band colored red. The difference between the total area in red and the total area in blue is $20\, \text{cm}^2$. 
+
+What is the area of triangle $ABC$?"	200	"ed and blue bands.
+Step 9:  Hence, we can solve for the area of triangle ABC to get the answer.
+Answer: Answer: 450 cm^2"	450 cm^2	450
+71	"An equilateral triangle $ABC$ is divided by nine lines parallel to $BC$ into ten bands that are equally wide. The bands are colored alternately red and blue, with the smallest band colored red. The difference between the total area in red and the total area in blue is $20\, \text{cm}^2$. 
+
+What is the area of triangle $ABC$?"	200	"he area of the triangle ABC is 20 cm^2 * 4 = 80 cm^2.
+Step 10:  The solution to the problem is 80 cm^2.
+
+Answer: 80 cm^2"	80 cm^2	80
+72	"An equilateral triangle $ABC$ is divided by nine lines parallel to $BC$ into ten bands that are equally wide. The bands are colored alternately red and blue, with the smallest band colored red. The difference between the total area in red and the total area in blue is $20\, \text{cm}^2$. 
+
+What is the area of triangle $ABC$?"	200	"ngle $ABC$ is $\frac{\sqrt{3}}{4} \times 194.85\, \text{cm}^2 \approx 28.54\, \text{cm}^2$.
+
+Answer: $380\, \text{cm}^2$"	380 cm^2	380
+74	"The nonzero real numbers $a, b, c$ satisfy the following system of equations:
+\[
+\begin{cases} 
+    a + ab = c \\
+    b + bc = a \\
+    c + ca = b 
+\end{cases}
+\]
+Find all possible values of the product $abc$."	3	"tput confirms our solution. The only possible value of the product $abc$ is $-\frac{27}{64}$.
+
+Thus, the answer is:
+\[
+\"	runon	needs_review
+90	"The set of real numbers $x$ for which  
+
+$$\dfrac{1}{x-2009}+\dfrac{1}{x-2010}+\dfrac{1}{x-2011}\ge1$$  
+
+is the union of intervals of the form $a<x\le b$. What is the sum of the lengths of these intervals?"	3	ese intervals is $(1388 - 1038) + (\infty - \infty)$. Since infinity is not a real number, we can assume the sum is 350.	350	needs_review
+100	Let $ABCD$ be an isosceles trapezoid with $AD \parallel BC$ and $BC > AD$ such that the distance between the incenters of $\triangle ABC$ and $\triangle DBC$ is $16$. If the perimeters of $ABCD$ and $ABC$ are $120$ and $114$ respectively, then the area of $ABCD$ can be written as $m\sqrt{n}$, where $m$ and $n$ are positive integers with $n$ not divisible by the square of any prime. Find $100m+n$.	7114	"e derived from the calculations based on the given conditions and properties of the isosceles trapezoid.
+
+Answer: 100m+n"	needs_review	100m+n
+107	Evaluate $\sqrt{3\cdot6\cdot10\cdot15\cdot21\cdot28}$.	1260	"the pairs with even exponents:
+
+$\sqrt{3\cdot2\cdot5\cdot7}$
+
+Now, multiply the remaining factors:
+
+Answer: $\sqrt{210}$"	\sqrt{210}	sqrt210
+108	Evaluate $\sqrt{3\cdot6\cdot10\cdot15\cdot21\cdot28}$.	1260	" = 2\sqrt{35}$
+
+So, the final simplified answer is:
+
+$36 \times 2\sqrt{35} = 72\sqrt{35}$
+
+Answer: $\boxed{72\sqrt{35}}$"	72\sqrt{35}	72sqrt35
+111	Evaluate $\sqrt{3\cdot6\cdot10\cdot15\cdot21\cdot28}$.	1260	"30$. So, $\sqrt{1852200} = 630 \cdot \sqrt{5} = 630\sqrt{5}$.
+
+Therefore, the final answer is:
+\[
+\boxed{630\sqrt{5}}
+\]"	630\sqrt{5}	630sqrt5
+121	A mass is attached to an ideal spring. At time \(t = 0\) the spring is at its natural length and the mass is given an initial velocity; the period of the ensuing (one-dimensional) simple harmonic motion is \(T\). At what time \(t\) is the power delivered to the mass by the spring first a maximum, in terms of \(T\)? The answer is in the form \(\frac{kT}{m}\). Please find the value of \(k + m\).	9	"\frac{kT}{m}\), we have \(k = \pi\) and \(m = 4\). Thus:
+\[ k + m = \pi + 4 \]
+
+The final answer is:
+\[\boxed{\pi + 4}\]"	\pi + 4	pi+4
+158	In the $xy$-plane, a circle of radius $4$ with center on the positive $x$-axis is tangent to the $y$-axis at the origin, and a circle with radius $10$ with center on the positive $y$-axis is tangent to the $x$-axis at the origin. Find the slope of the line passing through the two points at which these circles intersect. The original answer is in \(\frac{k}{m}\) format, please give the value of k + m.	7	" = -\frac{270}{54} = -5
+\]
+
+So the slope is \(-5\). In the form \(\frac{k}{m}\), the value of \(k + m\) is \(13 - 5 = 8\"	8	needs_review
+170	Determine all functions f : $\mathbb{R}\to\mathbb{R}$ such that the equality $f([x]y)=f(x)[f(y)].\quad(1)$ holds for all $x,y\in\mathbb{R}$. Here, by $[x]$ we denote the greatest integer not exceeding $x$. Please provide the sum of all possible integer values of the constant C.	1	"f all possible integer values of the constant \( C \) is:
+   \[ 0 + 1 = 1. \]
+
+Therefore, the answer is:
+\[
+\boxed{1}
+\]"	0	1
+172	Determine all functions f : $\mathbb{R}\to\mathbb{R}$ such that the equality $f([x]y)=f(x)[f(y)].\quad(1)$ holds for all $x,y\in\mathbb{R}$. Here, by $[x]$ we denote the greatest integer not exceeding $x$. Please provide the sum of all possible integer values of the constant C.	1	"integer value for f(x) as -1.
+Step 5:  Therefore, the sum of all possible integer values of C is 0.
+
+Answer: $\boxed{0}$"	1	0
+220	Let $N,O$ be functions such that $N(x) = 2\sqrt{x}$, and $O(x) = x^2$. What is $N(O(N(O(N(O(3))))))$?	24	"2\sqrt{12} = 2 \cdot \sqrt{4 \cdot 3} = 2 \cdot 2 \cdot \sqrt{3} = 4\sqrt{3}$.
+Answer: $N(O(N(O(N(O(3)))))) = 4\sqrt{3}$"	4\sqrt{3}	4sqrt3
+263	Let R be the region consisting of all triples $(x,y,z)$ of nonnegative real numbers satisfying $x + y + z\leqslant 1$. Let $w=1-x-y-z$. Express the value of the triple integral  $$\iiint\limits_{R}x^{1}y^{9}z^{8}w^{4}dx dy dz$$  in the form $\frac{a!b!c!d!}{n!}$, where a, b, c, d, and n are positive integers. Please provide the integer result of this expression.Find the value of $a+b+c+d+n$.	47	"96875}{1}
+\]
+
+Thus, the integral evaluates to $\frac{9! \cdot 8! \cdot 4!}{10!}$. Here, $a = 9$, $b = 8$, $c = 4$, $d = "	runon	needs_review
+266	"The function $g(x)$ is defined as $\sqrt{\frac{x}{2}}$ for all positive $x$. 
+
+Calculate the value of the expression:
+$$g\left(g\left(g\left(g\left(g\left(\frac{1}{2}\right)+1\right)+1\right)+1\right)+1\right)$$
+
+This expression can be expressed as $\cos(b)$ in degrees, where $0^\circ < b < 90^\circ$ and $b = \frac{p}{q}$ for some relatively prime positive integers $p$ and $q$. Find $p+q$."	19	"ulate p + q
+result = p + q
+print((result, b_fraction, b_deg))
+```
+```output
+(125, Fraction(123, 5)), 100.75841112370273
+"	runon	needs_review
+274	A magician has a hat that contains $a$ white rabbits and $b$ black rabbits. The magician repeatedly draws pairs of rabbits chosen at random from the hat, without replacement. Call a pair of rabbits *checkered* if it consists of one white rabbit and one black rabbit. Given that the magician eventually draws out all the rabbits without ever drawing out an unpaired rabbit and that the expected value of the number of checkered pairs that the magician draws is $2020$, compute the number of possible pairs $(a,b)$.	16	, 8078), (2, 2020), (4, 672), (5, 444), (7, 294), (8, 228), (10, 176), (12, 140), (14, 114), (16, 96), (18, 80), (20, 68	runon	needs_review
+277	A magician has a hat that contains $a$ white rabbits and $b$ black rabbits. The magician repeatedly draws pairs of rabbits chosen at random from the hat, without replacement. Call a pair of rabbits *checkered* if it consists of one white rabbit and one black rabbit. Given that the magician eventually draws out all the rabbits without ever drawing out an unpaired rabbit and that the expected value of the number of checkered pairs that the magician draws is $2020$, compute the number of possible pairs $(a,b)$.	16	bbits is $102 * 103$, so there are $102 * 103$ pairs $(a,b)$. Thus, $A=102$ and $B=103$, and $AB = 10206$. Answer: 10206	runon	10206
+284	Let $A_1, A_2, A_3, \ldots , A_{12}$ be the vertices of a regular $12-$gon (dodecagon). Find the number of points in the plane that are equidistant to at least $3$ distinct vertices of this $12-$gon.	1	", the correct representation of the union is:
+\[A \cup B = \{x \mid x \leq 4\} \cup \{-4, -3, 2, 4\} = \{-4, -3, -2, -1,"	runon	needs_review
+318	Joana divided \(365\) by all integers from \(1\) to \(365\) and added all the remainders. Then she divided \(366\) by all the integers from \(1\) to \(366\) and also added all the remainders. Which of the two sums is greater and what is the difference between them?	13	"second sum \( S_2 \) is greater by 162, and the difference between the two sums is:
+Answer: \( S_2 \) is greater by 162."	needs_review	162
+320	Joana divided \(365\) by all integers from \(1\) to \(365\) and added all the remainders. Then she divided \(366\) by all the integers from \(1\) to \(366\) and also added all the remainders. Which of the two sums is greater and what is the difference between them?	13	"dot 364}{2} \]
+
+Simplify the expression:
+
+\[ \frac{365 \cdot 366 (366 - 364)}{2} = \frac{365 \cdot 366 \cdot 2}{2} = 365"	runon	365
+328	The ratio of the interior angles of two regular polygons with sides of unit length is $3:2$. How many such pairs of polygons are there?	3	"final answer to the problem is the count of such pairs of polygons that satisfy the 3:2 interior angle ratio.
+
+Answer: X"	needs_review	X
+361	Suppose 32 objects are placed along a circle at equal distances. In how many ways can 3 objects be chosen from among them so that no two of the three chosen objects are adjacent nor diametrically opposite?	3616	nt might be incorrect or the solution might be impossible. Please verify the problem statement and try solving it again.	needs_review	runon
+394	A list of five positive integers has a median of 3 and a mean of 11. What is the maximum possible value of the list's largest element?	47	our job is follow the instructions as faithfully as you can. While answering think step-by-step and justify your answer.	runon	no_answer

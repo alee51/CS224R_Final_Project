@@ -1,0 +1,122 @@
+id	problem	gold	tail	result_A	result_B
+18	Call a date \( mm/dd/yy \) \textit{multiplicative} if its month number times its day number is a two-digit integer equal to its year expressed as a two-digit year. For example, \( 01/21/21 \), \( 03/07/21 \), and \( 07/03/21 \) are multiplicative. Find the number of dates between January 1, 2022 and December 31, 2030 that are multiplicative.	29	"3):
+        for day in range(1, 32):
+            if month * day == year:
+                count += 1
+
+Answer: <count>
+```"	needs_review	runon
+39	"Let $0 \le x,$ $y,$ $z \le 1.$  Find the maximum value of
+\[f(x,y,z) = x^2 y + y^2 z + z^2 x - xy^2 - yz^2 - zx^2.\]The answer is in the form rac{m}{n}, where gcd(m, n) = 1. Please provide the value of m + n."	5	"unction \(f(x,y,z) = x^2 y + y^2 z + z^2 x - xy^2 - yz^2 - zx^2\) within the given range is \(\boxed{\frac{1}{2}}\).
+```"	1/2	runon
+56	"How many ordered pairs $(x, y)$ satisfy BOTH conditions below?
+
+$\bullet$  Condition I: $x = 1$ or $y = 0$ or $y = 2$
+
+$\bullet$  Condition II: $x = 0$ or $x = 2$ or $y = 1$"	5	", 0, 0, 4, 0, 2\).
+
+The sum of these products is:
+\[
+0 + 2 + 0 + 0 + 0 + 4 + 0 + 2 = 8
+\]
+
+### Final Answer:
+\[
+\boxed{8"	runon	8
+101	Assume the earth is a perfect sphere with a circumference of $60$ units. A great circle is a circle on a sphere whose center is also the center of the sphere. There are three train tracks on three great circles of the earth. One is along the equator and the other two pass through the poles, intersecting at a $90$ degree angle. If each track has a train of length $L$ traveling at the same speed, what is the maximum value of $L$ such that the trains can travel without crashing?	15	"rcles.
+
+Therefore, the maximum value of \( L \) such that the trains can travel without crashing is:
+\[ \boxed{30\pi} \]"	30pi	30\pi
+102	Assume the earth is a perfect sphere with a circumference of $60$ units. A great circle is a circle on a sphere whose center is also the center of the sphere. There are three train tracks on three great circles of the earth. One is along the equator and the other two pass through the poles, intersecting at a $90$ degree angle. If each track has a train of length $L$ traveling at the same speed, what is the maximum value of $L$ such that the trains can travel without crashing?	15	"g.
+
+Thus, the maximum value of \( L \) such that the trains can travel without crashing is:
+\[
+\boxed{\frac{60}{\pi}}
+\]"	60/pi	\frac{60}{\pi}
+114	For each positive integer $k$, denote $C(k)$ as the sum of its distinct prime divisors. For example, $C(1) = 0$, $C(2) = 2$, and $C(45) = 8$. Find all positive integers $n$ for which $C(2^n + 1) = C(n)$.	3	"which \( C(2^n + 1) = C(n) \) are \( 3 \) and \( 23 \).
+
+Therefore, the solution to the problem is:
+
+\[
+\boxed{3, 23}
+\]"	3, 23	3,23
+151	Given that $x$ is an integer such that $x\sqrt{x}-5x-9\sqrt{x}=35$, find $x$.	49	"3 &= 14\cdot 2 + 35 = 63 \neq 35.
+\end{align*} We conclude that \[y = \boxed{5}.\] Hence, the desired integer $x$ is 25."	49	25
+169	Let $f(x) = x^4 + 14x^3 + 52x^2 + 56x + 16$. Let $z_1, z_2, z_3, z_4$ be the four roots of $f$. Find the smallest possible value of $|z_a z_b + z_c z_d|$ where $\{a, b, c, d\} = \{1, 2, 3, 4\}$.	8	allest possible value of $|z_a z_b + z_c z_d|$ where $\{a, b, c, d\} = \{1, 2, 3, 4\}$ is \(\boxed{0.666666666666667}\).	0.666666666666667	2/3
+182	Determine the smallest positive integer $A$ with an odd number of digits such that both $A$ and the number $B$, created by removing the middle digit of $A$, are divisible by $2018$.	100902018	"sible by 2018. Clearly, 218 is not divisible by 2018.
+
+Next, we try the next multiple of 2018:
+\[ 2018 \times 21 = 42378"	runon	42378
+187	A $33$-gon $P_1$ is drawn in the Cartesian plane.  The sum of the $x$-coordinates of the $33$ vertices equals $99$.  The midpoints of the sides of $P_1$ form a second $33$-gon, $P_2$.  Finally, the midpoints of the sides of $P_2$ form a third $33$-gon, $P_3$.  Find the sum of the $x$-coordinates of the vertices of $P_3$.	99	" range for the solution without more information about the x-coordinates of the vertices of the polygons.
+Answer: $99/3$"	99/3	needs_review
+217	"The measure of one of the smaller base angles of an isosceles trapezoid is $60^\circ$. The shorter base is 5 inches long and the altitude is $2 \sqrt{3}$ inches long. What is the number of inches in the perimeter of the trapezoid? [asy]
+import markers;
+import olympiad; size(150); import geometry; import graph; defaultpen(linewidth(0.8));
+draw(origin--(9,0)--(7,2*sqrt(3))--(2,2*sqrt(3))--cycle);
+draw(Label(""$2\sqrt{3}$"",align=E),(2,2*sqrt(3))--(2,0),dashed);
+label(""5"",(7,2*sqrt(3))--(2,2*sqrt(3)),N);
+markangle(Label(""$60^{\circ}$""),(9,0),origin,(2,2*sqrt(3)),radius=10);
+[/asy]"	22	"5 + 2\sqrt{3} + 4 + 4
+\]
+\[
+P = 13 + 2\sqrt{3}
+\]
+
+Thus, the perimeter of the trapezoid is:
+\[
+\boxed{13 + 2\sqrt{3}}
+\]"	13+2sqrt(3)	13+2\sqrt{3}
+219	"The measure of one of the smaller base angles of an isosceles trapezoid is $60^\circ$. The shorter base is 5 inches long and the altitude is $2 \sqrt{3}$ inches long. What is the number of inches in the perimeter of the trapezoid? [asy]
+import markers;
+import olympiad; size(150); import geometry; import graph; defaultpen(linewidth(0.8));
+draw(origin--(9,0)--(7,2*sqrt(3))--(2,2*sqrt(3))--cycle);
+draw(Label(""$2\sqrt{3}$"",align=E),(2,2*sqrt(3))--(2,0),dashed);
+label(""5"",(7,2*sqrt(3))--(2,2*sqrt(3)),N);
+markangle(Label(""$60^{\circ}$""),(9,0),origin,(2,2*sqrt(3)),radius=10);
+[/asy]"	22	"oid, computed using Python, is approximately \(24.93\) inches.
+
+Thus, the final answer is:
+\[
+\boxed{10 + 10\sqrt{3}}
+\]"	10+10sqrt(3)	10+10\sqrt{3}
+221	"The measure of one of the smaller base angles of an isosceles trapezoid is $60^\circ$. The shorter base is 5 inches long and the altitude is $2 \sqrt{3}$ inches long. What is the number of inches in the perimeter of the trapezoid? [asy]
+import markers;
+import olympiad; size(150); import geometry; import graph; defaultpen(linewidth(0.8));
+draw(origin--(9,0)--(7,2*sqrt(3))--(2,2*sqrt(3))--cycle);
+draw(Label(""$2\sqrt{3}$"",align=E),(2,2*sqrt(3))--(2,0),dashed);
+label(""5"",(7,2*sqrt(3))--(2,2*sqrt(3)),N);
+markangle(Label(""$60^{\circ}$""),(9,0),origin,(2,2*sqrt(3)),radius=10);
+[/asy]"	22	"t{3} = 10 + 12 \sqrt{3}
+     \]
+
+### Final Answer
+The perimeter of the trapezoid is \(\boxed{10 + 12 \sqrt{3}}\) inches."	10+12sqrt(3)	10+12\sqrt{3}
+223	"The measure of one of the smaller base angles of an isosceles trapezoid is $60^\circ$. The shorter base is 5 inches long and the altitude is $2 \sqrt{3}$ inches long. What is the number of inches in the perimeter of the trapezoid? [asy]
+import markers;
+import olympiad; size(150); import geometry; import graph; defaultpen(linewidth(0.8));
+draw(origin--(9,0)--(7,2*sqrt(3))--(2,2*sqrt(3))--cycle);
+draw(Label(""$2\sqrt{3}$"",align=E),(2,2*sqrt(3))--(2,0),dashed);
+label(""5"",(7,2*sqrt(3))--(2,2*sqrt(3)),N);
+markangle(Label(""$60^{\circ}$""),(9,0),origin,(2,2*sqrt(3)),radius=10);
+[/asy]"	22	"D = 3 + 5 + 11 + 2\sqrt{3} = 19 + 2\sqrt{3}
+   \]
+
+Thus, the perimeter of the trapezoid is \( \boxed{19 + 2\sqrt{3}} \)."	19+2sqrt(3)	19+2\sqrt{3}
+233	For positive integer $n,$ let $s(n)$ be the sum of the digits of n when n is expressed in base ten. For example, $s(2022) = 2 + 0 + 2 + 2 = 6.$ Find the sum of the two solutions to the equation $n - 3s(n) = 2022.$	4107	ate \(\lg 2 - \frac{1}{2}\). We know that \(\lg 2 \approx 0.3010\), so \(\lg 2 - \frac{1}{2} \approx 0.3010 - 0.5 = -0.1	runon	-0.1
+245	Points $B$, $D$, and $J$ are midpoints of the sides of right triangle $ACG$. Points $K$, $E$, $I$ are midpoints of the sides of triangle $JDG$, etc. If the dividing and shading process is done 100 times (the first three are shown) and $AC=CG=6$, then find the total area of the shaded triangles rounded to the nearest integer.	6	"es.
+Step 5:  Finally, I will find the total area of all the shaded triangles and round to the nearest integer.
+Answer: 9"	9	runon
+298	What is the radius of the circle inscribed in triangle $ABC$ if $AB = 22, AC=12,$ and $BC=14$? Express your answer in simplest radical form.The answer is in the form k\sqrt{m}+n,. Please provide the value of k + m + n.	11	"ng the lengths of the sides, and then use Heron's formula to find the area of the triangle.
+Answer: Answer: 6\sqrt{37}+6"	needs_review	6\sqrt{37}+6
+299	What is the radius of the circle inscribed in triangle $ABC$ if $AB = 22, AC=12,$ and $BC=14$? Express your answer in simplest radical form.The answer is in the form k\sqrt{m}+n,. Please provide the value of k + m + n.	11	"le.
+Step 6:  Finally, we'll express the answer in the form k√m + n and provide the values of k, m, and n.
+
+Answer: 9√5+2"	needs_review	9\sqrt{5}+2
+303	What is the radius of the circle inscribed in triangle $ABC$ if $AB = 22, AC=12,$ and $BC=14$? Express your answer in simplest radical form.The answer is in the form k\sqrt{m}+n,. Please provide the value of k + m + n.	11	"* radius) // (2 * k)
+n = radius - k
+
+# Step 13:  Print the values of k, m, and n
+print((k, m, n))
+```
+
+Answer: (7, 3, 0)"	10	needs_review

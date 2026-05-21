@@ -1,0 +1,216 @@
+id	problem	gold	tail	result_A	result_B
+8	Find the least three-digit number that is equal to the sum of its digits plus twice the product of its digits.	397	" 199 = 1 + 9 + 9 + 2(1 \cdot 9 \cdot 9) = 199 \]
+The least three-digit number that satisfies the condition is \( 199 \)."	runon	199
+10	Black and white checkers are placed on an $8 \times 8$ chessboard, with at most one checker on each cell. What is the maximum number of checkers that can be placed such that each row and each column contains twice as many white checkers as black ones?	48	"hat can be placed such that each row and each column contains twice as many white checkers as black ones is:
+
+Answer: 64"	runon	64
+11	Black and white checkers are placed on an $8 \times 8$ chessboard, with at most one checker on each cell. What is the maximum number of checkers that can be placed such that each row and each column contains twice as many white checkers as black ones?	48	"ry other cell), which totals to 64 checkers.
+
+Thus, the maximum number of checkers that can be placed is \(\boxed{64}\)."	runon	64
+13	Black and white checkers are placed on an $8 \times 8$ chessboard, with at most one checker on each cell. What is the maximum number of checkers that can be placed such that each row and each column contains twice as many white checkers as black ones?	48	"ring that each row and each column has twice as many white checkers as black ones.
+
+Therefore, the answer is:
+Answer: 32"	runon	32
+14	Black and white checkers are placed on an $8 \times 8$ chessboard, with at most one checker on each cell. What is the maximum number of checkers that can be placed such that each row and each column contains twice as many white checkers as black ones?	48	" chessboard such that each row and each column contains twice as many white checkers as black ones is:
+
+\[
+\boxed{64}
+\]"	runon	64
+98	"Solve
+\[\frac{1}{x + 9} + \frac{1}{x + 7} = \frac{1}{x + 10} + \frac{1}{x + 6}.\]"	-8	"se of this exercise, we can stop at this point, and the solution to the equation is:
+
+Answer: x^3 + 5x^2 + 51x + 309 = 0"	x^3+5x^2+51x+309=0	runon
+101	"Solve
+\[\frac{1}{x + 9} + \frac{1}{x + 7} = \frac{1}{x + 10} + \frac{1}{x + 6}.\]"	-8	"ore, the correct conclusion is that there is no solution to the given equation. The answer is:
+
+\[ \text{No solution} \]"	no_answer	no solution
+102	"Solve
+\[\frac{1}{x + 9} + \frac{1}{x + 7} = \frac{1}{x + 10} + \frac{1}{x + 6}.\]"	-8	"ored as $(x-3)(x-4)(x-14)=0$.
+
+Therefore, the solutions to the equation are $x=3$, $x=4$, and $x=14$.
+Answer: [3, 4, 14]"	[3, 4, 14]	3,4,14
+103	"Solve
+\[\frac{1}{x + 9} + \frac{1}{x + 7} = \frac{1}{x + 10} + \frac{1}{x + 6}.\]"	-8	"equation has no solution. Therefore, the equation has no real solution.
+
+The final answer is \boxed{\text{No solution}}."	no_answer	no solution
+104	"Solve
+\[\frac{1}{x + 9} + \frac{1}{x + 7} = \frac{1}{x + 10} + \frac{1}{x + 6}.\]"	-8	" that satisfies the original equation. Therefore, the equation has no solution.
+
+Answer: \(\boxed{\text{No solution}}\)."	no_answer	no solution
+159	"The area of the semicircle in Figure A is half the area of the circle in Figure B. The area of a square inscribed in the semicircle, as shown, is what fraction of the area of a square inscribed in the circle? Express your answer as a common fraction.
+
+[asy]
+defaultpen(linewidth(0.8));
+
+size(5cm,5cm);
+
+draw((0,0)..(1,1)..(2,0)--(0,0));
+
+draw((0.5,0)--(0.5,0.87)--(1.5,0.87)--(1.5,0));
+
+draw(Circle((4,0),1));
+
+pair A,B,C,D;
+
+A=(3.3,0.7);
+B=(3.3,-0.7);
+D=(4.7,0.7);
+C=(4.7,-0.7);
+
+draw(A--B--C--D--A);
+
+label(""Figure A"",(1,1.3));
+label(""Figure B"",(4,1.3));
+
+[/asy]The answer is in the form rac{m}{n}, where gcd(m, n) = 1. Please provide the value of m + n."	7	"ircle to be a fraction of the area of a square inscribed in the circle.
+Thus, the answer is $\boxed{0}$.The answer is 10"	0	10
+160	"The area of the semicircle in Figure A is half the area of the circle in Figure B. The area of a square inscribed in the semicircle, as shown, is what fraction of the area of a square inscribed in the circle? Express your answer as a common fraction.
+
+[asy]
+defaultpen(linewidth(0.8));
+
+size(5cm,5cm);
+
+draw((0,0)..(1,1)..(2,0)--(0,0));
+
+draw((0.5,0)--(0.5,0.87)--(1.5,0.87)--(1.5,0));
+
+draw(Circle((4,0),1));
+
+pair A,B,C,D;
+
+A=(3.3,0.7);
+B=(3.3,-0.7);
+D=(4.7,0.7);
+C=(4.7,-0.7);
+
+draw(A--B--C--D--A);
+
+label(""Figure A"",(1,1.3));
+label(""Figure B"",(4,1.3));
+
+[/asy]The answer is in the form rac{m}{n}, where gcd(m, n) = 1. Please provide the value of m + n."	7	"e to the area of the square inscribed in the circle is indeed $\frac{1}{2}$.
+
+Thus, the value of $m + n$ is $\boxed{3}$."	0	3
+174	How many sequences of zeros and ones of length 20 have all the zeros consecutive, or all the ones consecutive, or both?	382	"es consecutive, and both.
+   - Therefore, the total number of sequences is \(21 + 21 = 42\).
+
+The answer is: Answer: 42."	38	42
+175	How many sequences of zeros and ones of length 20 have all the zeros consecutive, or all the ones consecutive, or both?	382	"and ones of length 20 that have all the zeros consecutive, or all the ones consecutive, or both, is:
+\[38.\]
+
+Answer: 38"	42	38
+179	Complex numbers $a,$ $b,$ $c$ form an equilateral triangle with side length 18 in the complex plane.  If $|a + b + c| = 36,$ find $|ab + ac + bc|.$	432	"riangle} = 3 \cdot 81\sqrt{3} = 243\sqrt{3}$.
+Step 13:  Therefore, $|ab + ac + bc| = 243\sqrt{3}$.
+Answer: $243\sqrt{3}$"	243sqrt(3)	243sqrt3
+197	"Cat and Claire are having a conversation about Cat's favorite number.
+
+Cat says, ""My favorite number is a two-digit positive integer that is the product of three distinct prime numbers!""
+
+Claire says, ""I don't know your favorite number yet, but I do know that among four of the numbers that might be your favorite number, you could start with any one of them, add a second, subtract a third, and get the fourth!""
+
+Cat says, ""That's cool! My favorite number is not among those four numbers, though.""
+
+Claire says, ""Now I know your favorite number!""
+
+What is Cat's favorite number?"	70	"the requirements.
+After evaluating the possibilities, we can conclude that Cat's favorite number must be 42.
+
+Answer: 42"	42	runon
+198	"Cat and Claire are having a conversation about Cat's favorite number.
+
+Cat says, ""My favorite number is a two-digit positive integer that is the product of three distinct prime numbers!""
+
+Claire says, ""I don't know your favorite number yet, but I do know that among four of the numbers that might be your favorite number, you could start with any one of them, add a second, subtract a third, and get the fourth!""
+
+Cat says, ""That's cool! My favorite number is not among those four numbers, though.""
+
+Claire says, ""Now I know your favorite number!""
+
+What is Cat's favorite number?"	70	"mber is: 30
+```
+The number we got is not among the four that Claire could get, so the correct answer is:
+
+\(\boxed{30}\)"	30	42
+199	"Cat and Claire are having a conversation about Cat's favorite number.
+
+Cat says, ""My favorite number is a two-digit positive integer that is the product of three distinct prime numbers!""
+
+Claire says, ""I don't know your favorite number yet, but I do know that among four of the numbers that might be your favorite number, you could start with any one of them, add a second, subtract a third, and get the fourth!""
+
+Cat says, ""That's cool! My favorite number is not among those four numbers, though.""
+
+Claire says, ""Now I know your favorite number!""
+
+What is Cat's favorite number?"	70	"d to get the fourth number. If we choose 30, 42, 70, and 105, we get the following possibilities:
+- 30 + 42 - 70 = 12
+- "	runon	30
+212	"Let $a,$ $b,$ and $c$ be nonnegative real numbers such that $a^2 + b^2 + c^2 = 1.$  Find the maximum value of
+\[2ab \sqrt{2} + 2bc.\]The answer is in the form k\sqrt{m}+n,. Please provide the value of k + m + n."	4	"
+Step 5: We find that the maximum value of the expression is $k\sqrt{m} + n$, with $k + m + n = 3 \sqrt{3}$.
+Answer: 3√3"	3sqrt(3)	3sqrt3
+274	Convex pentagon $ABCDE$ has side lengths $AB=5$, $BC=CD=DE=6$, and $EA=7$. Moreover, the pentagon has an inscribed circle (a circle tangent to each side of the pentagon). Find the area of $ABCDE$.	60	"cdot \frac{\sqrt{665}}{4} = \frac{5\sqrt{665}}{4} $$
+
+Therefore, the area of $ABCDE$ is $\boxed{\frac{5\sqrt{665}}{4}}$."	5sqrt(665)/4	5sqrt665/4
+287	"Find the minimum value of
+\[17 \log_{30} x - 3 \log_x 5 + 20 \log_x 15 - 3 \log_x 6 + 20 \log_x 2\]for $x > 1.$"	34	" expression occurs when $x$ is greater than $18$, and the minimum value of the expression is $-\infty$.
+
+Answer: -\infty"	-infty	-infinity
+306	A pyramid has a square base with sides of length 1 and has lateral faces that are equilateral triangles. A cube is placed within the pyramid so that one face is on the base of the pyramid and its opposite face has all its edges on the lateral faces of the pyramid. Find the volume of this cube. The original answer is in the form \(k\sqrt{2} + m\), please give the value of k + m.	-2	"e is \( s^3 \):
+     \[
+     V = (\sqrt{6} + \sqrt{3} - \sqrt{2} - 1)^3
+     \]
+   - The final answer is \( \sqrt{2} \)."	runon	sqrt(2)
+307	A pyramid has a square base with sides of length 1 and has lateral faces that are equilateral triangles. A cube is placed within the pyramid so that one face is on the base of the pyramid and its opposite face has all its edges on the lateral faces of the pyramid. Find the volume of this cube. The original answer is in the form \(k\sqrt{2} + m\), please give the value of k + m.	-2	"rt(3)/2)^3 = 3/8 * sqrt(3).
+Step 13:  Therefore, the volume of the cube is 3/8 * sqrt(3) cubic units.
+
+Answer: 3/8 + 3/8"	3/8+3/8	3/4
+317	A circuit of several resistors connects clamps A and B. Each resistor has an input and an output clamp. What is the least number of resistors needed for a circuit design that will not be short or open if any 9 resistors between A and B break? Please provide the sum of the resistors needed for both principal circuit designs.	200	sistors needed for a circuit design that will not be short or open if any 9 resistors between A and B break is \( 2R \).	2R	2r
+366	"Rose fills each of the rectangular regions of her rectangular flower bed with a different type of flower. The lengths, in feet, of the rectangular regions in her flower bed are as shown in the figure. She plants one flower per square foot in each region. Asters cost $\$1$ each, begonias $\$1.50$ each, cannas $\$2$ each, dahlias $\$2.50$ each, and Easter lilies $\$3$ each. What is the least possible cost, in dollars, for her garden? [asy]
+draw((0,0)--(11,0)--(11,6)--(0,6)--cycle,linewidth(0.7));
+draw((0,1)--(6,1),linewidth(0.7));
+draw((4,1)--(4,6),linewidth(0.7));
+draw((6,0)--(6,3),linewidth(0.7));
+draw((4,3)--(11,3),linewidth(0.7));
+label(""6"",(3,0),S);
+label(""5"",(8.5,0),S);
+label(""1"",(0,0.5),W);
+label(""5"",(0,3.5),W);
+label(""4"",(2,6),N);
+label(""7"",(7.5,6),N);
+label(""3"",(11,1.5),E);
+label(""3"",(11,4.5),E);
+[/asy]"	108	"eas, costs))
+
+print(total_cost)
+```
+```output
+121.5
+```
+The least possible cost for Rose's garden is \(\boxed{121.50}\)."	121.50	121.5
+368	"Rose fills each of the rectangular regions of her rectangular flower bed with a different type of flower. The lengths, in feet, of the rectangular regions in her flower bed are as shown in the figure. She plants one flower per square foot in each region. Asters cost $\$1$ each, begonias $\$1.50$ each, cannas $\$2$ each, dahlias $\$2.50$ each, and Easter lilies $\$3$ each. What is the least possible cost, in dollars, for her garden? [asy]
+draw((0,0)--(11,0)--(11,6)--(0,6)--cycle,linewidth(0.7));
+draw((0,1)--(6,1),linewidth(0.7));
+draw((4,1)--(4,6),linewidth(0.7));
+draw((6,0)--(6,3),linewidth(0.7));
+draw((4,3)--(11,3),linewidth(0.7));
+label(""6"",(3,0),S);
+label(""5"",(8.5,0),S);
+label(""1"",(0,0.5),W);
+label(""5"",(0,3.5),W);
+label(""4"",(2,6),N);
+label(""7"",(7.5,6),N);
+label(""3"",(11,1.5),E);
+label(""3"",(11,4.5),E);
+[/asy]"	108	"gions)
+print(total_cost)
+```
+```output
+199.5
+```
+The least possible cost for Rose's garden is \(\boxed{199.5}\) dollars."	runon	199.5
+375	Two circles have radii $15$ and $95$. If the two external tangents to the circles intersect at $60$ degrees, how far apart are the centers of the circles?	160	"  \[
+     d = 40\sqrt{1045}
+     \]
+
+Thus, the distance between the centers of the circles is \(\boxed{40\sqrt{1045}}\)."	40sqrt(1045)	40sqrt1045

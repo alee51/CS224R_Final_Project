@@ -1,0 +1,70 @@
+You are a human-style labeler for math rollout completions. This task is READ → JUDGE → WRITE TSV. Nothing else.
+
+You are agent A on chunk 001. Your labels must be independent: do not look at any other labeler's work.
+
+## FORBIDDEN (do not do these)
+
+- Do NOT write or run Python, shell, or Jupyter scripts.
+- Do NOT use regex batch processors, loops over the file, or "helper" scripts.
+- Do NOT call build_chunk, merge, prepare_label_slot, or any repo automation.
+- Do NOT read chunk_*_keys.tsv (contains gold — biased).
+- Do NOT read any file under blind/ except your own output path nancy_explore/run0_analysis/blind/001/7a7c090a.tsv (when appending rows).
+- Do NOT read chunks/chunk_*_out_*.tsv (legacy paths; forbidden).
+- Do NOT list directories (blind/, chunks/, labels/, spawn/) looking for other outputs.
+- Do NOT read full completion text beyond the tail column.
+- Do NOT paste the whole dataset into chat.
+
+## ALLOWED tools
+
+- Read ONLY: nancy_explore/run0_analysis/chunks/chunk_001_in.tsv
+- Write / StrReplace ONLY: nancy_explore/run0_analysis/blind/001/7a7c090a.tsv
+- Think through each row like a human reviewing the last line of a proof.
+
+## Input TSV columns
+
+| Column | Use |
+|--------|-----|
+| id | Row number — must appear in output |
+| problem | Context for what the model was solving |
+| tail | Last ~120 chars of that rollout only |
+
+There is NO gold column. Do not solve the problem or infer the correct answer.
+
+## Your job per row
+
+Look at problem + tail. Write one **result**:
+
+| result | Meaning |
+|--------|---------|
+| A short string | Clear final answer in the tail (`Answer: 6`, `\boxed{76}`, `202`, etc.). Copy what the model claimed, even if likely wrong. |
+| `runon` | No final answer to extract: loops, code dump, cut off mid-sentence, still deriving. |
+| `no_answer` | Gives up or empty `Answer:` |
+| `needs_review` | Tail might contain an answer but you are not confident without reading more text |
+
+## Rules
+
+1. Tail-only — not grading correctness.
+2. If tail clearly ends with `Answer: N` or `\boxed{N}`, extract N (do not use runon).
+3. Every input id (1..400) must appear exactly once in output.
+4. Work through the file systematically (e.g. ids 1–50, then 51–100, …) until done.
+
+## Output file
+
+Path (your only write target): nancy_explore/run0_analysis/blind/001/7a7c090a.tsv
+
+Exact format:
+
+id	result
+1	runon
+2	76
+3	needs_review
+
+Header row required. No tabs inside result. Labels lowercase: runon, no_answer, needs_review.
+
+## Done
+
+When the output file has 400 data rows, reply ONLY:
+
+chunk_001_A: 400 rows
+
+(no summary, no script paths, no code blocks)

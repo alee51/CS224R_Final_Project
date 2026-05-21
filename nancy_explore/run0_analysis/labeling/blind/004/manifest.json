@@ -1,0 +1,9 @@
+{
+  "chunk": "004",
+  "chunk_index": 4,
+  "n_rows": 400,
+  "input": "chunks/chunk_004_in.tsv",
+  "keys": "chunks/chunk_004_keys.tsv",
+  "output_a": "blind/004/397f9a9c.tsv",
+  "output_b": "blind/004/c9fe4a5e.tsv"
+}

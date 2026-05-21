@@ -14,6 +14,7 @@ The paper does **not** provide an explicit verbatim prompt template used to wrap
 **What IS given verbatim** is the LM-judge clustering prompt (§A.1, pp. 20-22):
 
 **Instruction Block (static, passed to judge):**
+
 ```
 Your ONLY task is to cluster the {n_responses} responses into buckets based on their
 reasoning algorithm, including both the overall strategy and the methods used at key
@@ -58,6 +59,7 @@ same micro-strategy at every key step.
 ```
 
 **Instance-specific suffix (dynamic, appended per problem):**
+
 ```
 **Context:**
 <problem description>
@@ -89,25 +91,27 @@ same micro-strategy at every key step.
 
 From Table 1 (§A.2, p. 23):
 
-| Parameter | Paper value | Our pilot (`shared_train.yaml`) |
-|---|---|---|
-| Base model | Qwen-3-4B-Base | Qwen3-1.7B-Base |
-| Generations per prompt (N) | 8 | 8 |
-| Set size n (for set RL) | 4 | N/A (not set RL) |
-| Number of sets K (for set RL) | 70 | N/A |
-| Max prompt length | 1024 | not specified |
-| Learning rate | 1×10⁻⁶ | 1×10⁻⁶ |
-| KL coefficient | 0.0 | 0.001 |
-| Clip ratio ϵ_low | 0.20 | 0.2 |
-| Clip ratio ϵ_high | 0.28 | 0.2 (symmetric) |
-| Entropy coefficient | 0.0 | not set |
-| Rollout temperature | 1.0 | 1.0 |
-| Prompts per batch | 128 | 32 |
-| Prompts per minibatch | 64 | not explicit |
-| Max response length | 4096 tokens | 2048 tokens (capped to 1024 in execute.py) |
-| Training steps | 850 | 100 |
-| Device | 4×NVIDIA H200 | A100-80GB (1 GPU) |
-| Training epochs | 2 | not explicit |
+
+| Parameter                     | Paper value    | Our pilot (`shared_train.yaml`)            |
+| ----------------------------- | -------------- | ------------------------------------------ |
+| Base model                    | Qwen-3-4B-Base | Qwen3-1.7B-Base                            |
+| Generations per prompt (N)    | 8              | 8                                          |
+| Set size n (for set RL)       | 4              | N/A (not set RL)                           |
+| Number of sets K (for set RL) | 70             | N/A                                        |
+| Max prompt length             | 1024           | not specified                              |
+| Learning rate                 | 1×10⁻⁶         | 1×10⁻⁶                                     |
+| KL coefficient                | 0.0            | 0.001                                      |
+| Clip ratio ϵ_low              | 0.20           | 0.2                                        |
+| Clip ratio ϵ_high             | 0.28           | 0.2 (symmetric)                            |
+| Entropy coefficient           | 0.0            | not set                                    |
+| Rollout temperature           | 1.0            | 1.0                                        |
+| Prompts per batch             | 128            | 32                                         |
+| Prompts per minibatch         | 64             | not explicit                               |
+| Max response length           | 4096 tokens    | 2048 tokens (capped to 1024 in execute.py) |
+| Training steps                | 850            | 100                                        |
+| Device                        | 4×NVIDIA H200  | A100-80GB (1 GPU)                          |
+| Training epochs               | 2              | not explicit                               |
+
 
 **Reward function:** Binary RLVR — `r(x, y) ∈ {0, 1}` (correct/incorrect). Implicitly binary from all mathematical analysis in §5 (e.g., "r(x,y) = 0 (an incorrect response)"). No per-token scaling; per-generation binary correctness. This matches our `verifier: binary_rlvr`.
 
@@ -124,6 +128,7 @@ From Table 1 (§A.2, p. 23):
 Poly-EPO uses an **LM-judge** (Qwen-3-4B-Instruct) to cluster responses by reasoning strategy — NOT exact-match on answers.
 
 Key design choices (§4, §A.1):
+
 - Clusters are assigned based on **macro-strategy** (overall conceptual framework) AND **micro-strategy** (specific technique at key steps).
 - Clustering is **independent of the final answer** — two responses with identical logic but different arithmetic errors share a cluster.
 - Cluster 100 is reserved for degenerate responses (gibberish, off-topic, no logical steps, reward-hacking).
@@ -131,9 +136,11 @@ Key design choices (§4, §A.1):
 - When computing set diversity, Cluster 100 assignments are excluded from the numerator of d(x, y₁:n).
 
 The diversity of a set is:
+
 ```
 d(x, y_{1:n}) = |{C(y_1), ..., C(y_n)}| / n
 ```
+
 where C(yi) is the LM-judge cluster assignment, and Cluster 100 members are excluded (§A.1, p. 23).
 
 **Delta from our pilot:** Our pilot uses `clustering: exact_canonical` — hashing the canonicalized answer string (stripping whitespace, $, \boxed{}). This clusters by **answer identity**, not **reasoning strategy**. This is a fundamental mismatch: two responses that reach the same answer via different methods would be in the same cluster under our system, but in different clusters under Poly-EPO.
@@ -143,24 +150,31 @@ where C(yi) is the LM-judge cluster assignment, and Cluster 100 members are excl
 ## 5. The Minority/Majority Voting Framing — Poly-EPO Math
 
 **Polychromic objective** (Eq. 10, §4, p. 6):
+
 ```
 f_poly(x, y_1, ..., y_n) = (1/n) * sum_{i=1}^{n} r(x, y_i) * d(x, y_{1:n})
 ```
+
 = mean reward of the set × diversity of the set
 
 **Diversity function** (Eq. 11, §4, p. 7):
+
 ```
 d(x, y_{1:n}) = |{C(y_1), ..., C(y_n)}| / n
 ```
+
 = number of distinct reasoning-strategy clusters / set size
 
 **Marginal set advantage** (Eq. 8, §3, p. 5):
+
 ```
 A♯_marg(x, y; f) = (1/|G(y)|) * sum_{G ∈ G(y)} A♯(x, G; f)
 ```
+
 where G(y) = all constructed sets containing y, and A♯(x, G; f) = f(x, G) - mean_f.
 
 **What this means operationally:**
+
 - Sample N=8 generations per prompt.
 - Construct K=70 sets of size n=4.
 - Score each set: mean_reward × diversity.
@@ -169,13 +183,15 @@ where G(y) = all constructed sets containing y, and A♯(x, G; f) = f(x, G) - me
 
 **Comparison to our `inverse_freq`:**
 
-| Property | Poly-EPO | Our `inverse_freq` |
-|---|---|---|
-| Credit scope | Set-level (shared among n generations) | Per-trajectory |
-| Diversity measure | LM-judge strategy clusters | Exact-answer hash clusters |
-| What gets upweighted | Sets with high reward AND high strategy diversity | Individual rollouts in minority answer clusters |
-| Incorrect but diverse gets + signal | Yes (via set credit sharing) | Only if cluster is rare AND reward is nonzero (reward=0 → advantage=0 after mean-centering) |
-| Hyperparameter-free balance | Yes (product structure) | No (w_max=8, gamma=1.0) |
+
+| Property                            | Poly-EPO                                          | Our `inverse_freq`                                                                          |
+| ----------------------------------- | ------------------------------------------------- | ------------------------------------------------------------------------------------------- |
+| Credit scope                        | Set-level (shared among n generations)            | Per-trajectory                                                                              |
+| Diversity measure                   | LM-judge strategy clusters                        | Exact-answer hash clusters                                                                  |
+| What gets upweighted                | Sets with high reward AND high strategy diversity | Individual rollouts in minority answer clusters                                             |
+| Incorrect but diverse gets + signal | Yes (via set credit sharing)                      | Only if cluster is rare AND reward is nonzero (reward=0 → advantage=0 after mean-centering) |
+| Hyperparameter-free balance         | Yes (product structure)                           | No (w_max=8, gamma=1.0)                                                                     |
+
 
 **Key structural difference:** `inverse_freq` is standard RL with reweighted per-trajectory advantages. Poly-EPO is set RL with a joint set-level objective. An incorrect rollout in `inverse_freq` has reward=0, base advantage = 0 - mean(r), so it gets a *negative* advantage regardless of cluster rarity (it only helps if the group has zero mean, which is unlikely). In Poly-EPO, incorrect rollouts in rare strategy clusters can receive positive signal if correct siblings are in the same sampled set.
 
@@ -184,6 +200,7 @@ where G(y) = all constructed sets containing y, and A♯(x, G; f) = f(x, G) - me
 ## 6. Eval Methodology
 
 **Benchmarks (§6.1, p. 10):**
+
 - BeyondAIME [SC+25]
 - AIME 2026
 - AIME 2025
@@ -223,21 +240,13 @@ From §6.1 and figures (p. 10-12):
 From the paper's implementation choices and stated rationale:
 
 1. **No std normalization in advantage** (§A, p. 23): "we omit the standard deviation normalization term originally used in [SWZ+24], as we found this choice led to better empirical performance." This is a Dr.GRPO modification. Our pilot's `per_prompt_grpo` normalization mode needs to be checked for whether it includes std normalization.
-
 2. **Asymmetric clip ratio** (Table 1): ϵ_low = 0.20, ϵ_high = 0.28. This is a DAPO-style choice. Our pilot uses symmetric ϵ = 0.2.
-
 3. **Zero KL coefficient** (Table 1): KL coefficient = 0.0. No KL penalty against reference policy. Our pilot uses kl_coef = 0.001.
-
 4. **Long response length**: Max response = 4096 tokens. Our pilot caps at 2048 (and execute.py hard-caps at 1024). This is likely too short for hard math problems.
-
 5. **Large batch**: 128 prompts/batch (vs. our 32). Effective diversity per update is much higher.
-
 6. **850 training steps, 2 epochs** over POLARIS-53k. Our pilot runs 100 steps. The paper shows diversity collapse in GRPO beginning at ~200 steps, suggesting 100 steps may be too few to observe the full effect.
-
 7. **LM-judge for clustering is the instruct variant** of the same model family (Qwen-3-4B-Instruct judges Qwen-3-4B-Base outputs). Must "possess strong instruction-following capabilities."
-
 8. **Cluster 100 exclusion**: Degenerate generations (reward hacking, gibberish) are identified by the judge and excluded from diversity computation. Our exact-match system has no such safety valve.
-
 9. **Set size n=4, K=70 sets** from N=8 rollouts: (8 choose 4) = 70, so all possible sets are enumerated. This is the combinatorial maximum, not a random sample.
 
 ---
@@ -267,17 +276,11 @@ The paper does **not** contain a formal ablation section. The following comparis
 ### Direct constraints
 
 1. **100 steps is too short for signal.** The paper's Fig. 2 shows diversity dynamics only diverge meaningfully after ~200 steps. At 100 steps, we cannot distinguish Poly-EPO-style methods from GRPO because diversity collapse in GRPO hasn't fully occurred yet. Minimum recommended: ~300 steps to see the first divergence; 500+ to see the full effect. Our current `max_steps: 100` is almost certainly too short to detect the effect we are studying.
-
 2. **Exact-match clustering is not the paper's substrate.** The paper's clustering measures *reasoning strategy diversity*, not *answer diversity*. Two rollouts with different methods reaching the same answer are separate clusters under Poly-EPO but the same cluster under our system. This makes our `inverse_freq` conceptually misaligned with what the paper measures as "minority." The paper explicitly chose LM-judge to capture strategy-level diversity. Our exact-canonical clustering gives inverse_freq a fundamentally different signal than what Poly-EPO optimizes.
-
 3. **Max response length of 1024 tokens (execute.py cap) is too short.** The paper uses 4096. Hard math problems (AIME, HMMT) require long reasoning chains. Truncation at 1024 will systematically reward shorter (likely lower-quality) reasoning and distort reward signal.
-
 4. **KL coefficient should be 0.0** (or very small). The paper uses kl_coef = 0.0. Our 0.001 may constrain exploration unnecessarily.
-
 5. **Asymmetric clipping.** Paper uses ϵ_low=0.20, ϵ_high=0.28 (DAPO style). Our symmetric ϵ=0.2 may underweight positive updates.
-
 6. **Batch size 32 vs 128.** Smaller batch means each gradient step sees less diversity. For a diversity-promoting objective this matters more than for vanilla GRPO.
-
 7. **inverse_freq does not provide positive signal to incorrect rollouts.** This is the fundamental distinction from Poly-EPO: `r(x,y)=0` → base advantage starts at `0 - mean(r)` which is ≤ 0. Even if a cluster is rare, multiplying a negative advantage by a large weight makes it more negative. `inverse_freq` only helps correct rollouts in minority clusters. Poly-EPO upweights *exploratory* rollouts even when incorrect. Our method is closer to "correct minority voting" than "optimistic exploration."
 
 ### Guidance for redesign
@@ -287,3 +290,4 @@ The paper does **not** contain a formal ablation section. The following comparis
 - The 1.7B / synthetic-domain experiment (§6.2) is the paper's analog to our setup. Qwen-3-1.7B-Base on synthetic tasks with Gemini-2.0-Flash judge. We use 1.7B on DaPO math problems. The gap is the judge quality and clustering substrate.
 - Training data: Paper uses POLARIS-53k. We use DaPO. No comparison possible without knowing difficulty distribution overlap.
 - Pass@k is the primary signal, not pass@1. At 100 steps with N=8, we should be reporting pass@1 through pass@8 at minimum; the paper goes to pass@64+ to show divergence.
+

@@ -1,0 +1,65 @@
+id	problem	gold	tail	result_A	result_B
+48	Find all integers $n$ such that $1 < n < 10^6$ and $n^3 - 1$ is divisible by $10^6 n - 1$.	1000	"\( 10^6 n - 1 \) are \( n = 2 \), \( n = 3 \), and \( n = 13 \).
+
+Therefore, the final answer is:
+\[
+\boxed{2, 3, 13}
+\]"	2, 3, 13	2,3,13
+57	What percentage of twenty thousand is a quarter of a million?	1250	"e.**
+   - \( 12.5 \times 100 = 1250\% \).
+
+Therefore, a quarter of a million is \( \boxed{1250\%} \) of twenty thousand."	1250%	1250
+92	"Positive real numbers \(a\) and \(b\) have the property that  
+\[
+\sqrt{\log{a}} + \sqrt{\log{b}} + \log \sqrt{a} + \log \sqrt{b} = 100
+\]
+and all four terms on the left are positive integers, where \(\log\) denotes the base \(10\) logarithm. The original answer is in the form \(10^k\). Please find the value of \(k\)."	164	itive integer solutions for \(a\) and \(b\) that satisfy the given equation, the value of \(k\) is not explicitly given.	needs_review	no_answer
+102	The dimensions of a rectangle $R$ are $a$ and $b$, with $a < b$. It is required to obtain a rectangle with dimensions $x$ and $y$, where $x < a$ and $y < a$, such that its perimeter is one-third that of $R$, and its area is one-third that of $R$. Find the number of such (different) rectangles.	0	" = sp.Eq(x*y, (a*b)/3)
+
+# Solve the system of equations
+solution = sp.solve([perimeter_constraint, area_constraint], (x,"	2	runon
+172	Find a necessary and sufficient condition on the positive integer $\boldsymbol{n}$ that the equation $$x^{n}+(2+x)^{n}+(2-x)^{n}=0$$ has a rational root. Please provide the integer value of $n$ that satisfies this condition.	1	" a rational solution if $x=0$ or $x=-2$, which are not integer solutions.
+
+Answer: $\boxed{n \text{ is an odd integer}}$"	n is an odd integer	needs_review
+175	Find a necessary and sufficient condition on the positive integer $\boldsymbol{n}$ that the equation $$x^{n}+(2+x)^{n}+(2-x)^{n}=0$$ has a rational root. Please provide the integer value of $n$ that satisfies this condition.	1	"er \( n \) that satisfies the condition.
+
+Thus, there is no such \( n \). The answer is:
+\[ \boxed{\text{No such } n} \]"	No such n	no such n
+179	A large, regular hexagon is drawn on the ground, and a man stands at one of the vertices.  The man flips a coin.  If the coin lands heads, he walks counterclockwise along the edge of the hexagon until reaching the next nearest vertex.  If the coin lands tails, he walks clockwise around the hexagon until reaching another vertex.  Once there, he repeats the process.  The man flips the coin a total of six times.  What is the probability that the man is standing where he started when he is finished?The answer is in the form rac{m}{n}, where gcd(m, n) = 1. Please provide the value of m + n.	43	"es = 22 / 64 = 11 / 32.
+
+Since gcd(11, 32) = 1, the fraction is in its simplest form.
+
+Thus, the probability is 11 / 32."	needs_review	runon
+184	A large, regular hexagon is drawn on the ground, and a man stands at one of the vertices.  The man flips a coin.  If the coin lands heads, he walks counterclockwise along the edge of the hexagon until reaching the next nearest vertex.  If the coin lands tails, he walks clockwise around the hexagon until reaching another vertex.  Once there, he repeats the process.  The man flips the coin a total of six times.  What is the probability that the man is standing where he started when he is finished?The answer is in the form rac{m}{n}, where gcd(m, n) = 1. Please provide the value of m + n.	43	" them result in the man being back at his starting position. Therefore, the probability is 4/8 = 1/2.
+
+Answer: 1/2 = 1/2"	needs_review	3
+199	Let $ABCD$ be a parallelogram. Let $E$ be the midpoint of $AB$ and $F$ be the midpoint of $CD$. Points $P$ and $Q$ are on segments $EF$ and $CF$, respectively, such that $A$, $P$, and $Q$ are collinear. Given that $EP = 5$, $PF = 3$, and $QF = 12$, find $CQ$.	8	"\mathbf{c} - \mathbf{b})}{4} = \frac{13\mathbf{c} - 11\mathbf{b}}{4} \]
+
+Now, we need to find \(CQ\). Since \(CQ = 12\),"	runon	12
+322	The sum $\frac{1}{1}+\frac{1}{2}+\frac{1}{3}+\frac{1}{4}+\frac{1}{5}+\frac{1}{6}=\frac{m}{n}$ where $m$ and $n$ are relatively prime positive integers. Find $m + n.$	69	" 55 = 31 \]
+
+So, the difference between the average temperatures in Miami, Florida, and Reno, Nevada, is \(\boxed{31}\)."	needs_review	runon
+347	Find a set of positive integers with the greatest possible number of elements such that the least common multiple of all of them is less than $2011$.	40	"of elements such that the least common multiple of all of them is less than 2011 is:
+
+{Answer: {2, 3, 5, 7, 11, 13, 19}}"	{2, 3, 5, 7, 11, 13, 19}	needs_review
+352	Find a set of positive integers with the greatest possible number of elements such that the least common multiple of all of them is less than $2011$.	40	"M of all of them is less than 2011 is:
+\[ \{2, 3, 5, 7, 11, 13\} \]
+
+The answer is:
+\[ \boxed{\{2, 3, 5, 7, 11, 13\}} \]"	{2, 3, 5, 7, 11, 13}	needs_review
+356	Let $\triangle XOY$ be a right-angled triangle with $m\angle XOY = 90^{\circ}$. Let $M$ and $N$ be the midpoints of legs $OX$ and $OY$, respectively. Given that $XN = 19$ and $YM = 22$, find the length of $XY$.	26	"{9 \cdot 41} = 3\sqrt{41} \]
+
+So the length of $XY$ is $3\sqrt{41}$. Thus, the final answer is:
+\[
+\boxed{3\sqrt{41}}
+\]"	3\sqrt{41}	3sqrt41
+357	Let $\triangle XOY$ be a right-angled triangle with $m\angle XOY = 90^{\circ}$. Let $M$ and $N$ be the midpoints of legs $OX$ and $OY$, respectively. Given that $XN = 19$ and $YM = 22$, find the length of $XY$.	26	"= 90 \]
+
+Thus, the length of $XY$ is:
+\[ c = \sqrt{90} = 3\sqrt{10} \]
+
+So the final answer is:
+\[ \boxed{3\sqrt{10}} \]"	3\sqrt{10}	3sqrt10
+379	A mahogany bookshelf has four identical-looking books which are $200$, $400$, $600$, and $800$ pages long. Velma picks a random book off the shelf, flips to a random page to read, and puts the book back on the shelf. Later, Daphne also picks a random book off the shelf and flips to a random page to read. Given that Velma read page $122$ of her book and Daphne read page $304$ of her book, the probability that they chose the same book is $\frac{m}{n}$ for relatively prime positive integers $m$ and $n$. Compute $100m + n$.	6425	"
+```
+The output of the code indicates that the probability that Velma and Daphne read from the same book is $\frac{1}{4}"	needs_review	runon

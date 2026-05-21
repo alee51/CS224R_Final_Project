@@ -1,0 +1,80 @@
+id	problem	gold	tail	result_A	result_B
+10	Let $A$ be a subset of $\{1,2,\ldots,2020\}$ such that the difference of any two distinct elements in $A$ is not prime. Determine the maximum number of elements in set $A$.	505	 505 \), and 505/4 = 126 with a remainder of 1, which means we can include 510 elements without violating the condition.	runon	510
+72	If $x$ is a positive number such that $x^{x^{x^{x}}} = ((x^{x})^{x})^{x}$, find $(x^{x})^{(x^{x})}$.	27	"aside for now and focus on solving for \((x^x)^{(x^x)}\), which we will do in the next step.
+Answer: Answer: (x^x)^(x^x)"	needs_review	(x^x)^(x^x)
+121	"Suppose $x, y \in \mathbb{Z}$ satisfy the equation:
+\[
+y^4 + 4y^3 + 28y + 8x^3 + 6y^2 + 32x + 1 = (x^2 - y^2)(x^2 + y^2 + 24).
+\]
+Find the sum of all possible values of $|xy|$."	18	"`output
+([], 0)
+```
+Even with a wider range, there are still no integer pairs \((x, y)\) that satisfy the given equation"	0	no_answer
+156	The diameter, in inches, of a sphere with twice the volume of a sphere of radius 9 inches can be expressed in the form $a\sqrt[3]{b}$ where $a$ and $b$ are positive integers and $b$ contains no perfect cube factors.  Compute $a+b$.	20	". Since 9 has no perfect cube factors, b is already in the desired form.
+
+Thus, a + b = 2^(4/3) + 9
+
+Answer: 9 + 2^(4/3)"	9+2^(4/3)	9 + 2^(4/3)
+160	The diameter, in inches, of a sphere with twice the volume of a sphere of radius 9 inches can be expressed in the form $a\sqrt[3]{b}$ where $a$ and $b$ are positive integers and $b$ contains no perfect cube factors.  Compute $a+b$.	20	"ying the expression.
+Step 6:  Finally, we compute the sum of \( a \) and \( b \) to obtain the final answer. Answer: 316"	runon	316
+191	"How many non-congruent isosceles triangles (including equilateral triangles) have positive integer side
+lengths and perimeter less than 20?"	41	" 4), and (4, 4, 5).
+Step 7:  Therefore, the answer to the problem is 5, which corresponds to answer choice C.
+
+Answer: C"	C	c
+252	Calculate the result of the expression $1990-1980+1970-1960+\cdots -20+10$.	1000	"al Answer**:
+   - After performing the calculations, we conclude that the value of the expression is $990$.
+
+Answer: 990"	1000	990
+253	Calculate the result of the expression $1990-1980+1970-1960+\cdots -20+10$.	1000	"imes 10 = 50$. 
+
+Therefore, the result of the expression $1990 - 1980 + 1970 - 1960 + \cdots - 20 + 10$ is $\boxed{50}$."	990	50
+254	Calculate the result of the expression $1990-1980+1970-1960+\cdots -20+10$.	1000	"irs by 10, which is (1980) * 10.
+Step 9:  Therefore, the result of the expression is (1980) * 10 = 19800.
+
+Answer: 19800"	50	19800
+255	Calculate the result of the expression $1990-1980+1970-1960+\cdots -20+10$.	1000	"lt of each pair by the number of pairs.
+99 pairs * 10 = 990
+
+Step 5: Add 50 to the result.
+990 + 50 = 1040
+
+Answer: 1040"	19800	1040
+256	Calculate the result of the expression $1990-1980+1970-1960+\cdots -20+10$.	1000	"m 1990 to 10). Therefore, the result is:
+
+\[100 \times 10 = 1000\]
+
+Thus, the result of the expression is:
+
+Answer: 1000"	1040	1000
+343	Determine the smallest non-negative integer $n$ such that \( \sqrt{(6n+11)(6n+14)(20n+19)} \in \mathbb{Q} \).	219	"\)), \( n = 5 \) works.
+
+Therefore, the smallest non-negative integer \( n \) such that \( \sqrt{(6n+11)(6n+14)(20n+19)}"	runon	5
+355	"A ""slackrope walker"" is much like a tightrope walker except that the rope on which he performs is not pulled tight. Paul, a slackrope walker, has a rope tied to two $15\text{ m}$ high poles which are $14\text{ m}$ apart. When he is standing on the rope $5\text{ m}$ away from one of the poles, he is $3\text{ m}$ above the ground. How long in meters is the rope?
+
+[asy]
+draw((0,0)--(14,0)--(14,15)--(5,3)--(0,15)--cycle,black+linewidth(1));
+draw((0,3)--(5,3)--(5,0),black+linewidth(1)+dashed);
+draw((0,-3)--(6,-3),black+linewidth(1));
+draw((8,-3)--(14,-3),black+linewidth(1));
+draw((0,-3.5)--(0,-2.5),black+linewidth(1));
+draw((14,-3.5)--(14,-2.5),black+linewidth(1));
+draw((0,0)--(1,0)--(1,1)--(0,1)--cycle,black+linewidth(1));
+draw((14,0)--(14,1)--(13,1)--(13,0)--cycle,black+linewidth(1));
+draw(rotate(90)*Label(""Paul""),(5,3),3N);
+label(""5"",(0,3)--(5,3),N);
+label(""3"",(5,0)--(5,3),E);
+label(""14"",(7,-3));
+label(""15"",(14,0)--(14,15),E);
+[/asy]"	28	"text{Length of rope} = 5\sqrt{10} + 3\sqrt{34}
+\]
+Thus, the length of the rope is:
+\[
+\boxed{5\sqrt{10} + 3\sqrt{34}}
+\]"	5√10+3√34	5√10 + 3√34
+399	Let $u_0, u_1, u_2, \ldots$ be integers such that $u_0 = 100$; $u_{k+2} \geq 2 + u_k$ for all $k \geq 0$; and $u_{\ell+5} \leq 5 + u_\ell$ for all $\ell \geq 0$. Find all possible values for the integer $u_{2023}$.	2123	"r \(u_{2023}\) are \(\{755, 756, 757, 758, 759\}\).
+
+Therefore, the answer is:
+\[
+\boxed{\{755, 756, 757, 758, 759\}}
+\]"	755-759	{755, 756, 757, 758, 759}

@@ -1,0 +1,9 @@
+{
+  "chunk": "008",
+  "chunk_index": 8,
+  "n_rows": 400,
+  "input": "chunks/chunk_008_in.tsv",
+  "keys": "chunks/chunk_008_keys.tsv",
+  "output_a": "blind/008/7a89fee7.tsv",
+  "output_b": "blind/008/48567457.tsv"
+}

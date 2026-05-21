@@ -109,6 +109,22 @@ We think the project split into **two orthogonal questions**. The first pilot tr
 
 **`inverse_freq` (what we coded):** multiply GRPO advantages by **1 / (answer-cluster size)** within each prompt. On Run 0 this mostly upweights **singleton wrong answers** (large negative advantage), not “reward the minority correct vote.” Structurally **per-rollout**, not set-RL — close to GRPO+DIV reweighting in your paper, not a new set aggregator.
 
+### Before picking — is the LM judge actually a cost problem?
+
+Gemini 2.0 Flash is `cheap`-tier (per-call pennies), so the paper's "expensive judge" plausibly refers to **training-loop overhead** (called every gradient step, gates each policy update), not per-call dollars. Rough sizing per Qwen-1.7B training step (8 rollouts × 2048 tok, single A100):
+
+| Substrate | FLOPs vs policy step | Wall-clock vs step | Reproducible |
+|---|---|---|---|
+| Poly-EPO original — Gemini 2.0 Flash (API) | ~7B-local equiv | external (network-gated) | API-dependent |
+| Same-tier local judge — Qwen 2.5 7B, co-located | ~50–70% | ~10–25% | Yes (frozen) |
+| Smaller local judge — Qwen 2.5 1.5B / 3B | ~10–15% | ~3–8% | Yes |
+| Semantic embedding — MiniLM (~80MB) | <1% | <1% | Yes |
+| Answer-hash (current) | negligible | negligible | Yes; 0% minority-correct on Run 0 |
+
+(Back-of-envelope `2N`/`6N` FLOPs heuristics — order-of-magnitude only.)
+
+**Implication for the conversation:** ~10–25% wall-clock overhead from a co-located 7B judge is annoying, not prohibitive. The strong reason to replace Gemini Flash is **reproducibility** (frozen open weights, no API drift), not per-call cost or in-loop overhead. If you agree, Option A's framing softens: "kill the LM judge" → "use a frozen local judge," and the project's headline can shift toward Question II.
+
 Below: **candidates**, what each would mean, and a **sample phased plan** if we committed (all assume fixed parser, matched seeds, smoke-timed budget, reuse redesign infra where it still fits).
 
 ---

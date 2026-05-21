@@ -1,0 +1,217 @@
+id	problem	tail
+1	Compute the multiplicative inverse of $201$ modulo $299$. Express your answer as an integer from $0$ to $298$.	"1]
+if x < 0:
+    x += b
+
+print(x)
+```
+```output
+81
+```
+The multiplicative inverse of 201 modulo 299 is \( \boxed{81} \)."
+2	Compute the multiplicative inverse of $201$ modulo $299$. Express your answer as an integer from $0$ to $298$.	"to 298, we add 299 to $-125$:
+
+$-125 + 299 = 174$.
+
+Thus, the multiplicative inverse of 201 modulo 299 is $\boxed{174}$."
+3	Compute the multiplicative inverse of $201$ modulo $299$. Express your answer as an integer from $0$ to $298$.	"99}\]
+
+So, the multiplicative inverse of \(201\) modulo \(299\) is \(119\). Therefore, the answer is:
+
+\[ \boxed{119} \]"
+4	Compute the multiplicative inverse of $201$ modulo $299$. Express your answer as an integer from $0$ to $298$.	" a positive equivalent:
+
+\[ -119 + 299 = 180 \]
+
+So, the multiplicative inverse of 201 modulo 299 is:
+
+\[ \boxed{180} \]"
+5	Compute the multiplicative inverse of $201$ modulo $299$. Express your answer as an integer from $0$ to $298$.	"y adding \(299\):
+\[
+-121 + 299 = 178
+\]
+
+So, the multiplicative inverse of \(201\) modulo \(299\) is:
+\[
+\boxed{178}
+\]"
+6	Compute the multiplicative inverse of $201$ modulo $299$. Express your answer as an integer from $0$ to $298$.	"\cdot 2 \equiv 1 \pmod{299}
+\]
+Therefore, the multiplicative inverse of \( 201 \) modulo \( 299 \) is:
+\[
+\boxed{402}
+\]"
+7	Compute the multiplicative inverse of $201$ modulo $299$. Express your answer as an integer from $0$ to $298$.	" to \(-117\):
+\[
+-117 + 299 = 182
+\]
+Therefore, the multiplicative inverse of \(201\) modulo \(299\) is \(\boxed{182}\)."
+8	Compute the multiplicative inverse of $201$ modulo $299$. Express your answer as an integer from $0$ to $298$.	"(-66\):
+\[
+-66 + 299 = 233
+\]
+
+Therefore, the multiplicative inverse of \( 201 \) modulo \( 299 \) is:
+\[
+\boxed{233}
+\]"
+9	"An *access pattern* $\pi$ is a permutation of $\{1,2,\dots,50\}$ describing the order in which some 50 memory addresses are accessed. We define the *locality* of $\pi$ to be how much the program jumps around the memory, or numerically, 
+\[ \sum_{i=2}^{50}\left\lvert\pi(i)-\pi(i-1)\right\rvert. \]
+If $\pi$ is a uniformly randomly chosen access pattern, what is the expected value of its locality?"	"\rvert \right) \).
+
+### Final Answer
+
+The expected value of the locality of a random access pattern is \(\boxed{2475}\)."
+10	"An *access pattern* $\pi$ is a permutation of $\{1,2,\dots,50\}$ describing the order in which some 50 memory addresses are accessed. We define the *locality* of $\pi$ to be how much the program jumps around the memory, or numerically, 
+\[ \sum_{i=2}^{50}\left\lvert\pi(i)-\pi(i-1)\right\rvert. \]
+If $\pi$ is a uniformly randomly chosen access pattern, what is the expected value of its locality?"	iformly randomly chosen access pattern $\pi$ from all possible permutations of $\{1,2,\dots,50\}$ is \(\boxed{1190.5}\).
+11	"An *access pattern* $\pi$ is a permutation of $\{1,2,\dots,50\}$ describing the order in which some 50 memory addresses are accessed. We define the *locality* of $\pi$ to be how much the program jumps around the memory, or numerically, 
+\[ \sum_{i=2}^{50}\left\lvert\pi(i)-\pi(i-1)\right\rvert. \]
+If $\pi$ is a uniformly randomly chosen access pattern, what is the expected value of its locality?"	")
+
+# The expected locality for n = 50
+expected_locality_value = expected_locality(50)
+print(expected_locality_value)
+```"
+12	"An *access pattern* $\pi$ is a permutation of $\{1,2,\dots,50\}$ describing the order in which some 50 memory addresses are accessed. We define the *locality* of $\pi$ to be how much the program jumps around the memory, or numerically, 
+\[ \sum_{i=2}^{50}\left\lvert\pi(i)-\pi(i-1)\right\rvert. \]
+If $\pi$ is a uniformly randomly chosen access pattern, what is the expected value of its locality?"	" \sum_{i=2}^{50} \frac{49}{2450} = \frac{49}{2450} \times 49 = \frac{2401}{2450} \]
+
+Answer: $\boxed{\frac{2401}{2450}}$"
+13	"An *access pattern* $\pi$ is a permutation of $\{1,2,\dots,50\}$ describing the order in which some 50 memory addresses are accessed. We define the *locality* of $\pi$ to be how much the program jumps around the memory, or numerically, 
+\[ \sum_{i=2}^{50}\left\lvert\pi(i)-\pi(i-1)\right\rvert. \]
+If $\pi$ is a uniformly randomly chosen access pattern, what is the expected value of its locality?"	"
+
+Thus, the expected value of the locality of a uniformly randomly chosen access pattern \(\pi\) is:
+
+\[
+\boxed{1225}
+\]"
+14	"An *access pattern* $\pi$ is a permutation of $\{1,2,\dots,50\}$ describing the order in which some 50 memory addresses are accessed. We define the *locality* of $\pi$ to be how much the program jumps around the memory, or numerically, 
+\[ \sum_{i=2}^{50}\left\lvert\pi(i)-\pi(i-1)\right\rvert. \]
+If $\pi$ is a uniformly randomly chosen access pattern, what is the expected value of its locality?"	"9 such pairs in a permutation of 50 elements
+expected_locality = expected_difference * 49
+
+print(expected_locality)
+````"
+15	"An *access pattern* $\pi$ is a permutation of $\{1,2,\dots,50\}$ describing the order in which some 50 memory addresses are accessed. We define the *locality* of $\pi$ to be how much the program jumps around the memory, or numerically, 
+\[ \sum_{i=2}^{50}\left\lvert\pi(i)-\pi(i-1)\right\rvert. \]
+If $\pi$ is a uniformly randomly chosen access pattern, what is the expected value of its locality?"	" 2401
+   \]
+
+Thus, the expected value of the locality of a uniformly randomly chosen access pattern is \(\boxed{2401}\)."
+16	"An *access pattern* $\pi$ is a permutation of $\{1,2,\dots,50\}$ describing the order in which some 50 memory addresses are accessed. We define the *locality* of $\pi$ to be how much the program jumps around the memory, or numerically, 
+\[ \sum_{i=2}^{50}\left\lvert\pi(i)-\pi(i-1)\right\rvert. \]
+If $\pi$ is a uniformly randomly chosen access pattern, what is the expected value of its locality?"	" \[
+   \frac{49^2}{2} = \frac{2401}{2} = 1200.5
+   \]
+
+Thus, the expected value of the locality is:
+\[
+\boxed{1200.5}
+\]"
+17	Two circles of radius $5$ are externally tangent to each other and are internally tangent to a circle of radius $13$ at points $A$ and $B$, as shown in the diagram. The distance $AB$ can be written in the form $\frac{k}{l}$, where $k$ and $l$ are relatively prime positive integers. Find the value of $k+l$.	"
+result = k + l
+print(result)
+```
+```output
+11
+```
+The value of \( k + l \) for the distance \( AB \) is \(\boxed{11}\)."
+18	Two circles of radius $5$ are externally tangent to each other and are internally tangent to a circle of radius $13$ at points $A$ and $B$, as shown in the diagram. The distance $AB$ can be written in the form $\frac{k}{l}$, where $k$ and $l$ are relatively prime positive integers. Find the value of $k+l$.	"1\), the value of \(k + l\) is \(2 \sqrt{105} + 1\).
+
+Therefore, the value of \(k + l\) is \(\boxed{1 + 2 \sqrt{105}}\)."
+19	Two circles of radius $5$ are externally tangent to each other and are internally tangent to a circle of radius $13$ at points $A$ and $B$, as shown in the diagram. The distance $AB$ can be written in the form $\frac{k}{l}$, where $k$ and $l$ are relatively prime positive integers. Find the value of $k+l$.	"enominator is 1. Thus, $k = 25$ and $l = 1$.
+Step 8:  Therefore, the value of $k+l$ is $25+1 = 26$.
+Answer: $\boxed{26}$"
+20	Two circles of radius $5$ are externally tangent to each other and are internally tangent to a circle of radius $13$ at points $A$ and $B$, as shown in the diagram. The distance $AB$ can be written in the form $\frac{k}{l}$, where $k$ and $l$ are relatively prime positive integers. Find the value of $k+l$.	"# Rationalizing the denominator
+k = 26 * math.sqrt(103)
+l = 103
+
+# Sum of k and l
+result = k + l
+print(result)
+```"
+21	Two circles of radius $5$ are externally tangent to each other and are internally tangent to a circle of radius $13$ at points $A$ and $B$, as shown in the diagram. The distance $AB$ can be written in the form $\frac{k}{l}$, where $k$ and $l$ are relatively prime positive integers. Find the value of $k+l$.	tten in the form $\frac{10}{1}$, where $k = 10$ and $l = 1$. Hence, the value of $k+l$ is $\boxed{11}$.The answer is: 11
+22	Two circles of radius $5$ are externally tangent to each other and are internally tangent to a circle of radius $13$ at points $A$ and $B$, as shown in the diagram. The distance $AB$ can be written in the form $\frac{k}{l}$, where $k$ and $l$ are relatively prime positive integers. Find the value of $k+l$.	"ely prime.
+
+6. **Determine \( k + l \):**
+   \[
+   k + l = 10 + 1 = 11
+   \]
+
+Hence, the final answer is \(\boxed{11}\)."
+23	Two circles of radius $5$ are externally tangent to each other and are internally tangent to a circle of radius $13$ at points $A$ and $B$, as shown in the diagram. The distance $AB$ can be written in the form $\frac{k}{l}$, where $k$ and $l$ are relatively prime positive integers. Find the value of $k+l$.	" \sqrt{10}}{10}$, and thus $k = 16$ and $l = 10$, making $k + l = 16 + 10 = 26$.
+
+The final answer is:
+
+\[
+\boxed{26}
+\]"
+24	Two circles of radius $5$ are externally tangent to each other and are internally tangent to a circle of radius $13$ at points $A$ and $B$, as shown in the diagram. The distance $AB$ can be written in the form $\frac{k}{l}$, where $k$ and $l$ are relatively prime positive integers. Find the value of $k+l$.	"}{2} = 5\sqrt{3}
+\]
+But the correct distance should be:
+\[
+AB = 10
+\]
+Therefore, the correct answer is:
+\[
+\boxed{24}
+\]"
+25	What is $3^{-1} + 13^{-1} \pmod{19}$? Express your answer as an integer from $0$ to $18$, inclusive.	"s (or tails) at positions 1 through 2, and the 10 flips can be anything after that.
+# This gives us 2 possibilities: ""HH"
+26	What is $3^{-1} + 13^{-1} \pmod{19}$? Express your answer as an integer from $0$ to $18$, inclusive.	"^{-1} + 13^{-1} \pmod{19}
+\]
+\[
+13 + 3 \pmod{19}
+\]
+\[
+16 \pmod{19}
+\]
+
+Therefore, the final answer is:
+\[
+\boxed{16}
+\]"
+27	What is $3^{-1} + 13^{-1} \pmod{19}$? Express your answer as an integer from $0$ to $18$, inclusive.	"ulo 19 is 3.
+
+Finally, we add the inverses together modulo 19: $13 + 3 = 16$. So the answer is $\boxed{16}$.
+
+Answer: 16"
+28	What is $3^{-1} + 13^{-1} \pmod{19}$? Express your answer as an integer from $0$ to $18$, inclusive.	" can add the two inverses:
+\[
+3^{-1} + 13^{-1} \equiv 13 + 3 \equiv 16 \pmod{19}.
+\]
+So the answer is:
+\[
+\boxed{16}.
+\]"
+29	What is $3^{-1} + 13^{-1} \pmod{19}$? Express your answer as an integer from $0$ to $18$, inclusive.	"13 + 3 \pmod{19}
+\]
+\[
+13 + 3 = 16
+\]
+So,
+\[
+3^{-1} + 13^{-1} \equiv 16 \pmod{19}
+\]
+
+### Final Answer:
+\[
+\boxed{16}
+\]"
+30	What is $3^{-1} + 13^{-1} \pmod{19}$? Express your answer as an integer from $0$ to $18$, inclusive.	"19}\]
+
+Now we can find the sum:
+\[3^{-1} + 13^{-1} \equiv 13 + 3 \equiv 16 \pmod{19}\]
+So, the answer is:
+\[\boxed{16}\]"
+31	What is $3^{-1} + 13^{-1} \pmod{19}$? Express your answer as an integer from $0$ to $18$, inclusive.	"t
+9
+```
+The solution to the problem is \(3^{-1} + 13^{-1} \pmod{19} = 9\). Therefore, the final answer is \(\boxed{9}\)."
+32	What is $3^{-1} + 13^{-1} \pmod{19}$? Express your answer as an integer from $0$ to $18$, inclusive.	"dd the inverses together:
+\[3^{-1} + 13^{-1} \equiv 13 + 3 \pmod{19}\]
+\[13 + 3 = 16\]
+So, the answer is:
+\[\boxed{16}\]"
