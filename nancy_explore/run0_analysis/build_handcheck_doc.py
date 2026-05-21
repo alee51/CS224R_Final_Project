@@ -6,7 +6,7 @@ from __future__ import annotations
 import json
 import random
 import sys
-from collections import Counter, defaultdict
+from collections import defaultdict
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -20,7 +20,6 @@ OUT = RUN0 / "llm_clusters_handcheck.md"
 PROMPTS_PATH = DATA / "prompt_inputs.jsonl"
 REParsed_PATH = DATA / "predictions_reparsed.jsonl"
 SEED = 42
-MAX_COMPLETION_CHARS = 2400
 
 
 def _load_jsonl(path: Path) -> list[dict]:
@@ -33,15 +32,19 @@ def _load_jsonl(path: Path) -> list[dict]:
     return rows
 
 
-def _escape_md(s: str) -> str:
+def _normalize_newlines(s: str) -> str:
     return s.replace("\r\n", "\n")
 
 
-def _truncate(s: str, n: int) -> str:
-    s = s.strip()
-    if len(s) <= n:
-        return s
-    return s[: n - 20].rstrip() + "\n\n… [truncated]"
+def _table_cell(s: str) -> str:
+    """Escape characters that break GFM tables."""
+    return _normalize_newlines(s).replace("|", "\\|").replace("\n", " ").strip()
+
+
+def _indent_completion(text: str) -> str:
+    """Indent full completion so inner ``` fences do not break MD preview."""
+    lines = _normalize_newlines(text or "").split("\n")
+    return "\n".join(("    " + line) if line else "    " for line in lines) + "\n"
 
 
 def _judge_labels(cache: dict) -> dict[int, dict]:
@@ -89,11 +92,9 @@ def _pick_prompts(by_prompt: dict[str, list[dict]]) -> list[tuple[str, str]]:
                 chosen.append((pid, tag))
                 used.add(pid)
 
-    # High: 7/8, then 6/8, then 5/8 (no 8/8 on Run 0)
     high_pool = by_nc[7] + by_nc[6] + by_nc[5]
     take(high_pool, "high", 3)
 
-    # Mixed: spread across 1–4 correct
     mixed_pool: list[str] = []
     for nc in (2, 3, 4, 1):
         mixed_pool.extend(by_nc[nc])
@@ -136,18 +137,14 @@ def build() -> str:
         caches[path.stem] = json.loads(path.read_text())
 
     picked = _pick_prompts(by_prompt)
-    lines: list[str] = [
-        "# Analysis A — LLM cluster hand-check (10 prompts)\n",
-        f"**Generated:** {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M UTC')}  \n",
-        "**Instructions:** For each prompt, read the 8 rollouts and judge whether rollouts "
-        "with the *same reasoning approach* share a cluster. Ignore final-answer agreement; "
-        "focus on macro/micro strategy. Record disagreements in the **Your notes** section "
-        "at the bottom of each prompt block.\n",
-        "\n**Strata (design §A.7):** 3 high-correctness, 3 mixed, 4 none-correct. "
-        "Run 0 has **no** prompts with 8/8 correct; high stratum uses 5–7/8 correct.\n",
-        "\n**Cluster key:** `-1` = degenerate (paper cluster 100). "
-        "Same integer cluster ⇒ judge says same strategy.\n",
-        "---\n",
+    parts: list[str] = [
+        "# Analysis A — LLM cluster hand-check (10 prompts)\n\n",
+        f"**Generated:** {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M UTC')}  \n\n",
+        "For each prompt: read the summary table, then each rollout below (full text, untruncated). "
+        "Judge whether same *reasoning approach* ⇒ same cluster. Record notes at the end of each prompt.\n\n",
+        "**Strata:** 3 high, 3 mixed, 4 none-correct (Run 0 has no 8/8-correct prompts; high = 5–7/8).  \n",
+        "**Clusters:** `-1` = degenerate (paper id 100).\n\n",
+        "---\n\n",
     ]
 
     for n, (pid, bucket) in enumerate(picked, 1):
@@ -160,53 +157,55 @@ def build() -> str:
         cids = [judge[i]["cluster_id"] for i in range(8)]
         minority = _minority_flag(correct, cids) if nc else False
 
-        lines.append(f"\n## {n}. `{pid}` — {bucket}\n")
-        lines.append(f"**Stratum:** {bucket} — {_stratum_label(nc)}  \n")
-        lines.append(f"**Clusters:** {_cluster_summary(judge, correct)}  \n")
+        parts.append(f"## {n}. `{pid}` — {bucket}\n\n")
+        parts.append(f"- **Stratum:** {bucket} — {_stratum_label(nc)}\n")
+        parts.append(f"- **Clusters:** {_cluster_summary(judge, correct)}\n")
         if nc:
-            lines.append(
-                f"**Minority-correct prompt?** {'yes' if minority else 'no'} "
-                "(correct rollouts in ≥2 clusters, one not the majority among correct)  \n"
+            parts.append(
+                f"- **Minority-correct prompt?** "
+                f"{'yes' if minority else 'no'}\n"
             )
-        lines.append(f"**Gold answer:** `{pr.get('gold_answer', '')}`\n")
-        lines.append("\n### Problem\n\n")
-        lines.append(_escape_md(pr.get("problem", "")) + "\n")
-        lines.append("\n### Rollout summary\n\n")
-        lines.append(
-            "| # | Correct (v2) | Parsed answer | LLM cluster | Judge macro/micro |\n"
-            "|---:|:---:|---|---:|---|\n"
-        )
+        parts.append(f"- **Gold answer:** `{pr.get('gold_answer', '')}`\n\n")
+
+        parts.append("### Problem\n\n")
+        parts.append(_normalize_newlines(pr.get("problem", "")) + "\n\n")
+
+        parts.append("### Rollout summary\n\n")
+        parts.append("| # | OK | Parsed answer | Cluster | Judge macro/micro |\n")
+        parts.append("|---:|:--:|---|:-:|---|\n")
         for i, r in enumerate(rows):
-            pa = (r.get("parsed_answer_v2") or "")[:80].replace("|", "\\|").replace("\n", " ")
-            cot = (judge[i].get("chain_of_thought") or "—").replace("|", "\\|").replace("\n", " ")
-            if len(cot) > 120:
-                cot = cot[:117] + "…"
-            ok = "✓" if correct[i] else "✗"
+            pa = _table_cell((r.get("parsed_answer_v2") or "")[:100])
+            cot = _table_cell(judge[i].get("chain_of_thought") or "—")
+            ok = "yes" if correct[i] else "no"
             cid = judge[i]["cluster_id"]
-            cid_s = "**deg**" if cid == -1 else str(cid)
-            lines.append(f"| {i + 1} | {ok} | `{pa}` | {cid_s} | {cot} |\n")
+            cid_s = "deg" if cid == -1 else str(cid)
+            parts.append(f"| {i + 1} | {ok} | `{pa}` | {cid_s} | {cot} |\n")
+        parts.append("\n")
 
-        lines.append("\n### Full completions (expand to read)\n\n")
+        parts.append("### Rollouts (full text)\n\n")
         for i, r in enumerate(rows):
-            comp = _truncate(r.get("completion") or "", MAX_COMPLETION_CHARS)
             cid = judge[i]["cluster_id"]
-            lines.append(f"<details>\n<summary>Rollout {i + 1} — cluster {cid}</summary>\n\n")
-            lines.append("```\n" + comp + "\n```\n\n</details>\n\n")
+            ok = "correct" if correct[i] else "incorrect"
+            pa = _table_cell(r.get("parsed_answer_v2") or "")
+            cot = judge[i].get("chain_of_thought") or "—"
+            parts.append(f"#### Rollout {i + 1} — cluster {cid} ({ok})\n\n")
+            parts.append(f"**Parsed answer:** `{pa}`  \n\n")
+            parts.append(f"**Judge macro/micro:** {cot}\n\n")
+            parts.append(_indent_completion(r.get("completion") or ""))
+            parts.append("\n")
 
-        lines.append("### Your notes\n\n")
-        lines.append(
-            "- [ ] Clustering looks reasonable\n"
-            "- [ ] Disagreements (which rollouts should merge/split?):\n"
-            "- [ ] Other:\n"
-        )
+        parts.append("### Your notes\n\n")
+        parts.append("- [ ] Clustering looks reasonable\n")
+        parts.append("- [ ] Disagreements (which rollouts should merge/split?):\n")
+        parts.append("- [ ] Other:\n\n")
+        parts.append("---\n\n")
 
-    lines.append("\n---\n\n## Overall sign-off\n\n")
-    lines.append(
-        "- [ ] Reviewed all 10 prompts\n"
-        "- [ ] Comfortable using `llm_clusters_summary.parquet` for Analysis B\n"
-        "- [ ] Blockers / follow-ups:\n"
-    )
-    return "".join(lines)
+    parts.append("## Overall sign-off\n\n")
+    parts.append("- [ ] Reviewed all 10 prompts\n")
+    parts.append("- [ ] Comfortable using `llm_clusters_summary.parquet` for Analysis B\n")
+    parts.append("- [ ] Blockers / follow-ups:\n")
+
+    return "".join(parts)
 
 
 def main() -> None:

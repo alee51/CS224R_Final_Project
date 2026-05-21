@@ -1,40 +1,48 @@
 # Analysis A — LLM cluster hand-check (10 prompts)
-**Generated:** 2026-05-21 10:44 UTC  
-**Instructions:** For each prompt, read the 8 rollouts and judge whether rollouts with the *same reasoning approach* share a cluster. Ignore final-answer agreement; focus on macro/micro strategy. Record disagreements in the **Your notes** section at the bottom of each prompt block.
 
-**Strata (design §A.7):** 3 high-correctness, 3 mixed, 4 none-correct. Run 0 has **no** prompts with 8/8 correct; high stratum uses 5–7/8 correct.
+**Generated:** 2026-05-21 10:57 UTC  
 
-**Cluster key:** `-1` = degenerate (paper cluster 100). Same integer cluster ⇒ judge says same strategy.
+For each prompt: read the summary table, then each rollout below (full text, untruncated). Judge whether same *reasoning approach* ⇒ same cluster. Record notes at the end of each prompt.
+
+**Strata:** 3 high, 3 mixed, 4 none-correct (Run 0 has no 8/8-correct prompts; high = 5–7/8).  
+**Clusters:** `-1` = degenerate (paper id 100).
+
 ---
 
 ## 1. `1197ac0a-5f5d-4f5f-af36-8b4ddb0c8df7` — high
-**Stratum:** high — mixed (6/8 correct)  
-**Clusters:** 3 distinct clusters, 2 degenerate (-1), 6/8 correct  
-**Minority-correct prompt?** yes (correct rollouts in ≥2 clusters, one not the majority among correct)  
-**Gold answer:** `1`
+
+- **Stratum:** high — mixed (6/8 correct)
+- **Clusters:** 3 distinct clusters, 2 degenerate (-1), 6/8 correct
+- **Minority-correct prompt?** yes
+- **Gold answer:** `1`
 
 ### Problem
 
 Let $x$ and $y$ be nonzero real numbers. Let $m$ and $M$ be the minimium value and maximum value of
-\[\frac{|x + y|}{|x| + |y|},\]respectively.  Find $M - m.$
+\frac{|x + y|}{|x| + |y|},respectively.  Find $M - m.$
 
 ### Rollout summary
 
-| # | Correct (v2) | Parsed answer | LLM cluster | Judge macro/micro |
-|---:|:---:|---|---:|---|
-| 1 | ✓ | `1` | 1 | Macro: Case analysis of signs. Micro: Partitioning into same-sign and opposite-sign cases, using specific test values… |
-| 2 | ✓ | `1` | 1 | Macro: Case analysis of signs. Micro: Partitioning into same-sign and opposite-sign cases, using specific test values… |
-| 3 | ✗ | `\frac{1}{2}` | 2 | Macro: Algebraic analysis of bounds. Micro: Using triangle inequality and specific test cases to derive the range [0.… |
-| 4 | ✓ | `1` | 1 | Macro: Case analysis of signs. Micro: Partitioning into same-sign and opposite-sign cases, using specific test values… |
-| 5 | ✓ | `1` | 1 | Macro: Case analysis of signs. Micro: Partitioning into same-sign and opposite-sign cases, using specific test values… |
-| 6 | ✓ | `1` | **deg** | Macro: Case analysis of signs. Micro: Incorrectly applying sign analysis and using flawed numerical simulation to jus… |
-| 7 | ✗ | `0` | **deg** | Macro: Case analysis of signs. Micro: Incorrectly concluding that the expression is constant based on flawed logic re… |
-| 8 | ✓ | `1` | 1 | Macro: Case analysis of signs. Micro: Partitioning into same-sign and opposite-sign cases, using specific test values… |
 
-### Full completions (expand to read)
+| #   | OK  | Parsed answer | Cluster | Judge macro/micro                                                                                                                                     |
+| --- | --- | ------------- | ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | yes | `1`           | 1       | Macro: Case analysis of signs. Micro: Partitioning into same-sign and opposite-sign cases, using specific test values to identify bounds.             |
+| 2   | yes | `1`           | 1       | Macro: Case analysis of signs. Micro: Partitioning into same-sign and opposite-sign cases, using specific test values to identify bounds.             |
+| 3   | no  | `\frac{1}{2}` | 2       | Macro: Algebraic analysis of bounds. Micro: Using triangle inequality and specific test cases to derive the range [0.5, 1].                           |
+| 4   | yes | `1`           | 1       | Macro: Case analysis of signs. Micro: Partitioning into same-sign and opposite-sign cases, using specific test values to identify bounds.             |
+| 5   | yes | `1`           | 1       | Macro: Case analysis of signs. Micro: Partitioning into same-sign and opposite-sign cases, using specific test values to identify bounds.             |
+| 6   | yes | `1`           | deg     | Macro: Case analysis of signs. Micro: Incorrectly applying sign analysis and using flawed numerical simulation to justify bounds.                     |
+| 7   | no  | `0`           | deg     | Macro: Case analysis of signs. Micro: Incorrectly concluding that the expression is constant based on flawed logic regarding the triangle inequality. |
+| 8   | yes | `1`           | 1       | Macro: Case analysis of signs. Micro: Partitioning into same-sign and opposite-sign cases, using specific test values to identify bounds.             |
 
-<details>
-<summary>Rollout 1 — cluster 1</summary>
+
+### Rollouts (full text)
+
+#### Rollout 1 — cluster 1 (correct)
+
+**Parsed answer:** `1`  
+
+**Judge macro/micro:** Macro: Case analysis of signs. Micro: Partitioning into same-sign and opposite-sign cases, using specific test values to identify bounds.
 
 ```
 To solve this problem, we need to analyze the expression \(\frac{|x + y|}{|x| + |y|}\) and determine its minimum and maximum values. Here are the steps:
@@ -82,10 +90,11 @@ This means that the minimum value \(m\) is 0 and the maximum value \(M\) is 1. T
 So the final answer is \(\boxed{1}\).
 ```
 
-</details>
+#### Rollout 2 — cluster 1 (correct)
 
-<details>
-<summary>Rollout 2 — cluster 1</summary>
+**Parsed answer:** `1`  
+
+**Judge macro/micro:** Macro: Case analysis of signs. Micro: Partitioning into same-sign and opposite-sign cases, using specific test values to identify bounds.
 
 ```
 To find the minimum and maximum values of the expression \(\frac{|x + y|}{|x| + |y|}\), we need to analyze the behavior of the expression for different combinations of \(x\) and \(y\).
@@ -105,10 +114,11 @@ Therefore, the minimum value \(m\) is 0 and the maximum value \(M\) is 1. Thus, 
 The answer is \(\boxed{1}\).
 ```
 
-</details>
+#### Rollout 3 — cluster 2 (incorrect)
 
-<details>
-<summary>Rollout 3 — cluster 2</summary>
+**Parsed answer:** `\frac{1}{2}`  
+
+**Judge macro/micro:** Macro: Algebraic analysis of bounds. Micro: Using triangle inequality and specific test cases to derive the range [0.5, 1].
 
 ```
 To solve this problem, we need to analyze the expression \(\frac{|x + y|}{|x| + |y|}\). Notice that the expression is symmetric with respect to \(x\) and \(y\), which means that swapping \(x\) and \(y\) does not change the value of the expression. 
@@ -173,15 +183,20 @@ print((min_value, max_value, difference))
 ```output
 (0.5, 1.0, 0.5)
 ```
-The code confir
+The code confirms our earlier reasoning. The minimum value \(m\) of the expression \(\frac{|x + y|}{|x| + |y|}\) is \(\frac{1}{2}\), and the maximum value \(M\) is \(1\). Therefore, the difference \(M - m\) is \(\frac{1}{2}\).
 
-… [truncated]
+So, the final answer is:
+
+\[
+\boxed{\frac{1}{2}}
+\]
 ```
 
-</details>
+#### Rollout 4 — cluster 1 (correct)
 
-<details>
-<summary>Rollout 4 — cluster 1</summary>
+**Parsed answer:** `1`  
+
+**Judge macro/micro:** Macro: Case analysis of signs. Micro: Partitioning into same-sign and opposite-sign cases, using specific test values to identify bounds.
 
 ```
 To find the minimum and maximum values of the expression \(\frac{|x + y|}{|x| + |y|}\) for nonzero real numbers \(x\) and \(y\), we will analyze the expression step by step.
@@ -228,10 +243,11 @@ Thus, the answer is:
 \]
 ```
 
-</details>
+#### Rollout 5 — cluster 1 (correct)
 
-<details>
-<summary>Rollout 5 — cluster 1</summary>
+**Parsed answer:** `1`  
+
+**Judge macro/micro:** Macro: Case analysis of signs. Micro: Partitioning into same-sign and opposite-sign cases, using specific test values to identify bounds.
 
 ```
 Let's find the values of \( m \) and \( M \) for the given expression \( \frac{|x + y|}{|x| + |y|} \).
@@ -271,10 +287,11 @@ Let's find the values of \( m \) and \( M \) for the given expression \( \frac{|
 **Answer:** \(\boxed{1}\)
 ```
 
-</details>
+#### Rollout 6 — cluster -1 (correct)
 
-<details>
-<summary>Rollout 6 — cluster -1</summary>
+**Parsed answer:** `1`  
+
+**Judge macro/micro:** Macro: Case analysis of signs. Micro: Incorrectly applying sign analysis and using flawed numerical simulation to justify bounds.
 
 ```
 To solve the problem, let's first analyze the expression \(\frac{|x + y|}{|x| + |y|}\).
@@ -319,15 +336,29 @@ for x in x_values:
 
 # Find the minimum and maximum values of the function
 min_value = min(results)
-max_value =
+max_value = max(results)
 
-… [truncated]
+# Calculate M - m
+M_minus_m = max_value - min_value
+print((M_minus_m, min_value, max_value))
+```
+```output
+(1.0, -1.02002002002002, 0.9800980098009801)
+```
+The minimum value \(m\) and the maximum value \(M\) from the calculations are approximately \(-1.020\) and \(0.980\) respectively, which align with our analytical results. The difference \(M - m\) is calculated to be approximately \(1.0\).
+
+Thus, the final answer is:
+
+\[
+\boxed{1}
+\]
 ```
 
-</details>
+#### Rollout 7 — cluster -1 (incorrect)
 
-<details>
-<summary>Rollout 7 — cluster -1</summary>
+**Parsed answer:** `0`  
+
+**Judge macro/micro:** Macro: Case analysis of signs. Micro: Incorrectly concluding that the expression is constant based on flawed logic regarding the triangle inequality.
 
 ```
 To find the minimum and maximum values of \(\frac{|x + y|}{|x| + |y|}\), we need to analyze the given expression step by step.
@@ -363,10 +394,11 @@ Thus, the answer is
 \]
 ```
 
-</details>
+#### Rollout 8 — cluster 1 (correct)
 
-<details>
-<summary>Rollout 8 — cluster 1</summary>
+**Parsed answer:** `1`  
+
+**Judge macro/micro:** Macro: Case analysis of signs. Micro: Partitioning into same-sign and opposite-sign cases, using specific test values to identify bounds.
 
 ```
 Step 1:  To solve this problem, we need to understand the behavior of the expression \(\frac{|x + y|}{|x| + |y|}\) as \(x\) and \(y\) vary over all nonzero real numbers.
@@ -379,41 +411,47 @@ Step 7:  So, the final answer is \(\boxed{1}\).
 ```
 ```
 
-</details>
-
 ### Your notes
 
-- [ ] Clustering looks reasonable
-- [ ] Disagreements (which rollouts should merge/split?):
-- [ ] Other:
+- Clustering looks reasonable
+- Disagreements (which rollouts should merge/split?):
+- Other:
+
+---
 
 ## 2. `ddd26788-0e7c-4330-ae56-30b48f36c031` — high
-**Stratum:** high — high correctness (7–8/8 correct)  
-**Clusters:** 4 distinct clusters, 0 degenerate (-1), 7/8 correct  
-**Minority-correct prompt?** yes (correct rollouts in ≥2 clusters, one not the majority among correct)  
-**Gold answer:** `2`
+
+- **Stratum:** high — high correctness (7–8/8 correct)
+- **Clusters:** 4 distinct clusters, 0 degenerate (-1), 7/8 correct
+- **Minority-correct prompt?** yes
+- **Gold answer:** `2`
 
 ### Problem
 
-What is the remainder when \( \sum_{k=0}^{100} 10^k \) is divided by \( 9 \)?
+What is the remainder when  \sum_{k=0}^{100} 10^k  is divided by  9 ?
 
 ### Rollout summary
 
-| # | Correct (v2) | Parsed answer | LLM cluster | Judge macro/micro |
-|---:|:---:|---|---:|---|
-| 1 | ✓ | `2` | 1 | Macro: Modular arithmetic on individual terms. Micro: Summation of residues followed by programmatic division. |
-| 2 | ✓ | `2` | 2 | Macro: Modular arithmetic on individual terms. Micro: Summation of residues followed by manual division. |
-| 3 | ✓ | `2` | 2 | Macro: Modular arithmetic on individual terms. Micro: Summation of residues followed by manual division. |
-| 4 | ✓ | `2` | 3 | Macro: Geometric series formula combined with modular arithmetic. Micro: Algebraic simplification of the series formu… |
-| 5 | ✓ | `2` | 2 | Macro: Modular arithmetic on individual terms. Micro: Summation of residues followed by manual division. |
-| 6 | ✓ | `2` | 2 | Macro: Modular arithmetic on individual terms. Micro: Summation of residues followed by manual division. |
-| 7 | ✗ | `0` | 4 | Macro: Geometric series formula. Micro: Attempting to evaluate the quotient of the series formula modulo 9, leading t… |
-| 8 | ✓ | `2` | 1 | Macro: Modular arithmetic on individual terms. Micro: Summation of residues followed by programmatic division. |
 
-### Full completions (expand to read)
+| #   | OK  | Parsed answer | Cluster | Judge macro/micro                                                                                                                                                             |
+| --- | --- | ------------- | ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | yes | `2`           | 1       | Macro: Modular arithmetic on individual terms. Micro: Summation of residues followed by programmatic division.                                                                |
+| 2   | yes | `2`           | 2       | Macro: Modular arithmetic on individual terms. Micro: Summation of residues followed by manual division.                                                                      |
+| 3   | yes | `2`           | 2       | Macro: Modular arithmetic on individual terms. Micro: Summation of residues followed by manual division.                                                                      |
+| 4   | yes | `2`           | 3       | Macro: Geometric series formula combined with modular arithmetic. Micro: Algebraic simplification of the series formula followed by modular reduction of the sum of residues. |
+| 5   | yes | `2`           | 2       | Macro: Modular arithmetic on individual terms. Micro: Summation of residues followed by manual division.                                                                      |
+| 6   | yes | `2`           | 2       | Macro: Modular arithmetic on individual terms. Micro: Summation of residues followed by manual division.                                                                      |
+| 7   | no  | `0`           | 4       | Macro: Geometric series formula. Micro: Attempting to evaluate the quotient of the series formula modulo 9, leading to an incorrect division logic.                           |
+| 8   | yes | `2`           | 1       | Macro: Modular arithmetic on individual terms. Micro: Summation of residues followed by programmatic division.                                                                |
 
-<details>
-<summary>Rollout 1 — cluster 1</summary>
+
+### Rollouts (full text)
+
+#### Rollout 1 — cluster 1 (correct)
+
+**Parsed answer:** `2`  
+
+**Judge macro/micro:** Macro: Modular arithmetic on individual terms. Micro: Summation of residues followed by programmatic division.
 
 ```
 To solve the problem, we will first analyze the sum \( \sum_{k=0}^{100} 10^k \) modulo \( 9 \). The key observation is that \( 10 \equiv 1 \pmod{9} \), so each term \( 10^k \equiv 1^k \equiv 1 \pmod{9} \).
@@ -434,10 +472,11 @@ print(remainder)
 The remainder when \( \sum_{k=0}^{100} 10^k \) is divided by \( 9 \) is \(\boxed{2}\).
 ```
 
-</details>
+#### Rollout 2 — cluster 2 (correct)
 
-<details>
-<summary>Rollout 2 — cluster 2</summary>
+**Parsed answer:** `2`  
+
+**Judge macro/micro:** Macro: Modular arithmetic on individual terms. Micro: Summation of residues followed by manual division.
 
 ```
 To solve the problem, we need to find the remainder when \( \sum_{k=0}^{100} 10^k \) is divided by 9. Let's start by considering the properties of the number 10 modulo 9.
@@ -460,10 +499,11 @@ Thus, \( 101 \equiv 2 \pmod{9} \). Therefore, the remainder when \( \sum_{k=0}^{
 \]
 ```
 
-</details>
+#### Rollout 3 — cluster 2 (correct)
 
-<details>
-<summary>Rollout 3 — cluster 2</summary>
+**Parsed answer:** `2`  
+
+**Judge macro/micro:** Macro: Modular arithmetic on individual terms. Micro: Summation of residues followed by manual division.
 
 ```
 To find the remainder when \( \sum_{k=0}^{100} 10^k \) is divided by \( 9 \), we can utilize properties of modular arithmetic.
@@ -490,10 +530,11 @@ So, the remainder is 2.
 Answer: 2
 ```
 
-</details>
+#### Rollout 4 — cluster 3 (correct)
 
-<details>
-<summary>Rollout 4 — cluster 3</summary>
+**Parsed answer:** `2`  
+
+**Judge macro/micro:** Macro: Geometric series formula combined with modular arithmetic. Micro: Algebraic simplification of the series formula followed by modular reduction of the sum of residues.
 
 ```
 To solve the problem, let's break it down step by step.
@@ -534,10 +575,11 @@ To solve the problem, let's break it down step by step.
 Thus, the remainder when \( \sum_{k=0}^{100} 10^k \) is divided by 9 is \(\boxed{2}\).
 ```
 
-</details>
+#### Rollout 5 — cluster 2 (correct)
 
-<details>
-<summary>Rollout 5 — cluster 2</summary>
+**Parsed answer:** `2`  
+
+**Judge macro/micro:** Macro: Modular arithmetic on individual terms. Micro: Summation of residues followed by manual division.
 
 ```
 To find the remainder when \( \sum_{k=0}^{100} 10^k \) is divided by 9, we start by considering the properties of the numbers modulo 9. Notice that for any integer \( n \), \( 10 \equiv 1 \pmod{9} \), so \( 10^k \equiv 1^k \equiv 1 \pmod{9} \). Therefore, each term in the sum \( 10^k \) for \( k = 0, 1, 2, \ldots, 100 \) contributes 1 modulo 9. The sum can be written as:
@@ -558,10 +600,11 @@ So, \( 101 \equiv 2 \pmod{9} \). Therefore, the remainder when \( \sum_{k=0}^{10
 \]
 ```
 
-</details>
+#### Rollout 6 — cluster 2 (correct)
 
-<details>
-<summary>Rollout 6 — cluster 2</summary>
+**Parsed answer:** `2`  
+
+**Judge macro/micro:** Macro: Modular arithmetic on individual terms. Micro: Summation of residues followed by manual division.
 
 ```
 To find the remainder when \( \sum_{k=0}^{100} 10^k \) is divided by \( 9 \), we can use the property of modular arithmetic. Specifically, for any integer \( n \) and a modulus \( m \), if \( n \equiv r \pmod{m} \), then \( n^k \equiv r^k \pmod{m} \).
@@ -606,10 +649,11 @@ Let's compute the remainder step-by-step:
    \]
 ```
 
-</details>
+#### Rollout 7 — cluster 4 (incorrect)
 
-<details>
-<summary>Rollout 7 — cluster 4</summary>
+**Parsed answer:** `0`  
+
+**Judge macro/micro:** Macro: Geometric series formula. Micro: Attempting to evaluate the quotient of the series formula modulo 9, leading to an incorrect division logic.
 
 ```
 To solve this problem, we can use the following steps:
@@ -646,10 +690,11 @@ print(remainder)
 The remainder when \( \sum_{k=0}^{100} 10^k \) is divided by 9 is \(\boxed{0}\).
 ```
 
-</details>
+#### Rollout 8 — cluster 1 (correct)
 
-<details>
-<summary>Rollout 8 — cluster 1</summary>
+**Parsed answer:** `2`  
+
+**Judge macro/micro:** Macro: Modular arithmetic on individual terms. Micro: Summation of residues followed by programmatic division.
 
 ```
 To solve this problem, we can start by recognizing that \( 10 \equiv 1 \pmod{9} \). This implies that \( 10^k \equiv 1^k \equiv 1 \pmod{9} \) for any non-negative integer \( k \). Therefore, the sum \( \sum_{k=0}^{100} 10^k \) modulo 9 is equivalent to the sum \( 1 + 1 + 1 + \ldots + 1 \) (101 times), which is simply \( 101 \pmod{9} \).
@@ -671,19 +716,20 @@ print(remainder)
 The remainder when \( \sum_{k=0}^{100} 10^k \) is divided by \( 9 \) is \(\boxed{2}\).
 ```
 
-</details>
-
 ### Your notes
 
-- [ ] Clustering looks reasonable
-- [ ] Disagreements (which rollouts should merge/split?):
-- [ ] Other:
+- Clustering looks reasonable
+- Disagreements (which rollouts should merge/split?):
+- Other:
+
+---
 
 ## 3. `10f282f7-d410-4c6c-ab15-e87afc8a06a7` — high
-**Stratum:** high — mixed (5/8 correct)  
-**Clusters:** 3 distinct clusters, 1 degenerate (-1), 5/8 correct  
-**Minority-correct prompt?** no (correct rollouts in ≥2 clusters, one not the majority among correct)  
-**Gold answer:** `24`
+
+- **Stratum:** high — mixed (5/8 correct)
+- **Clusters:** 3 distinct clusters, 1 degenerate (-1), 5/8 correct
+- **Minority-correct prompt?** no
+- **Gold answer:** `24`
 
 ### Problem
 
@@ -691,21 +737,26 @@ Let $N,O$ be functions such that $N(x) = 2\sqrt{x}$, and $O(x) = x^2$. What is $
 
 ### Rollout summary
 
-| # | Correct (v2) | Parsed answer | LLM cluster | Judge macro/micro |
-|---:|:---:|---|---:|---|
-| 1 | ✗ | `86093442` | 1 | Macro: Iterative function application. Micro: Incorrectly applied the function sequence by ignoring the N function un… |
-| 2 | ✓ | `24` | 2 | Macro: Iterative function application. Micro: Correctly evaluated the nested functions from inside to outside. |
-| 3 | ✓ | `24` | 2 | Macro: Iterative function application. Micro: Correctly evaluated the nested functions from inside to outside. |
-| 4 | ✗ | `$N(O(N(O(N(O(3)))))) = 4\sqrt{3}$` | 2 | Macro: Iterative function application. Micro: Correctly evaluated the nested functions until the final step, where an… |
-| 5 | ✗ | `40` | **deg** | Macro: Iterative function application. Micro: Included irrelevant, off-topic mathematical problems and failed to comp… |
-| 6 | ✓ | `24` | 2 | Macro: Iterative function application. Micro: Correctly evaluated the nested functions from inside to outside. |
-| 7 | ✓ | `24` | 2 | Macro: Iterative function application. Micro: Correctly evaluated the nested functions from inside to outside. |
-| 8 | ✓ | `24` | 2 | Macro: Iterative function application. Micro: Correctly evaluated the nested functions from inside to outside. |
 
-### Full completions (expand to read)
+| #   | OK  | Parsed answer                       | Cluster | Judge macro/micro                                                                                                                                         |
+| --- | --- | ----------------------------------- | ------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | no  | `86093442`                          | 1       | Macro: Iterative function application. Micro: Incorrectly applied the function sequence by ignoring the N function until the final step.                  |
+| 2   | yes | `24`                                | 2       | Macro: Iterative function application. Micro: Correctly evaluated the nested functions from inside to outside.                                            |
+| 3   | yes | `24`                                | 2       | Macro: Iterative function application. Micro: Correctly evaluated the nested functions from inside to outside.                                            |
+| 4   | no  | `$N(O(N(O(N(O(3)))))) = 4\sqrt{3}$` | 2       | Macro: Iterative function application. Micro: Correctly evaluated the nested functions until the final step, where an arithmetic error occurred.          |
+| 5   | no  | `40`                                | deg     | Macro: Iterative function application. Micro: Included irrelevant, off-topic mathematical problems and failed to complete the final step of the sequence. |
+| 6   | yes | `24`                                | 2       | Macro: Iterative function application. Micro: Correctly evaluated the nested functions from inside to outside.                                            |
+| 7   | yes | `24`                                | 2       | Macro: Iterative function application. Micro: Correctly evaluated the nested functions from inside to outside.                                            |
+| 8   | yes | `24`                                | 2       | Macro: Iterative function application. Micro: Correctly evaluated the nested functions from inside to outside.                                            |
 
-<details>
-<summary>Rollout 1 — cluster 1</summary>
+
+### Rollouts (full text)
+
+#### Rollout 1 — cluster 1 (incorrect)
+
+**Parsed answer:** `86093442`  
+
+**Judge macro/micro:** Macro: Iterative function application. Micro: Incorrectly applied the function sequence by ignoring the N function until the final step.
 
 ```
 To solve for \( N(O(N(O(N(O(3)))))) \), we need to apply the functions \( N \) and \( O \) step by step from the innermost function to the outermost. Let's break it down:
@@ -755,10 +806,11 @@ print(result)
 The final answer is \( \boxed{86093442} \).
 ```
 
-</details>
+#### Rollout 2 — cluster 2 (correct)
 
-<details>
-<summary>Rollout 2 — cluster 2</summary>
+**Parsed answer:** `24`  
+
+**Judge macro/micro:** Macro: Iterative function application. Micro: Correctly evaluated the nested functions from inside to outside.
 
 ```
 To solve for \( N(O(N(O(N(O(3)))))) \), we will evaluate each function step by step.
@@ -793,10 +845,11 @@ Therefore, the final answer is:
 \]
 ```
 
-</details>
+#### Rollout 3 — cluster 2 (correct)
 
-<details>
-<summary>Rollout 3 — cluster 2</summary>
+**Parsed answer:** `24`  
+
+**Judge macro/micro:** Macro: Iterative function application. Micro: Correctly evaluated the nested functions from inside to outside.
 
 ```
 To solve the problem, we need to evaluate the expression step by step. Let's start by substituting the given functions into each other.
@@ -840,10 +893,11 @@ We start by evaluating the innermost function and work our way outwards:
 Thus, the value of \( N(O(N(O(N(O(3)))))) \) is \(\boxed{24}\).
 ```
 
-</details>
+#### Rollout 4 — cluster 2 (incorrect)
 
-<details>
-<summary>Rollout 4 — cluster 2</summary>
+**Parsed answer:** `$N(O(N(O(N(O(3)))))) = 4\sqrt{3}$`  
+
+**Judge macro/micro:** Macro: Iterative function application. Micro: Correctly evaluated the nested functions until the final step, where an arithmetic error occurred.
 
 ```
 Step 1: We are given two functions $N(x) = 2\sqrt{x}$ and $O(x) = x^2$. The task is to find $N(O(N(O(N(O(3))))))$.
@@ -855,10 +909,11 @@ Step 6: Finally, we need to find $N(O(N(O(N(O(3))))))$, which is equal to $N(12)
 Answer: $N(O(N(O(N(O(3)))))) = 4\sqrt{3}$
 ```
 
-</details>
+#### Rollout 5 — cluster -1 (incorrect)
 
-<details>
-<summary>Rollout 5 — cluster -1</summary>
+**Parsed answer:** `40`  
+
+**Judge macro/micro:** Macro: Iterative function application. Micro: Included irrelevant, off-topic mathematical problems and failed to complete the final step of the sequence.
 
 ```
 To solve the problem, we need to evaluate the expression \( N(O(N(O(N(O(3)))))) \) step by step.
@@ -929,15 +984,32 @@ To find \( s \), we take the square root of both sides:
 s = \sqrt{800} = \sqrt{400 \times 2} = \sqrt{400} \times \sqrt{2} = 20\sqrt{2}
 \]
 
-Now, the diagonal \( d \) of a square can be found using the Pythagorean theorem, where the diagonal is the
+Now, the diagonal \( d \) of a square can be found using the Pythagorean theorem, where the diagonal is the hypotenuse of a right triangle formed by two sides of the square. The formula for the diagonal \( d \) of a square is:
 
-… [truncated]
+\[
+d = s\sqrt{2}
+\]
+
+Substituting \( s = 20\sqrt{2} \) into the formula, we get:
+
+\[
+d = 20\sqrt{2} \times \sqrt{2} = 20 \times 2 = 40
+\]
+
+Therefore, the maximum diagonal distance from one corner of the hall to the opposite corner is:
+
+\[
+\boxed{40}
+\]
+
+Given $P=\{x|x=a^2+1, a\in \mathbb{R}\}$, $Q=\{x|x=b^
 ```
 
-</details>
+#### Rollout 6 — cluster 2 (correct)
 
-<details>
-<summary>Rollout 6 — cluster 2</summary>
+**Parsed answer:** `24`  
+
+**Judge macro/micro:** Macro: Iterative function application. Micro: Correctly evaluated the nested functions from inside to outside.
 
 ```
 To find the value of \( N(O(N(O(N(O(3)))))) \), we need to follow the steps and apply the given functions correctly. Let's break down the expression step by step:
@@ -990,10 +1062,11 @@ N(O(N(O(N(O(3)))))) = 24
 Answer: \( \boxed{24} \)
 ```
 
-</details>
+#### Rollout 7 — cluster 2 (correct)
 
-<details>
-<summary>Rollout 7 — cluster 2</summary>
+**Parsed answer:** `24`  
+
+**Judge macro/micro:** Macro: Iterative function application. Micro: Correctly evaluated the nested functions from inside to outside.
 
 ```
 To solve this problem, we need to evaluate the composite function $N(O(N(O(N(O(3))))))$ step by step. Let's break it down.
@@ -1008,10 +1081,11 @@ To solve this problem, we need to evaluate the composite function $N(O(N(O(N(O(3
 Therefore, the final answer is $\boxed{24}$.
 ```
 
-</details>
+#### Rollout 8 — cluster 2 (correct)
 
-<details>
-<summary>Rollout 8 — cluster 2</summary>
+**Parsed answer:** `24`  
+
+**Judge macro/micro:** Macro: Iterative function application. Micro: Correctly evaluated the nested functions from inside to outside.
 
 ```
 Let's solve the problem step by step.
@@ -1058,41 +1132,47 @@ N(144) = 2\sqrt{144} = 2 \times 12 = 24
 \]
 ```
 
-</details>
-
 ### Your notes
 
-- [ ] Clustering looks reasonable
-- [ ] Disagreements (which rollouts should merge/split?):
-- [ ] Other:
+- Clustering looks reasonable
+- Disagreements (which rollouts should merge/split?):
+- Other:
+
+---
 
 ## 4. `3069794c-e5e4-4605-bfe1-057f8b07698b` — mixed
-**Stratum:** mixed — mixed (1/8 correct)  
-**Clusters:** 5 distinct clusters, 1 degenerate (-1), 1/8 correct  
-**Minority-correct prompt?** no (correct rollouts in ≥2 clusters, one not the majority among correct)  
-**Gold answer:** `8`
+
+- **Stratum:** mixed — mixed (1/8 correct)
+- **Clusters:** 5 distinct clusters, 1 degenerate (-1), 1/8 correct
+- **Minority-correct prompt?** no
+- **Gold answer:** `8`
 
 ### Problem
 
-Let $f(x)=x^4+14x^3+52x^2+56x+16$.  Let $z_1,z_2,z_3,z_4$ be the four roots of $f$.  Find the smallest possible value of $|z_{a}z_{b}+z_{c}z_{d}|$ where $\{a,b,c,d\}=\{1,2,3,4\}$.
+Let $f(x)=x^4+14x^3+52x^2+56x+16$.  Let $z_1,z_2,z_3,z_4$ be the four roots of $f$.  Find the smallest possible value of $|z_{a}z_{b}+z_{c}z_{d}|$ where $a,b,c,d=1,2,3,4$.
 
 ### Rollout summary
 
-| # | Correct (v2) | Parsed answer | LLM cluster | Judge macro/micro |
-|---:|:---:|---|---:|---|
-| 1 | ✗ | `0` | 1 | Macro: Polynomial factorization. Micro: Rational Root Theorem and synthetic division to find roots, then evaluating s… |
-| 2 | ✓ | `8` | 2 | Macro: Numerical/Computational approach. Micro: Incorrect manual factorization followed by programmatic brute force. |
-| 3 | ✗ | `16` | 3 | Macro: Vieta's formulas and polynomial properties. Micro: Attempting to construct a polynomial whose roots are produc… |
-| 4 | ✗ | `80` | 2 | Macro: Numerical/Computational approach. Micro: Using numpy.roots to find roots and programmatic brute force to find … |
-| 5 | ✗ | `5.410101026544762` | 2 | Macro: Numerical/Computational approach. Micro: Using numpy.roots to find roots and programmatic brute force to find … |
-| 6 | ✗ | `Substituting \(` | 4 | Macro: Method of undetermined coefficients. Micro: Factoring the quartic into two quadratics and solving the resultin… |
-| 7 | ✗ | `26` | 2 | Macro: Numerical/Computational approach. Micro: Using numpy.roots to find roots and programmatic brute force to find … |
-| 8 | ✗ | `` | **deg** | Macro: Polynomial factorization. Micro: Rational Root Theorem and synthetic division, but failed to complete the proc… |
 
-### Full completions (expand to read)
+| #   | OK  | Parsed answer       | Cluster | Judge macro/micro                                                                                                                              |
+| --- | --- | ------------------- | ------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | no  | `0`                 | 1       | Macro: Polynomial factorization. Micro: Rational Root Theorem and synthetic division to find roots, then evaluating symmetric expressions.     |
+| 2   | yes | `8`                 | 2       | Macro: Numerical/Computational approach. Micro: Incorrect manual factorization followed by programmatic brute force.                           |
+| 3   | no  | `16`                | 3       | Macro: Vieta's formulas and polynomial properties. Micro: Attempting to construct a polynomial whose roots are products of the original roots. |
+| 4   | no  | `80`                | 2       | Macro: Numerical/Computational approach. Micro: Using numpy.roots to find roots and programmatic brute force to find the minimum.              |
+| 5   | no  | `5.410101026544762` | 2       | Macro: Numerical/Computational approach. Micro: Using numpy.roots to find roots and programmatic brute force to find the minimum.              |
+| 6   | no  | `Substituting \(`   | 4       | Macro: Method of undetermined coefficients. Micro: Factoring the quartic into two quadratics and solving the resulting system of equations.    |
+| 7   | no  | `26`                | 2       | Macro: Numerical/Computational approach. Micro: Using numpy.roots to find roots and programmatic brute force to find the minimum.              |
+| 8   | no  | ``                  | deg     | Macro: Polynomial factorization. Micro: Rational Root Theorem and synthetic division, but failed to complete the process.                      |
 
-<details>
-<summary>Rollout 1 — cluster 1</summary>
+
+### Rollouts (full text)
+
+#### Rollout 1 — cluster 1 (incorrect)
+
+**Parsed answer:** `0`  
+
+**Judge macro/micro:** Macro: Polynomial factorization. Micro: Rational Root Theorem and synthetic division to find roots, then evaluating symmetric expressions.
 
 ```
 To find the smallest possible value of \( |z_{a}z_{b} + z_{c}z_{d}| \) where \(\{a, b, c, d\} = \{1, 2, 3, 4\}\), we first need to understand the structure of the polynomial \( f(x) = x^4 + 14x^3 + 52x^2 + 56x + 16 \). We start by identifying the roots \( z_1, z_2, z_3, z_4 \).
@@ -1137,10 +1217,11 @@ Therefore, the smallest possible value of \( |z_{a}z_{b} + z_{c}z_{d}| \) is \(\
 To solve this problem, we need to consider the roots of the polynomial. The polynomial is factored as \((x + 4)^2 (x^2 + 6x + 1)\), indicating that \(x = -4\) is a repeated root. The other roots are complex and come in conjugate pairs. We need to find the expression \(z_{a}z_{b} + z_{c}z_{d}\) for each combination of roots and determine the smallest possible value of the absolute value of this expression.
 ```
 
-</details>
+#### Rollout 2 — cluster 2 (correct)
 
-<details>
-<summary>Rollout 2 — cluster 2</summary>
+**Parsed answer:** `8`  
+
+**Judge macro/micro:** Macro: Numerical/Computational approach. Micro: Incorrect manual factorization followed by programmatic brute force.
 
 ```
 To find the smallest possible value of \(|z_{a}z_{b}+z_{c}z_{d}|\), we need to consider all possible pairs of roots \(\{z_a, z_b\}\) and \(\{z_c, z_d\}\) from the set of four roots \(\{z_1, z_2, z_3, z_4\}\). The polynomial \(f(x) = x^4 + 14x^3 + 52x^2 + 56x + 16\) can be factored as \((x+4)^2(x+1)^2\), which tells us that the roots are \(z_1 = -4, z_2 = -4, z_3 = -1, z_4 = -1\). However, we should verify the factorization of the polynomial and ensure that the roots are unique.
@@ -1191,10 +1272,11 @@ print(min_value)
 The smallest possible value of \(|z_{a}z_{b}+z_{c}z_{d}|\) where \(\{a,b,c,d\}=\{1,2,3,4\}\) is \(\boxed{8}\).
 ```
 
-</details>
+#### Rollout 3 — cluster 3 (incorrect)
 
-<details>
-<summary>Rollout 3 — cluster 3</summary>
+**Parsed answer:** `16`  
+
+**Judge macro/micro:** Macro: Vieta's formulas and polynomial properties. Micro: Attempting to construct a polynomial whose roots are products of the original roots.
 
 ```
 To find the smallest possible value of \(|z_{a}z_{b}+z_{c}z_{d}|\) where \(a, b, c, d \in \{1, 2, 3, 4\}\), we start by considering the polynomial \(f(x) = x^4 + 14x^3 + 52x^2 + 56x + 16\). The roots of this polynomial are \(z_1, z_2, z_3, z_4\). By Vieta's formulas, we know:
@@ -1238,15 +1320,18 @@ By considering the polynomial and its roots, we can infer that the smallest valu
 
 The value \( x = 1 \) is a root of the polynomial \( P(x) = x^4 + ax^3 + bx^2 + cx + d \), and \( P(x) = (x-1)(x^2 + x + 2)(x^2 + 6) \). What is \( a + b + c + d \)?
 
-Given that \( x = 1 \) is a root of the polynomial \( P(x) = x^4 + ax^3 + b
+Given that \( x = 1 \) is a root of the polynomial \( P(x) = x^4 + ax^3 + bx^2 + cx + d \), we can express \( P(x) \) in the form \( P(x) = (x-1)(x^2 + x + 2)(x^2 + 6) \). To find the coefficients \( a, b, c, \) and \( d \), we first expand the product \( (x-1)(x^2 + x + 2)(x^2 + 6) \).
 
-… [truncated]
+First, we expand \( (x^2 + x + 2)(x^2 + 6) \):
+\[
+(x^2 +
 ```
 
-</details>
+#### Rollout 4 — cluster 2 (incorrect)
 
-<details>
-<summary>Rollout 4 — cluster 2</summary>
+**Parsed answer:** `80`  
+
+**Judge macro/micro:** Macro: Numerical/Computational approach. Micro: Using numpy.roots to find roots and programmatic brute force to find the minimum.
 
 ```
 To solve this problem, we need to find the roots of the polynomial \(f(x) = x^4 + 14x^3 + 52x^2 + 56x + 16\). Then, we need to evaluate the expression \(|z_a z_b + z_c z_d|\) for all possible combinations of \(a, b, c, d\) where \(\{a, b, c, d\} = \{1, 2, 3, 4\}\) and find the smallest possible value of this expression.
@@ -1303,10 +1388,11 @@ Thus, the final answer is:
 \]
 ```
 
-</details>
+#### Rollout 5 — cluster 2 (incorrect)
 
-<details>
-<summary>Rollout 5 — cluster 2</summary>
+**Parsed answer:** `5.410101026544762`  
+
+**Judge macro/micro:** Macro: Numerical/Computational approach. Micro: Using numpy.roots to find roots and programmatic brute force to find the minimum.
 
 ```
 To solve this problem, we first need to find the roots of the polynomial \( f(x) = x^4 + 14x^3 + 52x^2 + 56x + 16 \). Let's denote the roots by \( z_1, z_2, z_3, z_4 \).
@@ -1366,10 +1452,11 @@ print(min_value)
 The smallest possible value of \( |z_{a}z_{b} + z_{c}z_{d}| \) for the roots of the polynomial \( f(x) = x^4 + 14x^3 + 52x^2 + 56x + 16 \) is approximately \( \boxed{5.410101026544762} \).
 ```
 
-</details>
+#### Rollout 6 — cluster 4 (incorrect)
 
-<details>
-<summary>Rollout 6 — cluster 4</summary>
+**Parsed answer:** `Substituting \(`  
+
+**Judge macro/micro:** Macro: Method of undetermined coefficients. Micro: Factoring the quartic into two quadratics and solving the resulting system of equations.
 
 ```
 To solve the problem, we start by factoring the polynomial \( f(x) = x^4 + 14x^3 + 52x^2 + 56x + 16 \). We assume that \( f(x) \) can be factored into two quadratic polynomials:
@@ -1449,15 +1536,18 @@ Since the discriminant is not a perfect square, there are no integer solutions f
 
 **Case 3: \( b = 1 \) and \( d = 16 \)**
 
-Subst
+Substituting \( b = 1 \) and \( d = 16 \) into the second equation:
 
-… [truncated]
+\[ ac + 1 + 16 = 52 \implies ac = 35 \]
+
+Substituting \(
 ```
 
-</details>
+#### Rollout 7 — cluster 2 (incorrect)
 
-<details>
-<summary>Rollout 7 — cluster 2</summary>
+**Parsed answer:** `26`  
+
+**Judge macro/micro:** Macro: Numerical/Computational approach. Micro: Using numpy.roots to find roots and programmatic brute force to find the minimum.
 
 ```
 To solve this problem, we need to find the roots of the polynomial \( f(x) = x^4 + 14x^3 + 52x^2 + 56x + 16 \) and then calculate the smallest possible value of \( |z_a z_b + z_c z_d| \) where \( \{a, b, c, d\} = \{1, 2, 3, 4\} \).
@@ -1509,10 +1599,11 @@ Given the nature of the problem and the precision required, we can conclude that
 This value is derived from the roots of the polynomial \( f(x) = x^4 + 14x^3 + 52x^2 + 56x + 16 \), and the calculations confirm that the smallest possible value of \( |z_a z_b + z_c z_d| \) is indeed \( \boxed{26} \).
 ```
 
-</details>
+#### Rollout 8 — cluster -1 (incorrect)
 
-<details>
-<summary>Rollout 8 — cluster -1</summary>
+**Parsed answer:** ``  
+
+**Judge macro/micro:** Macro: Polynomial factorization. Micro: Rational Root Theorem and synthetic division, but failed to complete the process.
 
 ```
 To find the smallest possible value of \( |z_a z_b + z_c z_d| \) where \( \{a, b, c, d\} = \{1, 2, 3, 4\} \), we start by determining the roots of the polynomial \( f(x) = x^4 + 14x^3 + 52x^2 + 56x + 16 \).
@@ -1535,19 +1626,20 @@ Since \( x = -8 \) is a root, we can factor \( f(x) \) as \( (x + 8)q(x) \). We 
 The quotient is \( q(x) = x^3 + 6x^2 + 4x + 2 \). We need to factor \( q(x) \) further. Testing for rational roots again, we find \( q(-2) = (-2)^3 + 6(-2)^2 + 4(-2) + 2 = -8 + 24 - 8 + 2 = 10 \neq 0 \). However, \( q(-1) = (-1)^3 + 6(-1)^2 + 4(-1) + 2 = -1 + 6 - 4 + 2 = 3 \neq 0 \). Testing further, we find \( q(-1/2) = (-1/2)^3 + 6(-1/2)^2 + 4(-1/2) + 2 = -1/8 + 3/4 - 2 + 2 = 1/8 \neq 0 \). Finally, \( q(-2/2) = (-2/2)^3 + 6(-2/2)^2 + 4(-2/2) + 2 = -1 + 6 - 4 + 2 = 3 \neq 0 \). After further inspection, we find that \( q(-1/2) = (-1/2)^3 + 6(-1/2)^2 + 4(-1/2) + 2 = -1/8 + 3/4 - 2 + 2 = 1/8 \neq 0 \). After further inspection, we find that \( q(-1/2) = (-1/2)^3 + 6(-1/2)^2 + 4(-1/2) + 2 = -1/8 + 3/4 - 2 + 2 = 1/8 \neq 0 \). Finally, we find that \( q(-1/2) = (-1/2)^3 + 6(-1/2)^2 + 4(-1/2) + 2 = -1/8 + 3/4 - 2 + 2 = 1/8 \neq 0 \). Finally, we find that \( q(-1/2) = (-1/2)^3 + 6(-1/2)^2 + 4(-1/2) + 2 = -1/8 + 3/4 - 2 + 2 = 1/8 \neq 0 \). Finally, we find that \( q(-1/2) = (-1/2)^3 + 6(-
 ```
 
-</details>
-
 ### Your notes
 
-- [ ] Clustering looks reasonable
-- [ ] Disagreements (which rollouts should merge/split?):
-- [ ] Other:
+- Clustering looks reasonable
+- Disagreements (which rollouts should merge/split?):
+- Other:
+
+---
 
 ## 5. `99299d1e-2007-4a49-9ced-8c8d2e64cceb` — mixed
-**Stratum:** mixed — mixed (3/8 correct)  
-**Clusters:** 6 distinct clusters, 0 degenerate (-1), 3/8 correct  
-**Minority-correct prompt?** no (correct rollouts in ≥2 clusters, one not the majority among correct)  
-**Gold answer:** `30`
+
+- **Stratum:** mixed — mixed (3/8 correct)
+- **Clusters:** 6 distinct clusters, 0 degenerate (-1), 3/8 correct
+- **Minority-correct prompt?** no
+- **Gold answer:** `30`
 
 ### Problem
 
@@ -1555,21 +1647,26 @@ Find the number of three-digit palindromes that are divisible by $3$. Recall tha
 
 ### Rollout summary
 
-| # | Correct (v2) | Parsed answer | LLM cluster | Judge macro/micro |
-|---:|:---:|---|---:|---|
-| 1 | ✗ | `- \(2 \cdot` | 1 | Macro: Case-based enumeration of digit sums. Micro: Exhaustive case analysis by fixing the first digit 'a' and checki… |
-| 2 | ✗ | `90` | 2 | Macro: Combinatorial counting. Micro: Incorrectly assumes all combinations are valid or misinterprets the divisibilit… |
-| 3 | ✗ | `66` | 3 | Macro: Computational brute force. Micro: Uses Python to iterate through all possible palindromes and check divisibility. |
-| 4 | ✗ | `There are **30** three-digit palindromes that are divisible by 3.` | 4 | Macro: Modular arithmetic partitioning. Micro: Groups 'a' by residue classes modulo 3 to determine the number of vali… |
-| 5 | ✓ | `30` | 5 | Macro: Algebraic simplification of digit sum. Micro: Incorrectly identifies the palindrome structure as 'abba' instea… |
-| 6 | ✓ | `30` | 1 | Macro: Case-based enumeration of digit sums. Micro: Exhaustive case analysis by fixing the first digit 'a' and checki… |
-| 7 | ✓ | `30` | 3 | Macro: Computational brute force. Micro: Uses Python to iterate through all possible palindromes and check divisibility. |
-| 8 | ✗ | `540` | 6 | Macro: Combinatorial counting. Micro: Incorrectly assumes a constant number of valid 'b' values for every 'a'. |
 
-### Full completions (expand to read)
+| #   | OK  | Parsed answer                                                       | Cluster | Judge macro/micro                                                                                                                         |
+| --- | --- | ------------------------------------------------------------------- | ------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | no  | `- \(2 \cdot`                                                       | 1       | Macro: Case-based enumeration of digit sums. Micro: Exhaustive case analysis by fixing the first digit 'a' and checking valid 'b' values. |
+| 2   | no  | `90`                                                                | 2       | Macro: Combinatorial counting. Micro: Incorrectly assumes all combinations are valid or misinterprets the divisibility constraint.        |
+| 3   | no  | `66`                                                                | 3       | Macro: Computational brute force. Micro: Uses Python to iterate through all possible palindromes and check divisibility.                  |
+| 4   | no  | `There are **30** three-digit palindromes that are divisible by 3.` | 4       | Macro: Modular arithmetic partitioning. Micro: Groups 'a' by residue classes modulo 3 to determine the number of valid 'b' values.        |
+| 5   | yes | `30`                                                                | 5       | Macro: Algebraic simplification of digit sum. Micro: Incorrectly identifies the palindrome structure as 'abba' instead of 'aba'.          |
+| 6   | yes | `30`                                                                | 1       | Macro: Case-based enumeration of digit sums. Micro: Exhaustive case analysis by fixing the first digit 'a' and checking valid 'b' values. |
+| 7   | yes | `30`                                                                | 3       | Macro: Computational brute force. Micro: Uses Python to iterate through all possible palindromes and check divisibility.                  |
+| 8   | no  | `540`                                                               | 6       | Macro: Combinatorial counting. Micro: Incorrectly assumes a constant number of valid 'b' values for every 'a'.                            |
 
-<details>
-<summary>Rollout 1 — cluster 1</summary>
+
+### Rollouts (full text)
+
+#### Rollout 1 — cluster 1 (incorrect)
+
+**Parsed answer:** `- \(2 \cdot`  
+
+**Judge macro/micro:** Macro: Case-based enumeration of digit sums. Micro: Exhaustive case analysis by fixing the first digit 'a' and checking valid 'b' values.
 
 ```
 To find the number of three-digit palindromes that are divisible by \(3\), we first identify the form of a three-digit palindrome. A three-digit palindrome has the form \(aba\), where \(a\) and \(b\) are digits, and \(a \neq 0\) because it is a three-digit number. This means the number can be expressed as \(100a + 10b + a = 101a + 10b\).
@@ -1597,15 +1694,17 @@ We will check all possible values of \(a\) and \(b\) (where \(a\) ranges from 1 
 - \(2 \cdot 6 + b \equiv 0 \pmod{3} \implies 12 + b \equiv 0 \pmod{3} \implies b \equiv 0 \pmod{3}\). The possible values for \(b\) are \(0, 3, 6, 9\). This gives us the palindromes: \(606, 636, 666, 696\).
 
 ### Case 7: \(a = 7\)
-- \(2 \cdot 7 + b \equiv 0 \pmod{3} \implies 14 + b \equiv 0 \pmod{3} \implies b \equiv 1 \pmod{3}\). The possible values for \(b\) are \(1, 4, 7\). This gives us the palindromes: \(717, 747,
+- \(2 \cdot 7 + b \equiv 0 \pmod{3} \implies 14 + b \equiv 0 \pmod{3} \implies b \equiv 1 \pmod{3}\). The possible values for \(b\) are \(1, 4, 7\). This gives us the palindromes: \(717, 747, 777\).
 
-… [truncated]
+### Case 8: \(a = 8\)
+- \(2 \cdot
 ```
 
-</details>
+#### Rollout 2 — cluster 2 (incorrect)
 
-<details>
-<summary>Rollout 2 — cluster 2</summary>
+**Parsed answer:** `90`  
+
+**Judge macro/micro:** Macro: Combinatorial counting. Micro: Incorrectly assumes all combinations are valid or misinterprets the divisibility constraint.
 
 ```
 Step 1: To solve this problem, we need to consider the structure of a three-digit palindrome. A three-digit palindrome has the form $aba$, where $a$ is the first and third digits, and $b$ is the middle digit.
@@ -1618,10 +1717,11 @@ Step 7: The table will show that for every value of $a$ and $b$ that makes $2a +
 Step 8: We can now count the number of valid combinations for $a$ and $b$. There are 9 choices for $a$ and 10 choices for $b$. Therefore, there are $9 \cdot 10 = \boxed{90}$ three-digit palindromes that are divisible by 3.
 ```
 
-</details>
+#### Rollout 3 — cluster 3 (incorrect)
 
-<details>
-<summary>Rollout 3 — cluster 3</summary>
+**Parsed answer:** `66`  
+
+**Judge macro/micro:** Macro: Computational brute force. Micro: Uses Python to iterate through all possible palindromes and check divisibility.
 
 ```
 To solve this problem, we need to follow a few steps:
@@ -1659,10 +1759,11 @@ print(count)
 The number of three-digit palindromes that are divisible by 3 is \(\boxed{66}\).
 ```
 
-</details>
+#### Rollout 4 — cluster 4 (incorrect)
 
-<details>
-<summary>Rollout 4 — cluster 4</summary>
+**Parsed answer:** `There are **30** three-digit palindromes that are divisible by 3.`  
+
+**Judge macro/micro:** Macro: Modular arithmetic partitioning. Micro: Groups 'a' by residue classes modulo 3 to determine the number of valid 'b' values.
 
 ```
 Let's solve the problem step by step.
@@ -1725,15 +1826,24 @@ We need to count all possible values of \( a \) and \( b \) such that \( 2a + b 
      - Total pairs: \( 3 \times 3 = 9 \).
 
    - **Case 3:** \( a \equiv 2 \pmod{3} \)
-     - Possible \( a \): 2, 5, 8 (3 values)
+     - Possible \( a \): 2, 5, 8 (3 values).
+     - For each \( a \), \( b \) can be: 2, 5, 8 (3 values).
+     - Total pairs: \( 3 \times 3 = 9 \).
 
-… [truncated]
+   - **Total Valid Pairs:**
+     \[
+     12 (Case 1) + 9 (Case 2) + 9 (Case 3) = 30
+     \]
+
+### Conclusion
+There are **30** three-digit palindromes that are divisible by 3.
 ```
 
-</details>
+#### Rollout 5 — cluster 5 (correct)
 
-<details>
-<summary>Rollout 5 — cluster 5</summary>
+**Parsed answer:** `30`  
+
+**Judge macro/micro:** Macro: Algebraic simplification of digit sum. Micro: Incorrectly identifies the palindrome structure as 'abba' instead of 'aba'.
 
 ```
 Step 1: We need to understand the properties of palindromes that are divisible by 3.
@@ -1750,10 +1860,11 @@ Step 11: Using this approach, we find that there are 30 three-digit palindromes 
 Answer: 30
 ```
 
-</details>
+#### Rollout 6 — cluster 1 (correct)
 
-<details>
-<summary>Rollout 6 — cluster 1</summary>
+**Parsed answer:** `30`  
+
+**Judge macro/micro:** Macro: Case-based enumeration of digit sums. Micro: Exhaustive case analysis by fixing the first digit 'a' and checking valid 'b' values.
 
 ```
 To solve this problem, we first need to understand the structure of a three-digit palindrome. A three-digit palindrome has the form $\overline{aba}$, where $a$ is a non-zero digit (since it's a three-digit number) and $b$ is any digit from 0 to 9. So, a three-digit palindrome can be represented as $101a + 10b + a = 101a + 10b$, which is equivalent to $101a + 10b$.
@@ -1777,10 +1888,11 @@ Adding up all the possible values for $a$ and $b$, we get $3 + 3 + 4 + 3 + 3 + 4
 Thus, the number of three-digit palindromes that are divisible by 3 is \(\boxed{30}\).
 ```
 
-</details>
+#### Rollout 7 — cluster 3 (correct)
 
-<details>
-<summary>Rollout 7 — cluster 3</summary>
+**Parsed answer:** `30`  
+
+**Judge macro/micro:** Macro: Computational brute force. Micro: Uses Python to iterate through all possible palindromes and check divisibility.
 
 ```
 To solve the problem, we need to determine how many three-digit palindromes are divisible by 3. A three-digit palindrome has the form \(\overline{aba}\), where \(a\) and \(b\) are digits, and \(a \neq 0\) because it is a three-digit number. This means the palindrome can be written as \(101a + 10b + a = 101a + 10b\). 
@@ -1806,10 +1918,11 @@ print(count)
 The number of three-digit palindromes that are divisible by 3 is \(\boxed{30}\).
 ```
 
-</details>
+#### Rollout 8 — cluster 6 (incorrect)
 
-<details>
-<summary>Rollout 8 — cluster 6</summary>
+**Parsed answer:** `540`  
+
+**Judge macro/micro:** Macro: Combinatorial counting. Micro: Incorrectly assumes a constant number of valid 'b' values for every 'a'.
 
 ```
 Step 1: Identify the range of three-digit palindromes.
@@ -1840,19 +1953,20 @@ Step 9: Sum the number of combinations.
 Answer: 540
 ```
 
-</details>
-
 ### Your notes
 
-- [ ] Clustering looks reasonable
-- [ ] Disagreements (which rollouts should merge/split?):
-- [ ] Other:
+- Clustering looks reasonable
+- Disagreements (which rollouts should merge/split?):
+- Other:
+
+---
 
 ## 6. `6b1b00a1-83c7-4977-b982-ea5511461d3a` — mixed
-**Stratum:** mixed — mixed (3/8 correct)  
-**Clusters:** 3 distinct clusters, 0 degenerate (-1), 3/8 correct  
-**Minority-correct prompt?** yes (correct rollouts in ≥2 clusters, one not the majority among correct)  
-**Gold answer:** `8`
+
+- **Stratum:** mixed — mixed (3/8 correct)
+- **Clusters:** 3 distinct clusters, 0 degenerate (-1), 3/8 correct
+- **Minority-correct prompt?** yes
+- **Gold answer:** `8`
 
 ### Problem
 
@@ -1860,21 +1974,26 @@ Let $a$ and $b$ be real numbers.  One of the roots of $x^3 + ax + b = 0$ is $1 +
 
 ### Rollout summary
 
-| # | Correct (v2) | Parsed answer | LLM cluster | Judge macro/micro |
-|---:|:---:|---|---:|---|
-| 1 | ✗ | `12` | 1 | Macro: Polynomial construction from roots. Micro: Expand product of linear factors to equate coefficients. |
-| 2 | ✓ | `8` | 2 | Macro: Vieta's formulas. Micro: Use sum of roots to find third root, then expand factors to find coefficients. |
-| 3 | ✗ | `Answer: (2)` | 1 | Macro: Polynomial construction from roots. Micro: Step-by-step expansion of linear factors. |
-| 4 | ✗ | `5` | 1 | Macro: Polynomial construction from roots. Micro: Expand product of linear factors to equate coefficients. |
-| 5 | ✗ | `10` | 3 | Macro: Vieta's formulas. Micro: System of equations using sum and product of roots. |
-| 6 | ✓ | `8` | 1 | Macro: Polynomial construction from roots. Micro: Expand product of linear factors to equate coefficients. |
-| 7 | ✓ | `8` | 2 | Macro: Vieta's formulas. Micro: Use sum of roots for third root, then Vieta's for coefficients. |
-| 8 | ✗ | `-8` | 2 | Macro: Vieta's formulas. Micro: Use sum of roots for third root, then Vieta's for coefficients. |
 
-### Full completions (expand to read)
+| #   | OK  | Parsed answer | Cluster | Judge macro/micro                                                                                              |
+| --- | --- | ------------- | ------- | -------------------------------------------------------------------------------------------------------------- |
+| 1   | no  | `12`          | 1       | Macro: Polynomial construction from roots. Micro: Expand product of linear factors to equate coefficients.     |
+| 2   | yes | `8`           | 2       | Macro: Vieta's formulas. Micro: Use sum of roots to find third root, then expand factors to find coefficients. |
+| 3   | no  | `Answer: (2)` | 1       | Macro: Polynomial construction from roots. Micro: Step-by-step expansion of linear factors.                    |
+| 4   | no  | `5`           | 1       | Macro: Polynomial construction from roots. Micro: Expand product of linear factors to equate coefficients.     |
+| 5   | no  | `10`          | 3       | Macro: Vieta's formulas. Micro: System of equations using sum and product of roots.                            |
+| 6   | yes | `8`           | 1       | Macro: Polynomial construction from roots. Micro: Expand product of linear factors to equate coefficients.     |
+| 7   | yes | `8`           | 2       | Macro: Vieta's formulas. Micro: Use sum of roots for third root, then Vieta's for coefficients.                |
+| 8   | no  | `-8`          | 2       | Macro: Vieta's formulas. Micro: Use sum of roots for third root, then Vieta's for coefficients.                |
 
-<details>
-<summary>Rollout 1 — cluster 1</summary>
+
+### Rollouts (full text)
+
+#### Rollout 1 — cluster 1 (incorrect)
+
+**Parsed answer:** `12`  
+
+**Judge macro/micro:** Macro: Polynomial construction from roots. Micro: Expand product of linear factors to equate coefficients.
 
 ```
 To solve the problem, we start by noting that since the polynomial \(x^3 + ax + b = 0\) has real coefficients, the complex roots must come in conjugate pairs. Therefore, if \(1 + i\sqrt{3}\) is a root, then its complex conjugate \(1 - i\sqrt{3}\) must also be a root.
@@ -1903,10 +2022,11 @@ The answer is:
 \]
 ```
 
-</details>
+#### Rollout 2 — cluster 2 (correct)
 
-<details>
-<summary>Rollout 2 — cluster 2</summary>
+**Parsed answer:** `8`  
+
+**Judge macro/micro:** Macro: Vieta's formulas. Micro: Use sum of roots to find third root, then expand factors to find coefficients.
 
 ```
 To solve this problem, we need to use the fact that the coefficients of the polynomial $x^3 + ax + b = 0$ are real numbers, and therefore, if $1 + i \sqrt{3}$ is a root, then its complex conjugate, $1 - i \sqrt{3}$, must also be a root. Let's denote the roots of the polynomial as follows:
@@ -1963,10 +2083,11 @@ print((polynomial, a, b, result))
 ```
 ```
 
-</details>
+#### Rollout 3 — cluster 1 (incorrect)
 
-<details>
-<summary>Rollout 3 — cluster 1</summary>
+**Parsed answer:** `Answer: (2)`  
+
+**Judge macro/micro:** Macro: Polynomial construction from roots. Micro: Step-by-step expansion of linear factors.
 
 ```
 Step 1:  First, we need to recognize that the given polynomial is a cubic polynomial and can be expressed as (x^3 + ax + b = 0). One of the roots is (1 + i sqrt{3}). To solve the problem, we'll follow these steps:
@@ -1990,10 +2111,11 @@ Step 9:  Step 9.1: The final result is the sum of (a) and (b).
 Answer: Answer: (2)
 ```
 
-</details>
+#### Rollout 4 — cluster 1 (incorrect)
 
-<details>
-<summary>Rollout 4 — cluster 1</summary>
+**Parsed answer:** `5`  
+
+**Judge macro/micro:** Macro: Polynomial construction from roots. Micro: Expand product of linear factors to equate coefficients.
 
 ```
 Step 1:  The problem gives us the roots of a cubic polynomial equation, x^3 + ax + b = 0, and we know that one of the roots is (1 + i sqrt{3}).
@@ -2007,10 +2129,11 @@ Step 7:  Once we have the value of r, we can find the values of a and b, and sub
 Answer: 5
 ```
 
-</details>
+#### Rollout 5 — cluster 3 (incorrect)
 
-<details>
-<summary>Rollout 5 — cluster 3</summary>
+**Parsed answer:** `10`  
+
+**Judge macro/micro:** Macro: Vieta's formulas. Micro: System of equations using sum and product of roots.
 
 ```
 Step 1:  Since one of the roots is given to be $1 + i \sqrt{3}$, and the polynomial is of degree 3, the other two roots must be complex conjugates of each other.
@@ -2029,10 +2152,11 @@ Step 12:  Therefore, $a + b = 2 + 8 = \boxed{10}$.
 Answer: 10
 ```
 
-</details>
+#### Rollout 6 — cluster 1 (correct)
 
-<details>
-<summary>Rollout 6 — cluster 1</summary>
+**Parsed answer:** `8`  
+
+**Judge macro/micro:** Macro: Polynomial construction from roots. Micro: Expand product of linear factors to equate coefficients.
 
 ```
 Step 1:  We are given that one of the roots of the polynomial $x^3 + ax + b = 0$ is $1 + i \sqrt{3}.$
@@ -2050,10 +2174,11 @@ Step 11:  Therefore, a + b = 0 + 8 = 8.
 Answer: 8
 ```
 
-</details>
+#### Rollout 7 — cluster 2 (correct)
 
-<details>
-<summary>Rollout 7 — cluster 2</summary>
+**Parsed answer:** `8`  
+
+**Judge macro/micro:** Macro: Vieta's formulas. Micro: Use sum of roots for third root, then Vieta's for coefficients.
 
 ```
 To solve this problem, we need to find the values of $a$ and $b$ in the cubic equation $x^3 + ax + b = 0$ given that one of its roots is $1 + i \sqrt{3}$. Since the coefficients of the polynomial are real numbers, the complex conjugate $1 - i \sqrt{3}$ must also be a root. Let the third root be $r$. Using Vieta's formulas, we know that the sum of the roots of the polynomial is zero. Thus, we can write the following equation:
@@ -2110,10 +2235,11 @@ Therefore, the final answer is:
 \]
 ```
 
-</details>
+#### Rollout 8 — cluster 2 (incorrect)
 
-<details>
-<summary>Rollout 8 — cluster 2</summary>
+**Parsed answer:** `-8`  
+
+**Judge macro/micro:** Macro: Vieta's formulas. Micro: Use sum of roots for third root, then Vieta's for coefficients.
 
 ```
 To solve this problem, we can use the fact that complex roots of polynomials with real coefficients come in conjugate pairs. Therefore, if $1 + i \sqrt{3}$ is a root, then its conjugate $1 - i \sqrt{3}$ must also be a root.
@@ -2179,18 +2305,19 @@ Therefore, the answer is:
 \[\boxed{-8}\]
 ```
 
-</details>
-
 ### Your notes
 
-- [ ] Clustering looks reasonable
-- [ ] Disagreements (which rollouts should merge/split?):
-- [ ] Other:
+- Clustering looks reasonable
+- Disagreements (which rollouts should merge/split?):
+- Other:
+
+---
 
 ## 7. `94db2f59-c3c2-4bac-866b-dd09240dc0bf` — none
-**Stratum:** none — none correct (0/8)  
-**Clusters:** 4 distinct clusters, 0 degenerate (-1), 0/8 correct  
-**Gold answer:** `6`
+
+- **Stratum:** none — none correct (0/8)
+- **Clusters:** 4 distinct clusters, 0 degenerate (-1), 0/8 correct
+- **Gold answer:** `6`
 
 ### Problem
 
@@ -2198,21 +2325,26 @@ Compute the maximum integer value of $k$ such that $2^k$ divides $3^{2n+3} + 40n
 
 ### Rollout summary
 
-| # | Correct (v2) | Parsed answer | LLM cluster | Judge macro/micro |
-|---:|:---:|---|---:|---|
-| 1 | ✗ | `8` | 1 | Macro: Modular arithmetic analysis. Micro: Case-based parity analysis (n even/odd) to find divisibility by 2^k. |
-| 2 | ✗ | `1` | 2 | Macro: Modular arithmetic analysis. Micro: Direct evaluation of the expression modulo 2, 4, and 8. |
-| 3 | ✗ | `2` | 3 | Macro: Modular arithmetic analysis. Micro: Sequential testing of powers of 2 and Python-based verification. |
-| 4 | ✗ | `` | 3 | Macro: Modular arithmetic analysis. Micro: Simplification of 3^(2n+3) mod 8 and Python-based verification. |
-| 5 | ✗ | `0` | 1 | Macro: Modular arithmetic analysis. Micro: Parity analysis of terms to determine divisibility. |
-| 6 | ✗ | `3` | 3 | Macro: Modular arithmetic analysis. Micro: Sequential testing of powers of 2 and Python-based verification. |
-| 7 | ✗ | `8` | 4 | Macro: Single-point testing. Micro: Evaluating the expression for n=1 and finding the highest power of 2 dividing the… |
-| 8 | ✗ | `Since \( 3^{2n+3} \equiv 1 \pmod{16} \) and \( -27 \` | 1 | Macro: Modular arithmetic analysis. Micro: Case-based parity analysis (n even/odd) to find divisibility by 2^k. |
 
-### Full completions (expand to read)
+| #   | OK  | Parsed answer                                          | Cluster | Judge macro/micro                                                                                                             |
+| --- | --- | ------------------------------------------------------ | ------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| 1   | no  | `8`                                                    | 1       | Macro: Modular arithmetic analysis. Micro: Case-based parity analysis (n even/odd) to find divisibility by 2^k.               |
+| 2   | no  | `1`                                                    | 2       | Macro: Modular arithmetic analysis. Micro: Direct evaluation of the expression modulo 2, 4, and 8.                            |
+| 3   | no  | `2`                                                    | 3       | Macro: Modular arithmetic analysis. Micro: Sequential testing of powers of 2 and Python-based verification.                   |
+| 4   | no  | ``                                                     | 3       | Macro: Modular arithmetic analysis. Micro: Simplification of 3^(2n+3) mod 8 and Python-based verification.                    |
+| 5   | no  | `0`                                                    | 1       | Macro: Modular arithmetic analysis. Micro: Parity analysis of terms to determine divisibility.                                |
+| 6   | no  | `3`                                                    | 3       | Macro: Modular arithmetic analysis. Micro: Sequential testing of powers of 2 and Python-based verification.                   |
+| 7   | no  | `8`                                                    | 4       | Macro: Single-point testing. Micro: Evaluating the expression for n=1 and finding the highest power of 2 dividing the result. |
+| 8   | no  | `Since \( 3^{2n+3} \equiv 1 \pmod{16} \) and \( -27 \` | 1       | Macro: Modular arithmetic analysis. Micro: Case-based parity analysis (n even/odd) to find divisibility by 2^k.               |
 
-<details>
-<summary>Rollout 1 — cluster 1</summary>
+
+### Rollouts (full text)
+
+#### Rollout 1 — cluster 1 (incorrect)
+
+**Parsed answer:** `8`  
+
+**Judge macro/micro:** Macro: Modular arithmetic analysis. Micro: Case-based parity analysis (n even/odd) to find divisibility by 2^k.
 
 ```
 Step 1:  Let's analyze the expression $3^{2n+3} + 40n - 27$. The question is asking for the maximum integer value of $k$ such that $2^k$ divides this expression for any positive integer $n$. This means that $2^k$ must divide $3^{2n+3} + 40n - 27$ for all possible $n$. The first step is to understand that if $k$ is the highest power of 2 that divides $3^{2n+3} + 40n - 27$, then $2^{k+1}$ would not divide the expression for all $n$.
@@ -2221,15 +2353,17 @@ Step 3:  Since $3^{2n+3}$ and $27$ are both divisible by $8$, we can consider th
 Step 4:  Let's consider the cases when $n$ is even and $n$ is odd. If $n$ is even, $5n$ is divisible by $8$, so the expression simplifies to $3^{2n+3} + 8k - 27$ modulo $16$. If $n$ is odd, $5n$ is not divisible by $8$, so the expression simplifies to $3^{2n+3} + 5n - 27$ modulo $16$.
 Step 5:  We need to find a common pattern for both cases. By examining the expressions, we can see that when $n$ is even, $3^{2n+3}$ will be congruent to $1$ modulo $8$, and $3^{2n+3} + 8k - 27$ will also be congruent to $1 - 27 + 8k \equiv 8k - 26$ modulo $16$. When $n$ is odd, $3^{2n+3}$ will be congruent to $3$ modulo $8$, and $3^{2n+3} + 5n - 27$ will also be congruent to $3 + 5n - 27 \equiv 5n - 24$ modulo $16$.
 Step 6:  To find the highest power of $2$ that divides the expression, we need to consider the cases when $n$ is even and $n$ is odd separately. In both cases, we need to ensure that the expression is divisible by $8$ (i.e., $2^3$). We can find the minimum value of $n$ that satisfies this condition. For even $n$, setting $3^{2n+3} + 8k - 27 \equiv 0$ modulo $16$, we get $8k \equiv 26$ modulo $16$, which implies $k \equiv 3$ modulo $2$. For odd $n$, setting $3^{2n+3} + 5n - 27 \equiv 0$ modulo $16$, we get $5n \equiv 24$ modulo $16$, which implies $k \equiv 4$ modulo $2$.
-Step 7:  In both cases, we need the expression to be divisible by $2^3$.
+Step 7:  In both cases, we need the expression to be divisible by $2^3$. The minimum value of $n$ that satisfies this condition is $n = 4$ when $n$ is even and $n = 3$ when $n$ is odd. We can use this information to determine the maximum integer value of $k$.
+Step 8:  The maximum integer value of $k$ such that $2^k$ divides $3^{2n+3} + 40n - 27$ for any positive integer $n$ is $8$, which is $2^3$.
 
-… [truncated]
+Answer: 8
 ```
 
-</details>
+#### Rollout 2 — cluster 2 (incorrect)
 
-<details>
-<summary>Rollout 2 — cluster 2</summary>
+**Parsed answer:** `1`  
+
+**Judge macro/micro:** Macro: Modular arithmetic analysis. Micro: Direct evaluation of the expression modulo 2, 4, and 8.
 
 ```
 To solve the problem, we need to determine the maximum integer value of \( k \) such that \( 2^k \) divides \( 3^{2n+3} + 40n - 27 \) for any positive integer \( n \).
@@ -2284,10 +2418,11 @@ We have found that \( 2^1 \) divides \( P(n) \), but \( 2^2 \) and \( 2^3 \) do 
 \]
 ```
 
-</details>
+#### Rollout 3 — cluster 3 (incorrect)
 
-<details>
-<summary>Rollout 3 — cluster 3</summary>
+**Parsed answer:** `2`  
+
+**Judge macro/micro:** Macro: Modular arithmetic analysis. Micro: Sequential testing of powers of 2 and Python-based verification.
 
 ```
 Let's start by analyzing the problem. We need to find the maximum integer \( k \) such that \( 2^k \) divides \( 3^{2n+3} + 40n - 27 \) for any positive integer \( n \). This means we need to find the highest power of 2 that divides the expression \( 3^{2n+3} + 40n - 27 \).
@@ -2329,10 +2464,11 @@ timeout_decorator.timeout_decorator.TimeoutError: 'Timed Out'
 The maximum integer value of \( k \) such that \( 2^k \) divides \( 3^{2n+3} + 40n - 27 \) for any positive integer \( n \) is \(\boxed{2}\).
 ```
 
-</details>
+#### Rollout 4 — cluster 3 (incorrect)
 
-<details>
-<summary>Rollout 4 — cluster 3</summary>
+**Parsed answer:** ``  
+
+**Judge macro/micro:** Macro: Modular arithmetic analysis. Micro: Simplification of 3^(2n+3) mod 8 and Python-based verification.
 
 ```
 To solve the problem, we need to determine the maximum integer value of \( k \) such that \( 2^k \) divides \( 3^{2n+3} + 40n - 27 \) for any positive integer \( n \).
@@ -2371,10 +2507,11 @@ print(results)
 {1: True, 2: True, 3: True, 4: True, 5: True, 6: True, 7: True, 8: True, 9: True, 10: True, 11: True, 12: True, 13: True, 14: True, 15: True, 16: True, 17: True, 18: True, 19: True, 20: True, 21: True, 22: True, 23: True, 24: True, 25: True, 26: True, 27: True, 28: True, 29: True, 30: True, 31: True, 32: True, 33: True, 34: True, 35: True, 36: True, 37: True, 38: True, 39: True, 40: True, 41: True, 42: True, 43: True, 44: True, 45: True, 46: True, 47: True, 48: True, 49: True, 50: True, 51: True, 52: True, 53: True, 54: True, 55: True, 56: True, 57: True, 58: True, 59: True, 60: True, 61: True, 62: True, 63: True, 64: True, 65: True, 66: True, 67: True, 68: True, 69: True, 70: True, 71: True,
 ```
 
-</details>
+#### Rollout 5 — cluster 1 (incorrect)
 
-<details>
-<summary>Rollout 5 — cluster 1</summary>
+**Parsed answer:** `0`  
+
+**Judge macro/micro:** Macro: Modular arithmetic analysis. Micro: Parity analysis of terms to determine divisibility.
 
 ```
 Step 1:  We need to find the highest power of 2 that divides the given expression, which is $3^{2n+3} + 40n - 27$.
@@ -2395,10 +2532,11 @@ Step 14:  Thus, the greatest integer value of k is 0 since any power of 2 greate
 Answer: 0
 ```
 
-</details>
+#### Rollout 6 — cluster 3 (incorrect)
 
-<details>
-<summary>Rollout 6 — cluster 3</summary>
+**Parsed answer:** `3`  
+
+**Judge macro/micro:** Macro: Modular arithmetic analysis. Micro: Sequential testing of powers of 2 and Python-based verification.
 
 ```
 Let's solve this step by step. First, we want to find the maximum integer $k$ such that $2^k$ divides $3^{2n+3} + 40n - 27$ for any positive integer $n$. We will consider this problem modulo powers of 2 to understand the divisibility.
@@ -2432,10 +2570,11 @@ Thus, the final answer is:
 \]
 ```
 
-</details>
+#### Rollout 7 — cluster 4 (incorrect)
 
-<details>
-<summary>Rollout 7 — cluster 4</summary>
+**Parsed answer:** `8`  
+
+**Judge macro/micro:** Macro: Single-point testing. Micro: Evaluating the expression for n=1 and finding the highest power of 2 dividing the result.
 
 ```
 First, let's find the value of $3^{2n+3} + 40n - 27$ for $n = 1$:
@@ -2449,10 +2588,11 @@ $$\begin{aligned}256 &= 2^8 \\256 &= 2^8 \times 1 \\256 &= 2^8 \times 1 \times 1
 So, the maximum integer value of $k$ such that $2^k$ divides $3^{2n+3} + 40n - 27$ for any positive integer $n$ is $\boxed{8}$.
 ```
 
-</details>
+#### Rollout 8 — cluster 1 (incorrect)
 
-<details>
-<summary>Rollout 8 — cluster 1</summary>
+**Parsed answer:** `Since \( 3^{2n+3} \equiv 1 \pmod{16} \) and \( -27 \`  
+
+**Judge macro/micro:** Macro: Modular arithmetic analysis. Micro: Case-based parity analysis (n even/odd) to find divisibility by 2^k.
 
 ```
 To find the maximum integer value of \( k \) such that \( 2^k \) divides \( 3^{2n+3} + 40n - 27 \) for any positive integer \( n \), we will analyze the expression modulo powers of 2.
@@ -2496,18 +2636,19 @@ For \( k = 4 \), we need to check if \( 16 \) divides \( 3^{2n+3} + 40n - 27 \) 
 Since \( 3^{2n+3} \equiv 1 \pmod{16} \) and \( -27 \
 ```
 
-</details>
-
 ### Your notes
 
-- [ ] Clustering looks reasonable
-- [ ] Disagreements (which rollouts should merge/split?):
-- [ ] Other:
+- Clustering looks reasonable
+- Disagreements (which rollouts should merge/split?):
+- Other:
+
+---
 
 ## 8. `0e1aeeae-5854-49e6-973f-6911ff844716` — none
-**Stratum:** none — none correct (0/8)  
-**Clusters:** 7 distinct clusters, 1 degenerate (-1), 0/8 correct  
-**Gold answer:** `48`
+
+- **Stratum:** none — none correct (0/8)
+- **Clusters:** 7 distinct clusters, 1 degenerate (-1), 0/8 correct
+- **Gold answer:** `48`
 
 ### Problem
 
@@ -2515,21 +2656,26 @@ There are eight rooms on the first floor of a hotel, with four rooms on each sid
 
 ### Rollout summary
 
-| # | Correct (v2) | Parsed answer | LLM cluster | Judge macro/micro |
-|---:|:---:|---|---:|---|
-| 1 | ✗ | `**Answer: 24**` | 1 | Macro: Combinatorial selection. Micro: Case-based analysis of room selection with manual exclusion of constraints. |
-| 2 | ✗ | `- Valid selections: {1, 2, 3, 4}, {1, 2, 3, 5}, {1, 2, 3, 6}, {1,` | 1 | Macro: Combinatorial selection. Micro: Case-based analysis of room selection with manual exclusion of constraints. |
-| 3 | ✗ | `360` | 2 | Macro: Combinatorial selection. Micro: Subset selection using binomial coefficients and factorial permutation. |
-| 4 | ✗ | `1820` | 3 | Macro: Combinatorial selection. Micro: Selection of pairs using binomial coefficients. |
-| 5 | ✗ | `The answer is 8.` | 4 | Macro: Geometric/Symmetry analysis. Micro: Visualizing grid configurations and counting valid arrangements. |
-| 6 | ✗ | `` | 5 | Macro: Principle of Inclusion-Exclusion. Micro: Attempting to use set theory to subtract invalid combinations. |
-| 7 | ✗ | `35` | **deg** | Macro: Computational simulation. Micro: Using Python code to generate and filter combinations. |
-| 8 | ✗ | `The answer is: **Answer: 1**` | 6 | Macro: Logical deduction. Micro: Eliminating rooms based on constraints and checking a single case. |
 
-### Full completions (expand to read)
+| #   | OK  | Parsed answer                                                       | Cluster | Judge macro/micro                                                                                                  |
+| --- | --- | ------------------------------------------------------------------- | ------- | ------------------------------------------------------------------------------------------------------------------ |
+| 1   | no  | `**Answer: 24`**                                                    | 1       | Macro: Combinatorial selection. Micro: Case-based analysis of room selection with manual exclusion of constraints. |
+| 2   | no  | `- Valid selections: {1, 2, 3, 4}, {1, 2, 3, 5}, {1, 2, 3, 6}, {1,` | 1       | Macro: Combinatorial selection. Micro: Case-based analysis of room selection with manual exclusion of constraints. |
+| 3   | no  | `360`                                                               | 2       | Macro: Combinatorial selection. Micro: Subset selection using binomial coefficients and factorial permutation.     |
+| 4   | no  | `1820`                                                              | 3       | Macro: Combinatorial selection. Micro: Selection of pairs using binomial coefficients.                             |
+| 5   | no  | `The answer is 8.`                                                  | 4       | Macro: Geometric/Symmetry analysis. Micro: Visualizing grid configurations and counting valid arrangements.        |
+| 6   | no  | ``                                                                  | 5       | Macro: Principle of Inclusion-Exclusion. Micro: Attempting to use set theory to subtract invalid combinations.     |
+| 7   | no  | `35`                                                                | deg     | Macro: Computational simulation. Micro: Using Python code to generate and filter combinations.                     |
+| 8   | no  | `The answer is: **Answer: 1**`                                      | 6       | Macro: Logical deduction. Micro: Eliminating rooms based on constraints and checking a single case.                |
 
-<details>
-<summary>Rollout 1 — cluster 1</summary>
+
+### Rollouts (full text)
+
+#### Rollout 1 — cluster 1 (incorrect)
+
+**Parsed answer:** `**Answer: 24`**  
+
+**Judge macro/micro:** Macro: Combinatorial selection. Micro: Case-based analysis of room selection with manual exclusion of constraints.
 
 ```
 To solve this problem, we need to determine the number of ways to place four guests in eight rooms such that no two guests are in adjacent rooms or in opposite rooms. Here's a step-by-step approach:
@@ -2565,15 +2711,19 @@ We can approach this by considering the possible positions for the chosen rooms 
 This option is more complex and requires careful consideration. However, given the constraints, it's unlikely that such a combination exists because selecting three rooms that are all non-adjacent and not opposite to each other would be highly restrictive and may not align with the overall arrangement of the rooms.
 
 #### Option 3: Choose all four rooms
-This is the simplest case but clearly violates the adjacency and opposite constraints since we
+This is the simplest case but clearly violates the adjacency and opposite constraints since we need to place four guests, each in a separate room, without any two being adjacent or opposite.
 
-… [truncated]
+### Step 6: Conclusion
+After evaluating the options, the most straightforward and feasible solution is to choose two non-adjacent rooms. Therefore, the number of ways to accommodate the guests is:
+
+**Answer: 24**
 ```
 
-</details>
+#### Rollout 2 — cluster 1 (incorrect)
 
-<details>
-<summary>Rollout 2 — cluster 1</summary>
+**Parsed answer:** `- Valid selections: {1, 2, 3, 4}, {1, 2, 3, 5}, {1, 2, 3, 6}, {1,`  
+
+**Judge macro/micro:** Macro: Combinatorial selection. Micro: Case-based analysis of room selection with manual exclusion of constraints.
 
 ```
 To solve this problem, we need to follow these steps:
@@ -2622,13 +2772,14 @@ We can use a systematic approach to find all valid selections:
 
 - **Case 4:** Select Room 4
   - Cannot select Room 3, Room 8, or any adjacent room.
-  - Valid selections: {1, 2, 3, 4}, {1, 2, 3, 5}, {1, 2, 3, 6}, {1,
+  - Valid selections: {1, 2, 3, 4}, {1, 2, 3, 5}, {1, 2, 3, 6}, {1, 
 ```
 
-</details>
+#### Rollout 3 — cluster 2 (incorrect)
 
-<details>
-<summary>Rollout 3 — cluster 2</summary>
+**Parsed answer:** `360`  
+
+**Judge macro/micro:** Macro: Combinatorial selection. Micro: Subset selection using binomial coefficients and factorial permutation.
 
 ```
 To solve this problem, we need to consider the constraints given: no two guests can be in adjacent rooms, and no two guests can be in opposite rooms. Let's break down the problem step by step.
@@ -2666,10 +2817,11 @@ To solve this problem, we need to consider the constraints given: no two guests 
 Therefore, the number of ways to accommodate the guests is \(\boxed{360}\).
 ```
 
-</details>
+#### Rollout 4 — cluster 3 (incorrect)
 
-<details>
-<summary>Rollout 4 — cluster 3</summary>
+**Parsed answer:** `1820`  
+
+**Judge macro/micro:** Macro: Combinatorial selection. Micro: Selection of pairs using binomial coefficients.
 
 ```
 To solve this problem, we'll need to consider the constraints given and then use combinatorial reasoning to find the number of valid room assignments.
@@ -2727,10 +2879,11 @@ Thus, the total number of ways to accommodate the guests such that no two guests
 \[ \boxed{1820} \]
 ```
 
-</details>
+#### Rollout 5 — cluster 4 (incorrect)
 
-<details>
-<summary>Rollout 5 — cluster 4</summary>
+**Parsed answer:** `The answer is 8.`  
+
+**Judge macro/micro:** Macro: Geometric/Symmetry analysis. Micro: Visualizing grid configurations and counting valid arrangements.
 
 ```
 To solve the problem, we need to consider the constraints:
@@ -2762,10 +2915,11 @@ Therefore, there are 8 possible ways to accommodate the guests under the given c
 The answer is 8.
 ```
 
-</details>
+#### Rollout 6 — cluster 5 (incorrect)
 
-<details>
-<summary>Rollout 6 — cluster 5</summary>
+**Parsed answer:** ``  
+
+**Judge macro/micro:** Macro: Principle of Inclusion-Exclusion. Micro: Attempting to use set theory to subtract invalid combinations.
 
 ```
 To solve this problem, we need to determine the number of ways to place four guests in four of the eight rooms such that no two guests are in adjacent or opposite rooms. Here's the step-by-step solution:
@@ -2825,15 +2979,42 @@ However, calculating these directly can be complex, so we use a different approa
 But this approach is still complex, so we use a simpler method.
 
 #### Using complementary counting:
-Instead of directly counting the valid combinations, we can count the total number of ways to choose 4 rooms and then subtract the numb
+Instead of directly counting the valid combinations, we can count the total number of ways to choose 4 rooms and then subtract the number of invalid combinations.
 
-… [truncated]
+1. **Total ways to choose 4 rooms**: \(\binom{8}{4} = 70\).
+
+2. **Invalid combinations**:
+   - **Adjacent pairs**: Treat each pair of adjacent rooms as a single unit. There are 7 pairs, and we choose 4 units. The number of ways to choose 4 units from 7 pairs is \(\binom{7}{4}\).
+   
+   However, this overcounts because some pairs are also opposite. We need to adjust for that.
+
+3. **Opposite pairs**: Treat each pair of opposite rooms as a single unit. There are 4 pairs, and we choose 4 units. The number of ways to choose 4 units from 4 pairs is \(\binom{4}{4} = 1\).
+
+4. **Overlap**: Subtract the cases where both adjacent and opposite pairs are chosen simultaneously.
+
+But this approach is still complex, so we use a simpler method.
+
+#### Using the principle of inclusion-exclusion:
+1. **Adjacent pairs**: Treat each pair of adjacent rooms as a single unit. There are 7 pairs, and we choose 4 units. The number of ways to choose 4 units from 7 pairs is \(\binom{7}{4}\).
+   
+   However, this overcounts because some pairs are also opposite. We need to adjust for that.
+
+2. **Opposite pairs**: Treat each pair of opposite rooms as a single unit. There are 4 pairs, and we choose 4 units. The number of ways to choose 4 units from 4 pairs is \(\binom{4}{4} = 1\).
+
+3. **Overlap**: Subtract the cases where both adjacent and opposite pairs are chosen simultaneously.
+
+But this approach is still complex, so we use a simpler method.
+
+#### Using the principle of inclusion-exclusion:
+1. **Adjacent pairs**: Treat each pair of adjacent rooms as a single unit. There are 7 pairs, and we choose 4 units. The number of ways to choose 4 units from 7 pairs is \(\binom{7}{4}\).
+   
 ```
 
-</details>
+#### Rollout 7 — cluster -1 (incorrect)
 
-<details>
-<summary>Rollout 7 — cluster -1</summary>
+**Parsed answer:** `35`  
+
+**Judge macro/micro:** Macro: Computational simulation. Micro: Using Python code to generate and filter combinations.
 
 ```
 Step 1: Identify the total number of rooms and the constraint that no two guests can be in adjacent or opposite rooms.
@@ -2881,15 +3062,18 @@ Answer: num_valid_combinations
 
 The problem requires us to place four guests in eight rooms such that no two guests are in adjacent or opposite rooms. We can solve this by generating all possible combinations of four rooms out of the eight and checking which combinations satisfy the condition.
 
-First, we need to create a list of available rooms, represented as numbers from 1 to 8. Then, we use the `i
+First, we need to create a list of available rooms, represented as numbers from 1 to 8. Then, we use the `itertools.combinations` function to generate all possible combinations of four rooms out of the eight. We define a function `can_place_guests` that checks if a given combination of rooms is valid by ensuring that no two selected rooms are adjacent or opposite.
 
-… [truncated]
+Finally, we filter out the invalid combinations and count the number of valid combinations to determine the answer.
+
+Answer: 35
 ```
 
-</details>
+#### Rollout 8 — cluster 6 (incorrect)
 
-<details>
-<summary>Rollout 8 — cluster 6</summary>
+**Parsed answer:** `The answer is: **Answer: 1`**  
+
+**Judge macro/micro:** Macro: Logical deduction. Micro: Eliminating rooms based on constraints and checking a single case.
 
 ```
 To solve this problem, we need to place four guests in four rooms out of the eight rooms such that no two guests are in adjacent rooms or in opposite rooms.
@@ -2930,41 +3114,47 @@ To solve this problem, we need to place four guests in four rooms out of the eig
 The answer is: **Answer: 1**
 ```
 
-</details>
-
 ### Your notes
 
-- [ ] Clustering looks reasonable
-- [ ] Disagreements (which rollouts should merge/split?):
-- [ ] Other:
+- Clustering looks reasonable
+- Disagreements (which rollouts should merge/split?):
+- Other:
+
+---
 
 ## 9. `238df3ea-992d-4324-a3be-01cf56c11691` — none
-**Stratum:** none — none correct (0/8)  
-**Clusters:** 8 distinct clusters, 1 degenerate (-1), 0/8 correct  
-**Gold answer:** `553`
+
+- **Stratum:** none — none correct (0/8)
+- **Clusters:** 8 distinct clusters, 1 degenerate (-1), 0/8 correct
+- **Gold answer:** `553`
 
 ### Problem
 
-Given a real number $x,$ let $\lfloor x \rfloor$ denote the greatest integer less than or equal to $x.$ For a certain integer $k,$ there are exactly $70$ positive integers $n_{1}, n_{2}, \cdots, n_{70}$ such that $k=\lfloor\sqrt[3]{n_{1}}\rfloor = \lfloor\sqrt[3]{n_{2}}\rfloor = \cdots = \lfloor\sqrt[3]{n_{70}}\rfloor$ and $k$ divides $n_{i}$ for all $i$ such that $1 \leq i \leq 70.$    
+Given a real number $x,$ let $\lfloor x \rfloor$ denote the greatest integer less than or equal to $x.$ For a certain integer $k,$ there are exactly $70$ positive integers $n_{1}, n_{2}, \cdots, n_{70}$ such that $k=\lfloor\sqrt[3]{n_{1}}\rfloor = \lfloor\sqrt[3]{n_{2}}\rfloor = \cdots = \lfloor\sqrt[3]{n_{70}}\rfloor$ and $k$ divides $n_{i}$ for all $i$ such that $1 \leq i \leq 70.$  
 Find the maximum value of $\frac{n_{i}}{k}$ for $1\leq i \leq 70.$
 
 ### Rollout summary
 
-| # | Correct (v2) | Parsed answer | LLM cluster | Judge macro/micro |
-|---:|:---:|---|---:|---|
-| 1 | ✗ | `31` | 1 | Macro: Algebraic inequality analysis. Micro: Count integers in the interval [k^3, (k+1)^3-1] and solve for k. |
-| 2 | ✗ | `\[ 1296 \leq m_i <` | 2 | Macro: Algebraic inequality analysis. Micro: Substitute n_i = k*m_i and count integers in [k^2, (k+1)^2-1]. |
-| 3 | ✗ | `` | 3 | Macro: Trial and error/Heuristic search. Micro: Test specific values of k to find the count of multiples. |
-| 4 | ✗ | `The maximum value of (n_i / k) for 1 ≤ i ≤ 70 is ((k^2 + k - 1) / k).` | 4 | Macro: Algebraic derivation. Micro: Incorrectly equate n_i to a single expression 3k^2 + k - 1. |
-| 5 | ✗ | `80` | 5 | Macro: Algebraic inequality analysis. Micro: Incorrectly define the range of m_i as [k^2, 2k^2). |
-| 6 | ✗ | `70` | 6 | Macro: Algebraic derivation. Micro: Incorrectly assume the number of multiples is equal to k. |
-| 7 | ✗ | `1763` | **deg** | Macro: Vague heuristic reasoning. Micro: No clear mathematical steps or logical derivation provided. |
-| 8 | ✗ | `31` | 8 | Macro: Algebraic inequality analysis. Micro: Count multiples of k in [k^3, (k+1)^3-1] by dividing by k. |
 
-### Full completions (expand to read)
+| #   | OK  | Parsed answer                                                           | Cluster | Judge macro/micro                                                                                             |
+| --- | --- | ----------------------------------------------------------------------- | ------- | ------------------------------------------------------------------------------------------------------------- |
+| 1   | no  | `31`                                                                    | 1       | Macro: Algebraic inequality analysis. Micro: Count integers in the interval [k^3, (k+1)^3-1] and solve for k. |
+| 2   | no  | `\[ 1296 \leq m_i <`                                                    | 2       | Macro: Algebraic inequality analysis. Micro: Substitute n_i = k*m_i and count integers in [k^2, (k+1)^2-1].   |
+| 3   | no  | ``                                                                      | 3       | Macro: Trial and error/Heuristic search. Micro: Test specific values of k to find the count of multiples.     |
+| 4   | no  | `The maximum value of (n_i / k) for 1 ≤ i ≤ 70 is ((k^2 + k - 1) / k).` | 4       | Macro: Algebraic derivation. Micro: Incorrectly equate n_i to a single expression 3k^2 + k - 1.               |
+| 5   | no  | `80`                                                                    | 5       | Macro: Algebraic inequality analysis. Micro: Incorrectly define the range of m_i as [k^2, 2k^2).              |
+| 6   | no  | `70`                                                                    | 6       | Macro: Algebraic derivation. Micro: Incorrectly assume the number of multiples is equal to k.                 |
+| 7   | no  | `1763`                                                                  | deg     | Macro: Vague heuristic reasoning. Micro: No clear mathematical steps or logical derivation provided.          |
+| 8   | no  | `31`                                                                    | 8       | Macro: Algebraic inequality analysis. Micro: Count multiples of k in [k^3, (k+1)^3-1] by dividing by k.       |
 
-<details>
-<summary>Rollout 1 — cluster 1</summary>
+
+### Rollouts (full text)
+
+#### Rollout 1 — cluster 1 (incorrect)
+
+**Parsed answer:** `31`  
+
+**Judge macro/micro:** Macro: Algebraic inequality analysis. Micro: Count integers in the interval [k^3, (k+1)^3-1] and solve for k.
 
 ```
 To solve this problem, we need to analyze the properties of the integers \( n_i \) and the constraint that \( k = \lfloor \sqrt[3]{n_i} \rfloor \) for all \( i \) from 1 to 70.
@@ -3006,10 +3196,11 @@ To solve this problem, we need to analyze the properties of the integers \( n_i 
 Therefore, the maximum value of \( \frac{n_i}{k} \) is \( \boxed{31} \).
 ```
 
-</details>
+#### Rollout 2 — cluster 2 (incorrect)
 
-<details>
-<summary>Rollout 2 — cluster 2</summary>
+**Parsed answer:** `\[ 1296 \leq m_i <`  
+
+**Judge macro/micro:** Macro: Algebraic inequality analysis. Micro: Substitute n_i = k*m_i and count integers in [k^2, (k+1)^2-1].
 
 ```
 To solve this problem, let's break it down step by step.
@@ -3043,15 +3234,18 @@ The number of integers in this range is indeed \( 1224 - 1156 + 1 = 69 \), which
 Let's check \( k = 33 \):
 \[ 33^2 \leq m_i < 34^2 \]
 \[ 1089 \leq m_i < 1156 \]
-The number of integers in this range is
+The number of integers in this range is \( 1155 - 1089 + 1 = 67 \), which is not 70.
 
-… [truncated]
+Let's check \( k = 36 \):
+\[ 36^2 \leq m_i < 37^2 \]
+\[ 1296 \leq m_i <
 ```
 
-</details>
+#### Rollout 3 — cluster 3 (incorrect)
 
-<details>
-<summary>Rollout 3 — cluster 3</summary>
+**Parsed answer:** ``  
+
+**Judge macro/micro:** Macro: Trial and error/Heuristic search. Micro: Test specific values of k to find the count of multiples.
 
 ```
 To find the maximum value of \(\frac{n_i}{k}\) for \(1 \leq i \leq 70\), we need to determine the possible values of \(k\) such that exactly 70 positive integers \(n_i\) satisfy \(k = \lfloor \sqrt[3]{n_i} \rfloor\) and \(k \mid n_i\). 
@@ -3071,10 +3265,11 @@ Instead, let's consider \(k = 19\). Then, the range for \(n\) is \(k^3 \leq n < 
 Finally, let's consider \(k = 20\). Then, the range for \(n\) is \(k^3 \leq n < (k+1)^3\) or \(8000 \leq n < 8001\). The multiples of 20 in this range are \(8000, 8020, 8040, 8060, 8080, 8100, 8120, 8140, 8160, 8180, 8200, 8220, 8240, 8260, 8280, 8300, 8320, 8340, 8360, 8380, 8400, 8420, 8440, 8460, 8480, 8500, 8520, 8540, 8560, 8580, 8600, 8620, 8640, 8660, 8680, 8700, 8720, 8740, 8760, 8780, 8800, 8820, 8840,
 ```
 
-</details>
+#### Rollout 4 — cluster 4 (incorrect)
 
-<details>
-<summary>Rollout 4 — cluster 4</summary>
+**Parsed answer:** `The maximum value of (n_i / k) for 1 ≤ i ≤ 70 is ((k^2 + k - 1) / k).`  
+
+**Judge macro/micro:** Macro: Algebraic derivation. Micro: Incorrectly equate n_i to a single expression 3k^2 + k - 1.
 
 ```
 Step 1:  We are given a certain integer k such that there are exactly 70 positive integers n1, n2, ..., n70 that satisfy the equation (k = ⌊n1^(1/3)⌋ = ⌊n2^(1/3)⌋ = ... = ⌊n70^(1/3)⌋) and k divides ni for all i such that 1 ≤ i ≤ 70.
@@ -3085,10 +3280,11 @@ Step 5:  We can simplify this expression to (k^2 + k - 1) / k, and this will giv
 Answer: The maximum value of (n_i / k) for 1 ≤ i ≤ 70 is ((k^2 + k - 1) / k).
 ```
 
-</details>
+#### Rollout 5 — cluster 5 (incorrect)
 
-<details>
-<summary>Rollout 5 — cluster 5</summary>
+**Parsed answer:** `80`  
+
+**Judge macro/micro:** Macro: Algebraic inequality analysis. Micro: Incorrectly define the range of m_i as [k^2, 2k^2).
 
 ```
 To solve this problem, let's break it down step-by-step:
@@ -3106,10 +3302,11 @@ To solve this problem, let's break it down step-by-step:
 So, the maximum value of $\frac{n_i}{k}$ is $\boxed{80}$.
 ```
 
-</details>
+#### Rollout 6 — cluster 6 (incorrect)
 
-<details>
-<summary>Rollout 6 — cluster 6</summary>
+**Parsed answer:** `70`  
+
+**Judge macro/micro:** Macro: Algebraic derivation. Micro: Incorrectly assume the number of multiples is equal to k.
 
 ```
 Let's denote the value of \( k \) by \( m \). This means that \( k = \lfloor \sqrt[3]{n_i} \rfloor \) for all \( 1 \leq i \leq 70 \). This implies that \( m \leq \sqrt[3]{n_i} < m+1 \) for all \( i \), and thus \( m^3 \leq n_i < (m+1)^3 \). Since \( k \) divides \( n_i \), \( n_i \) must be a multiple of \( k \). Therefore, the possible values of \( n_i \) are \( mk, mk+1, mk+2, \ldots, mk+(k-1) \).
@@ -3123,10 +3320,11 @@ The maximum value of \( \frac{n_i}{k} \) occurs when \( n_i \) is as large as po
 Thus, the answer is \(\boxed{70}\).
 ```
 
-</details>
+#### Rollout 7 — cluster -1 (incorrect)
 
-<details>
-<summary>Rollout 7 — cluster -1</summary>
+**Parsed answer:** `1763`  
+
+**Judge macro/micro:** Macro: Vague heuristic reasoning. Micro: No clear mathematical steps or logical derivation provided.
 
 ```
 Step 1:  In order to determine the maximum value of n/k for 1 ≤ i ≤ 70, we need to find the value of k for which there are 70 positive integers n such that k = floor(n^(1/3)).
@@ -3139,10 +3337,11 @@ Step 6:  Therefore, by using these relationships and values, we can find the max
 Answer: 1763
 ```
 
-</details>
+#### Rollout 8 — cluster 8 (incorrect)
 
-<details>
-<summary>Rollout 8 — cluster 8</summary>
+**Parsed answer:** `31`  
+
+**Judge macro/micro:** Macro: Algebraic inequality analysis. Micro: Count multiples of k in [k^3, (k+1)^3-1] by dividing by k.
 
 ```
 To find the maximum value of \(\frac{n_i}{k}\) for \(1 \leq i \leq 70\), we start by understanding the properties of \(n_i\) and \(k\). Given that \(k = \lfloor \sqrt[3]{n_i} \rfloor\) for all \(i\), this implies that \(k^3 \leq n_i < (k+1)^3\). Additionally, \(k\) divides \(n_i\) for all \(i\).
@@ -3160,18 +3359,19 @@ Thus, the maximum value of \(\frac{n_i}{k}\) is achieved when \(k = 4\) and \(m_
 Therefore, the maximum value of \(\frac{n_i}{k}\) is \(\boxed{31}\).
 ```
 
-</details>
-
 ### Your notes
 
-- [ ] Clustering looks reasonable
-- [ ] Disagreements (which rollouts should merge/split?):
-- [ ] Other:
+- Clustering looks reasonable
+- Disagreements (which rollouts should merge/split?):
+- Other:
+
+---
 
 ## 10. `32cdd307-ff78-40b6-a1e7-d98d7f026b2f` — none
-**Stratum:** none — none correct (0/8)  
-**Clusters:** 2 distinct clusters, 2 degenerate (-1), 0/8 correct  
-**Gold answer:** `18`
+
+- **Stratum:** none — none correct (0/8)
+- **Clusters:** 2 distinct clusters, 2 degenerate (-1), 0/8 correct
+- **Gold answer:** `18`
 
 ### Problem
 
@@ -3185,21 +3385,26 @@ What is the smallest possible number of integers in the domain of $f$?
 
 ### Rollout summary
 
-| # | Correct (v2) | Parsed answer | LLM cluster | Judge macro/micro |
-|---:|:---:|---|---:|---|
-| 1 | ✗ | `Since \( 2 \) is even, we use the rule \( f(b) =` | 1 | Macro: Iterative sequence generation. Micro: Direct application of Collatz-like rules starting from f(14)=7. |
-| 2 | ✗ | `17` | 1 | Macro: Iterative sequence generation. Micro: Direct application of Collatz-like rules starting from f(14)=7. |
-| 3 | ✗ | `15` | 1 | Macro: Iterative sequence generation. Micro: Direct application of Collatz-like rules starting from f(14)=7. |
-| 4 | ✗ | `19` | 1 | Macro: Iterative sequence generation. Micro: Direct application of Collatz-like rules starting from f(14)=7. |
-| 5 | ✗ | `So far, we have determined that the values of $f(x)$ as $` | 1 | Macro: Iterative sequence generation. Micro: Direct application of Collatz-like rules starting from f(14)=7. |
-| 6 | ✗ | `The smallest possible number of integers in the domain of f is 28.` | **deg** | Macro: Non-mathematical reasoning. Micro: Vague procedural description without actual calculation or logical derivation. |
-| 7 | ✗ | `So, 20 is in the domain of \( f \` | 1 | Macro: Iterative sequence generation. Micro: Direct application of Collatz-like rules starting from f(14)=7. |
-| 8 | ✗ | `11` | **deg** | Macro: Non-mathematical reasoning. Micro: Vague procedural description without actual calculation or logical derivation. |
 
-### Full completions (expand to read)
+| #   | OK  | Parsed answer                                                        | Cluster | Judge macro/micro                                                                                                        |
+| --- | --- | -------------------------------------------------------------------- | ------- | ------------------------------------------------------------------------------------------------------------------------ |
+| 1   | no  | `Since \( 2 \) is even, we use the rule \( f(b) =`                   | 1       | Macro: Iterative sequence generation. Micro: Direct application of Collatz-like rules starting from f(14)=7.             |
+| 2   | no  | `17`                                                                 | 1       | Macro: Iterative sequence generation. Micro: Direct application of Collatz-like rules starting from f(14)=7.             |
+| 3   | no  | `15`                                                                 | 1       | Macro: Iterative sequence generation. Micro: Direct application of Collatz-like rules starting from f(14)=7.             |
+| 4   | no  | `19`                                                                 | 1       | Macro: Iterative sequence generation. Micro: Direct application of Collatz-like rules starting from f(14)=7.             |
+| 5   | no  | `So far, we have determined that the values of $f(x)$ as $`          | 1       | Macro: Iterative sequence generation. Micro: Direct application of Collatz-like rules starting from f(14)=7.             |
+| 6   | no  | `The smallest possible number of integers in the domain of f is 28.` | deg     | Macro: Non-mathematical reasoning. Micro: Vague procedural description without actual calculation or logical derivation. |
+| 7   | no  | `So, 20 is in the domain of \( f \`                                  | 1       | Macro: Iterative sequence generation. Micro: Direct application of Collatz-like rules starting from f(14)=7.             |
+| 8   | no  | `11`                                                                 | deg     | Macro: Non-mathematical reasoning. Micro: Vague procedural description without actual calculation or logical derivation. |
 
-<details>
-<summary>Rollout 1 — cluster 1</summary>
+
+### Rollouts (full text)
+
+#### Rollout 1 — cluster 1 (incorrect)
+
+**Parsed answer:** `Since \( 2 \) is even, we use the rule \( f(b) =`  
+
+**Judge macro/micro:** Macro: Iterative sequence generation. Micro: Direct application of Collatz-like rules starting from f(14)=7.
 
 ```
 To solve this problem, we need to trace the function \( f(x) \) starting from the initial value \( f(14) = 7 \) and apply the given rules to determine the subsequent values in the domain of \( f \).
@@ -3253,10 +3458,11 @@ Now, we need to find \( f(2) \):
 Since \( 2 \) is even, we use the rule \( f(b) =
 ```
 
-</details>
+#### Rollout 2 — cluster 1 (incorrect)
 
-<details>
-<summary>Rollout 2 — cluster 1</summary>
+**Parsed answer:** `17`  
+
+**Judge macro/micro:** Macro: Iterative sequence generation. Micro: Direct application of Collatz-like rules starting from f(14)=7.
 
 ```
 We start with \( f(14) = 7 \) since 14 is even, and we apply the rule:
@@ -3298,10 +3504,11 @@ since 2 is even. We can now trace back the steps using the function values. We s
 \]
 ```
 
-</details>
+#### Rollout 3 — cluster 1 (incorrect)
 
-<details>
-<summary>Rollout 3 — cluster 1</summary>
+**Parsed answer:** `15`  
+
+**Judge macro/micro:** Macro: Iterative sequence generation. Micro: Direct application of Collatz-like rules starting from f(14)=7.
 
 ```
 Answer:
@@ -3330,10 +3537,11 @@ Therefore, the final answer is:
 \]
 ```
 
-</details>
+#### Rollout 4 — cluster 1 (incorrect)
 
-<details>
-<summary>Rollout 4 — cluster 1</summary>
+**Parsed answer:** `19`  
+
+**Judge macro/micro:** Macro: Iterative sequence generation. Micro: Direct application of Collatz-like rules starting from f(14)=7.
 
 ```
 Let's start by understanding the given conditions and the function \( f \).
@@ -3471,10 +3679,11 @@ Given the sequence and the function's behavior, the smallest possible number of 
 \]
 ```
 
-</details>
+#### Rollout 5 — cluster 1 (incorrect)
 
-<details>
-<summary>Rollout 5 — cluster 1</summary>
+**Parsed answer:** `So far, we have determined that the values of $f(x)$ as $`  
+
+**Judge macro/micro:** Macro: Iterative sequence generation. Micro: Direct application of Collatz-like rules starting from f(14)=7.
 
 ```
 Let's start by calculating the function values step-by-step, beginning with $f(14)$. We know from the problem statement that $f(14) = 7$.
@@ -3572,10 +3781,11 @@ f(4) = \frac{4}{2} = 2.
 So far, we have determined that the values of $f(x)$ as $
 ```
 
-</details>
+#### Rollout 6 — cluster -1 (incorrect)
 
-<details>
-<summary>Rollout 6 — cluster -1</summary>
+**Parsed answer:** `The smallest possible number of integers in the domain of f is 28.`  
+
+**Judge macro/micro:** Macro: Non-mathematical reasoning. Micro: Vague procedural description without actual calculation or logical derivation.
 
 ```
 Step 1:  The question asks us to find the smallest possible number of integers in the domain of a function f.
@@ -3588,10 +3798,11 @@ Step 7:  Finally, we would need to compare the computed answer with the options 
 Answer: The smallest possible number of integers in the domain of f is 28.
 ```
 
-</details>
+#### Rollout 7 — cluster 1 (incorrect)
 
-<details>
-<summary>Rollout 7 — cluster 1</summary>
+**Parsed answer:** `So, 20 is in the domain of \( f \`  
+
+**Judge macro/micro:** Macro: Iterative sequence generation. Micro: Direct application of Collatz-like rules starting from f(14)=7.
 
 ```
 Let's solve this step by step. We are given the function \( f \) with the initial condition \( f(14) = 7 \). We need to find the smallest possible number of integers in the domain of \( f \).
@@ -3672,15 +3883,18 @@ Thus, we can conclude that \( f(7) = 22 \) is the only possible value for \( f(7
 
     So, 40 is in the domain of \( f \) because we know \( f(40) \).
 
-### Next
+### Next Step
+11. Next, we need to determine \( f(20) \):
+    - \( f(20) = 20 / 2 = 10 \) (if 20 is even)
 
-… [truncated]
+    So, 20 is in the domain of \( f \
 ```
 
-</details>
+#### Rollout 8 — cluster -1 (incorrect)
 
-<details>
-<summary>Rollout 8 — cluster -1</summary>
+**Parsed answer:** `11`  
+
+**Judge macro/micro:** Macro: Non-mathematical reasoning. Micro: Vague procedural description without actual calculation or logical derivation.
 
 ```
 Step 1:  To find the smallest possible number of integers in the domain of $f$, we need to consider the possible values of $f(x)$ for different integer values of $x$.
@@ -3697,18 +3911,17 @@ Step 10:  By considering the sequence and the conditions given, we can find the 
 Answer: 11
 ```
 
-</details>
-
 ### Your notes
 
-- [ ] Clustering looks reasonable
-- [ ] Disagreements (which rollouts should merge/split?):
-- [ ] Other:
+- Clustering looks reasonable
+- Disagreements (which rollouts should merge/split?):
+- Other:
 
 ---
 
 ## Overall sign-off
 
-- [ ] Reviewed all 10 prompts
-- [ ] Comfortable using `llm_clusters_summary.parquet` for Analysis B
-- [ ] Blockers / follow-ups:
+- Reviewed all 10 prompts
+- Comfortable using `llm_clusters_summary.parquet` for Analysis B
+- Blockers / follow-ups:
+

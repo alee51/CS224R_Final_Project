@@ -1,0 +1,33 @@
+[load] predictions + llm clusters...
+[load] merged shape=(4000, 15), missing llm_cluster_id=0
+[features] computing 8-bool tag tuples...
+[embed] computing/loading...
+[embed] loading MiniLM model...
+Loading weights:   0%|          | 0/103 [00:00<?, ?it/s]Loading weights: 100%|██████████| 103/103 [00:00<00:00, 24407.53it/s]
+[embed] encoding 4000 completions on CPU...
+Batches:   0%|          | 0/63 [00:00<?, ?it/s]Batches:   2%|▏         | 1/63 [00:01<01:23,  1.34s/it]Batches:   3%|▎         | 2/63 [00:01<00:42,  1.43it/s]Batches:   5%|▍         | 3/63 [00:01<00:30,  1.95it/s]Batches:   6%|▋         | 4/63 [00:02<00:24,  2.44it/s]Batches:   8%|▊         | 5/63 [00:02<00:20,  2.85it/s]Batches:  10%|▉         | 6/63 [00:02<00:17,  3.18it/s]Batches:  11%|█         | 7/63 [00:02<00:16,  3.41it/s]Batches:  13%|█▎        | 8/63 [00:03<00:15,  3.59it/s]Batches:  14%|█▍        | 9/63 [00:03<00:14,  3.72it/s]Batches:  16%|█▌        | 10/63 [00:03<00:13,  3.83it/s]Batches:  17%|█▋        | 11/63 [00:03<00:13,  3.91it/s]Batches:  19%|█▉        | 12/63 [00:04<00:12,  3.98it/s]Batches:  21%|██        | 13/63 [00:04<00:12,  4.02it/s]Batches:  22%|██▏       | 14/63 [00:04<00:12,  4.04it/s]Batches:  24%|██▍       | 15/63 [00:04<00:11,  4.07it/s]Batches:  25%|██▌       | 16/63 [00:05<00:11,  4.02it/s]Batches:  27%|██▋       | 17/63 [00:05<00:11,  3.91it/s]Batches:  29%|██▊       | 18/63 [00:05<00:11,  3.90it/s]Batches:  30%|███       | 19/63 [00:05<00:11,  3.97it/s]Batches:  32%|███▏      | 20/63 [00:06<00:10,  4.01it/s]Batches:  33%|███▎      | 21/63 [00:06<00:10,  4.03it/s]Batches:  35%|███▍      | 22/63 [00:06<00:10,  4.06it/s]Batches:  37%|███▋      | 23/63 [00:06<00:09,  4.06it/s]Batches:  38%|███▊      | 24/63 [00:07<00:10,  3.63it/s]Batches:  40%|███▉      | 25/63 [00:07<00:10,  3.49it/s]Batches:  41%|████▏     | 26/63 [00:07<00:10,  3.63it/s]Batches:  43%|████▎     | 27/63 [00:07<00:09,  3.76it/s]Batches:  44%|████▍     | 28/63 [00:08<00:09,  3.84it/s]Batches:  46%|████▌     | 29/63 [00:08<00:09,  3.75it/s]Batches:  48%|████▊     | 30/63 [00:08<00:09,  3.66it/s]Batches:  49%|████▉     | 31/63 [00:09<00:09,  3.39it/s]Batches:  51%|█████     | 32/63 [00:09<00:08,  3.55it/s]Batches:  52%|█████▏    | 33/63 [00:09<00:08,  3.70it/s]Batches:  54%|█████▍    | 34/63 [00:09<00:07,  3.83it/s]Batches:  56%|█████▌    | 35/63 [00:10<00:07,  3.92it/s]Batches:  57%|█████▋    | 36/63 [00:10<00:06,  3.98it/s]Batches:  59%|█████▊    | 37/63 [00:10<00:06,  3.87it/s]Batches:  60%|██████    | 38/63 [00:10<00:06,  3.83it/s]Batches:  62%|██████▏   | 39/63 [00:11<00:06,  3.54it/s]Batches:  63%|██████▎   | 40/63 [00:11<00:06,  3.67it/s]Batches:  65%|██████▌   | 41/63 [00:11<00:05,  3.80it/s]Batches:  67%|██████▋   | 42/63 [00:11<00:05,  3.89it/s]Batches:  68%|██████▊   | 43/63 [00:12<00:05,  3.97it/s]Batches:  70%|██████▉   | 44/63 [00:12<00:04,  4.02it/s]Batches:  71%|███████▏  | 45/63 [00:12<00:04,  4.05it/s]Batches:  73%|███████▎  | 46/63 [00:13<00:05,  2.94it/s]Batches:  75%|███████▍  | 47/63 [00:13<00:04,  3.22it/s]Batches:  76%|███████▌  | 48/63 [00:13<00:04,  3.45it/s]Batches:  78%|███████▊  | 49/63 [00:13<00:03,  3.63it/s]Batches:  79%|███████▉  | 50/63 [00:14<00:03,  3.76it/s]Batches:  81%|████████  | 51/63 [00:14<00:03,  3.84it/s]Batches:  83%|████████▎ | 52/63 [00:14<00:02,  3.91it/s]Batches:  84%|████████▍ | 53/63 [00:14<00:02,  3.79it/s]Batches:  86%|████████▌ | 54/63 [00:15<00:02,  3.88it/s]Batches:  87%|████████▋ | 55/63 [00:15<00:02,  3.94it/s]Batches:  89%|████████▉ | 56/63 [00:15<00:01,  3.99it/s]Batches:  90%|█████████ | 57/63 [00:15<00:01,  4.02it/s]Batches:  92%|█████████▏| 58/63 [00:16<00:01,  4.03it/s]Batches:  94%|█████████▎| 59/63 [00:16<00:01,  3.98it/s]Batches:  95%|█████████▌| 60/63 [00:16<00:00,  4.01it/s]Batches:  97%|█████████▋| 61/63 [00:16<00:00,  4.03it/s]Batches:  98%|█████████▊| 62/63 [00:17<00:00,  3.63it/s]Batches: 100%|██████████| 63/63 [00:17<00:00,  3.62it/s]
+[embed] cached to /Users/nancybao/Desktop/dev/cs224r_finalproject/nancy_explore/run0_analysis/embeddings_minilm.npy
+[embed] clustering at threshold=0.2...
+[embed] clustering at threshold=0.3...
+[embed] clustering at threshold=0.4...
+[embed] clustering at threshold=0.5...
+[metrics] per-prompt loop over 500 prompts...
+[out] wrote /Users/nancybao/Desktop/dev/cs224r_finalproject/nancy_explore/run0_analysis/substrate_results.parquet (500 rows)
+               substrate  ari_mean   ari_lo   ari_hi  vm_mean    vm_lo    vm_hi  dn_mean  minority_rate  minority_n_elig  concordance_accuracy  tp  fp  fn  tn
+           answer_strict  0.188113 0.159242 0.217884 0.813875 0.799024 0.828179    2.144       0.018182              165                 0.930   2   1  34 463
+            answer_loose  0.172746 0.143876 0.205887 0.798267 0.782411 0.812636    1.950       0.000000              165                 0.928   0   0  36 464
+completion_embedding@0.2  0.074225 0.055567 0.093733 0.464974 0.440223 0.489623    2.588       0.224242              165                 0.946  23  14  13 450
+completion_embedding@0.3  0.036431 0.022528 0.052311 0.201413 0.180268 0.224534    3.604       0.048485              165                 0.940   7   1  29 463
+completion_embedding@0.4  0.023484 0.012153 0.036553 0.094426 0.078465 0.111996    4.004       0.024242              165                 0.932   3   1  33 463
+completion_embedding@0.5  0.018309 0.007021 0.030852 0.059081 0.044742 0.074190    4.120       0.018182              165                 0.934   3   0  33 464
+     completion_features  0.110092 0.089524 0.130997 0.653249 0.637688 0.667725    1.784       0.363636              165                 0.928  30  30   6 434
+[ref] LLM minority rate = 0.2182, n_elig=165
+[out] wrote /Users/nancybao/Desktop/dev/cs224r_finalproject/nancy_explore/run0_analysis/substrate_comparison.md
+[out] wrote /Users/nancybao/Desktop/dev/cs224r_finalproject/nancy_explore/run0_analysis/analysis_b_minority_rate.png
+[vignettes] selecting top-5 ARI-gap prompts per substrate...
+[out] wrote /Users/nancybao/Desktop/dev/cs224r_finalproject/nancy_explore/run0_analysis/substrate_disagreement_vignettes.md (17 prompts)
+
+=== SUMMARY ===
+LLM minority rate (headline ref) = 21.82%
+Best substrate by ARI: answer_strict (ARI=0.188)
+Best embedding threshold: 0.2 (ARI=0.074)
