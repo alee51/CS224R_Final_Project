@@ -79,27 +79,27 @@ The output of this analysis is the **reference** that Analysis B's cheap substra
 
 ### A.6 Cost and time estimate
 - Per call: ~5800 input tokens (problem + 8 completions + instructions) + ~800 output tokens.
-- Sonnet 4.6 at $3/MTok input, $15/MTok output: ~$15 total for 500 prompts.
-- Haiku 4.5 validation on 50 prompts: ~$0.50.
+- **Haiku 4.5** at $1/MTok input, $5/MTok output: ~**$5** total for all 500 prompts (input ~$3 + output ~$2).
+- Optional Sonnet 4.6 cross-check on 50 prompts: ~$1.50.
 - Wall time: ~30-60 minutes with modest concurrency (10 in-flight calls).
-- Use prompt caching on the system prompt + instruction block (these don't change across prompts) — should cut input cost meaningfully.
+- Use prompt caching on the system prompt + instruction block (these don't change across prompts) — should cut input cost further.
 
 ### A.7 Quality checks (mandatory before using these clusters downstream)
 1. **Hand-read 10 prompts.** Pick: 3 prompts with all-correct rollouts, 3 with mixed correctness, 4 with no-correct rollouts. For each, read the 8 completions and the LLM's cluster assignments. Does the clustering match what a human would do? Document disagreements in `llm_clusters_handcheck.md`.
-2. **Cross-model agreement (50-prompt subsample).** Run Haiku 4.5 on a random 50 prompts. Compute Adjusted Rand Index (ARI) between Sonnet and Haiku clusterings per prompt; report mean and distribution.
+2. **Optional: cross-model sanity probe (50-prompt subsample).** Run Sonnet 4.6 on a random 50 prompts already labeled by Haiku 4.5. Compute Adjusted Rand Index (ARI) between Haiku and Sonnet clusterings per prompt; report mean and distribution. Skip if time-constrained — it's a nice-to-have robustness number, not a blocker.
 3. **Degenerate-cluster rate sanity.** What fraction of rollouts land in `cluster_id: -1`? Cross-check against the qual analysis's tagged garbage rate (~28% sympy derailment + ~25% repetition + ~9% long parse). If LLM's degenerate rate is wildly different, the prompt needs tuning.
 
 ### A.8 Outputs
 - `llm_clusters/{prompt_id}.json` × 500 (raw model output, cached).
 - `llm_clusters_summary.parquet` — per-rollout LLM cluster assignment.
 - `llm_clusters_handcheck.md` — 10-prompt hand audit.
-- `llm_judge_cross_model.md` — Sonnet vs Haiku ARI on 50-prompt subsample.
+- `llm_judge_cross_model.md` — Haiku vs Sonnet ARI on 50-prompt subsample (if cross-check run).
 - **The headline number:** `minority_correct_prompt_rate_llm` — under LLM clusters, fraction of prompts with ≥1 correct rollout that have correct rollouts spanning ≥2 LLM-clusters with at least one not the largest. Bootstrap 95% CI.
 
 ### A.9 Can claim
 - "Under LLM-based reasoning clustering on Run 0's base-model rollouts, minority-correct prompts exist at rate X% (CI […, …]). This is the substrate-controlled value for the gate metric."
-- If Sonnet↔Haiku ARI is high: "Even a cheap LM judge produces clusterings consistent with a stronger one — the LM judge in Poly-EPO need not be expensive."
-- If Sonnet↔Haiku ARI is low: "LM-judge clusterings are model-dependent on this data; the substrate is less determinate than the Poly-EPO paper implies."
+- If Haiku↔Sonnet ARI is high (cross-check run): "LM-judge clusterings are robust to model tier on this data — the cheap-tier judge tested here is not a quality compromise vs a stronger model."
+- If Haiku↔Sonnet ARI is low (cross-check run): "LM-judge clusterings are model-dependent on this data; reported numbers are conditional on judge choice, and Poly-EPO's reproducibility depends on judge availability."
 
 ### A.10 Cannot claim
 - That LLM clusters are "correct." They are a reference, not ground truth in the philosophical sense. A human-labeled subsample (the 10 hand-checked prompts) is the only thing closer to ground truth, and it's tiny.
@@ -224,7 +224,7 @@ A small markdown table with v1 (original parser) vs v2 (fixed parser) side-by-si
 ## Execution order if time-constrained before office hours (2026-05-21 PM)
 
 1. **Prerequisite 0** — parser-fix re-score. ~1 hour. Blocking for everything else.
-2. **Analysis A** — LLM clustering on all 500 prompts via Sonnet 4.6, plus Haiku 4.5 validation on 50 prompts. ~1-1.5 hours wall time (API-bound, mostly waiting). ~$15-20.
+2. **Analysis A** — LLM clustering on all 500 prompts via Haiku 4.5 (the Gemini-Flash tier analog Ifdita used). Optional Sonnet 4.6 cross-check on 50 prompts. ~1-1.5 hours wall time (API-bound, mostly waiting). ~$5 primary, +$1.50 if cross-check.
 3. **Analysis A quality checks** — hand-read 10 prompts. ~45 min. Do not skip — this is what makes the LLM clusters defensible as a reference.
 4. **Analysis B** — substrate comparison. ~1.5 hours including the disagreement vignettes.
 5. **Analysis C** — objective simulation. ~1.5 hours.

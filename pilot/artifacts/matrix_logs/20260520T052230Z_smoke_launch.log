@@ -1,0 +1,33 @@
+Note that running a local entrypoint in detached mode only keeps the last triggered Modal function alive after the parent process has been killed or disconnected.
+✓ Initialized. View run at 
+https://modal.com/apps/chicken602/main/ap-iIrnuoeadkdLlNVQmonbmj
+✓ Created objects.
+├── 🔨 Created mount 
+│   /Users/nancybao/Desktop/dev/cs224r_finalproject/pilot/infra/modal_app.py
+├── 🔨 Created mount /Users/nancybao/Desktop/dev/cs224r_finalproject/pilot
+└── 🔨 Created function PilotRunner.*.
+Spawning smoke on Modal A100 (detached spawn — survives laptop off)...
+  local artifact dir: 
+/Users/nancybao/Desktop/dev/cs224r_finalproject/pilot/artifacts/smoke/20260520T0
+52234Z
+  artifacts volume: pilot-artifacts
+  hf cache volume: hf-cache
+  NOTE: use `./pilot/scripts/modal_run_pilot.sh` (adds --detach) so the app 
+stays up after this process exits.
+Spawned function call id: fc-01KS1XBVK3W138C3Q2RGKWZMWR
+Monitor: `modal app list` and `modal app logs <app-id>` (dashboard URL above).
+After completion, pull artifacts:
+  python pilot/scripts/pull_run_artifacts.py --run-id smoke --local-dir 
+/Users/nancybao/Desktop/dev/cs224r_finalproject/pilot/artifacts/smoke/20260520T0
+52234Z
+2026-05-20 05:22:43,291 INFO debug_max_prompts=32
+2026-05-20 05:22:43,292 INFO GRPO smoke objective=grpo steps=25 batch=32 N=8 model=Qwen/Qwen3-1.7B-Base seed=42 train_data_sha256=9bebe9962bbe20d4
+2026-05-20 05:22:43,425 INFO HTTP Request: HEAD https://huggingface.co/Qwen/Qwen3-1.7B-Base/resolve/main/config.json "HTTP/1.1 307 Temporary Redirect"
+2026-05-20 05:22:43,442 INFO HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/Qwen/Qwen3-1.7B-Base/ea980cb0a6c2ae4b936e82123acc929f1cec04c1/config.json "HTTP/1.1 200 OK"
+2026-05-20 05:22:43,572 INFO HTTP Request: HEAD https://huggingface.co/Qwen/Qwen3-1.7B-Base/resolve/main/tokenizer_config.json "HTTP/1.1 307 Temporary Redirect"
+2026-05-20 05:22:43,592 INFO HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/Qwen/Qwen3-1.7B-Base/ea980cb0a6c2ae4b936e82123acc929f1cec04c1/tokenizer_config.json "HTTP/1.1 200 OK"
+2026-05-20 05:22:43,718 INFO HTTP Request: GET https://huggingface.co/api/models/Qwen/Qwen3-1.7B-Base/tree/main/additional_chat_templates?recursive=false&expand=false "HTTP/1.1 404 Not Found"
+2026-05-20 05:22:43,824 INFO HTTP Request: GET https://huggingface.co/api/models/Qwen/Qwen3-1.7B-Base/tree/main?recursive=true&expand=false "HTTP/1.1 200 OK"
+[modal-client] 2026-05-19T22:22:44-0700 Timed out waiting for final app logs.
+✓ App completed. View run at 
+https://modal.com/apps/chicken602/main/ap-iIrnuoeadkdLlNVQmonbmj

@@ -1,0 +1,9 @@
+# §6 smoke gate — GRPO only, 3 steps, ≤$10 cap (see PILOT_REDESIGN.md).
+run_id: smoke
+objective: grpo
+inherits: shared_train.yaml
+seed: 42
+max_steps: 3
+budget_cap_usd: 10
+debug_max_prompts: 32
+max_new_tokens: 1536

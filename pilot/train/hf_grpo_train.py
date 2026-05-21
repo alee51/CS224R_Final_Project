@@ -982,12 +982,15 @@ def run_grpo_training(
     shared = yaml.safe_load(shared_path.read_text())
 
     seed = int(config.get("seed", shared.get("seed", 42)))
-    max_steps = int(shared.get("max_steps", 100))
+    max_steps = int(config.get("max_steps", shared.get("max_steps", 25)))
     n_rollouts = int(config.get("rollouts_per_prompt", shared.get("rollouts_per_prompt", 8)))
     batch_prompts = int(config.get("batch_prompts", shared.get("batch_prompts", 32)))
     lr = float(shared.get("learning_rate", 1e-6))
     model_id = str(shared["model_id"])
-    max_new_tokens = int(config.get("max_new_tokens", shared.get("max_new_tokens", 2048)))
+    max_new_tokens = min(
+        int(config.get("max_new_tokens", shared.get("max_new_tokens", 1536))),
+        1536,
+    )
     temperature = float(shared.get("temperature", 1.0))
     top_p = float(shared.get("top_p", 0.95))
     rollout_micro_batch_size = int(
@@ -1062,14 +1065,14 @@ def run_grpo_training(
         logger.info("resuming from step %s (loading weights from %s)", resume_state["step"] + 1, ckpt_weights)
         policy = AutoModelForCausalLM.from_pretrained(
             str(ckpt_weights),
-            dtype=dtype,
+            torch_dtype=dtype,
             trust_remote_code=True,
             attn_implementation="flash_attention_2",
         ).to(device)
     else:
         policy = AutoModelForCausalLM.from_pretrained(
             model_id,
-            dtype=dtype,
+            torch_dtype=dtype,
             trust_remote_code=True,
             attn_implementation="flash_attention_2",
         ).to(device)
@@ -1439,7 +1442,7 @@ def run_grpo_training(
                 max_new_tokens=max_new_tokens,
                 temperature=temperature,
                 top_p=top_p,
-                dtype=dtype,
+                torch_dtype=dtype,
                 micro_batch_size=rollout_micro_batch_size,
                 allow_seeded_prompt_batching=allow_seeded_prompt_batching,
             ),
@@ -1547,7 +1550,7 @@ def validate_seeded_prompt_batching_parity(
         tokenizer.pad_token = tokenizer.eos_token
     policy = AutoModelForCausalLM.from_pretrained(
         model_id,
-        dtype=dtype,
+        torch_dtype=dtype,
         trust_remote_code=True,
         attn_implementation="flash_attention_2",
     ).to(device)

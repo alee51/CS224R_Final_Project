@@ -53,11 +53,13 @@ def _format_resolved_config(config: dict[str, Any]) -> str:
 
 
 def _run_on_modal(config: dict[str, Any], repo_root: Path) -> Path:
-    from pilot.infra.modal_app import app, run_pilot_remote
+    from pilot.infra.modal_app import PilotRunner, app
 
-    with app.run():
-        out_str = run_pilot_remote.remote(json.dumps(config))
-    return Path(out_str)
+    with app.run(detach=True):
+        out = PilotRunner().run_pilot_remote.spawn(json.dumps(config)).get()
+    if isinstance(out, dict):
+        return Path(out["artifact_dir"])
+    return Path(out)
 
 
 def launch_run(
@@ -89,10 +91,10 @@ def launch_run(
         print("--- budget guard (simulated) ---")
         print(json.dumps(sim, indent=2))
         print(f"artifact_dir: {artifact_dir(run_id, artifacts_root=artifacts_root)}")
-        print("\nTo run on Modal GPU (detached, survives laptop off):")
-        print(f"  modal run --detach pilot/infra/modal_app.py --run-id {run_id}")
+        print("\nTo run on Modal GPU (detached by default; survives laptop off):")
+        print(f"  ./pilot/scripts/modal_run_pilot.sh --run-id {run_id}")
         print("\nInteractive (blocks + auto-pull; laptop must stay on):")
-        print(f"  modal run pilot/infra/modal_app.py --run-id {run_id} --wait")
+        print(f"  ./pilot/scripts/modal_run_pilot.sh --run-id {run_id} --wait")
         return artifact_dir(run_id, artifacts_root=artifacts_root)
 
     out = bootstrap_run_artifacts(

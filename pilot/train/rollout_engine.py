@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 
 PROMPT_TEMPLATE = (
     "Solve the following math problem. Reason step by step, "
-    "and put your final answer within \\boxed{}.\n\n"
+    "and put your final answer within \\boxed{{}}.\n\n"
     "{problem}\n\n"
 )
 
@@ -299,7 +299,7 @@ class HFRolloutEngine:
         self.tokenizer.padding_side = "left"
         self.model = AutoModelForCausalLM.from_pretrained(
             model_source,
-            dtype=dtype,
+            torch_dtype=dtype,
             trust_remote_code=True,
         )
         self.model.to(self.device)

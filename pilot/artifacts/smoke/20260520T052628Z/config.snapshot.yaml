@@ -1,10 +1,9 @@
-# Frozen across Run1 / Run1b / Run2 / Run3 — objective field only may differ.
-model_id: "Qwen/Qwen3-1.7B-Base"
-train_data: "pilot/data/dapo_slice_3k.jsonl"
-max_steps: 25
+model_id: Qwen/Qwen3-1.7B-Base
+train_data: pilot/data/dapo_slice_3k.jsonl
+max_steps: 3
 rollouts_per_prompt: 8
 batch_prompts: 32
-learning_rate: 1.0e-6
+learning_rate: 1.0e-06
 kl_coef: 0.0
 clip_ratio_low: 0.2
 clip_ratio_high: 0.28
@@ -13,11 +12,11 @@ allow_seeded_prompt_batching: true
 completion_logprob_micro_batch_size: 32
 temperature: 1.0
 top_p: 0.95
-verifier: "binary_rlvr"
-clustering: "exact_canonical"
-advantage_norm: "per_prompt_grpo"
+verifier: binary_rlvr
+clustering: exact_canonical
+advantage_norm: per_prompt_grpo
 seed: 42
-gpu: "A100-80GB"
+gpu: A100-80GB
 modal_price_per_sec: 0.000694
 checkpoint:
   min_interval_seconds: 1800
@@ -25,8 +24,11 @@ checkpoint:
   always_save_first_step: true
   always_save_last_step: true
   retention_keep_last: 2
-budget_cap_usd: 50.0
+budget_cap_usd: 10
 heartbeat:
   seconds: 60
   completions: 32
 mechanism_tripwire_enabled: true
+run_id: smoke
+objective: grpo
+debug_max_prompts: 32

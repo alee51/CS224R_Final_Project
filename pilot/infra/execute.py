@@ -29,7 +29,7 @@ from pilot.train.run_proxy import (
 logger = logging.getLogger(__name__)
 
 TRAINING_RUN_IDS = frozenset(
-    {"run1_grpo", "run1b_grpo", "run2_inverse_freq", "run3_f_grpo"}
+    {"smoke", "run1_grpo", "run1b_grpo", "run2_inverse_freq", "run3_f_grpo"}
 )
 
 
@@ -268,18 +268,24 @@ def run_training_with_eval(
     )
     logger.info("training finished: %s", out_dir)
 
-    engine = _engine_for_eval(config, out_dir)
-    eval_paths = _tier1_eval_paths(repo_root)
-    logger.info("starting tier-1 eval on %s", list(eval_paths.keys()))
-    run_tier1_eval(
-        engine,
-        eval_paths,
-        run_id=run_id,
-        out_dir=out_dir,
-        seed=seed,
-        n_rollouts=n_rollouts,
-        debug_max_prompts=max_prompts,
-    )
+    if run_id == "smoke":
+        logger.info(
+            "smoke run: skipping tier-1 eval (§6 gate is training-only; "
+            "run B6 eval separately with debug_max_prompts=4 if needed)"
+        )
+    else:
+        engine = _engine_for_eval(config, out_dir)
+        eval_paths = _tier1_eval_paths(repo_root)
+        logger.info("starting tier-1 eval on %s", list(eval_paths.keys()))
+        run_tier1_eval(
+            engine,
+            eval_paths,
+            run_id=run_id,
+            out_dir=out_dir,
+            seed=seed,
+            n_rollouts=n_rollouts,
+            debug_max_prompts=max_prompts,
+        )
 
     gpu_seconds = time.time() - t0
     record_cost(

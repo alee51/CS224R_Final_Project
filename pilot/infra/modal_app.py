@@ -4,12 +4,12 @@ Modal GPU entrypoint for pilot runs.
 From repo root (with venv active):
   source .venv/bin/activate
 
-Production (survives laptop disconnect — requires ``--detach`` + spawn default):
-  modal run --detach pilot/infra/modal_app.py --run-id run0_proxy
-  modal run --detach pilot/infra/modal_app.py --run-id run0_proxy --debug-max-prompts 5
+Production (detached by default — survives laptop disconnect):
+  ./pilot/scripts/modal_run_pilot.sh --run-id run0_proxy
+  ./pilot/scripts/modal_run_pilot.sh --run-id smoke
 
 Interactive (blocks until done, auto-pulls artifacts; laptop must stay on):
-  modal run pilot/infra/modal_app.py --run-id run0_proxy --wait
+  ./pilot/scripts/modal_run_pilot.sh --run-id run0_proxy --wait
 
 Overnight matrix (one detached spawn per run — use ``launch_pilot_matrix.sh``):
   ./pilot/scripts/launch_pilot_matrix.sh
@@ -53,6 +53,15 @@ app = modal.App("cs224r-pilot")
 artifacts_volume = modal.Volume.from_name(ARTIFACTS_VOLUME_NAME, create_if_missing=True)
 hf_cache_volume = modal.Volume.from_name(HF_CACHE_VOLUME_NAME, create_if_missing=True)
 
+# flash-attn must be a prebuilt wheel matching Python/CUDA/torch — sdist pip install fails on
+# Modal image builders (metadata-generation-failed). See modal.com/docs/examples/install_flash_attn
+_TORCH_VERSION = "2.5.1"
+_TORCH_CUDA_INDEX = "https://download.pytorch.org/whl/cu124"
+_FLASH_ATTN_WHEEL = (
+    "https://github.com/Dao-AILab/flash-attention/releases/download/v2.7.4.post1/"
+    "flash_attn-2.7.4.post1+cu12torch2.5cxx11abiFALSE-cp311-cp311-linux_x86_64.whl"
+)
+
 image = (
     modal.Image.debian_slim(python_version="3.11")
     .env(
@@ -62,16 +71,19 @@ image = (
         }
     )
     .pip_install(
-        "torch>=2.2",
-        "transformers>=4.51",
+        f"torch=={_TORCH_VERSION}",
+        extra_index_url=_TORCH_CUDA_INDEX,
+    )
+    .pip_install(
+        "transformers>=4.51,<4.55",
         "accelerate>=0.30",
         "sentencepiece",
         "safetensors",
         "pyyaml>=6.0",
         "huggingface_hub>=0.23",
         "wandb",
+        _FLASH_ATTN_WHEEL,
     )
-    .pip_install("flash-attn==2.6.3", extra_options="--no-build-isolation")
     # Exclude artifacts/ — mounted separately via pilot-artifacts Volume.
     .add_local_dir(
         str(_LOCAL_PILOT_DIR),
@@ -262,8 +274,8 @@ def _spawn_only_one(
     print(f"  artifacts volume: {ARTIFACTS_VOLUME_NAME}")
     print(f"  hf cache volume: {HF_CACHE_VOLUME_NAME}")
     print(
-        "  NOTE: launch with `modal run --detach ...` so the ephemeral app stays up "
-        "after this process exits."
+        "  NOTE: use `./pilot/scripts/modal_run_pilot.sh` (adds --detach) so the app "
+        "stays up after this process exits."
     )
     function_call = PilotRunner().run_pilot_remote.spawn(json.dumps(config))
     call_id = str(getattr(function_call, "object_id", "unknown"))

@@ -35,7 +35,7 @@
     "math500_full_hf": "HuggingFaceH4/MATH-500"
   },
   "metrics_frozen": {
-    "pass_at_k": 8,
+    "pass_at_k": 16,
     "cover_tau": 0.15,
     "worst_subset_quantile": 0.25,
     "bootstrap_samples": 2000,
@@ -55,11 +55,12 @@
     ]
   },
   "budget_caps_usd": {
-    "run0_proxy": 24,
-    "run1_grpo": 36,
-    "run1b_grpo": 36,
-    "run2_inverse_freq": 36,
-    "run3_f_grpo": 36,
-    "pilot_total": 405
+    "smoke": 10,
+    "run0_proxy": 50,
+    "run1_grpo": 50,
+    "run1b_grpo": 50,
+    "run2_inverse_freq": 50,
+    "run3_f_grpo": 50,
+    "pilot_total": 200
   }
 }

@@ -16,6 +16,7 @@ RUN_CONFIG_FILES: dict[str, str] = {
     "run1b_grpo": "run1b_grpo.yaml",
     "run2_inverse_freq": "run2_inverse_freq.yaml",
     "run3_f_grpo": "run3_f_grpo.yaml",
+    "smoke": "smoke.yaml",
 }
 
 

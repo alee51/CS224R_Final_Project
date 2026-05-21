@@ -1,27 +1,32 @@
 #!/usr/bin/env bash
-# Launch Run1–Run3 overnight matrix on Modal (independent jobs, parallel by default).
+# Stage-1 pilot matrix — three detached Modal jobs (PILOT_REDESIGN.md §3).
 #
-# Run0 (run0_proxy) is separate — proxy rollouts only, not part of this matrix.
+# Runs: run1_grpo + run2_inverse_freq + run3_f_grpo (GRPO matrix only).
+# Run 0 waived — use pre-redesign artifacts (see pilot/docs/decisions/20260519_skip_run0_stage1_redesign.md).
+# All use seed 42 in configs; single seed, parallel by default.
 #
 # Usage (from repo root):
-#   ./pilot/scripts/launch_pilot_matrix.sh              # parallel (4 Modal jobs)
-#   ./pilot/scripts/launch_pilot_matrix.sh --sequential   # one process, --run-ids list
-#   ./pilot/scripts/launch_pilot_matrix.sh --dry-run      # print caps + commands only
+#   ./pilot/scripts/launch_pilot_matrix.sh
+#   ./pilot/scripts/launch_pilot_matrix.sh --sequential
+#   ./pilot/scripts/launch_pilot_matrix.sh --dry-run
+#
+# Launches via ./pilot/scripts/modal_run_pilot.sh (--detach by default).
 
 set -euo pipefail
 
-MATRIX_RUNS=(run1_grpo run1b_grpo run2_inverse_freq run3_f_grpo)
+MATRIX_RUNS=(run1_grpo run2_inverse_freq run3_f_grpo)
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 LOCK="${REPO_ROOT}/pilot/preflight_lock.json"
 LOG_DIR="${REPO_ROOT}/pilot/artifacts/matrix_logs"
+MODAL_RUN="${REPO_ROOT}/pilot/scripts/modal_run_pilot.sh"
 MODE="parallel"
 DRY_RUN=0
 
 usage() {
-  sed -n '2,12p' "$0" | sed 's/^# \{0,1\}//'
+  sed -n '2,14p' "$0" | sed 's/^# \{0,1\}//'
   echo ""
   echo "Options:"
-  echo "  --sequential   Single modal process: --run-ids run1_grpo,..."
+  echo "  --sequential   Spawn one run after another (still detached)"
   echo "  --dry-run      Print budget caps and commands; do not launch"
   echo "  -h, --help     Show this help"
 }
@@ -37,6 +42,10 @@ while [[ $# -gt 0 ]]; do
 done
 
 cd "$REPO_ROOT"
+
+if [[ ! -x "$MODAL_RUN" ]]; then
+  chmod +x "$MODAL_RUN"
+fi
 
 if [[ -z "${VIRTUAL_ENV:-}" ]]; then
   if [[ -f "${REPO_ROOT}/.venv/bin/activate" ]]; then
@@ -59,10 +68,10 @@ if [[ ! -f "$LOCK" ]]; then
   exit 1
 fi
 
-echo "=== Pilot overnight matrix (Run1–Run3) ==="
+echo "=== Pilot Stage-1 matrix (3 runs) ==="
 echo "Repo: $REPO_ROOT"
 echo "Mode: $MODE"
-echo "Note: run0_proxy is NOT included (launch separately for proxy rollouts)."
+echo "Launcher: $MODAL_RUN (detach default; --wait opt-in on wrapper only)"
 echo ""
 echo "Budget caps (from preflight_lock.json):"
 python3 - "$LOCK" "${MATRIX_RUNS[@]}" <<'PY'
@@ -83,24 +92,21 @@ for rid in run_ids:
 print(f"  matrix subtotal (these {len(run_ids)} runs): ${matrix_sum:.0f}")
 if pilot_total is not None:
     print(f"  pilot_total ceiling: ${float(pilot_total):.0f}")
+    if matrix_sum > float(pilot_total):
+        print(f"  WARNING: matrix subtotal exceeds pilot_total by ${matrix_sum - float(pilot_total):.0f}")
 PY
 echo ""
-echo "Runs are independent (different objectives/seeds) and may run in parallel."
+echo "Runs are independent (objectives differ); parallel spawn is default."
+echo "Monitor: modal app list  |  logs: modal app logs <app-id>"
 echo ""
-
-MODAL_LAUNCH=(modal run --detach pilot/infra/modal_app.py)
 
 if [[ "$DRY_RUN" -eq 1 ]]; then
   echo "DRY RUN — commands that would run:"
+  for rid in "${MATRIX_RUNS[@]}"; do
+    echo "  $MODAL_RUN --run-id $rid"
+  done
   if [[ "$MODE" == "parallel" ]]; then
-    for rid in "${MATRIX_RUNS[@]}"; do
-      echo "  modal run --detach pilot/infra/modal_app.py --run-id $rid"
-    done
-    echo "  (each in background; logs under pilot/artifacts/matrix_logs/)"
-  else
-    for rid in "${MATRIX_RUNS[@]}"; do
-      echo "  modal run --detach pilot/infra/modal_app.py --run-id $rid"
-    done
+    echo "  (parallel mode: each in background; logs under pilot/artifacts/matrix_logs/)"
   fi
   exit 0
 fi
@@ -109,7 +115,7 @@ if [[ "$MODE" == "sequential" ]]; then
   echo "Launching sequential matrix (detached spawn per run)..."
   for rid in "${MATRIX_RUNS[@]}"; do
     echo "=== $rid ==="
-    "${MODAL_LAUNCH[@]}" --run-id "$rid"
+    "$MODAL_RUN" --run-id "$rid"
   done
   echo "All matrix runs spawned. Monitor with: modal app list"
   exit 0
@@ -122,7 +128,7 @@ pids=()
 for rid in "${MATRIX_RUNS[@]}"; do
   log="${LOG_DIR}/${stamp}_${rid}.log"
   echo "  $rid -> $log"
-  "${MODAL_LAUNCH[@]}" --run-id "$rid" >"$log" 2>&1 &
+  "$MODAL_RUN" --run-id "$rid" >"$log" 2>&1 &
   pids+=($!)
 done
 
@@ -144,4 +150,4 @@ if [[ "$failed" -gt 0 ]]; then
 fi
 echo "All matrix runs spawned on Modal (GPU work continues if laptop disconnects)."
 echo "Monitor: modal app list"
-echo "After each run completes, pull: python pilot/scripts/pull_run_artifacts.py --run-id <id> --local-dir <dir>"
+echo "Pull when done: python pilot/scripts/pull_run_artifacts.py --run-id <id> --local-dir <dir>"
