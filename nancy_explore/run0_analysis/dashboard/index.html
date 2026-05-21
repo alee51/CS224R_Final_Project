@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Run 0 LLM-cluster review</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+<script defer src="data.js"></script>
+<script defer src="app.js"></script>
+<style>
+:root {
+  --bg: #fafaf9; --panel: #fff; --border: #e5e5e5; --muted: #777; --text: #222;
+  --correct: #1f7a3a; --wrong: #b04444; --degen: #8a6d00; --accent: #2b5fa8;
+  --minority: #d68a00;
+}
+* { box-sizing: border-box; }
+body { margin: 0; font: 14px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+       color: var(--text); background: var(--bg); display: flex; height: 100vh; }
+#sidebar { width: 360px; border-right: 1px solid var(--border); background: var(--panel);
+           overflow-y: auto; flex: 0 0 360px; }
+#main { flex: 1; overflow-y: auto; padding: 18px 24px; }
+#sidebar-head { padding: 10px 12px; border-bottom: 1px solid var(--border);
+                position: sticky; top: 0; background: var(--panel); z-index: 1; }
+#search { width: 100%; padding: 6px 8px; border: 1px solid var(--border); border-radius: 4px; }
+.filters { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 8px; }
+.filters button { font-size: 11px; padding: 3px 7px; border: 1px solid var(--border);
+                  background: #fff; border-radius: 3px; cursor: pointer; }
+.filters button.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+.prompt-row { padding: 8px 12px; border-bottom: 1px solid #eee; cursor: pointer;
+              font-size: 12px; }
+.prompt-row:hover { background: #f5f5f5; }
+.prompt-row.active { background: #e8f0fa; }
+.prompt-row .pid { font-family: ui-monospace, monospace; font-size: 11px; color: var(--muted); }
+.prompt-row .stats { margin-top: 2px; }
+.prompt-row .badge { display: inline-block; padding: 1px 5px; border-radius: 3px;
+                     font-size: 10px; margin-right: 3px; }
+.b-correct { background: #d4ecdb; color: var(--correct); }
+.b-wrong { background: #f1d8d8; color: var(--wrong); }
+.b-minority { background: #fbe8c2; color: var(--minority); }
+.b-cluster { background: #eee; color: #555; }
+h1 { font-size: 18px; margin: 0 0 4px; }
+.pid-mono { font-family: ui-monospace, monospace; font-size: 12px; color: var(--muted); }
+.problem-block { background: var(--panel); border: 1px solid var(--border); border-radius: 5px;
+                 padding: 12px 14px; margin: 10px 0 16px; }
+.gold { font-family: ui-monospace, monospace; background: #f4f0e6; padding: 1px 5px; border-radius: 3px; }
+.summary-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 8px;
+                margin: 12px 0 18px; }
+.summary-cell { background: var(--panel); border: 1px solid var(--border); border-radius: 5px;
+                padding: 8px 10px; }
+.summary-cell .label { font-size: 11px; color: var(--muted); text-transform: uppercase;
+                       letter-spacing: 0.4px; }
+.summary-cell .value { font-size: 18px; font-weight: 600; margin-top: 2px; }
+.summary-cell .sub { font-size: 11px; color: var(--muted); margin-top: 1px; }
+.rollout { background: var(--panel); border: 1px solid var(--border); border-radius: 5px;
+           margin-bottom: 10px; overflow: hidden; }
+.rollout-head { padding: 8px 12px; background: #f7f7f6; border-bottom: 1px solid var(--border);
+                display: flex; align-items: center; gap: 10px; flex-wrap: wrap; cursor: pointer; }
+.rollout-head .idx { font-weight: 600; min-width: 24px; }
+.rollout-head .answer { font-family: ui-monospace, monospace; font-size: 12px; }
+.rollout-head .answer.correct { color: var(--correct); }
+.rollout-head .answer.wrong { color: var(--wrong); }
+.rollout-head .cluster { font-size: 11px; color: var(--muted); }
+.rollout-head .degen { color: var(--degen); font-weight: 600; }
+.rollout-body { padding: 10px 14px; display: none; }
+.rollout-body.open { display: block; }
+.rollout-body pre { white-space: pre-wrap; word-break: break-word; font-size: 12.5px;
+                    margin: 0; font-family: ui-monospace, "SF Mono", Menlo, monospace; }
+.toggle-all { font-size: 12px; margin-bottom: 10px; }
+#count { font-size: 11px; color: var(--muted); margin-top: 6px; }
+.cluster-pill { display: inline-block; padding: 1px 6px; border-radius: 10px;
+                font-size: 11px; font-family: ui-monospace, monospace; }
+.cluster-pill.llm { background: #e3eaf5; color: var(--accent); }
+.cluster-pill.v2 { background: #efefef; color: #555; }
+.cluster-pill.llm.degen { background: #fbeac2; color: var(--degen); }
+</style>
+</head>
+<body>
+<aside id="sidebar">
+  <div id="sidebar-head">
+    <input id="search" placeholder="Search prompt_id…">
+    <div class="filters" id="filters">
+      <button data-f="all" class="active">All</button>
+      <button data-f="has-correct">Has correct</button>
+      <button data-f="no-correct">No correct</button>
+      <button data-f="partial">Partial (1–7)</button>
+      <button data-f="minority-llm">Minority-LLM</button>
+      <button data-f="minority-cleaned">Minority-cleaned</button>
+    </div>
+    <div id="count"></div>
+  </div>
+  <div id="list"></div>
+</aside>
+<main id="main">
+  <div id="empty">Loading…</div>
+  <div id="detail" hidden></div>
+</main>
+</body>
+</html>
