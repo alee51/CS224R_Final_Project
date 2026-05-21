@@ -182,7 +182,7 @@ Each row: one prompt, 8 rollouts summarized, fairness of stored labels, short qu
 ### E20 — `1cc3b783` · partial (5/8) · high diversity
 
 - **Gold:** (varies) · **Pattern:** Representative of 398 prompts with ≥7 clusters: mostly different wrong ints + code tails, not seven solution strategies.
-- **Fairness:** Cluster count **overstates** reasoning diversity.
+- **Fairness:** Cluster count **overstates** diversity of completion text (we did not cluster reasoning).
 
 ### E21 — `0b9df9e2` · partial · Answer-line correct
 
