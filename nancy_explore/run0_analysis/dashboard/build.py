@@ -21,6 +21,13 @@ PROMPTS = ROOT / "data" / "prompt_inputs.jsonl"
 CLEANED_PARQUET = ROOT / "data" / "cleaned_answers.parquet"
 LLM_PARQUET = ROOT / "analysis_a" / "llm_clusters_summary.parquet"
 OUT = HERE / "data.js"
+POLY_EPO_DEGENERATE = 100
+
+
+def normalize_llm_cluster_id(cid: int) -> int:
+    if cid == POLY_EPO_DEGENERATE:
+        return -1
+    return int(cid)
 
 
 def load_jsonl(path: Path) -> list[dict]:
@@ -69,7 +76,7 @@ def main() -> None:
     llm_by_pid: dict[str, dict[int, dict]] = defaultdict(dict)
     for row in llm.itertuples(index=False):
         llm_by_pid[row.prompt_id][int(row.rollout_idx)] = {
-            "llm_cluster_id": int(row.llm_cluster_id),
+            "llm_cluster_id": normalize_llm_cluster_id(int(row.llm_cluster_id)),
             "parse_ok": bool(row.parse_ok),
         }
 
@@ -97,15 +104,8 @@ def main() -> None:
 
         largest_correct_cleaned = largest_correct_cluster_size(cluster_cleaned, correct)
         largest_correct_llm = largest_correct_cluster_size(llm_ids, correct)
-        # LLM minority-correct: degenerate -1 treated as singletons per design
-        llm_ids_for_minority = []
-        for i, lid in enumerate(llm_ids):
-            if lid == -1:
-                llm_ids_for_minority.append(f"degen_{i}")
-            else:
-                llm_ids_for_minority.append(lid)
         minority_cleaned = has_minority_correct(cluster_cleaned, correct)
-        minority_llm = has_minority_correct(llm_ids_for_minority, correct)
+        minority_llm = has_minority_correct(llm_ids, correct)
 
         prompt_meta = prompts.get(pid, {})
 

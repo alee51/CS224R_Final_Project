@@ -13,7 +13,7 @@ python build.py
 - `../data/cleaned_answers.parquet` — canonical answer-extraction (`cleaned_answer`, `cleaned_state`, `cleaned_correct`, `cleaned_cluster_id`)
 - `../data/predictions_reparsed.jsonl` — completion text only (v1/v2 parser fields ignored)
 - `../data/prompt_inputs.jsonl` — problem text + gold
-- `../analysis_a/llm_clusters_summary.parquet` — `llm_cluster_id` per rollout (-1 = degenerate)
+- `../analysis_a/llm_clusters_summary.parquet` — `llm_cluster_id` per rollout (`100` → `-1` degenerate; all `-1` in a prompt = one cluster)
 
 Writes `data.js`. Re-run after any of those inputs change.
 
