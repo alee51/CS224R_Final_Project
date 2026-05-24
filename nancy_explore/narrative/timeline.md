@@ -1,7 +1,7 @@
 # Project timeline — minority voting (CS224R Spring 2026)
 
 Canonical chronology for the team, agents, and TA discussions.  
-**Last updated:** 2026-05-20.
+**Last updated:** 2026-05-21.
 
 For narrative context see [`context.md`](context.md). For tomorrow’s office-hours brief see [`briefs/ta_office_hours_20260521.md`](briefs/ta_office_hours_20260521.md). For strategic uncertainty see [`briefs/pilot_strategy_20260520.md`](briefs/pilot_strategy_20260520.md).
 
@@ -41,7 +41,7 @@ For narrative context see [`context.md`](context.md). For tomorrow’s office-ho
 | **2026-05-19 PM** | Matrix **terminated** by operators (~21:48 PDT) | [`MAIN_RUNS_PLAYBOOK.md`](../pilot/docs/operations/MAIN_RUNS_PLAYBOOK.md) |
 | **2026-05-19** | `run1b`/`run2`/`run3`: at most step-1 rollout build; **no completed training comparisons** | [`0519_perf_consolidated.md`](../pilot/docs/analysis/0519_perf_consolidated.md) |
 
-**Run 0 scientific headline:** `minority_correct_prompt_rate = 0` under answer-only clustering; strong wrong-answer diversity; parser/canonicalization issues. Handoff: [`RUN0_HANDOFF_FOR_REVIEW.md`](../pilot/artifacts/run0_proxy/20260519T190202Z/RUN0_HANDOFF_FOR_REVIEW.md).
+**Run 0 scientific headline:** `minority_correct_prompt_rate = 0` under answer-only clustering; ~14.5% under LLM reasoning clusters (cleaned labels). Handoff (historical): [`pilot/docs/archive/RUN0_HANDOFF_FOR_REVIEW.md`](../../pilot/docs/archive/RUN0_HANDOFF_FOR_REVIEW.md). Analysis writeup: [`../run0_analysis/run0_exec_plan.md`](../run0_analysis/run0_exec_plan.md).
 
 **Infra headline:** ~$1,275 projected vs ~$210 intent; no resume/checkpointing; logging gaps; `canonicalize_answer` bugs.
 
@@ -65,14 +65,30 @@ For narrative context see [`context.md`](context.md). For tomorrow’s office-ho
 | Date | Event | Doc |
 |------|--------|-----|
 | **2026-05-20** | Critique: mentor pitch admits multiple formalizations; **`inverse_freq` should not run as written**; split **Q I** (LM judge ablation) vs **Q II** (minority vs majority set-RL); recommend short mentor sync before more GPU spend | [`briefs/pilot_strategy_20260520.md`](briefs/pilot_strategy_20260520.md) |
+| **2026-05-21** | Human labels promoted to `cleaned_answers.parquet`; v2-based A/B/C/D archived. | [`../run0_analysis/README.md`](../run0_analysis/README.md) |
+| **2026-05-21** | **Run 0 offline analysis complete** (E1 set-score sim on cleaned labels; eval floor Pass@1 9.03%, Pass@8 34.4%). **Training direction:** test **minority-voting set-RL** (reward the rarest mode in each 4-rollout subset → marginal advantages), not the redesign `inverse_freq` / Poly-EPO diversity matrix as the headline. Tie-break: random. **Defer to training:** answer-hash vs LLM-CoT minority (`ans-rand` vs `cot-rand`). | [`../run0_analysis/run0_exec_plan.md`](../run0_analysis/run0_exec_plan.md), [`../run0_analysis/analysis_c/set_score_simulation.md`](../run0_analysis/analysis_c/set_score_simulation.md) |
 
-**Current uncertainty (not yet resolved in ops docs):**
+### Open issue (2026-05-21): human labels from 0a never wired into A/B/C/D
 
-- Headline experiment: cheap-substrate Poly-EPO replication (**Q I**) vs minority-voting set objective (**Q II**)?
-- If Q II: which `f_minority` — `worst_subset`, smallest-cluster reward, or other?
-- Is Run 0’s 0% minority-correct gate a **dead proxy** or a **broken metric**?
+The 4000-row blind-A/B + dispute-resolved human labels from §0a were referenced only by an audit script (now archived at `nancy_explore/run0_analysis/archive/2026-05-21_pre_human_label_audit/prereq_0b_reparse/audit_1024_token_labels.py`). Analyses A/B/C/D all read `data/predictions_reparsed.jsonl` — pure v2-parser output, no human cross-check. Treat all current Analysis A/B/C/D numbers as **provisional pending parser validation**.
 
-`PILOT_REDESIGN.md` still describes the `inverse_freq` 3-run matrix; treat it as **implementation-ready but research-pending** until the team or mentor confirms the objective.
+**Update (later 2026-05-21):** v2-vs-human comparison showed only **78% presence agreement** (3123/4000), with `last_line` extraction path at 0.28% agreement (effectively useless). Both parsers (v1, v2) were judged not good enough; human labels are now canonical. New artifact: `nancy_explore/run0_analysis/data/cleaned_answers.parquet` (4000 rows, schema documented in `run0_analysis/README.md`). Old analyses archived to `archive/2026-05-21_pre_human_label_audit/`. Headline numbers under cleaned labels: Pass@1 **9.03%**, Pass@8 **34.40%** (vs v2's 8.25% / 33.00%).
+
+Concrete gaps:
+
+1. **No v2-parser-vs-human agreement number exists.** Every Analysis A/B/C/D headline depends on v2 being roughly right, but its accuracy has never been measured against the human labels.
+2. **Analysis B's substrate table is missing a `human_tail` row.** Per design doc framing, the human labels were *the* substrate that captures "did the model state an answer? vs runon." Without it, B compares parser-vs-LLM and feature-vs-LLM but skips human-vs-LLM — the strongest cheap substrate available.
+3. **A.7.3 degenerate sanity used pattern-counts (9.2–28.5% qual tags) instead of the human "runon"/"no_answer" labels** that would directly anchor the 16.95% LLM-degenerate rate.
+
+Fix plan (three small jobs, none requires re-running the LLM judge or re-embedding): parser-vs-human validation report, add `human_tail` as substrate in B and re-run aggregates, LLM-degen × human-runon cross-tab for A.7.3.
+
+**Not needed as separate prereq work (2026-05-21):** The three fix-plan bullets above (parser-vs-human report, `human_tail` substrate row, LLM-degen × runon cross-tab) are **not** blocking — human labels are already canonical via `cleaned_answers.parquet`. Phase 2B/C/D in [`../run0_analysis/run0_analysis_plan.md`](../run0_analysis/run0_analysis_plan.md) subsumes the substrate and metric refresh on cleaned labels.
+
+---
+
+**Resolved (2026-05-21):** Headline objective is **minority-voting set-RL** (`f(G)` = reward of rarest mode in subset G). Run 0 analysis settled tie-break (random), distinct from Poly-EPO/GRPO, and enough per-rollout signal (~34%). Cheap substrates do not replace LLM CoT clusters.
+
+**Still open at training time:** `ans-rand` vs `cot-rand` (same answer vs LLM reasoning bucket for “minority”). `PILOT_REDESIGN.md` `inverse_freq` matrix is legacy infra spec, not the chosen research arm.
 
 ---
 
@@ -80,10 +96,10 @@ For narrative context see [`context.md`](context.md). For tomorrow’s office-ho
 
 | Have | Need |
 |------|------|
-| Complete Run 0 proxy + analysis | Chosen formal objective aligned with mentor pitch |
-| Failed/partial matrix training (≤1 GRPO step) | Smoke pass + matrix **or** smaller pre-registered comparison |
-| Redesign spec + code path | Explicit decision: run redesign as-is vs pivot objective |
-| Simulations + exploration depth docs | Milestone narrative tying experiment → mentor pitch |
+| Complete Run 0 proxy + offline analysis (human labels) | Training runs with minority set-RL |
+| E1 objective comparison + eval floor metrics | Compare `ans-rand` vs `cot-rand` in training |
+| Failed/partial matrix training (≤1 GRPO step) | Smoke pass + training launch |
+| Redesign spec + code path | Wire minority `f(G)` into train loop |
 
 ---
 

@@ -1,5 +1,7 @@
 # Analysis D — Frozen-eval base-model baseline
 
+> ⚠ **ARCHIVED (v2-era).** Cover@τ `n_eligible` fields in `baseline_metrics.json` use **165** prompts (`is_correct_v2`). Human labels → **172** eligible — recompute in Phase 5.
+
 _500 prompts × 8 rollouts; bootstrap 95% CIs, prompt-level resampling, 1000 resamples, seed=0._
 
 **Lock discrepancy note.** `pilot/preflight_lock.json` records `pass_at_k=16` (and `bootstrap_samples=2000`), but Run 0 produced only 8 rollouts per prompt. Per Analysis D design (§D.2) we report **Pass@8** and flag this discrepancy. Bootstrap is set to 1000 per the Analysis D spec.

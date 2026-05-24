@@ -1,5 +1,35 @@
 # Decisions
 
+## 2026-05-21: Training objectives — minority set-RL ablations
+
+**Status:** Accepted (post Run 0 offline analysis).
+
+**Decision:** After Run 0 analysis on human labels ([`run0_exec_plan.md`](../run0_analysis/run0_exec_plan.md), E1 in [`set_score_simulation.md`](../run0_analysis/analysis_c/set_score_simulation.md)), the **headline training question** is whether **minority-voting set-RL** helps — not a repeat of the pre-redesign `inverse_freq` / cheap-substrate matrix.
+
+**Set-RL setup (shared across minority arms):** For each prompt, score all C(8,4) subsets; `f(G)` = mean reward of rollouts in the **rarest** mode in G (ties broken at random — offline E1: ~equivalent to averaging tied modes). Convert subset scores to per-rollout **marginal advantages** (mean set advantage over subsets containing that rollout). Rollout reward remains `cleaned_correct` (0/1).
+
+**Planned training ablations:**
+
+| Arm | What “minority” / diversity means | Run 0 code name |
+|-----|-----------------------------------|-----------------|
+| **Poly-EPO (baseline)** | `mean(r in G) × (distinct clusters in G) / 4` — cluster-count diversity, not rarity | `f_poly` |
+| **Minority — LLM CoT** | Rarest `llm_cluster_id` in G (offline: cached cheap-tier judge; in-loop TBD) | `cot-rand` |
+| **Minority — answer-only** | Rarest `cleaned_cluster_id` (final-answer hash) in G | `ans-rand` |
+
+**Not in the primary ablation set (unless revived later):** `inverse_freq` (old redesign matrix arm), vanilla GRPO-only as a standalone paper arm (useful contrast but not the mentor “minority voting” hypothesis), `avg` tie-break variants (offline ~same as `rand`).
+
+**Rationale (Run 0):**
+
+- Minority objectives are **not** the same as Poly-EPO / GRPO credit (E1 correlations ~0.4–0.6 vs minority, ~0.87 GRPO↔`f_poly`).
+- Answer-hash minority sees **0%** legacy minority-correct prompts; LLM CoT sees **~14.5%** on eligible prompts — so both arms are worth training, not answer-only alone.
+- Cheap text embeddings **do not** approximate LLM CoT clusters (archived Analysis B); CoT arm needs LLM labels in training or accepted proxy cost.
+
+**Still to learn in training (not more offline E1):** Which minority arm (`ans-rand` vs `cot-rand`) improves Pass@k on the same 500-prompt slice / held-out eval.
+
+**Supersedes:** Treating Stage 1 redesign’s three-run matrix (`run1_grpo`, `run2_inverse_freq`, `run3_f_grpo`) as the definitive research plan without adding minority arms.
+
+---
+
 ## 2026-05-19: No shared Modal team workspace (Stage 1 pilot)
 
 **Status:** Accepted. Supersedes team-workspace bullets in `pilot/docs/operations/PILOT_REDESIGN.md` until those doc edits landed (now aligned).

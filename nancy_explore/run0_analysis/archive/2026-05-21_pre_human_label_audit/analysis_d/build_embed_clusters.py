@@ -12,10 +12,11 @@ import numpy as np
 import pandas as pd
 from sklearn.cluster import AgglomerativeClustering
 
-ROOT = Path(__file__).resolve().parent
-EMB = ROOT / "embeddings_minilm.npy"
-IDS = ROOT / "embedding_ids.parquet"
-OUT = ROOT / "embed_clusters_at_best_threshold.parquet"
+HERE = Path(__file__).resolve().parent
+ROOT = HERE.parent
+EMB = ROOT / "analysis_b" / "embeddings_minilm.npy"
+IDS = ROOT / "analysis_b" / "embedding_ids.parquet"
+OUT = HERE / "embed_clusters_at_best_threshold.parquet"
 
 THRESHOLD = 0.2
 

@@ -14,6 +14,7 @@ Documentation for the small-compute RL pilot. Organized by *kind*, not chronolog
 
 ## Layout
 
+- `archive/` — frozen narrative docs tied to a specific artifact run (not updated with later label resets).
 - `incidents/` — postmortems and debug logs from things that went wrong. One file per incident, named `MMDD-HH_short-slug.md` (month-day-hour, since the pilot spans only a few days).
 - `operations/` — how to run the pilot: `RUNBOOK.md` (frozen scope), `MAIN_RUNS_PLAYBOOK.md` (first-matrix post-mortem), `PERSONAL_WORKSPACE_COLLAB.md` (personal Modal profile ops).
 - `decisions/` — decision memos and execution plans. Things we chose and why.
@@ -36,6 +37,9 @@ Documentation for the small-compute RL pilot. Organized by *kind*, not chronolog
 - `operations/PERSONAL_WORKSPACE_COLLAB.md` — personal Modal profile: launch, pull, wandb sync, sharing weights
 - `operations/RUNBOOK.md` — *historical* — original frozen pilot scope (orchestrator-owned)
 - `operations/MAIN_RUNS_PLAYBOOK.md` — *post-mortem* — first matrix lessons (workspace §2 superseded 2026-05-19)
+
+### Archive
+- `archive/RUN0_HANDOFF_FOR_REVIEW.md` — pre–human-label Run 0 handoff (20260519T190202Z). Superseded for metrics by `nancy_explore/run0_analysis/data/cleaned_answers.parquet` and [`run0_analysis_plan.md`](../../nancy_explore/run0_analysis/run0_analysis_plan.md).
 
 ### Decisions
 - `decisions/20260519_skip_run0_stage1_redesign.md` — Stage 1 matrix excludes `run0_proxy`; use `20260519T190202Z` artifacts

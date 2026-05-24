@@ -10,7 +10,7 @@ Status: **drafted 2026-05-19, ready for independent audit**. Supersedes the matr
 
 The first pilot launch (2026-05-19, runs `run0_proxy`, `run1_grpo`, `run1b_grpo`, `run2_inverse_freq`, `run3_f_grpo`) failed structurally, not by bad luck. Root causes documented in `pilot/docs/incidents/0519-11` through `0519-25` and synthesized in `pilot/docs/analysis/0519_perf_consolidated.md`:
 
-**Run 0 waived for Stage 1.** Pre-redesign `run0_proxy` already completed and was analyzed; do not re-run in the redesign matrix. Use artifacts `pilot/artifacts/run0_proxy/20260519T190202Z/` and handoff `RUN0_HANDOFF_FOR_REVIEW.md` there. Decision: [`../decisions/20260519_skip_run0_stage1_redesign.md`](../decisions/20260519_skip_run0_stage1_redesign.md).
+**Run 0 waived for Stage 1.** Pre-redesign `run0_proxy` already completed and was analyzed; do not re-run in the redesign matrix. Use artifacts `pilot/artifacts/run0_proxy/20260519T190202Z/` and handoff `pilot/docs/archive/RUN0_HANDOFF_FOR_REVIEW.md` (historical). Current metrics: `nancy_explore/run0_analysis/`. Decision: [`../decisions/20260519_skip_run0_stage1_redesign.md`](../decisions/20260519_skip_run0_stage1_redesign.md).
 
 - **Cost mismatch.** Measured ~99 min/step × 100 planned steps × 4 runs ≈ ~$1,275, against an intended ~$210 pilot budget and a $1,400 team total. The pilot was never affordable as written.
 - **No mid-run durability.** `artifacts_volume.commit()` ran only in the `finally` block; no per-step checkpoint; preemption produced zero salvageable weights. `run1_grpo` entered a death spiral: preempt → restart → bootstrap wipes `raw_predictions.jsonl` → replay step 1 → preempt mid-step-2 → repeat.
@@ -598,7 +598,7 @@ Listed here so the implementing agent does not silently absorb them.
 These are out of scope for the Stage 1 implementation but listed so they are not lost.
 
 - **Math-Verify grader** for HMMT-Nov / Beyond-AIME / MATH-500 (per `decisions.md` 2026-05-18). Stage 2 prerequisite, not Stage 1.
-- **`gate_decision.json` re-evaluation.** Current state is `PIVOT_WORST_SUBSET` based on `minority_correct_rate=0.000` from pre-redesign Run 0 (`pilot/artifacts/run0_proxy/20260519T190202Z/`). Re-run or revise the gate using those artifacts plus cleaned offline analysis — **do not** schedule a redesign matrix re-run of `run0_proxy` for this. Decide whether the gate stays load-bearing or is retired after review of `RUN0_HANDOFF_FOR_REVIEW.md`.
+- **`gate_decision.json` re-evaluation.** Current state is `PIVOT_WORST_SUBSET` based on `minority_correct_rate=0.000` from pre-redesign Run 0 (`pilot/artifacts/run0_proxy/20260519T190202Z/`). Re-run or revise the gate using those artifacts plus cleaned offline analysis — **do not** schedule a redesign matrix re-run of `run0_proxy` for this. Decide whether the gate stays load-bearing or is retired after review of `pilot/docs/archive/RUN0_HANDOFF_FOR_REVIEW.md` and `nancy_explore/run0_analysis/run0_analysis_plan.md`.
 - **Stage 2 rollback plan** if the escalated 400-step run also fails to differentiate variants. Documented fallbacks in `final_decision.md` (substrate-ablation paper, head-to-head minority-objectives paper, pre-registered negative-result paper). Choose post-pilot, with eval data in hand.
 - **Pass@k k-value bump for Stage 2.** Mentor prescribes 64-sample at eval; Stage 2 should use this; Stage 1 uses 16. Confirm at Stage 2 planning.
 - **Multi-seed for Stage 2.** Probably 2 seeds on the Stage 1 winner per mentor practice; not in Stage 1.

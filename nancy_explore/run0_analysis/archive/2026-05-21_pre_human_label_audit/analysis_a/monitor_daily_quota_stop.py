@@ -9,7 +9,7 @@ import sys
 import time
 from pathlib import Path
 
-REPO = Path(__file__).resolve().parents[2]
+REPO = Path(__file__).resolve().parents[3]
 CACHE_DIR = REPO / "pilot/artifacts/run0_proxy/20260519T190202Z/llm_clusters"
 LOG_PATH = Path(__file__).resolve().parent / "analysis_a_full_run.log"
 POLL_SEC = 15

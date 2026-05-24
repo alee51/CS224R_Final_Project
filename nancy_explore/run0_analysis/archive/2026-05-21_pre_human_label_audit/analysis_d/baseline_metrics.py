@@ -25,16 +25,17 @@ from typing import Callable
 import numpy as np
 import pandas as pd
 
-ROOT = Path(__file__).resolve().parent
+HERE = Path(__file__).resolve().parent
+ROOT = HERE.parent
 DATA = ROOT / "data" / "predictions_reparsed.jsonl"
-LLM_PARQUET = ROOT / "llm_clusters_summary.parquet"
+LLM_PARQUET = ROOT / "analysis_a" / "llm_clusters_summary.parquet"
 PREFLIGHT = ROOT.parent.parent / "pilot" / "preflight_lock.json"
-SUBSTRATE_PARQUET = ROOT / "substrate_results.parquet"  # optional, from Analysis B
-SUBSTRATE_COMPARISON = ROOT / "substrate_comparison.md"
-EMBED_CLUSTERS = ROOT / "embed_clusters_at_best_threshold.parquet"  # built by build_embed_clusters.py
+SUBSTRATE_PARQUET = ROOT / "analysis_b" / "substrate_results.parquet"  # optional, from Analysis B
+SUBSTRATE_COMPARISON = ROOT / "analysis_b" / "substrate_comparison.md"
+EMBED_CLUSTERS = HERE / "embed_clusters_at_best_threshold.parquet"  # built by build_embed_clusters.py
 
-OUT_MD = ROOT / "baseline_metrics.md"
-OUT_JSON = ROOT / "baseline_metrics.json"
+OUT_MD = HERE / "baseline_metrics.md"
+OUT_JSON = HERE / "baseline_metrics.json"
 
 BOOTSTRAP_N = 1000
 BOOTSTRAP_SEED = 0

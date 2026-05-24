@@ -28,15 +28,17 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-REPO = Path(__file__).resolve().parents[2]
+REPO = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(REPO))
 
 from pilot.train.run_proxy import has_minority_correct_cluster  # noqa: E402
 
-RUN0_DIR = Path(__file__).resolve().parent
+HERE = Path(__file__).resolve().parent
+RUN0_DIR = HERE.parent
 DATA_DIR = RUN0_DIR / "data"
 REParsed_PATH = DATA_DIR / "predictions_reparsed.jsonl"
 PROMPTS_PATH = DATA_DIR / "prompt_inputs.jsonl"
+CLEANED_PARQUET = DATA_DIR / "cleaned_answers.parquet"  # canonical answer ground truth
 ENV_PATH = RUN0_DIR / ".env"
 
 CONFIG_YAML = RUN0_DIR / "config" / "llm_judge_models.yaml"
@@ -45,8 +47,8 @@ PROMPT_MD = RUN0_DIR / "config" / "analysis_a_prompt.md"
 ARTIFACT_RUN = REPO / "pilot/artifacts/run0_proxy/20260519T190202Z"
 CACHE_DIR = ARTIFACT_RUN / "llm_clusters"
 
-SUMMARY_PARQUET = RUN0_DIR / "llm_clusters_summary.parquet"
-SUMMARY_MD = RUN0_DIR / "analysis_a_summary.md"
+SUMMARY_PARQUET = HERE / "llm_clusters_summary.parquet"
+SUMMARY_MD = HERE / "analysis_a_summary.md"
 
 N_BOOT = 1000
 BOOT_SEED = 42
@@ -649,9 +651,9 @@ def _build_summary_rows(
                     "prompt_id": job.prompt_id,
                     "rollout_idx": idx,
                     "llm_cluster_id": assignment.get(idx) if parse_ok else None,
-                    "is_correct_v2": bool(r.get("is_correct_v2")),
-                    "parsed_answer_v2": r.get("parsed_answer_v2", ""),
-                    "canonical_v2": r.get("canonical_v2", ""),
+                    "cleaned_correct": bool(r.get("cleaned_correct")),
+                    "cleaned_answer": r.get("cleaned_answer", ""),
+                    "cleaned_state": r.get("cleaned_state", ""),
                     "parse_ok": parse_ok,
                     "provider": cache.get("provider"),
                     "tier": cache.get("tier"),
@@ -673,7 +675,7 @@ def _minority_metrics(jobs: list[PromptJob], caches: dict[str, dict]) -> tuple[l
         n_parsed += 1
         assign = cache.get("cluster_assignment") or {}
         cluster_ids = [int(assign[str(i)]) for i in range(8)]
-        correct = [bool(r.get("is_correct_v2")) for r in job.rollouts]
+        correct = [bool(r.get("cleaned_correct")) for r in job.rollouts]
         if not any(correct):
             continue
         n_eligible += 1
@@ -706,10 +708,10 @@ def _build_summary_md(
     lines.extend(
         [
             "\n## Headline: minority_correct_prompt_rate_llm\n",
-            "Among prompts with ≥1 correct rollout (v2 parser), fraction where correct "
-            "rollouts span ≥2 LLM clusters and at least one correct cluster is not the "
-            "largest (same definition as `has_minority_correct_cluster` in "
-            "`pilot/train/run_proxy.py`).\n",
+            "Among prompts with ≥1 `cleaned_correct` rollout (`data/cleaned_answers.parquet`), "
+            "fraction where correct rollouts span ≥2 LLM clusters and at least one correct "
+            "cluster is not the largest (same definition as `has_minority_correct_cluster` in "
+            "`pilot/train/run_proxy.py`; degenerate `llm_cluster_id == -1` = one cluster per prompt).\n",
             "\n| Metric | Value |\n|---|---:|\n",
             f"| Prompts attempted | {n_prompts} |\n",
             f"| Prompts with successful parse | {n_parsed} |\n",
@@ -791,6 +793,26 @@ def main() -> None:
     by_prompt: dict[str, list[dict]] = defaultdict(list)
     for row in _load_jsonl(REParsed_PATH):
         by_prompt[row["prompt_id"]].append(row)
+
+    # Attach canonical cleaned-answer fields to each rollout (joined by position).
+    # Source of truth for correctness/extracted-answer; supersedes v1/v2 parser fields.
+    if CLEANED_PARQUET.is_file():
+        import pandas as _pd
+        _cleaned = _pd.read_parquet(CLEANED_PARQUET)
+        _cleaned_by_key = {
+            (row.prompt_id, int(row.rollout_idx)): {
+                "cleaned_answer": row.cleaned_answer,
+                "cleaned_state": row.cleaned_state,
+                "cleaned_correct": bool(row.cleaned_correct),
+                "cleaned_cluster_id": int(row.cleaned_cluster_id),
+            }
+            for row in _cleaned.itertuples(index=False)
+        }
+        for pid, rs in by_prompt.items():
+            for idx, r in enumerate(rs):
+                r.update(_cleaned_by_key.get((pid, idx), {}))
+    else:
+        raise SystemExit(f"missing {CLEANED_PARQUET}; build it before running")
 
     prompt_ids = sorted(by_prompt.keys())
     if args.pilot:

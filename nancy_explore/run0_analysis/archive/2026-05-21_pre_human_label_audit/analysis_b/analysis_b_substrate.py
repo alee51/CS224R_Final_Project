@@ -26,19 +26,20 @@ import pandas as pd
 from sklearn.cluster import AgglomerativeClustering
 from sklearn.metrics import adjusted_rand_score, v_measure_score
 
-ROOT = Path("/Users/nancybao/Desktop/dev/cs224r_finalproject/nancy_explore/run0_analysis")
+HERE = Path(__file__).resolve().parent
+ROOT = HERE.parent
 DATA = ROOT / "data"
 PREDS = DATA / "predictions_reparsed.jsonl"
 PROMPTS = DATA / "prompt_inputs.jsonl"
-LLM_PARQUET = ROOT / "llm_clusters_summary.parquet"
+LLM_PARQUET = ROOT / "analysis_a" / "llm_clusters_summary.parquet"
 
-EMBED_CACHE = ROOT / "embeddings_minilm.npy"
-EMBED_IDS = ROOT / "embedding_ids.parquet"
+EMBED_CACHE = HERE / "embeddings_minilm.npy"
+EMBED_IDS = HERE / "embedding_ids.parquet"
 
-OUT_PARQUET = ROOT / "substrate_results.parquet"
-OUT_TABLE = ROOT / "substrate_comparison.md"
-OUT_VIGNETTES = ROOT / "substrate_disagreement_vignettes.md"
-OUT_PNG = ROOT / "analysis_b_minority_rate.png"
+OUT_PARQUET = HERE / "substrate_results.parquet"
+OUT_TABLE = HERE / "substrate_comparison.md"
+OUT_VIGNETTES = HERE / "substrate_disagreement_vignettes.md"
+OUT_PNG = HERE / "analysis_b_minority_rate.png"
 
 THRESHOLDS = [0.2, 0.3, 0.4, 0.5]
 

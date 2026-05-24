@@ -18,7 +18,7 @@ import sys
 from collections import Counter, defaultdict
 from pathlib import Path
 
-REPO = Path(__file__).resolve().parents[2]
+REPO = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(REPO))
 
 from pilot.train.answer_clean import (  # noqa: E402
@@ -29,12 +29,13 @@ from pilot.train.answer_clean import (  # noqa: E402
 )
 from pilot.train.run_proxy import has_minority_correct_cluster  # noqa: E402
 
-RUN0_DIR = Path(__file__).resolve().parent
+HERE = Path(__file__).resolve().parent
+RUN0_DIR = HERE.parent
 DATA_DIR = RUN0_DIR / "data"
 RAW_PATH = DATA_DIR / "raw_predictions.jsonl"
 PROMPTS_PATH = DATA_DIR / "prompt_inputs.jsonl"
 OUT_PATH = DATA_DIR / "predictions_reparsed.jsonl"
-REPORT_PATH = RUN0_DIR / "reparse_diff.md"
+REPORT_PATH = HERE / "reparse_diff.md"
 
 N_BOOT = 1000
 BOOT_SEED = 42

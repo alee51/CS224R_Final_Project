@@ -1,4 +1,8 @@
-# Run 0 offline analyses — design doc
+# Run 0 offline analyses — design doc (archived)
+
+> ⚠ **ARCHIVED — v2-era design.** **Current plan:** [`../../run0_analysis_plan.md`](../../run0_analysis_plan.md).
+>
+> **HISTORICAL — 2026-05-21 reset.** This doc was the spec for the original A/B/C/D analyses, which depended on the v1/v2 parsers. Subsequent v2-vs-human validation showed only 78% presence agreement (see `nancy_explore/narrative/timeline.md`, entry 2026-05-21), so we promoted the §0a human labels to ground truth. The canonical answer-extraction artifact is now `data/cleaned_answers.parquet` (schema in `README.md`). All references in this document to `parsed_answer_v2`, `is_correct_v2`, `cluster_id_v2`, `canonical_v2`, `extract_path_v2`, and `reparse_diff.md` are **stale**: substitute `cleaned_answer`, `cleaned_correct`, `cleaned_cluster_id`, `cleaned_state` from `cleaned_answers.parquet`. References to the `prereq_0b_reparse/` folder now point to `archive/2026-05-21_pre_human_label_audit/prereq_0b_reparse/`. The doc is preserved for context on why Analyses A–D were structured the way they were; the headline numbers it cites (v1 Pass@1 8.10%, v2 8.25%, `minority_correct_prompt_rate_v2` 0%, eligible **165**, LLM minority **14.55%**) are superseded — under human labels: Pass@1 **9.03%**, Pass@8 **34.40%**, eligible **172**, LLM minority **14.53%** (see `README.md` in this archive folder).
 
 **Date:** 2026-05-21 (updated: 0b done, Analysis A script + Poly-EPO judge prompt)  
 **Workspace:** `nancy_explore/run0_analysis/`  

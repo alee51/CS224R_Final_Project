@@ -1,5 +1,7 @@
 # Run 0 — detailed results handoff (for downstream review)
 
+> **Archived 2026-05-21.** Moved from `pilot/artifacts/run0_proxy/20260519T190202Z/` to `pilot/docs/archive/`. Pass@ and minority metrics here use pre–human-label parsers. **Current metrics:** `nancy_explore/run0_analysis/data/cleaned_answers.parquet` and [`run0_analysis_plan.md`](../../../nancy_explore/run0_analysis/run0_analysis_plan.md).
+
 **Artifact run:** `20260519T190202Z`  
 **Run ID:** `run0_proxy`  
 **Purpose of this doc:** Freeze what was actually measured, where it lives, and what is *not* measured — so a reviewer can compare answer-only clustering to Poly-EPO-style reasoning clusters (which Run 0 did **not** build).

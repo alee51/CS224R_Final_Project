@@ -1,8 +1,10 @@
 # Analysis B — Cheap-substrate comparison vs LLM reference
 
+> ⚠ **ARCHIVED (v2-era).** Reference minority rate **14.55% on 165** eligible prompts (`is_correct_v2`). Human labels: **14.53% on 172** — see [`../../analysis_minority/minority_metrics.md`](../../analysis_minority/minority_metrics.md).
+
 **Reference:** `llm_cluster_id` from Analysis A (treating `-1` as its own cluster, no rollouts dropped).
 
-**LLM minority-correct prompt rate (headline):** 14.55% over 165 prompts with >=1 correct rollout.
+**LLM minority-correct prompt rate (headline, v2):** 14.55% over **165** prompts with >=1 correct rollout.
 
 ## Aggregate substrate metrics
 

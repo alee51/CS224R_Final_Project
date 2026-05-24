@@ -10,12 +10,13 @@ from collections import defaultdict
 from datetime import datetime, timezone
 from pathlib import Path
 
-REPO = Path(__file__).resolve().parents[2]
+REPO = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(REPO))
-RUN0 = Path(__file__).resolve().parent
+HERE = Path(__file__).resolve().parent
+RUN0 = HERE.parent
 DATA = RUN0 / "data"
 CACHE_DIR = REPO / "pilot/artifacts/run0_proxy/20260519T190202Z/llm_clusters"
-OUT = RUN0 / "llm_clusters_handcheck.md"
+OUT = HERE / "llm_clusters_handcheck.md"
 
 PROMPTS_PATH = DATA / "prompt_inputs.jsonl"
 REParsed_PATH = DATA / "predictions_reparsed.jsonl"

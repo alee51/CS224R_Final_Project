@@ -258,7 +258,8 @@ Below: **candidates**, what each would mean, and a **sample phased plan** if we 
 |-------|------|
 | Timeline | [`../timeline.md`](../timeline.md) |
 | Mentor meeting | [`../../reference/mentor_meeting_20260507.md`](../../reference/mentor_meeting_20260507.md) |
-| Run 0 handoff | [`../../../pilot/artifacts/run0_proxy/20260519T190202Z/RUN0_HANDOFF_FOR_REVIEW.md`](../../../pilot/artifacts/run0_proxy/20260519T190202Z/RUN0_HANDOFF_FOR_REVIEW.md) |
+| Run 0 handoff (historical) | [`../../../pilot/docs/archive/RUN0_HANDOFF_FOR_REVIEW.md`](../../../pilot/docs/archive/RUN0_HANDOFF_FOR_REVIEW.md) |
+| Run 0 analysis (current) | [`../../run0_analysis/run0_analysis_plan.md`](../../run0_analysis/run0_analysis_plan.md) |
 | Strategic critique | [`pilot_strategy_20260520.md`](pilot_strategy_20260520.md) |
 | Poly-EPO vs pilot | [`../../../pilot/docs/analysis/0519_poly_epo_methodology.md`](../../../pilot/docs/analysis/0519_poly_epo_methodology.md) |
 | Worst-subset depth | [`../../agents/outputs/depth/02_depth_worst_subset.md`](../../agents/outputs/depth/02_depth_worst_subset.md) |

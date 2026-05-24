@@ -1,4 +1,7 @@
 # Analysis A — LLM reasoning clusters (summary)
+
+> ⚠ **ARCHIVED (v2-era).** Eligible **165** and rate **14.55%** used `is_correct_v2`. Current summary: [`../../../analysis_a/analysis_a_summary.md`](../../../analysis_a/analysis_a_summary.md) — eligible **172**, **14.53%** under `cleaned_correct`.
+
 **Generated:** 2026-05-21  
 **Provider / tier / model:** `google` / `cheap` / `gemini-3.1-flash-lite`  
 **Cache dir:** `pilot/artifacts/run0_proxy/20260519T190202Z/llm_clusters`  

@@ -1,5 +1,5 @@
 # Moved
 
-This brief lives at `**[../../run0_analysis/run0_offline_analyses_20260521.md](../../run0_analysis/run0_offline_analyses_20260521.md)**` (`nancy_explore/run0_analysis/`).
+**Current plan:** [`../../run0_analysis/run0_analysis_plan.md`](../../run0_analysis/run0_analysis_plan.md)
 
-Human labels: `**../../run0_analysis/labels/rollout_labels.jsonl**`. Labeling pipeline archive: `**../../run0_analysis/labeling/**`.
+**Historical v2-era design (2026-05-21):** [`../../run0_analysis/archive/2026-05-21_pre_human_label_audit/run0_offline_analyses_20260521.md`](../../run0_analysis/archive/2026-05-21_pre_human_label_audit/run0_offline_analyses_20260521.md)

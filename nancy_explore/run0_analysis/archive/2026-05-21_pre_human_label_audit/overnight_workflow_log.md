@@ -1,12 +1,14 @@
 # Overnight workflow log — 2026-05-21 PM → 05-22 AM
 
+> ⚠ **HISTORICAL — pre-human-label audit.** All `Pass@k`, `minority_correct_prompt_rate_v2`, Cover@τ, and substrate-rate numbers in this log were computed against the v2 parser before it was validated against human labels. v2-vs-human came back at 78% presence agreement, so the analyses cited here were archived (see `archive/2026-05-21_pre_human_label_audit/`). Canonical replacement: `data/cleaned_answers.parquet`. Updated headlines under human labels: Pass@1 = **9.03%**, Pass@8 = **34.40%** (**172**/500 prompts with ≥1 correct; was **165**/500 under v2 `is_correct_v2`). LLM minority rate under human labels: **14.53%** (25/172) — see `analysis_minority/minority_metrics.md` and `analysis_a/analysis_a_summary.md`. Any **165** or **14.55%** in this log is v2-era only. See `archive/2026-05-21_pre_human_label_audit/README.md`.
+
 **Operator:** Claude (Opus 4.7), autonomous overnight session  
-**Goal:** Complete as much of `run0_offline_analyses_20260521.md` as possible while Nancy sleeps.
+**Goal:** Complete as much of `run0_offline_analyses_20260521.md` (this folder) as possible while Nancy sleeps.
 
 ## Starting state
 
 - **Analysis A model calls:** DONE (500 prompts labeled by `gemini-3.1-flash-lite`, cache populated, summary parquet built).
-- **Headline from A:** `minority_correct_prompt_rate_llm = 14.55%` (CI [9.09%, 20.00%]), 165/500 prompts eligible. Degenerate rate = 16.95%.
+- **Headline from A (v2-era, stale):** `minority_correct_prompt_rate_llm = 14.55%` (CI [9.09%, 20.00%]), **165**/500 prompts eligible (`is_correct_v2`). Human labels → **172** eligible, **14.53%** minority LLM. Degenerate rate = 16.95%.
 - **A.7.1 hand-check:** Nancy did the first pass of `llm_clusters_handcheck.md`, said it looked fine; rest not reviewed.
 - **A.7.2 cross-tier ARI probe:** explicitly marked skippable in design doc — **SKIPPING** for the night.
 - **A.7.3 degenerate-cluster sanity:** not done.

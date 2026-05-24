@@ -9,7 +9,7 @@ from collections import Counter, defaultdict
 from functools import lru_cache
 from pathlib import Path
 
-WORKDIR = Path(__file__).resolve().parent
+WORKDIR = Path(__file__).resolve().parent.parent
 RAW = WORKDIR / "data" / "raw_predictions.jsonl"
 ROLLOUT_LABELS = WORKDIR / "labels" / "rollout_labels.jsonl"
 DEFAULT_MODEL = "Qwen/Qwen3-1.7B-Base"

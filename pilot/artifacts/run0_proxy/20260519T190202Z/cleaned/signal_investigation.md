@@ -8,7 +8,7 @@
 
 Cleaning (`answer_clean.py`) **improves measurement** (fewer garbage parses, +6 rollout-level correct via normalization) but **does not change the scientific conclusion** for Run 0’s core question: whether exact-match clustering supports **minority-weighted set RL** when correct answers occasionally land in **distinct canonical clusters**.
 
-After clean labels, **`minority_correct_prompt_rate` remains 0.0%** (0/500). Among 165 prompts with ≥1 clean-correct rollout and high wrong-answer diversity, **zero** prompts have ≥2 distinct **correct** answer modes (semantic bucket or `canon_clean`). The substrate shows **high wrong-mode diversity**, not **multi-cluster correct minorities**.
+After clean labels, **`minority_correct_prompt_rate` remains 0.0%** (0/500). Among **165** prompts with ≥1 clean-correct rollout in this artifact’s `answer_clean` pass (human-verified labels → **172** eligible; see `nancy_explore/run0_analysis/analysis_minority/minority_metrics.md`) and high wrong-answer diversity, **zero** prompts have ≥2 distinct **correct** answer modes (semantic bucket or `canon_clean`). The substrate shows **high wrong-mode diversity**, not **multi-cluster correct minorities**.
 
 ---
 
@@ -28,7 +28,7 @@ Original gate: `minority_correct_prompt_rate` ≥ 15%. Team has deprioritized ga
 | Metric | Stored (raw) | Clean (`answer_clean`) | Δ |
 |--------|-------------:|----------------------:|---:|
 | Rollout correct | 324/4000 (**8.10%**) | 330/4000 (**8.25%**) | +6 |
-| Prompts with ≥1 correct | 163/500 (**32.6%**) | 165/500 (**33.0%**) | +2 prompts |
+| Prompts with ≥1 correct | 163/500 (**32.6%**) | 165/500 (**33.0%**) (`answer_clean`; human labels **172/500**) | +2 prompts |
 | `minority_correct_prompt_rate` | **0.0%** | **0.0%** | — |
 
 **Per-prompt correct-rollout distribution** shifts slightly (e.g. 81→83 prompts with exactly 1 correct); no prompt reaches 8/8.

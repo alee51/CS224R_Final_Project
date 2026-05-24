@@ -10,7 +10,7 @@ The first pilot matrix (pre-redesign) launched `run0_proxy` detached on 2026-05-
 
 ## Reasoning
 
-- Run 0 from the pre-redesign pilot is **complete and reviewed**: artifacts at `pilot/artifacts/run0_proxy/20260519T190202Z/`, handoff in [`RUN0_HANDOFF_FOR_REVIEW.md`](../../artifacts/run0_proxy/20260519T190202Z/RUN0_HANDOFF_FOR_REVIEW.md), plus cleaned offline analysis under `cleaned/`.
+- Run 0 from the pre-redesign pilot is **complete and reviewed**: artifacts at `pilot/artifacts/run0_proxy/20260519T190202Z/`, handoff in [`../archive/RUN0_HANDOFF_FOR_REVIEW.md`](../archive/RUN0_HANDOFF_FOR_REVIEW.md) (historical), current analysis in `nancy_explore/run0_analysis/`.
 - Re-running `run0_proxy` under redesign would mostly **re-sample the same frozen model** on the same 500 DaPO rows (0–499). Parser/template fixes improve label quality but do not change the core conclusion from the completed run: **answer-cluster minority-correct prompt rate stays ~0%** on this substrate.
 - Stage 1 budget and wall-clock are better spent on the **GRPO mechanism matrix** (`run1_grpo`, `run2_inverse_freq`, `run3_f_grpo`) after smoke, where training + diagnostics are the actual unknowns.
 - `pilot/eval/gate.py` may still read the latest `run0_proxy` artifact directory if present; no gate re-run is required for Stage 1 launch.
@@ -28,7 +28,7 @@ The first pilot matrix (pre-redesign) launched `run0_proxy` detached on 2026-05-
 ## Links
 
 - Artifacts: `pilot/artifacts/run0_proxy/20260519T190202Z/`
-- Handoff: `pilot/artifacts/run0_proxy/20260519T190202Z/RUN0_HANDOFF_FOR_REVIEW.md`
+- Handoff: `pilot/docs/archive/RUN0_HANDOFF_FOR_REVIEW.md`
 - Redesign spec: `pilot/docs/operations/PILOT_REDESIGN.md` (Run 0 waived bullet in §1)
 
 ## Supersedes

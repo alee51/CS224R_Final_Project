@@ -24,15 +24,16 @@ import numpy as np
 import pandas as pd
 from scipy.stats import pearsonr, spearmanr
 
-HERE = Path(__file__).parent
-PREDS_PATH = HERE / "data" / "predictions_reparsed.jsonl"
-LLM_PATH = HERE / "llm_clusters_summary.parquet"
+HERE = Path(__file__).resolve().parent
+ROOT = HERE.parent
+PREDS_PATH = ROOT / "data" / "predictions_reparsed.jsonl"
+LLM_PATH = ROOT / "analysis_a" / "llm_clusters_summary.parquet"
 OUT_PARQUET = HERE / "objective_advantages.parquet"
 OUT_PEARSON = HERE / "objective_corr_pearson.csv"
 OUT_SPEARMAN = HERE / "objective_corr_spearman.csv"
 OUT_SCATTER = HERE / "objective_scatter_grid.png"
 OUT_MD = HERE / "objective_simulation.md"
-LOG = HERE / "overnight_workflow_log.md"
+LOG = ROOT / "overnight_workflow_log.md"
 
 N = 8           # rollouts per prompt
 SUBSET = 4      # subset size for f_poly / worst_subset

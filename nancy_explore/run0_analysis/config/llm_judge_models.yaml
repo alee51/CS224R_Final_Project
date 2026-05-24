@@ -1,5 +1,5 @@
 # LLM judge tier → API model IDs per provider.
-# Used by Run 0 offline Analysis A (see nancy_explore/run0_analysis/run0_offline_analyses_20260521.md).
+# Used by Run 0 offline Analysis A (see nancy_explore/run0_analysis/run0_analysis_plan.md).
 #
 # Executor sets `provider` to one of: google | anthropic | openai
 # Analysis A primary run uses tier `cheap`; optional cross-check uses `moderate`.

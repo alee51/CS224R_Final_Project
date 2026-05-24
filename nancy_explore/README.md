@@ -9,7 +9,8 @@
 | [`narrative/context.md`](narrative/context.md) | Mentor pitch, constraints, reading order |
 | [`narrative/timeline.md`](narrative/timeline.md) | Chronology |
 | [`narrative/briefs/ta_office_hours_20260521.md`](narrative/briefs/ta_office_hours_20260521.md) | Latest mentor brief (tried / learned / next options) |
-| [`run0_analysis/run0_offline_analyses_20260521.md`](run0_analysis/run0_offline_analyses_20260521.md) | Offline analyses design + `labels/rollout_labels.jsonl` |
+| [`run0_analysis/run0_exec_plan.md`](run0_analysis/run0_exec_plan.md) | Run 0 analysis — done; questions + E1 conclusions |
+| [`narrative/timeline.md`](narrative/timeline.md) | Project chronology (updates here) |
 | [`narrative/decisions.md`](narrative/decisions.md) | Team decision log (canonical) |
 
 ## Layout
