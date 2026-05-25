@@ -11,6 +11,7 @@ All probe scripts follow `[STANDARDS.md](../STANDARDS.md)` — same wandb / Moda
 | Doc / file | Contents |
 | --- | --- |
 | This file | What each probe measures, why, metrics, soft expectations, decisions unlocked |
+| `[group_a_results.md](./group_a_results.md)` | Group A full-run readout (metrics → PLAN §2/§5/§7 decisions) |
 | `main/configs/probe_a_05-24.yaml` | Numeric knobs (created at implement time; source of truth for scripts) |
 | `STANDARDS.md` | Cross-cutting rules: artifacts, checkpoints, seeds, parsing policy, Modal volume note |
 | `main/docs/probes/artifacts/*.pointer.json` | Git pointers to volume paths after a run |
@@ -87,6 +88,8 @@ Doesn't need our trainer. Needs vLLM + Qwen3-1.7B-Base + Qwen3-4B-Instruct-2507 
 | Judge wall-clock / VRAM / $/call | PLAN.md §5 judge; §7 cost; may cut CoT arms |
 
 **Runtime:** ~2 hr at 200×8 (was ~1.5 hr at old 200-problem plan); longer if GPU is slower than estimate.
+
+**Results (full run, 05-25):** [`group_a_results.md`](./group_a_results.md) — wandb `t33091vc`.
 
 ### Group B — first end-to-end probe, after §5 skeleton is built
 

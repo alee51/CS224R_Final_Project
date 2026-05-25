@@ -1,6 +1,6 @@
 # Group A probe — implementation guide
 
-**Prerequisites:** Read `[05-24_probe_plan.md](./05-24_probe_plan.md)`, `[prompt_extraction_research.md](./prompt_extraction_research.md)`, `[STANDARDS.md](../STANDARDS.md)`.
+**Prerequisites:** Read `[05-24_probe_plan.md](./05-24_probe_plan.md)`, `[prompt_extraction_research.md](./prompt_extraction_research.md)`, `[STANDARDS.md](../STANDARDS.md)`. Full-run readout: `[group_a_results.md](./group_a_results.md)`.
 
 **Locked choices:**
 
@@ -302,11 +302,13 @@ cat main/docs/probes/artifacts/05-24_group_a.pointer.json
 - [ ] `group_a_rollout_judge.py` Phase 1 `@app.function` → smoke
 - [ ] Add Phase 2 as a **separate** `@app.function` (own container); chain after Phase 1 in pipeline mode, callable standalone for resume
 - [ ] Full run H100 detached
-- [ ] Readout: update PLAN §2/§5/§7 from wandb panels
+- [ ] Readout: update PLAN §2/§5/§7 from [`group_a_results.md`](./group_a_results.md)
 
 ---
 
 ## 8. Post-run readout
+
+**Full run (05-25):** [`group_a_results.md`](./group_a_results.md) — wandb `t33091vc`.
 
 | Panel | PLAN update |
 | --- | --- |
