@@ -36,6 +36,8 @@ logging.basicConfig(level=logging.INFO)
 POLARIS_DATASET_ID = "POLARIS-Project/Polaris-Dataset-53K"
 POLARIS_CACHE_REL = "probes/05-24/group_a/polaris_cache.jsonl"
 PROMPT_VARIANT = "dapo_answer_v1"
+# Phase 1 batch logs use step=rollouts_done (up to ~1600). Phase 2 must not reuse those steps.
+PHASE2_STEP_OFFSET = 2000
 
 app = modal.App(os.environ.get("CS224R_APP_NAME", "cs224r-probe-a-untagged"))
 
@@ -49,6 +51,15 @@ def _load_yaml(config_path: str) -> dict[str, Any]:
 
 
 def _git_metadata() -> dict[str, Any]:
+    env_sha = os.environ.get("CS224R_GIT_SHA")
+    if env_sha:
+        dirty_raw = os.environ.get("CS224R_GIT_DIRTY", "false").lower()
+        return {
+            "git_sha": env_sha,
+            "git_dirty": dirty_raw in ("true", "1", "yes"),
+            "git_sha_short": os.environ.get("CS224R_GIT_SHA_SHORT", env_sha[:7]),
+        }
+
     def _run(cmd: list[str]) -> str:
         return subprocess.check_output(cmd, text=True, stderr=subprocess.DEVNULL).strip()
 
@@ -210,11 +221,36 @@ def _percentiles(values: list[float], ps: tuple[int, ...]) -> dict[str, float]:
     return out
 
 
+def _reset_vram_peak() -> None:
+    import torch
+
+    if torch.cuda.is_available():
+        torch.cuda.reset_peak_memory_stats()
+
+
 def _vram_gb_used() -> float:
     import torch
 
     if torch.cuda.is_available():
-        return torch.cuda.max_memory_allocated() / (1024**3)
+        peak_bytes = torch.cuda.max_memory_allocated()
+        if peak_bytes > 0:
+            return peak_bytes / (1024**3)
+
+    try:
+        out = subprocess.check_output(
+            [
+                "nvidia-smi",
+                "--query-gpu=memory.used",
+                "--format=csv,noheader,nounits",
+            ],
+            text=True,
+            stderr=subprocess.DEVNULL,
+        ).strip()
+        mibs = [float(line.strip()) for line in out.splitlines() if line.strip()]
+        if mibs:
+            return max(mibs) / 1024.0
+    except (subprocess.CalledProcessError, FileNotFoundError, ValueError):
+        pass
     return 0.0
 
 
@@ -342,6 +378,7 @@ def run_phase1(config: str) -> str:
         max_num_seqs=int(phase1_cfg["max_num_seqs"]),
         enable_prefix_caching=bool(phase1_cfg.get("enable_prefix_caching", True)),
     )
+    _reset_vram_peak()
     max_response_length = int(phase1_cfg["max_response_length"])
     batch_size = int(phase1_cfg["max_num_seqs"])
 
@@ -629,6 +666,7 @@ def run_phase2(config: str, wandb_run_id: str | None = None) -> str:
         gpu_memory_utilization=float(phase2_cfg["gpu_memory_utilization"]),
         max_num_seqs=max_num_seqs,
     )
+    _reset_vram_peak()
     tokenizer = llm.get_tokenizer()
     judge_params = SamplingParams(
         temperature=float(phase2_cfg["temperature"]),
@@ -747,7 +785,7 @@ def run_phase2(config: str, wandb_run_id: str | None = None) -> str:
                     "cluster_100_hits": cluster_100_hits,
                     "cost_per_call": cost_per_call,
                 },
-                step=judged_count,
+                step=PHASE2_STEP_OFFSET + judged_count,
             )
 
             table_rows.append(

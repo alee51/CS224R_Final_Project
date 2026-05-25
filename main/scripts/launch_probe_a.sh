@@ -22,4 +22,11 @@ print(cfg['operator'])
 EOF
 TS=$(date +%m-%d-%H%M)
 export CS224R_APP_NAME="cs224r-probe-a-${PHASE}-${OP}-${TS}"
+export CS224R_GIT_SHA="$(git rev-parse HEAD)"
+export CS224R_GIT_SHA_SHORT="$(git rev-parse --short HEAD)"
+if [ -n "$(git status --porcelain)" ]; then
+  export CS224R_GIT_DIRTY="true"
+else
+  export CS224R_GIT_DIRTY="false"
+fi
 exec main/.venv/bin/modal run --detach main/probes/group_a_rollout_judge.py::run_full --config "$CFG"
