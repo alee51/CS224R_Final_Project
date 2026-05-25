@@ -36,8 +36,12 @@ logging.basicConfig(level=logging.INFO)
 POLARIS_DATASET_ID = "POLARIS-Project/Polaris-Dataset-53K"
 POLARIS_CACHE_REL = "probes/05-24/group_a/polaris_cache.jsonl"
 PROMPT_VARIANT = "dapo_answer_v1"
-# Phase 1 batch logs use step=rollouts_done (up to ~1600). Phase 2 must not reuse those steps.
-PHASE2_STEP_OFFSET = 2000
+
+
+def _phase2_step_offset(phase1_done: dict[str, Any]) -> int:
+    """Phase 1 logs batch scalars at step=rollouts_done; Phase 2 must start above that."""
+    n_rollouts = int(phase1_done.get("n_rollouts", 0))
+    return n_rollouts + 1000
 
 app = modal.App(os.environ.get("CS224R_APP_NAME", "cs224r-probe-a-untagged"))
 
@@ -306,7 +310,7 @@ def _resume_wandb(cfg: dict[str, Any], wandb_run_id: str) -> Any:
 
 @app.function(
     gpu="H100",
-    timeout=10800,
+    timeout=14400,
     image=image,
     secrets=[
         modal.Secret.from_name("HUGGINGFACE"),
@@ -585,7 +589,7 @@ def run_phase1(config: str) -> str:
 
 @app.function(
     image=image,
-    timeout=21600,
+    timeout=36000,
 )
 def run_pipeline(config: str) -> str:
     """Orchestrate Phase 1 → Phase 2 on Modal (safe to chain .remote() here)."""
@@ -595,7 +599,7 @@ def run_pipeline(config: str) -> str:
 
 @app.function(
     gpu="H100",
-    timeout=10800,
+    timeout=14400,
     image=image,
     secrets=[
         modal.Secret.from_name("HUGGINGFACE"),
@@ -632,6 +636,8 @@ def run_phase2(config: str, wandb_run_id: str | None = None) -> str:
 
     with phase1_done_path.open() as f:
         phase1_done = json.load(f)
+
+    phase2_step_offset = _phase2_step_offset(phase1_done)
 
     if wandb_run_id is None:
         wandb_run_id = phase1_done["wandb_run_id"]
@@ -785,7 +791,7 @@ def run_phase2(config: str, wandb_run_id: str | None = None) -> str:
                     "cluster_100_hits": cluster_100_hits,
                     "cost_per_call": cost_per_call,
                 },
-                step=PHASE2_STEP_OFFSET + judged_count,
+                step=phase2_step_offset + judged_count,
             )
 
             table_rows.append(
