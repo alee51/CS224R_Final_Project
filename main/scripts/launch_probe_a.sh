@@ -11,8 +11,15 @@ REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 cd "$REPO_ROOT"
 
 CFG="${1:-main/configs/probe_a_05-24.yaml}"
-PHASE=$(yq '.smoke' "$CFG" | grep -q true && echo smoke || echo full)
-OP=$(yq '.operator' "$CFG")
+read -r PHASE OP <<EOF
+$(python3 -c "
+import yaml, sys
+cfg = yaml.safe_load(open(sys.argv[1]))
+smoke = bool(cfg.get('smoke', False))
+print('smoke' if smoke else 'full')
+print(cfg['operator'])
+" "$CFG")
+EOF
 TS=$(date +%m-%d-%H%M)
 export CS224R_APP_NAME="cs224r-probe-a-${PHASE}-${OP}-${TS}"
-exec modal run --detach main/probes/group_a_rollout_judge.py::run_full --config "$CFG"
+exec main/.venv/bin/modal run --detach main/probes/group_a_rollout_judge.py::run_full --config "$CFG"

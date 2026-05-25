@@ -23,6 +23,7 @@ image = (
         {
             "PYTORCH_CUDA_ALLOC_CONF": "expandable_segments:True",
             "PYTHONUNBUFFERED": "1",
+            "PYTHONPATH": "/root/main",
         }
     )
     .pip_install(
@@ -46,9 +47,6 @@ image = (
         str(_LOCAL_MAIN_DIR),
         remote_path="/root/main",
         ignore=["docs", "data", "*.md", "__pycache__", ".pytest_cache"],
-    )
-    .run_commands(
-        "echo '/root/main' > /usr/local/lib/python3.11/site-packages/main.pth"
     )
 )
 
