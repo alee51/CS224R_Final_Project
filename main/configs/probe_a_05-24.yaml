@@ -1,0 +1,53 @@
+global_seed: 42
+operator: nancy  # STANDARDS run name; operator identity in wandb comes from WANDB_API_KEY
+gpu_class: H100
+modal_price_per_sec: 0.001097
+
+# smoke: 1 problem per band × 2 rollouts (keeps stratification path live)
+smoke: true
+smoke_per_band: 1
+smoke_n_rollouts: 2
+
+# optional: force Phase 2 only (else auto-detect phase1_done.json on volume)
+resume_from_phase: null  # or 2
+
+sampling:
+  per_band: 25
+  difficulty_bands: ["0/8", "1/8", "2/8", "3/8", "4/8", "5/8", "6/8", "7/8"]
+  rollouts_per_prompt: 8
+  temperature: 1.0
+
+phase1:
+  model: Qwen/Qwen3-1.7B-Base
+  max_prompt_length: 1024
+  max_response_length: 4096
+  gpu_memory_utilization: 0.90
+  max_model_len: 5120
+  max_num_seqs: 128
+  enable_prefix_caching: true
+
+phase2:
+  model: Qwen/Qwen3-4B-Instruct-2507  # confirmed via HF model card 2026-05-25
+  gpu_memory_utilization: 0.88
+  # Native context is 262144 (no RoPE scaling). HF card recommends 32768 as OOM fallback.
+  # Worst-case judge input ≈ 17-18k tokens (8 × 2048 rollouts + instructions); 32768 leaves
+  # ~14k headroom. Do NOT cap individual rollouts (Poly-EPO faithful). Log judge_input_tokens.
+  max_model_len: 32768
+  max_num_seqs: 4
+  temperature: 0.0          # deterministic judge
+  max_tokens: 1024          # judge JSON for 8 entries is small; bump only if outputs truncate
+  apply_chat_template: true # 4B-Instruct has a chat template (unlike 1.7B-Base)
+
+artifacts:
+  volume_name: main-artifacts  # auto-created per workspace via create_if_missing=True
+  volume_mount: /vol
+  hf_cache_volume: hf-cache
+  manifest_path: probes/05-24/group_a/manifest.jsonl
+  rollouts_path: probes/05-24/group_a/phase1_rollouts.jsonl
+  phase1_done_path: probes/05-24/group_a/phase1_done.json
+  pointer_path: docs/probes/artifacts/05-24_group_a.pointer.json
+
+wandb:
+  entity: 224r-project
+  project: cs224r-minority-voting
+  group: probe-A-05-24
