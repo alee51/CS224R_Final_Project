@@ -1,4 +1,4 @@
-"""Group A probe — Phase 1 rollouts (Phase 2 judge added in Phase D)."""
+"""Group A probe — Phase 1 rollouts and Phase 2 judge."""
 
 from __future__ import annotations
 
@@ -218,6 +218,15 @@ def _vram_gb_used() -> float:
     return 0.0
 
 
+def _read_jsonl(path: Path) -> list[dict[str, Any]]:
+    rows: list[dict[str, Any]] = []
+    with path.open() as f:
+        for line in f:
+            if line.strip():
+                rows.append(json.loads(line))
+    return rows
+
+
 def _init_wandb(cfg: dict[str, Any], repro: dict[str, Any]) -> Any:
     import wandb
 
@@ -245,6 +254,18 @@ def _init_wandb(cfg: dict[str, Any], repro: dict[str, Any]) -> Any:
         }
     )
     return run
+
+
+def _resume_wandb(cfg: dict[str, Any], wandb_run_id: str) -> Any:
+    import wandb
+
+    return wandb.init(
+        entity=cfg["wandb"]["entity"],
+        project=cfg["wandb"]["project"],
+        group=cfg["wandb"]["group"],
+        id=wandb_run_id,
+        resume="must",
+    )
 
 
 @app.function(
@@ -525,8 +546,295 @@ def run_phase1(config: str) -> str:
     return wandb_run_id
 
 
+@app.function(
+    gpu="H100",
+    timeout=10800,
+    image=image,
+    secrets=[
+        modal.Secret.from_name("HUGGINGFACE"),
+        modal.Secret.from_name("WANDB_API_KEY"),
+    ],
+    volumes={
+        ARTIFACTS_MOUNT: artifacts_volume,
+        HF_CACHE_MOUNT: hf_cache_volume,
+    },
+)
+def run_phase2(config: str, wandb_run_id: str | None = None) -> str:
+    """Phase 2: read Phase 1 artifacts, vLLM judge, wandb resume, pointer json."""
+    from vllm import LLM, SamplingParams
+
+    from judge.format import (
+        _assignment_from_poly_epo_payload,
+        _strip_json_fences,
+        build_judge_messages,
+    )
+
+    cfg = _load_yaml(config)
+    vol_root = Path(ARTIFACTS_MOUNT)
+    art = cfg["artifacts"]
+    manifest_path = vol_root / art["manifest_path"]
+    rollouts_path = vol_root / art["rollouts_path"]
+    phase1_done_path = vol_root / art["phase1_done_path"]
+    pointer_path = vol_root / art["pointer_path"]
+
+    if not phase1_done_path.is_file():
+        raise FileNotFoundError(
+            f"Phase 1 not complete: missing {phase1_done_path}. "
+            "Run run_phase1 first or check volume artifacts."
+        )
+
+    with phase1_done_path.open() as f:
+        phase1_done = json.load(f)
+
+    if wandb_run_id is None:
+        wandb_run_id = phase1_done["wandb_run_id"]
+    if not wandb_run_id:
+        raise ValueError("wandb_run_id required (arg or phase1_done.json)")
+
+    if not manifest_path.is_file():
+        raise FileNotFoundError(f"Missing manifest: {manifest_path}")
+    if not rollouts_path.is_file():
+        raise FileNotFoundError(f"Missing rollouts: {rollouts_path}")
+
+    manifest = _read_jsonl(manifest_path)
+    rollout_rows = _read_jsonl(rollouts_path)
+    rollouts_by_pid: dict[int, list[dict[str, Any]]] = defaultdict(list)
+    for row in rollout_rows:
+        rollouts_by_pid[int(row["problem_id"])].append(row)
+    for pid in rollouts_by_pid:
+        rollouts_by_pid[pid].sort(key=lambda r: int(r["rollout_idx"]))
+
+    run = _resume_wandb(cfg, wandb_run_id)
+    import wandb
+
+    phase2_cfg = cfg["phase2"]
+    max_model_len = int(phase2_cfg["max_model_len"])
+    max_num_seqs = int(phase2_cfg["max_num_seqs"])
+    modal_price = float(cfg["modal_price_per_sec"])
+    apply_chat_template = bool(phase2_cfg.get("apply_chat_template", True))
+
+    llm = LLM(
+        model=phase2_cfg["model"],
+        max_model_len=max_model_len,
+        gpu_memory_utilization=float(phase2_cfg["gpu_memory_utilization"]),
+        max_num_seqs=max_num_seqs,
+    )
+    tokenizer = llm.get_tokenizer()
+    judge_params = SamplingParams(
+        temperature=float(phase2_cfg["temperature"]),
+        max_tokens=int(phase2_cfg["max_tokens"]),
+    )
+
+    judge_tasks: list[dict[str, Any]] = []
+    for entry in manifest:
+        problem_id = int(entry["problem_id"])
+        rollouts = rollouts_by_pid.get(problem_id, [])
+        if not rollouts:
+            raise RuntimeError(f"No rollouts for problem_id={problem_id}")
+        n_rollouts = len(rollouts)
+        system, user = build_judge_messages(entry["problem"], rollouts)
+        messages = [
+            {"role": "system", "content": system},
+            {"role": "user", "content": user},
+        ]
+        if apply_chat_template:
+            prompt_str = tokenizer.apply_chat_template(
+                messages, add_generation_prompt=True, tokenize=False
+            )
+        else:
+            prompt_str = f"{system}\n\n{user}"
+
+        judge_input_tokens = len(tokenizer.encode(prompt_str))
+        truncated = judge_input_tokens > max_model_len
+        judge_tasks.append(
+            {
+                "problem_id": problem_id,
+                "difficulty_band": entry.get("difficulty_band"),
+                "prompt_str": prompt_str,
+                "n_rollouts": n_rollouts,
+                "judge_input_tokens": judge_input_tokens,
+                "truncated": truncated,
+            }
+        )
+
+    table_columns = [
+        "problem_id",
+        "difficulty_band",
+        "judge_input_tokens",
+        "output_tokens",
+        "wall_clock_s",
+        "json_parse_ok",
+        "truncated",
+        "cluster_count",
+        "cluster_100_hits",
+        "cost_per_call",
+        "finish_reason",
+    ]
+    table_rows: list[list[Any]] = []
+
+    wall_clocks: list[float] = []
+    output_tokens_all: list[float] = []
+    cluster_counts: list[float] = []
+    costs_per_call: list[float] = []
+    json_parse_ok_count = 0
+    judged_count = 0
+
+    runnable = [t for t in judge_tasks if not t["truncated"]]
+    truncated_tasks = [t for t in judge_tasks if t["truncated"]]
+
+    for batch_start in range(0, len(runnable), max_num_seqs):
+        batch = runnable[batch_start : batch_start + max_num_seqs]
+        prompts = [t["prompt_str"] for t in batch]
+        batch_t0 = time.monotonic()
+        outputs = llm.generate(prompts, judge_params)
+        batch_elapsed = time.monotonic() - batch_t0
+        per_call_wall = batch_elapsed / len(batch) if batch else 0.0
+
+        for task, out in zip(batch, outputs):
+            completion_out = out.outputs[0]
+            completion_text = completion_out.text
+            output_tokens = len(completion_out.token_ids)
+            finish_reason = completion_out.finish_reason
+            wall_clock_s = per_call_wall
+            cost_per_call = wall_clock_s * modal_price
+
+            json_parse_ok = False
+            cluster_count: int | None = None
+            cluster_100_hits: int | None = None
+
+            try:
+                payload = json.loads(_strip_json_fences(completion_text))
+                assignment, clusters = _assignment_from_poly_epo_payload(
+                    payload, task["n_rollouts"]
+                )
+                cluster_count = len(clusters)
+                cluster_100_hits = sum(1 for cid in assignment.values() if cid == -1)
+                json_parse_ok = True
+                json_parse_ok_count += 1
+            except (json.JSONDecodeError, ValueError, KeyError, TypeError) as exc:
+                logger.warning(
+                    "Judge JSON parse failed problem_id=%s: %s",
+                    task["problem_id"],
+                    exc,
+                )
+
+            judged_count += 1
+            wall_clocks.append(wall_clock_s)
+            output_tokens_all.append(float(output_tokens))
+            if cluster_count is not None:
+                cluster_counts.append(float(cluster_count))
+            costs_per_call.append(cost_per_call)
+
+            wandb.log(
+                {
+                    "judge_wall_clock_s": wall_clock_s,
+                    "judge_input_tokens": task["judge_input_tokens"],
+                    "judge_output_tokens": output_tokens,
+                    "judge_vram_gb_used": _vram_gb_used(),
+                    "json_parse_ok": json_parse_ok,
+                    "truncated": False,
+                    "cluster_count": cluster_count,
+                    "cluster_100_hits": cluster_100_hits,
+                    "cost_per_call": cost_per_call,
+                },
+                step=judged_count,
+            )
+
+            table_rows.append(
+                [
+                    task["problem_id"],
+                    task["difficulty_band"],
+                    task["judge_input_tokens"],
+                    output_tokens,
+                    wall_clock_s,
+                    json_parse_ok,
+                    False,
+                    cluster_count,
+                    cluster_100_hits,
+                    cost_per_call,
+                    finish_reason,
+                ]
+            )
+
+    for task in truncated_tasks:
+        table_rows.append(
+            [
+                task["problem_id"],
+                task["difficulty_band"],
+                task["judge_input_tokens"],
+                None,
+                None,
+                False,
+                True,
+                None,
+                None,
+                None,
+                None,
+            ]
+        )
+
+    n_prompts = len(judge_tasks)
+    truncated_count = len(truncated_tasks)
+
+    final_log: dict[str, Any] = {
+        "phase2_n_prompts": n_prompts,
+        "phase2_judged_calls": judged_count,
+        "phase2_truncated_count": truncated_count,
+        "phase2_truncated_rate": truncated_count / n_prompts if n_prompts else 0.0,
+        "phase2_json_parse_ok_rate": (
+            json_parse_ok_count / judged_count if judged_count else 0.0
+        ),
+        "judge_vram_gb_used": _vram_gb_used(),
+    }
+    if wall_clocks:
+        for key, val in _percentiles(wall_clocks, (50, 90, 95, 99)).items():
+            final_log[f"judge_wall_clock_{key}"] = val
+        final_log["phase2_judge_wall_clock_hist"] = wandb.Histogram(wall_clocks)
+    if output_tokens_all:
+        for key, val in _percentiles(output_tokens_all, (50, 90, 95, 99)).items():
+            final_log[f"judge_output_tokens_{key}"] = val
+        final_log["phase2_judge_output_tokens_hist"] = wandb.Histogram(output_tokens_all)
+    if costs_per_call:
+        final_log["phase2_cost_per_call_hist"] = wandb.Histogram(costs_per_call)
+        final_log["phase2_cost_per_call_median"] = _percentiles(costs_per_call, (50,))[
+            "p50"
+        ]
+    if cluster_counts:
+        final_log["phase2_cluster_count_hist"] = wandb.Histogram(cluster_counts)
+
+    wandb.log(
+        {
+            **final_log,
+            "phase2_judge_results": wandb.Table(columns=table_columns, data=table_rows),
+        }
+    )
+
+    group_dir = str(Path(art["manifest_path"]).parent)
+    pointer_record = {
+        "modal_volume": ARTIFACTS_VOLUME_NAME,
+        "path": f"{group_dir}/",
+        "wandb_run_id": wandb_run_id,
+        "created_at": datetime.now(timezone.utc).isoformat(),
+    }
+    pointer_path.parent.mkdir(parents=True, exist_ok=True)
+    with pointer_path.open("w") as f:
+        json.dump(pointer_record, f, indent=2)
+    artifacts_volume.commit()
+
+    logger.info(
+        "Phase 2 complete: %s prompts (%s judged, %s truncated), wandb=%s, pointer=%s",
+        n_prompts,
+        judged_count,
+        truncated_count,
+        wandb_run_id,
+        pointer_path,
+    )
+    run.finish()
+    return wandb_run_id
+
+
 @app.local_entrypoint()
 def run_full(config: str) -> str:
     wandb_run_id = run_phase1.remote(config=config)
-    # Phase D will extend this to call run_phase2 after Phase 1.
+    run_phase2.remote(config=config, wandb_run_id=wandb_run_id)
     return wandb_run_id
