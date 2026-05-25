@@ -547,6 +547,16 @@ def run_phase1(config: str) -> str:
 
 
 @app.function(
+    image=image,
+    timeout=21600,
+)
+def run_pipeline(config: str) -> str:
+    """Orchestrate Phase 1 → Phase 2 on Modal (safe to chain .remote() here)."""
+    wandb_run_id = run_phase1.remote(config=config)
+    return run_phase2.remote(config=config, wandb_run_id=wandb_run_id)
+
+
+@app.function(
     gpu="H100",
     timeout=10800,
     image=image,
@@ -834,7 +844,8 @@ def run_phase2(config: str, wandb_run_id: str | None = None) -> str:
 
 
 @app.local_entrypoint()
-def run_full(config: str) -> str:
-    wandb_run_id = run_phase1.remote(config=config)
-    run_phase2.remote(config=config, wandb_run_id=wandb_run_id)
-    return wandb_run_id
+def run_full(config: str) -> None:
+    """Launch full probe pipeline; survives laptop disconnect via spawn."""
+    call = run_pipeline.spawn(config=config)
+    print(f"Spawned Group A pipeline (Phase 1 → Phase 2): {call.object_id}")
+    print("Track progress on Modal dashboard; wandb run appears after Phase 1 init.")
