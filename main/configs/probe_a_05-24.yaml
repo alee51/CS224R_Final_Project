@@ -4,7 +4,7 @@ gpu_class: H100
 modal_price_per_sec: 0.001097
 
 # smoke: 1 problem per band × 2 rollouts (keeps stratification path live)
-smoke: true
+smoke: false
 smoke_per_band: 1
 smoke_n_rollouts: 2
 
