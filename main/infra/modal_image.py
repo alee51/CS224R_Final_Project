@@ -24,6 +24,8 @@ image = (
         }
     )
     .pip_install(f"vllm=={_VLLM_VERSION}")
+    # vllm 0.8.5 otherwise pulls transformers 5.x; breaks Qwen2Tokenizer in vLLM cache path.
+    .pip_install("transformers>=4.55.2,<5.0.0")
     .pip_install(
         "datasets>=2.20",
         "wandb",
