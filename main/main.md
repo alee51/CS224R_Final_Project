@@ -72,7 +72,7 @@ as a different reasoning method may be required there.
     Polaris dataset [@polaris], sub-selecting a training block of
     lower-difficulty questions (size TBD). We'll train a GRPO model
     (baseline) and answer-based minority voting model; we'll add
-    CoT-based minority and Poly-EPO for comparison if compute permits.
+    CoT-based minority and Poly-EPO-answer (paper `f_poly` with answer-hash diversity, not the paper's in-loop CoT judge) for comparison if compute permits.
 
 3.  **Algorithm Refinement:** If our revised objective excessively
     degrades majority correctness modes, we may consider a hybrid
