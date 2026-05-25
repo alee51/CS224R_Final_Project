@@ -152,6 +152,72 @@ def is_correct_strict_box(
     return 1 if (extracted_pred == gt) else -1, extracted_pred
 
 
+def extract_rank2(
+    completion: str,
+    gold: str,
+    prompt_variant: str = "dapo_answer_v1",
+) -> dict:
+    clipped = completion[-300:]
+    gt_norm = normalize_final_answer(gold)
+
+    minerva_matches = re.findall(r"(?i)Answer\s*:\s*([^\n]+)", clipped)
+    if minerva_matches:
+        parsed_answer_minerva = normalize_final_answer(minerva_matches[-1])
+        parse_ok_minerva = bool(
+            parsed_answer_minerva.strip()
+            and parsed_answer_minerva != "[INVALID]"
+        )
+    else:
+        parsed_answer_minerva = None
+        parse_ok_minerva = False
+
+    boxed_str = last_boxed_only_string(clipped)
+    if boxed_str is not None:
+        parsed_answer_boxed = normalize_final_answer(remove_boxed(boxed_str))
+        parse_ok_boxed = bool(parsed_answer_boxed.strip())
+    else:
+        parsed_answer_boxed = None
+        parse_ok_boxed = False
+
+    parsed_answer: str | None = None
+    extract_path = "none"
+    parse_ok_rank2 = False
+
+    if prompt_variant == "hybrid_answer_boxed":
+        hybrid_matches = re.findall(r"Answer:\s*\\boxed\{([^}]+)\}", clipped)
+        if hybrid_matches:
+            candidate = normalize_final_answer(hybrid_matches[-1])
+            if candidate.strip():
+                parsed_answer = candidate
+                extract_path = "hybrid"
+                parse_ok_rank2 = True
+
+    if not parse_ok_rank2 and parse_ok_boxed:
+        parsed_answer = parsed_answer_boxed
+        extract_path = "boxed"
+        parse_ok_rank2 = True
+
+    if not parse_ok_rank2 and parse_ok_minerva:
+        parsed_answer = parsed_answer_minerva
+        extract_path = "answer_line"
+        parse_ok_rank2 = True
+
+    reward = 0
+    if parse_ok_rank2 and parsed_answer is not None:
+        reward = 1 if parsed_answer == gt_norm else 0
+
+    return {
+        "parsed_answer_minerva": parsed_answer_minerva,
+        "parse_ok_minerva": parse_ok_minerva,
+        "parsed_answer_boxed": parsed_answer_boxed,
+        "parse_ok_boxed": parse_ok_boxed,
+        "parse_ok_rank2": parse_ok_rank2,
+        "extract_path": extract_path,
+        "reward": reward,
+        "parsed_answer": parsed_answer if parse_ok_rank2 else None,
+    }
+
+
 def compute_reward(completion: str, gold: str) -> dict:
     clipped = completion[-300:]
     correct, pred = is_correct_minerva(clipped, gold)

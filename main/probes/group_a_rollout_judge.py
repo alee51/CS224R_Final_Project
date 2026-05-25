@@ -35,7 +35,6 @@ logging.basicConfig(level=logging.INFO)
 
 POLARIS_DATASET_ID = "POLARIS-Project/Polaris-Dataset-53K"
 POLARIS_CACHE_REL = "probes/05-24/group_a/polaris_cache.jsonl"
-PROMPT_VARIANT = "dapo_answer_v1"
 
 
 def _phase2_step_offset(phase1_done: dict[str, Any]) -> int:
@@ -267,13 +266,15 @@ def _read_jsonl(path: Path) -> list[dict[str, Any]]:
     return rows
 
 
-def _init_wandb(cfg: dict[str, Any], repro: dict[str, Any]) -> Any:
+def _init_wandb(
+    cfg: dict[str, Any], repro: dict[str, Any], prompt_variant: str
+) -> Any:
     import wandb
 
     operator = cfg["operator"]
     ts = datetime.now(timezone.utc).strftime("%m-%d-%H%M")
-    run_name = f"probe-A_{operator}_{ts}"
-    tags = ["probe", operator, cfg["gpu_class"], repro["git_sha_short"]]
+    run_name = f"probe-prompt-{prompt_variant}_{operator}_{ts}"
+    tags = ["probe", operator, cfg["gpu_class"], repro["git_sha_short"], prompt_variant]
     if cfg.get("smoke"):
         tags.append("smoke")
 
@@ -287,7 +288,7 @@ def _init_wandb(cfg: dict[str, Any], repro: dict[str, Any]) -> Any:
     )
     wandb.log(
         {
-            "prompt_variant": PROMPT_VARIANT,
+            "prompt_variant": prompt_variant,
             "global_seed": cfg["global_seed"],
             **repro,
             **_dep_versions(),
@@ -330,13 +331,15 @@ def run_phase1(config: str) -> str:
 
     cfg = _load_yaml(config)
     repro = _git_metadata()
+    prompt_variant = cfg.get("prompt_variant", "dapo_answer_v1")
+    reuse_manifest = bool(cfg.get("reuse_manifest", False))
     vol_root = Path(ARTIFACTS_MOUNT)
     art = cfg["artifacts"]
     manifest_path = vol_root / art["manifest_path"]
     rollouts_path = vol_root / art["rollouts_path"]
     phase1_done_path = vol_root / art["phase1_done_path"]
 
-    run = _init_wandb(cfg, repro)
+    run = _init_wandb(cfg, repro, prompt_variant)
     wandb_run_id = run.id
 
     smoke = bool(cfg.get("smoke", False))
@@ -358,19 +361,29 @@ def run_phase1(config: str) -> str:
     if torch.cuda.is_available():
         torch.cuda.manual_seed_all(global_seed)
 
-    raw_rows = _load_or_build_polaris_cache(vol_root)
-    clean_rows = _clean_polaris_rows(raw_rows)
-    band_counts: dict[str, int] = defaultdict(int)
-    for row in clean_rows:
-        band_counts[row["difficulty"]] += 1
-    logger.info("Polaris clean difficulty counts: %s", dict(band_counts))
+    if reuse_manifest:
+        if not manifest_path.is_file():
+            raise FileNotFoundError(
+                f"reuse_manifest: missing manifest at {manifest_path}"
+            )
+        manifest = _read_jsonl(manifest_path)
+        logger.info(
+            "Reusing manifest (%s prompts) from %s", len(manifest), manifest_path
+        )
+    else:
+        raw_rows = _load_or_build_polaris_cache(vol_root)
+        clean_rows = _clean_polaris_rows(raw_rows)
+        band_counts: dict[str, int] = defaultdict(int)
+        for row in clean_rows:
+            band_counts[row["difficulty"]] += 1
+        logger.info("Polaris clean difficulty counts: %s", dict(band_counts))
 
-    configured_bands = list(cfg["sampling"]["difficulty_bands"])
-    bands = _verify_difficulty_bands(dict(band_counts), configured_bands)
+        configured_bands = list(cfg["sampling"]["difficulty_bands"])
+        bands = _verify_difficulty_bands(dict(band_counts), configured_bands)
 
-    manifest = _sample_manifest(clean_rows, bands, per_band, global_seed)
-    _write_jsonl(manifest_path, manifest)
-    logger.info("Wrote manifest (%s prompts) to %s", len(manifest), manifest_path)
+        manifest = _sample_manifest(clean_rows, bands, per_band, global_seed)
+        _write_jsonl(manifest_path, manifest)
+        logger.info("Wrote manifest (%s prompts) to %s", len(manifest), manifest_path)
 
     if rollouts_path.exists():
         rollouts_path.unlink()
@@ -413,7 +426,7 @@ def run_phase1(config: str) -> str:
 
     requests: list[tuple[str, int, int, int]] = []
     for entry in manifest:
-        prompt = format_problem(entry["problem"])
+        prompt = format_problem(entry["problem"], variant=prompt_variant)
         pid = int(entry["problem_id"])
         for rollout_idx in range(rollouts_per_prompt):
             seed = global_seed + pid * rollouts_per_prompt + rollout_idx
@@ -477,7 +490,7 @@ def run_phase1(config: str) -> str:
                     length_tokens,
                     prompt_tokens,
                     finish_reason,
-                    PROMPT_VARIANT,
+                    prompt_variant,
                 ]
             )
             rollouts_done += 1
@@ -885,6 +898,14 @@ def run_phase2(config: str, wandb_run_id: str | None = None) -> str:
     )
     run.finish()
     return wandb_run_id
+
+
+@app.local_entrypoint()
+def run_phase1_only(config: str) -> None:
+    """Launch Phase 1 only; survives laptop disconnect via spawn."""
+    call = run_phase1.spawn(config=config)
+    print(f"Spawned Phase 1 only: {call.object_id}")
+    print("Track progress on Modal dashboard; wandb run appears after Phase 1 init.")
 
 
 @app.local_entrypoint()

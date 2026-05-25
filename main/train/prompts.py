@@ -4,6 +4,22 @@ DAPO_PROMPT_TEMPLATE = """Solve the following math problem step by step. The las
 
 Remember to put your answer on its own line after "Answer:"."""
 
+VERL_MATH_BOXED_TEMPLATE = (
+    "{problem} Let's think step by step and output the final answer within \\boxed{{}}."
+)
 
-def format_problem(problem: str) -> str:
-    return DAPO_PROMPT_TEMPLATE.format(problem=problem)
+HYBRID_ANSWER_BOXED_TEMPLATE = """Solve the following math problem step by step. End your response with the final answer on its own line, formatted exactly as: Answer: \\boxed{{$Answer}}
+
+{problem}
+
+Remember: the last line must be "Answer: \\boxed{{...}}" with your final answer inside the box."""
+
+PROMPT_VARIANTS = {
+    "dapo_answer_v1": DAPO_PROMPT_TEMPLATE,
+    "verl_math_boxed": VERL_MATH_BOXED_TEMPLATE,
+    "hybrid_answer_boxed": HYBRID_ANSWER_BOXED_TEMPLATE,
+}
+
+
+def format_problem(problem: str, variant: str = "dapo_answer_v1") -> str:
+    return PROMPT_VARIANTS[variant].format(problem=problem)

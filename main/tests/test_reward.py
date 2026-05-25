@@ -1,5 +1,6 @@
 from judge.format import _assignment_from_poly_epo_payload, build_judge_messages
-from train.reward import compute_reward
+from train.prompts import PROMPT_VARIANTS, format_problem
+from train.reward import compute_reward, extract_rank2
 
 
 def test_compute_reward_correct_answer():
@@ -24,6 +25,65 @@ def test_compute_reward_no_answer_marker():
     result = compute_reward("step by step with no final line", "42")
     assert result["reward"] == 0
     assert result["parse_ok"] is False
+
+
+def test_format_problem_variants():
+    problem = "What is 2+2?"
+    assert "Answer:" in format_problem(problem, variant="dapo_answer_v1")
+    assert "\\boxed{}" in format_problem(problem, variant="verl_math_boxed")
+    assert "Answer: \\boxed{" in format_problem(problem, variant="hybrid_answer_boxed")
+    assert set(PROMPT_VARIANTS) == {
+        "dapo_answer_v1",
+        "verl_math_boxed",
+        "hybrid_answer_boxed",
+    }
+
+
+def test_extract_rank2_minerva_path():
+    result = extract_rank2("work\nAnswer: 42", "42")
+    assert result["parse_ok_minerva"] is True
+    assert result["parsed_answer_minerva"] == "42"
+    assert result["extract_path"] == "answer_line"
+    assert result["parse_ok_rank2"] is True
+    assert result["reward"] == 1
+
+
+def test_extract_rank2_boxed_path():
+    result = extract_rank2("work\n\\boxed{42}", "42", prompt_variant="verl_math_boxed")
+    assert result["parse_ok_boxed"] is True
+    assert result["parsed_answer_boxed"] == "42"
+    assert result["extract_path"] == "boxed"
+    assert result["parse_ok_rank2"] is True
+    assert result["reward"] == 1
+
+
+def test_extract_rank2_hybrid_path():
+    completion = "work\nAnswer: \\boxed{42}"
+    result = extract_rank2(
+        completion, "42", prompt_variant="hybrid_answer_boxed"
+    )
+    assert result["extract_path"] == "hybrid"
+    assert result["parse_ok_rank2"] is True
+    assert result["parsed_answer"] == "42"
+    assert result["reward"] == 1
+
+
+def test_extract_rank2_order_hybrid_before_boxed():
+    completion = "Answer: \\boxed{7}\nalso \\boxed{99}"
+    result = extract_rank2(
+        completion, "7", prompt_variant="hybrid_answer_boxed"
+    )
+    assert result["extract_path"] == "hybrid"
+    assert result["parsed_answer"] == "7"
+    assert result["reward"] == 1
+
+
+def test_extract_rank2_order_boxed_before_minerva():
+    completion = "Answer: 99\n\\boxed{42}"
+    result = extract_rank2(completion, "42", prompt_variant="verl_math_boxed")
+    assert result["extract_path"] == "boxed"
+    assert result["parsed_answer"] == "42"
+    assert result["reward"] == 1
 
 
 def test_build_judge_messages_eight_rollouts():
