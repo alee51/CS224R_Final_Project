@@ -35,7 +35,7 @@ image = (
     .add_local_dir(
         str(_LOCAL_MAIN_DIR),
         remote_path="/root/main",
-        ignore=["docs", "data", "*.md", "__pycache__", ".pytest_cache"],
+        ignore=["docs", "data", "*.md", "__pycache__", ".pytest_cache", ".DS_Store"],
     )
 )
 
