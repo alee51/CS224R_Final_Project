@@ -1,0 +1,9 @@
+DAPO_PROMPT_TEMPLATE = """Solve the following math problem step by step. The last line of your response should be of the form Answer: $Answer (without quotes) where $Answer is the answer to the problem.
+
+{problem}
+
+Remember to put your answer on its own line after "Answer:"."""
+
+
+def format_problem(problem: str) -> str:
+    return DAPO_PROMPT_TEMPLATE.format(problem=problem)
