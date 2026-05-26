@@ -15,6 +15,7 @@ export PYTHONPATH="${CS224R_MAIN_ROOT}"
 
 CFG="main/configs/train_real.yaml"
 MODE=""
+FRESH_WANDB=""
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -22,9 +23,16 @@ while [[ $# -gt 0 ]]; do
       MODE="${2:-}"
       shift 2
       ;;
+    --fresh-wandb)
+      # One-shot: start a new wandb run on resume instead of resuming the old one.
+      # Use when the live wandb run has logged past the resume checkpoint and rewind
+      # is unavailable. Subsequent self-spawned legs chain onto the new run normally.
+      FRESH_WANDB="--fresh-wandb"
+      shift 1
+      ;;
     *)
       echo "Unknown argument: $1" >&2
-      echo "Usage: bash main/scripts/launch_train.sh --mode smoke|full" >&2
+      echo "Usage: bash main/scripts/launch_train.sh --mode smoke|full [--fresh-wandb]" >&2
       exit 1
       ;;
   esac
@@ -54,5 +62,5 @@ else
   export CS224R_GIT_DIRTY="false"
 fi
 
-echo "Launching train mode=$MODE config=$CFG total_steps=${CS224R_TOTAL_STEPS:-from yaml} app=$CS224R_APP_NAME"
-exec main/.venv/bin/modal run --detach main/train/trainer.py::train_remote --config-path "$CFG"
+echo "Launching train mode=$MODE config=$CFG total_steps=${CS224R_TOTAL_STEPS:-from yaml} app=$CS224R_APP_NAME fresh_wandb=${FRESH_WANDB:-no}"
+exec main/.venv/bin/modal run --detach main/train/trainer.py::train_remote --config-path "$CFG" $FRESH_WANDB

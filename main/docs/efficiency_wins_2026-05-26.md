@@ -22,7 +22,22 @@ Step time decomposition from Group B probe (H200, bs=64): **rollout ≈ 73%**, *
 
 **Verify after launch.** Watch `train/vram_peak_gb_step` for ~10 steps. If it touches 140 GB, dial back to 95–100k. If it stays < 130, consider 110k.
 
-### 2. FlashAttention-2 on the HF model  — **[DONE 2026-05-26]**
+### 2. FlashAttention-2 on the HF model  — **[ATTEMPTED, REVERTED — 2026-05-26]**
+
+**Status update:** Wired the `attn_implementation="flash_attention_2"` arg into `build_hf` and added the prebuilt flash-attn wheel to the Modal image. Image built cleanly. First relaunch (`ap-ojqOqa0PgKoHk6O5QWmVw1`) **died ~90s into the container — exactly in the window where `build_hf` calls `from_pretrained` and triggers `import flash_attn`.** Modal's 100-line log buffer was saturated with image-build noise by the time we noticed, so no stack trace was recovered.
+
+Self-spawn / token_budget / fresh-wandb were ruled out by timing: none of those code paths execute in the first 90 seconds. FA2 is the only suspect that fires in that window.
+
+**Reverted** the trainer change (FA2 arg removed); **kept** the wheel install in `modal_image.py` so re-enabling is a one-line change with no image rebuild.
+
+**To re-enable cleanly (next debug session):**
+1. Smoke-test FA2 in isolation: small Modal function that just does `AutoModelForCausalLM.from_pretrained("Qwen/Qwen3-1.7B-Base", attn_implementation="flash_attention_2", torch_dtype=torch.bfloat16).cuda()` and reports stack trace if any. This will surface the actual import / runtime error.
+2. Common fixes if `import flash_attn` fails at runtime: try `cxx11abiTRUE` wheel instead of FALSE; add `nvidia-cuda-cccl-cu12` to the image; pin transformers to a tested release.
+3. Once smoke is green, re-add `attn_implementation="flash_attention_2"` to `build_hf` and relaunch.
+
+---
+
+### 2-original (preserved for context). FlashAttention-2 on the HF model
 
 **Win.** ~20–30% faster on the HF forward+backward block, which is ~27% of step → **~5–8% off step time**. Also cuts activation memory by ~30% on the attention path, which buys more `token_budget` headroom (compounds with #1).
 
@@ -76,32 +91,62 @@ Step time decomposition from Group B probe (H200, bs=64): **rollout ≈ 73%**, *
 
 ---
 
-## Modal auto-relaunch
+## Modal auto-relaunch  — **[DONE 2026-05-26]**
 
-**No native option.** 24h is a hard per-function timeout. Modal's `retries=` only retries on exceptions/crashes — natural timeouts don't auto-retry.
+**Why custom is required.** 24h is a hard per-function timeout. Modal's `retries=` only retries on exceptions/crashes — natural timeouts don't auto-retry.
 
-### Recommended: self-spawn from inside the train loop
+### What landed: self-spawn from inside the train loop
 
-In `train()` loop, track elapsed wall-clock since start. When `elapsed > 23.5h`:
-1. Force a checkpoint.
-2. Call `train_remote.spawn(config_path=...)` to detach a fresh container (Modal spawn doesn't wait on the caller).
-3. `return` cleanly.
+`train_remote` now accepts `leg_number` (default 1) and `max_legs` (default 10). The Modal entrypoint:
 
-The new container's `resume: auto` picks up the latest `.pt`. Legs chain themselves; no babysitting. ~30 lines added in `trainer.py`. Optionally guard with a max-leg-count env var so a bug can't infinite-loop.
+1. Reads `CS224R_LEG_HOURS` from env (default **23.0h**) and converts to `leg_budget_s`.
+2. Passes `leg_budget_s` and an `on_leg_exhausted` callback into `train()`.
+3. `train()` checks elapsed wall-clock at the bottom of each step. The **first step that finishes after `leg_budget_s` has elapsed** triggers a graceful exit:
+   - Force a checkpoint at the current step if no natural ckpt fired this iteration.
+   - Run `after_checkpoint` (volume commit).
+   - Call `on_leg_exhausted(step)` → which commits the volume again (belt + suspenders) and invokes `train_remote.spawn(config_path=..., leg_number=leg_number+1, max_legs=max_legs)`.
+   - `return`.
+4. The successor container's `resume: auto` picks up the latest `.pt` and continues. `wandb_run_id` is carried in the checkpoint, so the same wandb run continues across legs. New `setup_wandb` tag `leg_number=N` makes legs filterable in the wandb UI.
+5. Runaway guard: `leg_number >= max_legs` skips the spawn and logs a warning.
 
-### Alternatives (lower priority)
+### Tunables (no relaunch needed)
 
-- **Modal cron watchdog** — separate `@app.function(schedule=modal.Cron(...))` that runs every 23h, checks if latest ckpt step < total_steps, and launches if so. Race-prone (need a lockfile on volume).
+| Env var | Default | What it does |
+|---|---|---|
+| `CS224R_LEG_HOURS` | `23.0` | Wall-clock budget per Modal container. Modal hard cap is 24h, so leave ~30 min margin. |
+| (CLI arg) `--max-legs` | `10` | Upper bound on chained legs. Bump for very long arms. |
+
+### How to use
+
+`bash main/scripts/launch_train.sh --mode full` (unchanged). The first leg auto-starts; subsequent legs spawn themselves. If you want a one-leg-only run for testing, launch with `--max-legs 1` via `modal run` directly:
+
+```bash
+modal run --detach main/train/trainer.py::train_remote \
+  --config-path main/configs/train_real.yaml --max-legs 1
+```
+
+### How to stop
+
+`modal app stop <app-id>` on whichever leg is currently active. The spawn fires only when a leg exits via the budget path; an external `app stop` does not trigger a successor. So one stop = full halt.
+
+### Alternatives considered (skipped)
+
+- **Modal cron watchdog** — separate `@app.function(schedule=modal.Cron(...))` that runs every 23h, checks if latest ckpt step < total_steps, and launches if so. Race-prone (needs lockfile on volume). Self-spawn avoids the race.
 - **Local while-loop** — `while true; do modal run --detach ...; sleep 86400; done`. Brittle (laptop sleep kills it).
-
-**Implementation status:** not yet done. Suggested as the next code change once #1 + #2 land and we've confirmed they speed up steps as expected.
 
 ---
 
-## What landed in this commit
+## What landed in this commit (post-revert state)
 
 - `main/configs/train_real.yaml`: `token_budget: 90000` → `105000` (+ updated inline comment).
-- `main/train/trainer.py`: `build_hf` now passes `attn_implementation="flash_attention_2"`.
-- `main/infra/modal_image.py`: `flash-attn` added to image (post-vllm, `--no-build-isolation`).
+- `main/train/trainer.py`:
+  - **FA2 arg reverted** (`attn_implementation` not passed) — see #2 status update above.
+  - `train()` accepts `leg_budget_s` and `on_leg_exhausted` kwargs.
+  - `train_remote` accepts `leg_number` / `max_legs` / `fresh_wandb`, computes the budget, chains itself via `train_remote.spawn(...)` before the 24h Modal timeout.
+  - `setup_wandb` adds a `leg_number=N` tag when `CS224R_LEG_NUMBER` is set.
+  - `CS224R_FRESH_WANDB` env override skips the checkpoint's `wandb_run_id` for a fresh-start wandb run.
+- `main/infra/modal_image.py`: `flash-attn` prebuilt wheel added to image (kept even though trainer doesn't use FA2 yet — image already cached, re-enabling is one trainer line).
+- `main/scripts/launch_train.sh`: `--fresh-wandb` flag added.
+- `main/scripts/wandb_rewind.py`: one-shot rewind helper. Returns 400 on the current wandb plan (rewind in private preview); kept for future tier upgrade.
 
-Modal will rebuild the image on next launch (~3–5 min one-time cost). Resume picks up at step 140 (or wherever the latest ckpt is).
+Net result: ~25% expected step-time savings from token_budget alone; FA2 deferred. Self-spawn eliminates ~5 manual relaunches per branch.

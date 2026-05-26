@@ -13,7 +13,7 @@ prompt_variant: hybrid_answer_boxed
 
 train:
   data_path: /vol/data/polaris_train.jsonl
-  total_steps: 850
+  total_steps: 799
   batch_size: 64
   n_rollouts: 8
   microbatch: 64

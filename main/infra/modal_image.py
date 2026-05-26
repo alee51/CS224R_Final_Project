@@ -31,10 +31,14 @@ image = (
     # vllm 0.8.5 otherwise pulls transformers 5.x; breaks Qwen2Tokenizer in vLLM cache path.
     .pip_install("transformers>=4.55.2,<5.0.0")
     # FlashAttention-2 for the HF train-side forward/backward (build_hf uses
-    # attn_implementation="flash_attention_2"). Must install after vllm so it links
-    # against vllm's torch; --no-build-isolation avoids re-fetching torch.
+    # attn_implementation="flash_attention_2"). Prebuilt wheel matched to
+    # torch 2.6 + cu12 + py311 + cxx11abiFALSE (PyPI default ABI). Source build
+    # fails because debian_slim has no nvcc; the wheel ships compiled kernels.
     # See docs/efficiency_wins_2026-05-26.md.
-    .pip_install("flash-attn==2.7.4.post1", extra_options="--no-build-isolation")
+    .pip_install(
+        "https://github.com/Dao-AILab/flash-attention/releases/download/v2.7.4.post1/"
+        "flash_attn-2.7.4.post1+cu12torch2.6cxx11abiFALSE-cp311-cp311-linux_x86_64.whl"
+    )
     .pip_install(
         "datasets>=2.20",
         "wandb",

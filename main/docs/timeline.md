@@ -422,3 +422,85 @@ All 53 CPU tests still pass; smoke-tested via direct `grpo_loss(..., return_stat
 - Bump `timeout=60*60*8` → `24` in `trainer.py:974` to halve relaunch count per epoch (currently ~5 legs needed for 41h epoch).
 - Consider raising `token_budget` to 105–110k once a few steps of the new run confirm peak VRAM stays comfortable; reduces multi-chunk steps (each chunk has ~30s recompute overhead).
 - Consider deferred experiment: `gradient_checkpointing=False` with smaller `token_budget` to halve backward time — biggest possible single win (~25% step time), but needs careful VRAM calibration.
+
+---
+
+## 2026-05-26 (Tuesday) — efficiency restart: FA2 + token_budget 105k + self-spawn
+
+### Motivation
+
+Step time on the live run (`8qesa78k`, app `ap-ZPXuQuUDfEHb7p5aQhj15N`) was 3–4 min/step at bs=64; at 2 epochs (~1600 steps) and Modal's 24h function cap, that's ~4 days wall-clock and ~7 manual relaunches per branch. With up to 4 arms planned (GRPO, Minority-answer, Minority-CoT, Poly-EPO-answer), per-step savings compound; restart cost is one-time and only 12h was sunk. Three open follow-ups from the 28th entry were landed in one batch. Full reasoning + branch-savings math in [`efficiency_wins_2026-05-26.md`](./efficiency_wins_2026-05-26.md).
+
+### Changes landed
+
+| Change | File | Expected win |
+|---|---|---|
+| `attn_implementation="flash_attention_2"` | `train/trainer.py` (`build_hf`) | ~20–30% on HF fwd+bwd (~27% of step) → ~5–8% step time |
+| `flash-attn==2.7.4.post1` prebuilt wheel | `infra/modal_image.py` | (enabler; source build failed — `debian_slim` has no nvcc, switched to GitHub release wheel matched to torch 2.6 + cu12 + cp311 + cxx11abiFALSE) |
+| `token_budget 90000 → 105000` | `configs/train_real.yaml` | ~25% step time when chunks drop 2 → 1 (often, given FA2's activation savings) |
+| Self-spawn auto-relaunch | `train/trainer.py`, `scripts/launch_train.sh` | eliminates manual relaunches; `train_remote` chains itself via `.spawn(...)` at `CS224R_LEG_HOURS` (default 23h) |
+| `--fresh-wandb` flag + `CS224R_FRESH_WANDB` env | `train/trainer.py`, `scripts/launch_train.sh` | escape hatch when resume ckpt < live wandb step (wandb rewind requires private-preview access we don't have) |
+| Wandb rewind helper (unused but kept) | `scripts/wandb_rewind.py` | one-shot rewind via `resume_from`; returns 400 on current plan, kept for future tier |
+
+### Restart procedure executed
+
+1. `modal app stop --yes ap-ZPXuQuUDfEHb7p5aQhj15N` — old run had reached wandb step 155, latest ckpt was `step_000149.pt`.
+2. Attempted `wandb_rewind.py --run-id 8qesa78k --step 149` → `wandb: Rewind is in private preview -- contact support@wandb.com to enable it.` Backed out.
+3. Added `CS224R_FRESH_WANDB` env override + `--fresh-wandb` flag (~5 lines total).
+4. Image rebuild failed first time on flash-attn source build (no nvcc). Switched to prebuilt wheel URL.
+5. `bash main/scripts/launch_train.sh --mode full --fresh-wandb` → app `ap-ojqOqa0PgKoHk6O5QWmVw1`. Container started post-image-build and **died ~90s later, before any wandb logs were emitted**. Modal's 100-line log buffer was saturated with image-build output by the time we checked, so no stack trace was recovered.
+
+### Root-cause narrowing (incomplete; FA2 deferred)
+
+The four changes ride together. We can isolate by **when each one can crash**:
+
+| Change | When it executes | Could have killed a 90s init? |
+|---|---|---|
+| Self-spawn (`leg_budget_s` check) | Bottom of step loop; default 23h | **No** — never reached in 90s |
+| `token_budget=105000` | First call to `_train_step_microbatched`, i.e. after first rollout completes | **No** — first rollout alone is ~2 min on bs=64 |
+| `--fresh-wandb` | `setup_wandb` (skips ckpt's wandb_run_id) | **No** — just None assignment, no I/O risk |
+| `attn_implementation="flash_attention_2"` | `build_hf` → `AutoModelForCausalLM.from_pretrained(...)` → triggers `import flash_attn` | **Yes** — exactly in the dead window |
+
+High-confidence inference: **FA2 is the culprit.** Likely a runtime `import flash_attn` failure (CUDA lib resolution, ABI mismatch, or transformers↔flash_attn version incompatibility for Qwen3) despite the wheel installing cleanly at image-build time. The wheel was matched to `torch 2.6 + cu12 + cp311 + cxx11abiFALSE`; the failure mode is consistent with cuda driver / loader mismatch on the H200 worker, not the wheel itself.
+
+### Decision: drop FA2, keep the rest
+
+Reverted `build_hf` to default attn (no `attn_implementation` arg). Kept:
+- `token_budget=105000` (still ~25% win on multi-chunk steps; doesn't depend on FA2)
+- Self-spawn (~5 manual relaunches saved per branch)
+- `--fresh-wandb` flag (escape hatch utility)
+- `flash-attn==2.7.4.post1` wheel still in `infra/modal_image.py` (no removal — image already cached; re-enabling FA2 later is a one-line trainer change, not an image rebuild)
+
+Net expected step-time savings vs pre-restart: **~25% from token_budget** (lost the ~5–8% from FA2 until we debug it). Still well worth the restart cost.
+
+### Open: FA2 debug (deferred)
+
+To re-enable FA2 cleanly:
+1. Smoke-test in isolation: launch a Modal function that does only `from transformers import AutoModelForCausalLM; AutoModelForCausalLM.from_pretrained("Qwen/Qwen3-1.7B-Base", attn_implementation="flash_attention_2", torch_dtype=torch.bfloat16).cuda()` and reports success or stack trace. If this fails, we get the actual error.
+2. Common fixes if `import flash_attn` fails: add `nvidia-cuda-cccl-cu12` to image; try a different wheel ABI (`cxx11abiTRUE`); pin transformers to a tested version.
+3. Once smoke passes, re-enable `attn_implementation="flash_attention_2"` in `build_hf` and relaunch.
+
+The flash-attn wheel install in `modal_image.py` is deliberately left in place so re-enabling is a one-line change and doesn't trigger image rebuild.
+
+### Verification plan (during live run)
+
+Watch these for the first ~10 post-resume steps:
+- **VRAM** — `train/vram_peak_gb_step` must stay < 140 GB at `token_budget=105000`. If it touches 140, dial back to 95–100k.
+- **Step time** — target 150–180s (vs. 197s median pre-change). If unchanged, FA2 may not be active — check `train/t_logprob_fwd_s` and `train/t_backward_s` for ~20–25% drop.
+- **Numerical stability** — `train/ratio_max` should be similar or _lower_ than pre-change (FA2 is closer to vLLM's attn than SDPA was). Spike to >10 = numerical mismatch in the importance ratio; rollback to SDPA if so.
+- **Reward continuity** — `train/mean_reward` should resume near 0.085–0.10. Sharp drop to 0 = state-dict mismatch from FA2 weight-shape expectations (unlikely for Qwen3 but possible).
+- **Self-spawn** — first leg should spawn leg 2 around 23h elapsed. Visible in modal app list as a new app with `leg_number=2` tag in wandb.
+
+### Branch-cost arithmetic
+
+| Branches | Hours saved by FA2 + 105k token_budget (~12%) | Modal $ saved (~$0.001261/s × 64-prompt step) |
+|---|---|---|
+| 1 (current GRPO) | ~13h | ~$60 |
+| 2 (+ Minority-answer) | ~26h | ~$120 |
+| 4 (all arms) | ~52h | ~$240 |
+
+### Notes for next operator
+
+- Old wandb run `8qesa78k` has the pre-change baseline through step 155; new wandb run continues from step 150 with FA2 + 105k. Compare `t_logprob_fwd_s` and `t_backward_s` between the two to quantify FA2 win.
+- The 2026-05-28 entry's "Open follow-ups" are mostly resolved here (Modal 24h timeout already set in `trainer.py`; token_budget bumped; FA2 not in that list but landed). Remaining deferred: `gradient_checkpointing=False` experiment (next-biggest win, requires careful VRAM calibration; do as an A/B on a fresh branch, not mid-run).
+- `--fresh-wandb` is a one-shot. Don't bake it into normal launches — auto-resume after a crash should preserve history.

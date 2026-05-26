@@ -1,15 +1,22 @@
-# GRPO training handoff — resume from step 139
+# GRPO training handoff — resume from latest checkpoint
 
-You are continuing a CS 224R final project run that Nancy started. Training stopped cleanly at step 141 (out of ~799) when the Modal function hit its 8-hour wall-clock timeout. This doc walks you through resuming on **your** Modal credits.
+You are continuing a CS 224R final project GRPO run that Nancy started. As of the 2026-05-26 restart, the trainer **auto-relaunches itself** across Modal's 24h timeout, so once you launch, you can walk away — chained legs handle themselves until `total_steps=799` is reached.
 
-The trainer's Modal-function timeout has been bumped to 24h, so your single leg can cover ~432 more steps (vs ~144 before). Latest commit on `main`: **`3833416`**.
+**Step count:** 149 done out of 799 (`total_steps=799` in yaml = one epoch on filtered Polaris: 51,139 rows / 64-prompt batch ≈ 799 unique batches). The handoff checkpoint is **`step_000149.pt`**.
+
+**Key improvements landed 2026-05-26** (see [`efficiency_wins_2026-05-26.md`](../efficiency_wins_2026-05-26.md) for full reasoning):
+
+- **`token_budget` bumped to 105000** in `train_real.yaml` (drops most steps from 2 chunks → 1, ~25% step time savings when it triggers).
+- **Self-spawn auto-relaunch**: `train_remote` chains itself before Modal's 24h cap, no manual intervention needed.
+- **`--fresh-wandb` flag**: starts a new wandb run on resume when the live run has logged past the resume checkpoint. Useful for your first launch.
+- **FlashAttention-2 attempted then reverted** — first relaunch died at ~90s during HF model load (no stack trace recovered). See `efficiency_wins_2026-05-26.md` §2. The `flash-attn` wheel is still pinned in the Modal image so re-enabling later is a one-line trainer change with no image rebuild.
 
 ---
 
 ## What you'll receive from Nancy
 
-1. **`step_000139.pt`** — checkpoint, ~13.7 GB. Contains model weights, optimizer state, RNG, dataset cursor. **Nancy has already stripped her `wandb_run_id` from it** so your launch starts a fresh wandb run.
-2. **`polaris_train.jsonl`** — filtered Polaris training data, ~29 MB, **51,139 rows**.
+1. **`step_000149.pt`** (~9.6 GB). Contains model weights, optimizer state, RNG, dataset cursor. Nancy already stripped the `wandb_run_id` from it so your launch starts a fresh wandb run.
+2. **`polaris_train.jsonl`** — filtered Polaris training data, ~29 MB, **51,139 rows**. **Skip this if you already have it from a previous Nancy handoff** — the file hasn't changed since 2026-05-26.
 
 That's it. Repo + code are public on GitHub.
 
@@ -18,11 +25,13 @@ That's it. Repo + code are public on GitHub.
 ## One-time setup on your machine
 
 ```bash
-# 1. Clone Nancy's repo
+# 1. Clone Nancy's repo (or git pull if you already have it)
 git clone https://github.com/alee51/CS224R_Final_Project.git
 cd CS224R_Final_Project
-# Use the latest main; the timeout=24h + handoff docs commit is 3833416 or newer
-git log --oneline -1   # should show 3833416 or descendant
+# IMPORTANT: must include the 2026-05-26 efficiency changes (token_budget=105k + self-spawn + --fresh-wandb).
+# Check by grep:
+grep "token_budget: 105000" main/configs/train_real.yaml && echo "OK: 105k budget" || echo "STALE: pull latest main"
+grep "leg_budget_s" main/train/trainer.py && echo "OK: self-spawn wired" || echo "STALE: pull latest main"
 
 # 2. Install Python deps (venv at main/.venv)
 python3.11 -m venv main/.venv
@@ -44,16 +53,16 @@ If you don't have a wandb account, make one at https://wandb.ai/. The run will l
 ## Upload Nancy's artifacts to your Modal volume
 
 ```bash
-# From the directory where you saved step_000139.pt and polaris_train.jsonl:
 main/.venv/bin/modal volume create main-artifacts          # one-time, idempotent
-main/.venv/bin/modal volume put main-artifacts step_000139.pt checkpoints/train_real/step_000139.pt
+main/.venv/bin/modal volume put main-artifacts step_000149.pt checkpoints/train_real/step_000149.pt
+# Skip the next line if you already have polaris_train.jsonl on your volume from a prior handoff:
 main/.venv/bin/modal volume put main-artifacts polaris_train.jsonl data/polaris_train.jsonl
 ```
 
 Sanity check:
 ```bash
 main/.venv/bin/modal volume ls main-artifacts checkpoints/train_real/
-# should show: step_000139.pt
+# should show: step_000149.pt
 main/.venv/bin/modal volume ls main-artifacts data/
 # should show: polaris_train.jsonl
 ```
@@ -68,15 +77,19 @@ Edit `main/configs/train_real.yaml`:
 operator: emma           # or anastasia — your name
 ```
 
-Leave everything else alone. The yaml already points at `/vol/data/polaris_train.jsonl` and `/vol/checkpoints/train_real/`, and `resume: auto` will auto-load step 139. The Modal function timeout is already 24h (commit `3833416`). At ~200s/step a single 24h leg covers ~432 steps, so you can finish the remaining ~660 steps in ~2 legs.
+Leave everything else alone. The yaml already points at `/vol/data/polaris_train.jsonl` and `/vol/checkpoints/train_real/`, and `resume: auto` will auto-load the latest checkpoint on the volume. The Modal function timeout is 24h; the trainer self-spawns a successor leg at `CS224R_LEG_HOURS=23` (default) before the timeout. **You launch once; chained legs run themselves until `total_steps=799` is reached.** At post-2026-05-26 step times (~150–180s/step expected with `token_budget=105k`), a single 23h leg covers ~460–550 steps.
 
 ---
 
 ## Launch
 
 ```bash
-bash main/scripts/launch_train.sh --mode full
+# First launch: --fresh-wandb starts a new wandb run (the checkpoint's old wandb_run_id
+# may point at a finished run; this avoids the "current step > log step" silent drop).
+bash main/scripts/launch_train.sh --mode full --fresh-wandb
 ```
+
+After the **first** leg lands cleanly, subsequent legs (which spawn themselves) do NOT need `--fresh-wandb` — they inherit the new wandb_run_id from your checkpoint and chain onto it.
 
 You should see (within ~30 seconds):
 ```
@@ -84,13 +97,23 @@ Launching train mode=full ... app=cs224r-train-grpo-full-<you>-<MMDDHHMM>
 ✓ Initialized. View run at https://modal.com/apps/<workspace>/main/ap-XXXXXXXX
 ```
 
-Within ~2 minutes you'll see:
+The first launch in your workspace triggers a **~3–5 min Modal image rebuild** (one-time; includes the flash-attn wheel even though the trainer doesn't currently load it). Subsequent legs reuse the cached image and start in ~30s.
+
+Within ~2–5 minutes you'll see:
 ```
-INFO Resuming from checkpoint /vol/checkpoints/train_real/step_000139.pt
-wandb: View run at https://wandb.ai/.../runs/<your_run_id>
+INFO Resuming from checkpoint /vol/checkpoints/train_real/step_000149.pt
+INFO CS224R_FRESH_WANDB set; starting fresh wandb run
+wandb: View run at https://wandb.ai/.../runs/<your_new_run_id>
 ```
 
-Training picks up at **step 140**. Checkpoints land at step 149, 159, 169, … on the volume.
+Training picks up at **step 150**. Checkpoints land every 10 steps on the volume.
+
+After ~23h the leg will log:
+```
+Leg budget 23.00h reached at step N; spawning successor and exiting
+Spawning leg 2 (last completed step=N, config=...)
+```
+and a new Modal app appears with `leg_number=2` in its wandb tag. Same wandb run continues.
 
 ---
 
@@ -108,7 +131,7 @@ Most important panels (build these as line plots — wandb's "Add panel" UI):
 | Entropy proxy | `train/mean_neg_logprob` | Should be stable ~2–4; sharp drop = mode collapse |
 | Grad norm | `train/grad_norm_preclip` | Should hover around 1–5; spike to 100+ = instability |
 | VRAM | `train/vram_peak_gb_step` | Should stay 115–130 GB; if it touches 140 = OOM next step |
-| Step time | timestamp delta between successive `_step` rows | Should be 165–230s; sustained 250+ = something off |
+| Step time | timestamp delta between successive `_step` rows | Should be 150–200s (105k token_budget); sustained 230+ = something off |
 | Sample completions | `sample/completion_0/1/2` (logged every 50 steps) | Read 2–3 to confirm model is producing real math, not garbage |
 
 If anything looks weird, ping Nancy with the wandb URL before stopping the run.
@@ -117,13 +140,15 @@ If anything looks weird, ping Nancy with the wandb URL before stopping the run.
 
 ## When Modal times out (or you want to stop)
 
-Just let it timeout naturally, or `modal app stop <app-id>` to stop early. Either way: **a checkpoint at the most recent step divisible by 10 is on volume**. To resume — yours or hand back to Nancy — just relaunch:
+**You shouldn't need to do anything for normal timeouts** — the trainer self-spawns a successor leg at 23h elapsed. Just let it run.
 
+**To stop the chain manually:** `modal app stop <app-id>` on whichever leg is currently running. External stop does NOT trigger a successor — one `modal app stop` = full halt. A checkpoint at the most recent step divisible by 10 is on the volume.
+
+**To resume after a manual stop or crash:**
 ```bash
-bash main/scripts/launch_train.sh --mode full   # auto-resumes from latest .pt
+bash main/scripts/launch_train.sh --mode full   # auto-resumes from latest .pt; no --fresh-wandb needed
 ```
-
-The wandb run will be a different ID each time, but step numbers stay continuous.
+The same wandb run continues (no fresh flag) because the latest checkpoint has the active run_id.
 
 ---
 
@@ -138,7 +163,7 @@ main/.venv/bin/modal volume get main-artifacts checkpoints/train_real/step_000XX
 # Send it to Nancy (gdrive / scp / s3 — it's ~13.7 GB)
 ```
 
-Don't strip her wandb_run_id when sending back — she'll handle it on her side.
+No wandb_run_id stripping needed — Nancy launches with `--fresh-wandb` on her side if her live run has logged past your checkpoint.
 
 ---
 
@@ -148,16 +173,17 @@ Don't strip her wandb_run_id when sending back — she'll handle it on her side.
 → Check `modal volume ls main-artifacts checkpoints/train_real/`. If empty, your upload failed; re-run the `modal volume put` step.
 
 **Modal function errors with "wandb run already exists"**
-→ Nancy's `wandb_run_id` wasn't stripped. Either ask her to strip it, or strip locally:
+→ The checkpoint's wandb_run_id points at Nancy's old run. Relaunch with `--fresh-wandb`:
 ```bash
-main/.venv/bin/python -c "
-import torch
-c = torch.load('step_000139.pt', map_location='cpu', weights_only=False)
-c.pop('wandb_run_id', None)
-torch.save(c, 'step_000139.pt')
-"
-# then re-upload to volume
+bash main/scripts/launch_train.sh --mode full --fresh-wandb
 ```
+The legacy "strip wandb_run_id from the checkpoint" workaround is no longer needed.
+
+**Wandb says "current step is X" and silently drops your logs after resume**
+→ The live wandb run logged past the resume checkpoint. Same fix: `--fresh-wandb` on next launch.
+
+**Self-spawn didn't fire at 23h (leg just exited)**
+→ Check `modal app list` — if no leg 2 appeared, the spawn call failed silently. Manually relaunch with `bash main/scripts/launch_train.sh --mode full` (no `--fresh-wandb` — the latest ckpt's wandb_run_id is fine). Ping Nancy with the modal app logs.
 
 **OOM on resume step**
 → VRAM headroom should be ~15 GB. If it OOMs, lower `train.token_budget` in yaml from 90000 to 75000 and relaunch. Should not happen with the current config but possible if your H200 has a slightly smaller usable VRAM (Modal sometimes provisions trimmed cards).
@@ -171,7 +197,7 @@ torch.save(c, 'step_000139.pt')
 
 | Item | Status when you're done |
 |---|---|
-| Step count | 799 (one epoch on filtered Polaris) — yaml says 850 but the dataset has only 799 unique batches |
+| Step count | 799 (one epoch on filtered Polaris: 51,139 rows / 64-prompt batch) |
 | Final checkpoint | `step_000799.pt` (or whichever step you stopped on) |
 | Time to ship back | When Modal timeout hits OR you've done your share OR you've finished the epoch |
 

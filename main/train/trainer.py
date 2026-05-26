@@ -529,11 +529,13 @@ def build_hf(cfg: TrainCfg) -> tuple[Any, torch.optim.Optimizer]:
     model_name = cfg.rollout.model
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     dtype = torch.bfloat16 if device.type == "cuda" else torch.float32
+    # FA2 disabled 2026-05-26 after first relaunch died during HF model load.
+    # The flash-attn wheel is still installed in the image so we can re-enable
+    # once we know-good in isolation. See docs/efficiency_wins_2026-05-26.md.
     model = AutoModelForCausalLM.from_pretrained(
         model_name,
         torch_dtype=dtype,
         trust_remote_code=True,
-        attn_implementation="flash_attention_2",
     )
     if cfg.train.get("gradient_checkpointing", True):
         model.gradient_checkpointing_enable()
@@ -787,6 +789,9 @@ def setup_wandb(
     launch_mode = cfg.raw.get("launch_mode")
     if launch_mode:
         tags.append(f"launch_mode={launch_mode}")
+    leg_number = os.environ.get("CS224R_LEG_NUMBER")
+    if leg_number:
+        tags.append(f"leg_number={leg_number}")
     abl = cfg.raw.get("ablation")
     if abl:
         tags.append(f"ablation={abl}")
@@ -905,7 +910,19 @@ def train(
     cfg: TrainCfg,
     *,
     after_checkpoint: Any | None = None,
+    leg_budget_s: float | None = None,
+    on_leg_exhausted: Any | None = None,
 ) -> None:
+    """Run the GRPO train loop.
+
+    Auto-relaunch hooks:
+      * `leg_budget_s` — if set, exit cleanly the first step after this many
+        seconds have elapsed since the start of this call. A checkpoint at the
+        last completed step is guaranteed before exit.
+      * `on_leg_exhausted(final_step)` — called immediately before return when
+        the leg budget triggers exit. Used by `train_remote` to spawn the next
+        Modal container, which will pick up via `resume: auto`.
+    """
     repro = _git_metadata()
     ckpt_dir = Path(cfg.train.get("checkpoint_dir", "/vol/checkpoints/train/"))
     resume_path: Path | None = None
@@ -924,7 +941,15 @@ def train(
         head = torch.load(resume_path, map_location="cpu", weights_only=False)
         resumed_from_step = int(head["step"])
         start_step = resumed_from_step + 1
-        wandb_run_id = str(head["wandb_run_id"])
+        # CS224R_FRESH_WANDB: one-shot escape hatch when the live wandb run has
+        # logged past the resume checkpoint and rewind/fork is not available.
+        # Starts a fresh wandb run; subsequent legs spawn without this env var
+        # and chain onto the new run via the next checkpoint's wandb_run_id.
+        if os.environ.get("CS224R_FRESH_WANDB", "").lower() in ("1", "true", "yes"):
+            logger.info("CS224R_FRESH_WANDB set; starting fresh wandb run")
+            wandb_run_id = None
+        else:
+            wandb_run_id = str(head["wandb_run_id"])
     else:
         set_seeds(cfg.global_seed)
 
@@ -953,6 +978,7 @@ def train(
 
     batch_size = int(cfg.train["batch_size"])
     last_ckpt = time.monotonic()
+    leg_start = time.monotonic()
 
     try:
         for step in range(start_step, total_steps):
@@ -1023,6 +1049,29 @@ def train(
                 last_ckpt = time.monotonic()
                 if after_checkpoint is not None:
                     after_checkpoint()
+
+            # Auto-relaunch: spawn a successor leg before the 24h Modal timeout.
+            if (
+                leg_budget_s is not None
+                and (time.monotonic() - leg_start) >= leg_budget_s
+            ):
+                ckpt_path = ckpt_dir / f"step_{step:06d}.pt"
+                if not ckpt_path.exists():
+                    save_ckpt(
+                        ckpt_path, hf_model, opt, step, cfg, run.id, dataset
+                    )
+                    last_ckpt = time.monotonic()
+                    if after_checkpoint is not None:
+                        after_checkpoint()
+                elapsed_h = (time.monotonic() - leg_start) / 3600.0
+                logger.info(
+                    "Leg budget %.2fh reached at step %d; spawning successor and exiting",
+                    elapsed_h,
+                    step,
+                )
+                if on_leg_exhausted is not None:
+                    on_leg_exhausted(step)
+                return
     finally:
         rollout_engine.shutdown()
         run.finish()
@@ -1063,7 +1112,18 @@ try:
         ablation: str = "",
         vllm_sleep: int = 0,
         logprob_chunk: int = 0,
+        leg_number: int = 1,
+        max_legs: int = 10,
+        fresh_wandb: bool = False,
     ) -> None:
+        """Modal entrypoint.
+
+        Auto-relaunch: when the leg budget (CS224R_LEG_HOURS, default 23.0h) is
+        hit, `train()` exits cleanly after a final checkpoint and this function
+        spawns a successor container via `train_remote.spawn(...)`. The new
+        container resumes from the latest checkpoint. `leg_number` increments
+        per chained leg; `max_legs` is a runaway guard.
+        """
         from train.ablation import apply_ablation_env
 
         apply_ablation_env(
@@ -1071,11 +1131,49 @@ try:
             vllm_sleep=vllm_sleep,
             logprob_chunk=logprob_chunk,
         )
+        os.environ["CS224R_LEG_NUMBER"] = str(leg_number)
+        os.environ["CS224R_MAX_LEGS"] = str(max_legs)
+        if fresh_wandb:
+            os.environ["CS224R_FRESH_WANDB"] = "1"
+
+        leg_budget_h = float(os.environ.get("CS224R_LEG_HOURS", "23.0"))
+        leg_budget_s = leg_budget_h * 3600.0
 
         def _commit_volume() -> None:
             _artifacts_vol.commit()
 
-        train(load_cfg(config_path), after_checkpoint=_commit_volume)
+        def _on_leg_exhausted(final_step: int) -> None:
+            _commit_volume()
+            if leg_number >= max_legs:
+                logger.warning(
+                    "Leg %d hit max_legs=%d; not spawning successor (final step=%d)",
+                    leg_number,
+                    max_legs,
+                    final_step,
+                )
+                return
+            next_leg = leg_number + 1
+            logger.info(
+                "Spawning leg %d (last completed step=%d, config=%s)",
+                next_leg,
+                final_step,
+                config_path,
+            )
+            train_remote.spawn(
+                config_path=config_path,
+                ablation=ablation,
+                vllm_sleep=vllm_sleep,
+                logprob_chunk=logprob_chunk,
+                leg_number=next_leg,
+                max_legs=max_legs,
+            )
+
+        train(
+            load_cfg(config_path),
+            after_checkpoint=_commit_volume,
+            leg_budget_s=leg_budget_s,
+            on_leg_exhausted=_on_leg_exhausted,
+        )
         _commit_volume()
 
 except ImportError:
