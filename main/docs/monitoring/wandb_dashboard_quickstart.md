@@ -1,6 +1,6 @@
 # GRPO training — wandb dashboard quickstart
 
-8 panels for routine monitoring of `cs224r-minority-voting` runs. If something looks off, drop into [`wandb_dashboard_full.md`](./wandb_dashboard_full.md) for the diagnostic panels.
+9 panels for routine monitoring of `cs224r-minority-voting` runs. If something looks off, drop into [`wandb_dashboard_full.md`](./wandb_dashboard_full.md) for the diagnostic panels.
 
 A 60-second check: scan top-to-bottom. If panels 1–6 look normal and a sample completion in 8 looks like real math, close the tab.
 
@@ -19,7 +19,8 @@ The companion script `scripts/setup_wandb_quickstart_view.py` creates this exact
 | 5 | **Completion length** | `train/mean_completion_tokens`, `train/p95_completion_tokens` | mean 700–950, p95 1700–2500 | p95 approaches 4096 |
 | 6 | **Finish reason** | `train/frac_finish_stop`, `..._length`, `..._other` | stop > 0.85 | length > 0.25 |
 | 7 | **VRAM peak** | `train/vram_peak_gb_step` | 115–130 GB | touches 140 |
-| 8 | **Sample completions** | `sample/completion_0`, `_1`, `_2` (every 50 steps) | looks like real chain-of-thought math | repetition, empty, `\boxed{0}` spam |
+| 8 | **Time per step (stacked)** | `train/t_rollout_s` + `train/t_train_fwd_bwd_s` + `train/t_weight_sync_s` | total 165–230s, rollout dominant | sustained > 250s |
+| 9 | **Sample completions** | `sample/completion_0`, `_1`, `_2` (every 50 steps) | looks like real chain-of-thought math | repetition, empty, `\boxed{0}` spam |
 
 ---
 

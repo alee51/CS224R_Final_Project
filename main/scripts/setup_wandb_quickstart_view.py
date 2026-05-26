@@ -11,6 +11,10 @@ Requires:
     WANDB_API_KEY set (or ~/.netrc credentials)
 """
 
+from dataclasses import dataclass
+from typing import ClassVar, Literal
+
+import wandb_workspaces.expr as _expr
 import wandb_workspaces.workspaces as ws
 import wandb_workspaces.reports.v2 as wr
 
@@ -19,14 +23,27 @@ PROJECT = "cs224r-minority-voting"
 VIEW_NAME = "GRPO quickstart"
 
 
+@dataclass(eq=False, frozen=True)
+class RunTags(_expr.BaseMetric):
+    """Filter expression for the actual run tags field.
+
+    `ws.Tags()` in wandb-workspaces 0.3.x hardcodes `section="run"`, which the
+    backend interprets as a column named `tags` (the lowercase one with the
+    list icon in the filter UI) rather than the real `Tags` field (tag icon).
+    Override the section to `"tags"` so it filters on the actual run tags.
+    """
+
+    name: str = "tags"
+    section: ClassVar[Literal["tags"]] = "tags"
+
+
 def build_workspace() -> ws.Workspace:
     return ws.Workspace(
         entity=ENTITY,
         project=PROJECT,
         name=VIEW_NAME,
         runset_settings=ws.RunsetSettings(
-            filters=[ws.Tags().isin(["production"])],
-            groupby=[ws.Tags()],
+            filters=[RunTags().isin(["production"])],
         ),
         sections=[
             ws.Section(
@@ -91,13 +108,22 @@ def build_workspace() -> ws.Workspace:
                 ],
             ),
             ws.Section(
-                name="4. Safety + samples",
+                name="4. Safety + perf + samples",
                 is_open=True,
                 panels=[
                     wr.LinePlot(
                         title="VRAM peak (GB)",
                         y=["train/vram_peak_gb_step"],
                         range_y=(80, 145),
+                    ),
+                    wr.LinePlot(
+                        title="Time per step (s, stacked)",
+                        y=[
+                            "train/t_rollout_s",
+                            "train/t_train_fwd_bwd_s",
+                            "train/t_weight_sync_s",
+                        ],
+                        plot_type="stacked-area",
                     ),
                     wr.MediaBrowser(
                         title="Sample completions (every 50 steps)",
