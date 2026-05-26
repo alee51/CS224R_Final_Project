@@ -48,7 +48,7 @@ Pulled verbatim from PLAN §5 "Architecture (commit now)". **If any of these cha
 
 | Item | Resolution | Config / code |
 |---|---|---|
-| **Reward parser** | **Rank-2 locked** — boxed-first ∪ Minerva; `extract_path` diagnostic. 200-run 56% Minerva-only was format compliance, not parser failure. Offline rank2 ~**87.6%** on hybrid rollouts. | `main/train/reward.py` — `compute_reward()`, `extract_rank2()` |
+| **Reward parser** | Rank-2 extract + **`grade_parsed_answer`** (mathd OR sympy, DeepScaleR/rLLM). `extract_path` diagnostic. ~**87.6%** `parse_ok_rank2` on hybrid n800. | `main/train/reward.py` — `compute_reward()`, `extract_rank2()`, `grade_parsed_answer()` |
 | **Prompt template** | **Hybrid arm C locked** — `hybrid_answer_boxed` (`HYBRID_ANSWER_BOXED_TEMPLATE`). Fallbacks: `dapo_answer_v1`, `verl_math_boxed`. | `prompt_variant` in yaml → `format_problem(..., variant=...)` |
 
 See [`probes/group_a_results.md`](./probes/group_a_results.md) addendum and [`timeline.md`](./timeline.md).
@@ -57,8 +57,8 @@ See [`probes/group_a_results.md`](./probes/group_a_results.md) addendum and [`ti
 
 | Item | Status | How skeleton handles it |
 |---|---|---|
-| **`max_response_length`** | 4096 safe (Group A); 3072 truncates ~2.3% | `rollout.max_response_length`, default **4096** |
-| **§2 sampling / training freeze** | Undecided | `train.data_path` → frozen jsonl from `preprocess_polaris.py` |
+| **`max_response_length`** | **4096 locked** (Group A; 1.25% hit cap) | `rollout.max_response_length`, default **4096** |
+| **§2 sampling / training freeze** | **Locked** — train on `polaris_train.jsonl` (filtered); full pool in `source/polaris_train_full.jsonl` | `train.data_path` → `/vol/data/polaris_train.jsonl` |
 | **Judge VRAM / hosting** | n800: ~70 GB judge alone; collocated train+policy+judge unmeasured | Sidecar / second GPU for CoT arms only |
 | **Loss normalization for *new* arms** | GRPO + Poly-EPO-style locked | Minority-* → `T_max` via config per arm |
 
@@ -72,7 +72,7 @@ See [`probes/group_a_results.md`](./probes/group_a_results.md) addendum and [`ti
 | HF Transformers | `>=4.55.2,<5.0.0` (pinned in image; Qwen2Tokenizer cache-path constraint) |
 | Model | `Qwen/Qwen3-1.7B-Base` — plain string to vLLM, no chat template (per STANDARDS Reward §) |
 | Prompt template (default train) | **`hybrid_answer_boxed`** (arm C) — `main/train/prompts.py`; override via `prompt_variant` |
-| Reward API | `compute_reward(completion, gold, prompt_variant=...)` — Rank-2 in `main/train/reward.py` |
+| Reward API | `compute_reward(completion, gold, prompt_variant=...)` — Rank-2 + mathd OR sympy via `grade_parsed_answer()` |
 | Polaris sampling | **Not in skeleton.** Training reads frozen jsonl produced by separate `main/data/preprocess_polaris.py` (PLAN §2). For Group B's toy batch, reuse Group A's manifest (`probes/05-24/group_a/manifest.jsonl` on `main-artifacts`). |
 | Seeds | STANDARDS formula: `global_seed + step * batch_size * N + prompt_idx * N + rollout_idx`. Never Python `hash()`. |
 | Modal image | `from main.infra.modal_image import image` — already exists |
@@ -250,10 +250,10 @@ def train(cfg: TrainCfg) -> None:
 
 One-shot script. **Not run by trainer.** PLAN §2 freeze.
 
-- Reads Polaris from HF, applies cleaning (integer gold, non-empty problem).
-- Selects bands / sizes per §2 decisions (UNDECIDED — config-driven).
-- Writes `main/data/polaris_train.jsonl` + `polaris_train.meta.json` (HF revision SHA, seed, bands, row count, timestamp, cleaning filters).
-- **Do not run until §2 is locked.** Group B can use Group A's manifest in the meantime.
+- Reads Polaris from HF, applies cleaning (non-empty problem + non-empty gold; **all** HF answer types kept).
+- Stratified proportional 16k across `0/8`…`7/8`, seed 42 (see `polaris_preprocess_plan.md`).
+- Writes `source/polaris_train_full.jsonl` + meta via `preprocess_polaris.py`; `filter_polaris_train.py` → `polaris_train.jsonl` + train meta.
+- **Policy locked;** materialization is a one-shot ops step. Group B can use Group A's manifest in the meantime.
 
 ### 5.7 `main/data/dataset.py`
 
@@ -295,7 +295,7 @@ train:
 rollout:
   model: Qwen/Qwen3-1.7B-Base
   max_prompt_length: 1024
-  max_response_length: 4096    # locked (Group A); 3072 possible later
+  max_response_length: 4096    # locked (Group A)
   temperature: 1.0
   top_p: 1.0
   gpu_memory_utilization: 0.45 # collocated; Group B tunes

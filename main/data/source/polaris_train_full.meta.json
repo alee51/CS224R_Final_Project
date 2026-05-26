@@ -1,0 +1,61 @@
+{
+  "dataset_id": "POLARIS-Project/Polaris-Dataset-53K",
+  "dataset_revision": "296f8e34132e63f4a1d70e0dcc8bddebb43f03e4",
+  "split": "train",
+  "sampling": {
+    "method": "stratified_proportional",
+    "target_n": 53291,
+    "seed": 42,
+    "bands": [
+      "0/8",
+      "1/8",
+      "2/8",
+      "3/8",
+      "4/8",
+      "5/8",
+      "6/8",
+      "7/8"
+    ]
+  },
+  "cleaning": {
+    "drop_empty_gold": true,
+    "drop_empty_problem": true,
+    "gold_policy": "verbatim_hf_strip_only",
+    "note": "No integer-gold filter; grade at train time via grade_parsed_answer (mathd OR sympy)."
+  },
+  "counts": {
+    "hf_rows": 53291,
+    "after_clean": 53291,
+    "written": 53291,
+    "dropped_cleaning": 0,
+    "dropped_bad_band": 0,
+    "per_band_after_clean": {
+      "0/8": 15368,
+      "1/8": 6956,
+      "2/8": 5459,
+      "3/8": 5137,
+      "4/8": 5211,
+      "5/8": 4720,
+      "6/8": 4000,
+      "7/8": 6440
+    },
+    "per_band_in_output": {
+      "0/8": 15368,
+      "1/8": 6956,
+      "2/8": 5459,
+      "3/8": 5137,
+      "4/8": 5211,
+      "5/8": 4720,
+      "6/8": 4000,
+      "7/8": 6440
+    }
+  },
+  "materialized_at": "2026-05-26T08:05:03Z",
+  "freeze_status": "frozen",
+  "artifact_role": "full_pool",
+  "freeze_note": "Unfiltered clean pool; not for training. Train on data/polaris_train.jsonl (filter_polaris_train.py).",
+  "output_files": {
+    "jsonl": "main/data/source/polaris_train_full.jsonl",
+    "meta": "main/data/source/polaris_train_full.meta.json"
+  }
+}

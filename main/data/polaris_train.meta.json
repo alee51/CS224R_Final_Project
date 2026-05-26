@@ -1,7 +1,7 @@
 {
   "source": {
-    "input_jsonl": "/Users/nancybao/Desktop/dev/cs224r_finalproject/main/data/polaris_train.jsonl",
-    "parent_meta": "/Users/nancybao/Desktop/dev/cs224r_finalproject/main/data/polaris_train.meta.json",
+    "input_jsonl": "/Users/nancybao/Desktop/dev/cs224r_finalproject/main/data/source/polaris_train_full.jsonl",
+    "parent_meta": "/Users/nancybao/Desktop/dev/cs224r_finalproject/main/data/source/polaris_train_full.meta.json",
     "parent_freeze": "frozen",
     "parent_dataset_id": "POLARIS-Project/Polaris-Dataset-53K",
     "parent_dataset_revision": "296f8e34132e63f4a1d70e0dcc8bddebb43f03e4"
@@ -40,12 +40,13 @@
       "7/8": 178
     }
   },
-  "materialized_at": "2026-05-26T08:56:26Z",
+  "materialized_at": "2026-05-26T09:01:03Z",
   "freeze_status": "frozen",
-  "freeze_note": "Trimmed from polaris_train.jsonl; do not re-materialize without dated note in main/docs/context.md.",
+  "freeze_note": "Canonical train manifest (prompt-filtered). Source pool: source/polaris_train_full.jsonl. Re-materialize only with dated note in main/docs/context.md.",
+  "artifact_role": "train",
   "output_files": {
-    "jsonl": "/Users/nancybao/Desktop/dev/cs224r_finalproject/main/data/polaris_train_filtered.jsonl",
-    "meta": "/Users/nancybao/Desktop/dev/cs224r_finalproject/main/data/polaris_train_filtered.meta.json",
-    "dropped_audit_jsonl": "main/data/polaris_train_filtered_dropped.jsonl"
+    "jsonl": "/Users/nancybao/Desktop/dev/cs224r_finalproject/main/data/polaris_train.jsonl",
+    "meta": "/Users/nancybao/Desktop/dev/cs224r_finalproject/main/data/polaris_train.meta.json",
+    "dropped_audit_jsonl": "/Users/nancybao/Desktop/dev/cs224r_finalproject/main/data/polaris_train_dropped.jsonl"
   }
 }

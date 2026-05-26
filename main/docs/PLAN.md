@@ -30,23 +30,26 @@ Nancy code. Anastasia run monitoring, Emma evaluation maybe?
 
 **Source:** `[POLARIS-Project/Polaris-Dataset-53K](https://huggingface.co/datasets/POLARIS-Project/Polaris-Dataset-53K)`. Only one version / one `train` split exists. Fields: `problem`, `answer`, `difficulty`. `difficulty` is 8 fractional bands (`1/8` easiest → `7/8` hardest), labeled by Deepseek-R1-distill-Qwen-7B pass rate.
 
-**Training sub-block size and difficulty band:** TBD. Target ≈ 16k problems (mirrors DAPO-17k baseline); final size depends on §7 cost. Three coupled decisions, all open:
+**Train data (decided 2026-05-26):** **Polaris** (not DAPO-Math-17k) — mentor recommendation + `difficulty` bands for §2 sampling. Early DAPO-vs-Polaris comparison used **arm A** rollouts and overstated the gap; **arm C** hybrid on the same 800-problem manifest is ~1 pp below DAPO pilot pass@8 (33.1% vs 34.4%). See `[timeline.md](./timeline.md)` §2026-05-26 afternoon.
 
-- Whether to drop problems Qwen-1.7B gets 8/8 correct (Polaris recipe).
-- Probe baseline pass rate across difficulty bands to see where reward signal actually exists.
-- Final distribution: low-difficulty bias (milestone framing) vs. mirrored-J per Polaris vs. something in between.
+**Training sub-block size and difficulty band (decided 2026-05-26 late):** **16,000** rows, **stratified proportional** across difficulty bands `0/8`…`7/8` (mirrored-J shape at ~53k scale), seed **42**. Spec: [`polaris_preprocess_plan.md`](./polaris_preprocess_plan.md); script: `main/data/preprocess_polaris.py`.
 
-**Cleaning:** Polaris is already filtered from DeepScaleR + AReal-boba-Data and should be clean. Apply only:
+**Cleaning (train freeze):** Polaris is already filtered from DeepScaleR + AReal-boba-Data. Apply only:
 
-- drop rows where `answer` doesn't parse as an integer
-- drop rows where `problem` is empty or malformed
+- drop rows where `problem` is empty or not a non-empty string
+- drop rows where `answer` / gold is empty after strip
+
+**Do not** filter to integer-only gold for the Polaris manifest — random full-gold n800 probe matched integer-stratified pass rates under arm C + `grade_parsed_answer` (see [`timeline.md`](./timeline.md) §2026-05-26 late night). Group A probes may still use integer gold for historical parity; that is not the train freeze policy.
+
+**Still open (optional v2):** drop prompts where Qwen-1.7B gets 8/8 correct mid-training (Polaris dynamic recipe).
 
 **Eval splits:** TBD — defer to §4 Evaluation. (Pilot frozen splits in `pre-milestone/pilot/data/` are a starting point but not load-bearing here.)
 
 **Freeze policy:**
 
-- Once difficulty band + size are chosen, materialize a single jsonl file at `main/data/polaris_train.jsonl` with a deterministic seed.
-- Record provenance in `main/data/polaris_train.meta.json`: HF dataset ID, dataset revision SHA, difficulty bands kept, sampling seed, row count, cleaning filters applied, materialization timestamp.
+- **Train manifest (canonical):** `main/data/polaris_train.jsonl` + `polaris_train.meta.json` — 51,139 rows after prompt filter ([`data/README.md`](../data/README.md), [`decisions.md`](./decisions.md) §2026-05-27).
+- **Full pool (source):** `main/data/source/polaris_train_full.jsonl` — from `preprocess_polaris.py`; input to `filter_polaris_train.py` only.
+- Record provenance in each meta json: HF revision, seed, row counts, filters applied, materialization timestamp.
 - Once frozen, **do not re-materialize** without writing a dated note in `main/docs/context.md` explaining why.
 - Eval splits follow the same convention: one jsonl + meta.json per split.
 
@@ -80,7 +83,7 @@ Clustering substrate differs by arm (answer-hash vs. CoT). Poly-EPO-answer uses 
 
 ### Reward
 
-0/1 integer match between the model's `\boxed{...}` answer and Polaris gold. Answer parsing and grading depends on the answer-extraction method (consider VeRL-inspired, or MathReward package).  
+**Locked (2026-05-26):** Rank-2 extraction (`extract_rank2`, arm C `hybrid_answer_boxed`) then **DeepScaleR / rLLM graders** — `grade_answer_mathd(parsed, gold) or grade_answer_sympy(parsed, gold)` (`grade_parsed_answer` in `main/train/reward.py`; vendored from [rLLM `math_utils/utils.py`](https://github.com/agentica-project/rllm/blob/main/rllm/rewards/math_utils/utils.py)). OOD eval remains Math-Verify (STANDARDS).  
 
 ### Success criteria
 
@@ -121,7 +124,7 @@ Kept deliberately open — flesh out once arms are training and we know the nois
 
 Lightweight VeRL-flavored trainer; not the full VeRL stack. Nancy owns all `.py`. Target: small enough that one person holds the whole thing in their head. All code follows `[STANDARDS.md](./STANDARDS.md)` (reproducibility, wandb, Modal, checkpointing) — this section is just the trainer-specific architecture on top.
 
-The binding constraint is **wall-clock, not $$.** Internal target is ~7 days from skeleton-complete to results across all arms. $1,600 on A100-80GB ≈ 640 GPU-hr ≈ 26 days sequential / ~6 days at 4-way parallel — and that's before judge cost for Minority-CoT / Poly-EPO-CoT and before any re-runs. We expect to land on H100 or H200 even at slightly worse $/throughput; trainer must therefore be GPU-class-agnostic (A100 / H100 / H200, single-GPU or 2-GPU). GPU class is resolved by §7 probes.
+The binding constraint is **wall-clock, not $$.** Internal target is ~7 days from skeleton-complete to results across all arms. $1,600 on A100-80GB ≈ 640 GPU-hr ≈ 26 days sequential / ~6 days at 4-way parallel — and that's before judge cost for Minority-CoT / Poly-EPO-CoT and before any re-runs. **GPU class resolved 2026-05-26: H200** (Group B readout — H100 OOMs at `batch_size: 64` because `_completion_logprobs_hf` is one-shot; H200 fits with 25% VRAM headroom and is 25% cheaper / 34% faster per prompt). Trainer remains GPU-class-agnostic in code (A100 / H100 / H200 / B200, single-GPU or 2-GPU) — only Modal `gpu=` strings and `modal_price_per_sec` change between SKUs.
 
 ### Proposed
 
@@ -160,12 +163,14 @@ Aggressive optimization here is the only place we can buy back wall-clock before
 | Param | Poly-EPO | Note for us (1.7B) |
 | --- | --- | --- |
 | N rollouts / set size n / K | 8 / 4 / 70 | Same — already locked |
-| Max prompt / response | 1024 / 4096 | Probe `max_response` before adopting — biggest cost knob |
-| Prompts / batch / microbatch | 128 / 64 | Probe |
+| Max prompt / response | 1024 / 4096 | **4096 locked** (Group A; ~1.25% hit cap) |
+| Prompts / batch / microbatch | 128 / 64 | Locked **64** on single H200† |
 | LR / KL / clip low/high | 1e-6 / 0.0 / 0.20 / 0.28 (DAPO-asym) | Adopt KL=0 and asym clip; LR sweep if needed |
 | Entropy / rollout temp | 0.0 / 1.0 | Adopt |
 | Training steps | 850 | Scope from probes |
 | Codebase | VeRL via Tajwar et al MLRL fork | Read-and-lift, not import |
+
+† Poly-EPO **128 prompts / batch 64** is on **4× H200** (4B, VeRL) — not our single-GPU collocated 1.7B stack. We lock **`train.batch_size: 64`** on one H200; bs=128 OOMs in `logprob_fwd` after rollout ([`decisions.md`](./decisions.md) §2026-05-26).
 
 **Architecture (commit now):**
 
@@ -175,8 +180,30 @@ Aggressive optimization here is the only place we can buy back wall-clock before
 - **Filter zero-advantage prompts before backward.** When all N rollouts get the same reward (GRPO) or all 70 sets get the same f (set-RL arms), the advantage is zero and the prompt contributes nothing to the gradient. Skip it. Particularly relevant for minority-answer: collapsed prompts (all 8 rollouts agree on one answer) produce no signal by construction. `objective.py` returns a mask; `loss.py` honors it.
 - **Judge as a sidecar vLLM engine** (Minority-CoT, Poly-EPO CoT variant). Run Qwen-3-4B-Instruct via vLLM locally — same machine if VRAM allows, second GPU otherwise. `judge/client.py` is a thin wrapper that's swappable to API if probes show local hosting is infeasible. **Group A n800:** judge ≈ rollout wall-clock and ~$0.0014/call on H100 — CoT arms are ~2× inference GPU vs rollout-only arms, not blocked on $/latency; collocated train+policy+judge still unmeasured.
 - **vLLM prefix caching ON.** Shared system-prompt prefix is reused across all N rollouts per problem. Free.
-- **wandb logging** from `trainer.py`; project `cs224r-minority-voting`. Log step time, mean reward, loss, and advantage stats each training step.
+- **wandb logging** from `trainer.py`; project `cs224r-minority-voting`. Log step time, mean reward, loss, and advantage stats each training step — plus **training-dynamics panel** (§5 below) required for Poly-EPO Fig. 2–style curves.
 - **Async rollout / train overlap** — stretch. vLLM rolls out batch t+1 while HF does backward on batch t. Up to ~30% wall-clock saved. Defer unless §7 step-probe shows it's the binding constraint; the code complexity isn't worth it otherwise.
+
+### Training-time reporting (Poly-EPO Fig. 2 parity)
+
+Poly-EPO reports **in-training** curves on the **training set** (Fig. 2), separate from held-out **pass@k** (Fig. 1). We need the same split: wandb during train; `eval/passk.py` only post-train (or rare offline eval jobs).
+
+**Source:** [`pre-milestone/pilot/docs/analysis/0519_poly_epo_methodology.md`](../../pre-milestone/pilot/docs/analysis/0519_poly_epo_methodology.md) §6 — Ifdita Hasan Orney et al., Poly-EPO (May 2026).
+
+| Poly-EPO Fig. 2 panel | Definition | Required for v1? | How we implement |
+| --- | --- | --- | --- |
+| **Right — training coverage** | Fraction of **training prompts** in the step with **≥1 correct** rollout (of N=8), using the **train reward** (mathd∨sympy on Rank-2 parse) | **Yes — all arms** | `trainer.py` wandb: `train/prompt_coverage` (= mean over batch of `max(reward_row) > 0`). **Not** the same as `train/mean_reward` (mean over all rollouts). |
+| **Right — related** | Fraction with **mixed** correct/incorrect rollouts (minority / GRPO signal density) | **Yes — all arms** | `train/mixed_reward_rate` (= fraction of prompts with `0 < sum(rewards) < N`). Maps to probe-plan **C1**. |
+| **Left — strategy diversity** | Mean **unique LM-judge reasoning clusters** among **correct** rollouts only | **Poly-EPO / Minority-CoT only** | In-loop judge (`judge/` + `poly_epo_a1.md`) each step: cluster correct rollouts, log `train/mean_unique_strategy_clusters_correct`. **GRPO baseline does not log this** — no judge in GRPO loop. |
+| **Left — answer diversity (our analogue)** | Unique **answer-hash** clusters among correct rollouts | **Minority-answer / Poly-EPO-answer** when implemented | Cheap hash clusters on parsed answers; log `train/mean_unique_answer_clusters_correct`. Not identical to paper's CoT clusters — cite separately in writeup. |
+| **Diagnostics (PLAN §5)** | `extract_path` distribution, parse failures | **Yes — all arms** | Per-step counts: `train/parse_ok_rate`, `train/extract_path_{hybrid,boxed,answer_line,none}` fractions. |
+| **Length / collapse (C2)** | Mean completion tokens per step | **Yes — all arms** | `train/mean_completion_tokens`, optional p95. |
+| **Set-arm advantages (C3)** | Distribution of marginal subset advantages | **Minority-* / Poly-EPO arms** | Log at step 100 (and every 100): histogram or percentiles of per-rollout marginal advantages — not meaningful for pure GRPO. |
+
+**Retention policy:** These metrics are **wandb scalars only** unless we add an explicit decision to flush rollout jsonl to the volume (expensive). **Checkpoints do not store rollouts** — you cannot reconstruct Fig. 2 from `step_*.pt` alone. If we need paper-faithful strategy clusters on a GRPO run post hoc, run an **offline judge pass** on a saved checkpoint's eval rollouts, not from training checkpoints.
+
+**Implementation status (2026-05-26):** **All-arm rows implemented** in `trainer.py` via `aggregate_train_step_wandb_metrics` (C1, C1b, C2). Still missing: C3 (set-arm advantages), C4/C4b (cluster diversity — judge / answer-hash). Core loop also logs `loss`, `mean_reward`, `fraction_filtered`, `n_kept`.
+
+**What we explicitly do not emulate in-loop:** Held-out AIME/HMMT **pass@k** during training (paper Fig. 1 is end-of-run). Optional later: sparse offline eval on checkpoint every K steps — separate Modal job, not in `train()` loop.
 
 **Size / throughput (set by §7 probes):**
 
@@ -185,7 +212,7 @@ Aggressive optimization here is the only place we can buy back wall-clock before
 - **Gradient checkpointing on** — ~50% activation memory for ~30% recompute. Standard at this scale.
 - **8-bit AdamW** (bitsandbytes) if VRAM-tight. Drops optimizer state from ~4× model size to ~1× (~10 GB freed for Qwen3-1.7B). Cheap to A/B.
 - **Fused AdamW** for speed once memory is sorted.
-- **`max_response_length`** — linear in rollout cost. Poly-EPO uses 4096; before adopting, probe Qwen3-1.7B's cumulative-length distribution on Polaris at temp=1. If the model rarely exceeds 2048–3072, lower the cap and pocket the savings.
+- **`max_response_length`** — **4096 locked** (Group A). vLLM decode compute scales with tokens actually generated per sequence (PagedAttention, incremental KV blocks), not full `max_tokens` matmul on every rollout. **`max_model_len`** (1024+4096=5120) sets the KV memory pool and concurrency budget — separate from per-token decode cost.
 - **vLLM `gpu_memory_utilization`** — tuned to leave VRAM for HF model + grads + optimizer + activations if collocated; maximized if vLLM has its own GPU.
 - **HF → vLLM weight sync cadence.** Every step by default; batch updates over N steps if `update_weights` is slow.
 - **Microbatch shapes** (rollout, logprob forward, backward) + gradient accumulation — sized to fit VRAM with everything above. Defer to probes.
@@ -205,16 +232,16 @@ Resolved by Group A offline analysis, prompt A/B/C probe, and Rank-2 implementat
 | --- | --- | --- |
 | **Train prompt** | **`hybrid_answer_boxed`** (arm C) — `Answer: \boxed{N}` hybrid; no validated upstream recipe | `dapo_answer_v1`, `verl_math_boxed` in `main/train/prompts.py` |
 | **Parser** | **Rank-2** — hybrid regex (arm C) → last `\boxed{}` → Minerva `Answer:` line; `extract_path` logged | Revert variant in yaml if train diverges |
-| **`max_response_length`** | **4096** (Group A: 1.25% cap hits at 4096) | 3072 possible later (~2.3% truncated) |
+| **`max_response_length`** | **4096** (Group A: 1.25% cap hits at 4096) | — |
 
-**Monitor in training:** `extract_path` distribution; if `none` rate climbs above ~20% mid-run, revisit prompt. OOD eval stays Math-Verify (format-agnostic).
+**Monitor in training:** per §5 **Training-time reporting** — `extract_path` fractions + `train/prompt_coverage`; if `extract_path_none` climbs above ~20% mid-run, revisit prompt. OOD eval stays Math-Verify (format-agnostic).
 
 ### Open
 
 - Exact vLLM version + `update_weights` API signature — **pinned 0.8.5** in image; spike in `test_weight_sync.py`.
 - Judge hosting: same GPU vs second GPU vs API — Group A answered $/latency; **collocated** three-way VRAM still open.
-- Config schema — flat yaml in use (`train_grpo_05-25.yaml`); refine as arms land.
-- Whether async rollout/train overlap is worth the code complexity — **Group B** phase-% decides.
+- Config schema — production yaml: [`configs/train_real.yaml`](../configs/train_real.yaml); launch via `launch_train.sh --mode smoke|full`.
+- Whether async rollout/train overlap is worth the code complexity — **Group B answered:** rollout is 73% of step on H200 @ bs=64, so overlap could save ~25–30% wall-clock. Defer to **after** first real training run lands; implementation complexity not worth bundling into the first launch.
 - Whether to re-introduce `kl_coef` if we see mode collapse / reward hacking under KL=0.
 
 ## 6. Operations
@@ -296,7 +323,7 @@ Where every knob that affects cost or step time gets enumerated. **Not comprehen
 - eval temperature (often different from train)
 - eval max_new_tokens
 - eval batch size
-- mid-training eval cadence + which slice
+- mid-training **held-out** eval cadence + which slice (optional; **not** required for Poly-EPO Fig. 2 parity — see §5 Training-time reporting)
 
 ### Scoping probes (run before locking the matrix)
 
@@ -316,14 +343,25 @@ Where every knob that affects cost or step time gets enumerated. **Not comprehen
 - $/full eval matrix
 - total $/matrix incl. buffer
 
-### Probe status (2026-05-25)
+### Probe status (2026-05-26)
 
 | Probe | Status |
 | --- | --- |
 | Group A (rollout + judge) | **Done** — H100; ~4.5k tok/s policy; judge ≈ rollout time; see `group_a_results.md` |
-| Prompt A/B/C | **Done** — arm **C** locked for train |
-| Group B (collocated GRPO step) | **In flight** — microbatch, util, $/step, async |
-| GPU SKU (H100 vs H200) | **Not run** — optional 1-hr re-run of Group B toy slice; not blocking |
+| Prompt A/B/C | **Done** — arm **C** (`hybrid_answer_boxed`) locked for train |
+| Group B (collocated GRPO step) | **Done** — H200 chosen; bs=64 fits with 75% VRAM peak; rollout=73% / backward=25% of step (~0.41 s/kept seq); $0.0023/prompt; see `timeline.md` 2026-05-26 |
+| GPU SKU (H100 vs H200) | **Done** — H100 ruled out (OOMs at bs=64); H200 locked. B200 not run; optional ~1 hr smoke per `probes/B200_migration_analysis_2026-05-26T034425Z_b01999f.md` |
+
+### Locked from Group B (2026-05-26)
+
+- **GPU**: H200 (Modal `gpu="H200"`, `modal_price_per_sec: 0.001261`).
+- **`batch_size`**: **Locked 64** ([`decisions.md`](./decisions.md) §2026-05-26). Fits with ~75% VRAM peak on H200; theoretical ceiling ≈ bs=80–96 before OOM at this stack shape — **do not use 128** on single-GPU collocated train (bs=128 probes OOM in `logprob_fwd` after rollout).
+- **`gpu_memory_utilization`**: 0.45 on H200 (gives vLLM ~63 GB / trainer ~77 GB). **Do not raise blindly** — raising starves the trainer and re-creates the bs=64 OOM.
+- **Microbatch**: capped by `n_kept_sequences` per step (~72 in the probe). All sequences fit in one forward+backward at this shape; no gradient accumulation needed unless we scale batch_size past the VRAM ceiling.
+- **Per-step economics**: ~$0.150/step at this shape (~$0.0023/prompt). $/arm depends on §7 horizon (TBD).
+- **Backward (Phase 1, canonical `66g5uyt6`)**: 29.5 s @ `n_kept=72` → **~0.41 s / kept sequence**. Phase 1b backward is not comparable (max microbatch + fresh rollouts).
+- **`rollout.gpu_memory_utilization: 0.45` on H200**: vLLM ~63 GB after rollout; trainer peak ~105 GB on 140 GB → ~35 GB headroom. Raise util only after re-probing trainer peak.
+- **Open knob to revisit later (not for first launch)**: async rollout/train overlap — rollout is 73% of step, so overlap pays. Implementation complexity ≠ trivial; defer to post-first-run.
 
 ### Reward density / batch utilization (flag)
 
@@ -331,8 +369,8 @@ Group A n800 (arm A): **73.4%** of prompts all-wrong (0/8 rollouts correct) → 
 
 ### Open
 
-- Whether **H100** stays default after Group B readout, or a one-off **H200** replay of the Group B slice is worth wall-clock savings.
+- ~~Whether **H100** stays default after Group B readout~~ — **Resolved 2026-05-26: H200 locked** (H100 OOMs at bs=64).
 - Whether to chase the stretch +$400 credits proactively or only if probes say we need them.
 - Whether some arms (e.g. Poly-EPO-answer stretch) get a smaller training horizon / fewer prompts than the headline arms for cost parity.
-- §2 Polaris freeze (size, bands, drop-easy) — still blocks final train matrix.
+- §2 Polaris freeze (size, bands, drop-easy) — still blocks final train matrix; now the **binding blocker** for first training launch.
 

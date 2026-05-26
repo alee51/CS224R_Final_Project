@@ -2,7 +2,7 @@
 # Launch: bash main/scripts/launch_train.sh --mode smoke|full
 #   smoke → 10 steps (CS224R_TOTAL_STEPS override only)
 #   full  → total_steps below
-# Requires /vol/data/polaris_train_filtered.jsonl on main-artifacts (§2 freeze + prompt filter).
+# Requires /vol/data/polaris_train.jsonl on main-artifacts (canonical train freeze; §2 + prompt filter).
 
 global_seed: 42
 operator: nancy
@@ -12,7 +12,7 @@ arm: grpo
 prompt_variant: hybrid_answer_boxed
 
 train:
-  data_path: /vol/data/polaris_train_filtered.jsonl
+  data_path: /vol/data/polaris_train.jsonl
   total_steps: 850
   batch_size: 64
   n_rollouts: 8

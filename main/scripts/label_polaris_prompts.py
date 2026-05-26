@@ -14,11 +14,16 @@ _MAIN_ROOT = Path(__file__).resolve().parents[1]
 if str(_MAIN_ROOT) not in sys.path:
     sys.path.insert(0, str(_MAIN_ROOT))
 
+from data.paths import (
+    POLARIS_TRAIN_FULL_JSONL,
+    POLARIS_TRAIN_HEURISTIC_SUMMARY,
+    POLARIS_TRAIN_LABELED_JSONL,
+)
 from data.prompt_heuristics import any_heuristic, label_prompt_heuristics
 
-DEFAULT_IN = _MAIN_ROOT / "data/polaris_train.jsonl"
-DEFAULT_OUT = _MAIN_ROOT / "data/polaris_train_labeled.jsonl"
-DEFAULT_SUMMARY = _MAIN_ROOT / "data/polaris_train_heuristic_summary.json"
+DEFAULT_IN = POLARIS_TRAIN_FULL_JSONL
+DEFAULT_OUT = POLARIS_TRAIN_LABELED_JSONL
+DEFAULT_SUMMARY = POLARIS_TRAIN_HEURISTIC_SUMMARY
 
 
 def _read_jsonl(path: Path) -> list[dict[str, Any]]:

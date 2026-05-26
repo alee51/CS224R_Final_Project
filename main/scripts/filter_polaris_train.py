@@ -15,15 +15,23 @@ _MAIN_ROOT = Path(__file__).resolve().parents[1]
 if str(_MAIN_ROOT) not in sys.path:
     sys.path.insert(0, str(_MAIN_ROOT))
 
+from data.paths import (  # noqa: E402
+    POLARIS_TRAIN_DROPPED_JSONL,
+    POLARIS_TRAIN_FULL_JSONL,
+    POLARIS_TRAIN_FULL_META,
+    POLARIS_TRAIN_JSONL,
+    POLARIS_TRAIN_META,
+)
 from data.prompt_heuristics import (  # noqa: E402
     label_prompt_heuristics,
     should_drop_train_prompt_filter,
 )
 
-DEFAULT_IN = _MAIN_ROOT / "data/polaris_train.jsonl"
-DEFAULT_OUT = _MAIN_ROOT / "data/polaris_train_filtered.jsonl"
-DEFAULT_META = _MAIN_ROOT / "data/polaris_train_filtered.meta.json"
-DEFAULT_PARENT_META = _MAIN_ROOT / "data/polaris_train.meta.json"
+DEFAULT_IN = POLARIS_TRAIN_FULL_JSONL
+DEFAULT_OUT = POLARIS_TRAIN_JSONL
+DEFAULT_META = POLARIS_TRAIN_META
+DEFAULT_PARENT_META = POLARIS_TRAIN_FULL_META
+DEFAULT_DROPPED = POLARIS_TRAIN_DROPPED_JSONL
 
 _TRAIN_ROW_KEYS = ("problem_id", "problem", "gold", "difficulty_band", "hf_index")
 
@@ -122,9 +130,10 @@ def build_meta(
         "materialized_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
         "freeze_status": "frozen",
         "freeze_note": (
-            "Trimmed from polaris_train.jsonl; do not re-materialize without dated note in "
-            "main/docs/context.md."
+            "Canonical train manifest (prompt-filtered). Source pool: source/polaris_train_full.jsonl. "
+            "Re-materialize only with dated note in main/docs/context.md."
         ),
+        "artifact_role": "train",
         "output_files": {
             "jsonl": str(out_jsonl),
             "meta": str(out_meta),
@@ -142,8 +151,8 @@ def main() -> None:
     parser.add_argument(
         "--dropped-audit",
         type=Path,
-        default=None,
-        help="Optional jsonl of dropped rows with drop_reason (not for training)",
+        default=DEFAULT_DROPPED,
+        help="jsonl of dropped rows with drop_reason (not for training)",
     )
     parser.add_argument("--dry-run", action="store_true")
     args = parser.parse_args()

@@ -1,0 +1,142 @@
+{
+  "n_rows": 53291,
+  "per_flag": {
+    "last_starts_prove": {
+      "count": 1507,
+      "pct": 0.028278696215120754
+    },
+    "last_contains_prove": {
+      "count": 1854,
+      "pct": 0.03479011465350622
+    },
+    "contains_show_that": {
+      "count": 720,
+      "pct": 0.013510724137283969
+    },
+    "gold_in_prompt": {
+      "count": 10826,
+      "pct": 0.20314874931977256
+    }
+  },
+  "prompt_heuristic_any": {
+    "count": 12466,
+    "pct": 0.23392317652136382
+  },
+  "suggested_remove_or_last_prove_gold_leak": {
+    "last_starts_prove OR gold_in_prompt": 11764,
+    "any_of_four": 12466,
+    "all_four": 4
+  },
+  "top_combo_patterns": [
+    {
+      "flags": {
+        "last_starts_prove": false,
+        "last_contains_prove": false,
+        "contains_show_that": false,
+        "gold_in_prompt": false
+      },
+      "count": 40825
+    },
+    {
+      "flags": {
+        "last_starts_prove": false,
+        "last_contains_prove": false,
+        "contains_show_that": false,
+        "gold_in_prompt": true
+      },
+      "count": 9904
+    },
+    {
+      "flags": {
+        "last_starts_prove": true,
+        "last_contains_prove": true,
+        "contains_show_that": false,
+        "gold_in_prompt": false
+      },
+      "count": 936
+    },
+    {
+      "flags": {
+        "last_starts_prove": true,
+        "last_contains_prove": true,
+        "contains_show_that": false,
+        "gold_in_prompt": true
+      },
+      "count": 565
+    },
+    {
+      "flags": {
+        "last_starts_prove": false,
+        "last_contains_prove": false,
+        "contains_show_that": true,
+        "gold_in_prompt": false
+      },
+      "count": 466
+    },
+    {
+      "flags": {
+        "last_starts_prove": false,
+        "last_contains_prove": false,
+        "contains_show_that": true,
+        "gold_in_prompt": true
+      },
+      "count": 242
+    },
+    {
+      "flags": {
+        "last_starts_prove": false,
+        "last_contains_prove": true,
+        "contains_show_that": false,
+        "gold_in_prompt": false
+      },
+      "count": 233
+    },
+    {
+      "flags": {
+        "last_starts_prove": false,
+        "last_contains_prove": true,
+        "contains_show_that": false,
+        "gold_in_prompt": true
+      },
+      "count": 108
+    },
+    {
+      "flags": {
+        "last_starts_prove": true,
+        "last_contains_prove": true,
+        "contains_show_that": true,
+        "gold_in_prompt": true
+      },
+      "count": 4
+    },
+    {
+      "flags": {
+        "last_starts_prove": false,
+        "last_contains_prove": true,
+        "contains_show_that": true,
+        "gold_in_prompt": false
+      },
+      "count": 3
+    },
+    {
+      "flags": {
+        "last_starts_prove": false,
+        "last_contains_prove": true,
+        "contains_show_that": true,
+        "gold_in_prompt": true
+      },
+      "count": 3
+    },
+    {
+      "flags": {
+        "last_starts_prove": true,
+        "last_contains_prove": true,
+        "contains_show_that": true,
+        "gold_in_prompt": false
+      },
+      "count": 2
+    }
+  ],
+  "input": "/Users/nancybao/Desktop/dev/cs224r_finalproject/main/data/source/polaris_train_full.jsonl",
+  "output": "/Users/nancybao/Desktop/dev/cs224r_finalproject/main/data/polaris_train_labeled.jsonl"
+}

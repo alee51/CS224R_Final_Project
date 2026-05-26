@@ -59,7 +59,7 @@ From [`05-24_probe_plan.md`](./05-24_probe_plan.md) § Group B / B1:
 |---|---|---|
 | Reward parser (Rank 2) | **Resolved** (2026-05-25) | `compute_reward()` / `extract_rank2()`; log `parse_ok_rate` sentinel vs **n800 hybrid (arm C) ~87.6% rank2**, not 200-run 56% Minerva |
 | `max_response_length` | 4096 safe (Group A) | Use **4096** for probe |
-| §2 training freeze | Undecided | Probe does **not** use `polaris_train.jsonl` |
+| §2 training freeze | **Frozen** (`polaris_train.jsonl`, 51k) | Probe does **not** use train manifest (toy ids) |
 | Prompt variant | **Locked: `hybrid_answer_boxed`** (arm C) | Group B smoke + full use this variant |
 | Judge | Out of scope | No judge GPU in this probe |
 | GPU SKU (H100 vs H200 vs B200) | **Not in this probe** | H100 only; see §1 note — optional follow-up re-run of same toy slice on other SKUs |

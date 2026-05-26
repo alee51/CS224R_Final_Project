@@ -4,11 +4,11 @@ Strategic decisions for the `main/` training stack. Pilot-era and Run 0 objectiv
 
 ---
 
-## 2026-05-26: Polaris train freeze — keep full gold (no integer-only filter)
+## 2026-05-26: Polaris full pool — keep full gold (no integer-only filter)
 
-**Status:** Locked for `polaris_train.jsonl` materialization.
+**Status:** Locked for `source/polaris_train_full.jsonl` materialization (53,291 rows; not the train manifest).
 
-**Decision:** `preprocess_polaris.py` keeps **all** non-empty HF `answer` strings (LaTeX, fractions, symbolic, etc.). Do **not** drop rows that fail `is_integer_gold`.
+**Decision:** `preprocess_polaris.py` keeps **all** non-empty HF `answer` strings (LaTeX, fractions, symbolic, etc.). Do **not** drop rows that fail `is_integer_gold`. Output → **`main/data/source/polaris_train_full.jsonl`** (see [`data/README.md`](../data/README.md)).
 
 **Evidence:** Random full-gold n800 vs integer-stratified n800 (arm C, offline `grade_parsed_answer`) — pass@1 **~8.5%** vs **~9.4%**, pass@8 **~33%** both; see [`timeline.md`](./timeline.md) §2026-05-26 late night, [`probes/integer_vs_random_fullgold_unified_grade.md`](./probes/integer_vs_random_fullgold_unified_grade.md).
 
@@ -68,7 +68,7 @@ Strategic decisions for the `main/` training stack. Pilot-era and Run 0 objectiv
 
 ## 2026-05-27: Polaris train prompt filter — proof endings + gold leak
 
-**Status:** Materialized → `main/data/polaris_train_filtered.jsonl` + `polaris_train_filtered.meta.json` (frozen).
+**Status:** Materialized → **`main/data/polaris_train.jsonl`** + `polaris_train.meta.json` (frozen; canonical train manifest).
 
 **Decision:** Drop a row iff:
 
@@ -89,7 +89,7 @@ OR (
 
 **Implementation:** `should_drop_train_prompt_filter()` in `main/data/prompt_heuristics.py`; `main/scripts/filter_polaris_train.py` (materialize); optional labels via `label_polaris_prompts.py` → `polaris_train_labeled.jsonl`.
 
-**Size (53,291 → filtered):** drop **2,152 (4.0%)**, keep **51,139 (96.0%)**.
+**Input / output:** `source/polaris_train_full.jsonl` (53,291) → `polaris_train.jsonl` (51,139). Drop **2,152 (4.0%)**; audit `polaris_train_dropped.jsonl`.
 
 **Rationale (short):** Arm C + mathd∨sympy rewards a **boxed final answer**, not a proof writeup. Last-sentence `Prove …` items (~88% proof-style in manual spot check) are poor GRPO targets; gold-in-prompt is only toxic when paired with prove/show wording (answer leakage), not for MCQs (~9.9k rows with gold in stem, no prove/show).
 
