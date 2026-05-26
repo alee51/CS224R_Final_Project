@@ -68,14 +68,6 @@ operator: emma           # or anastasia — your name
 
 Leave everything else alone. The yaml already points at `/vol/data/polaris_train.jsonl` and `/vol/checkpoints/train_real/`, and `resume: auto` will auto-load step 139.
 
-**Recommended one-line bump** in `main/train/trainer.py:974` to reduce the number of relaunches you'll need:
-
-```python
-timeout=60 * 60 * 24,    # was 8
-```
-
-Modal allows up to 24h on GPU functions. With 24h legs at ~200s/step, each leg covers ~432 steps → you'd need only ~2 relaunches total for the remaining ~660 steps.
-
 ---
 
 ## Launch
