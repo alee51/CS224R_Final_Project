@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import html
 import logging
 import math
 import os
@@ -56,6 +57,7 @@ class StepResult:
     diagnostics: dict[str, Any] = field(default_factory=dict)
     train_wandb: dict[str, float] = field(default_factory=dict)
     step_cache: dict[str, Any] | None = None
+    sample_completions: list[str] = field(default_factory=list)
 
 
 _EXTRACT_PATH_WANDB_KEYS = (
@@ -82,6 +84,7 @@ def aggregate_train_step_wandb_metrics(
     parse_ok = 0
     n_scored = 0
     path_counts = {k: 0 for k in _EXTRACT_PATH_WANDB_KEYS}
+    path_reward_sums = {k: 0.0 for k in _EXTRACT_PATH_WANDB_KEYS}
     correct_count_hist = [0] * (n_rollouts + 1)
 
     for p_idx in range(n_prompts):
@@ -101,6 +104,7 @@ def aggregate_train_step_wandb_metrics(
             if path not in path_counts:
                 path = "none"
             path_counts[path] += 1
+            path_reward_sums[path] += float(row[r_idx])
 
     out: dict[str, float] = {
         "train/prompt_coverage": n_coverage / n_prompts,
@@ -112,6 +116,10 @@ def aggregate_train_step_wandb_metrics(
         out["train/parse_ok_rate"] = parse_ok / n_scored
         for key, count in path_counts.items():
             out[f"train/extract_path_{key}"] = count / n_scored
+            if count > 0:
+                out[f"train/mean_reward_extract_{key}"] = (
+                    path_reward_sums[key] / count
+                )
 
     if completion_token_lens:
         lens_sorted = sorted(completion_token_lens)
@@ -225,6 +233,7 @@ def _train_step_microbatched(
     instrument: bool = False,
     phase_times: dict[str, float] | None = None,
     vram_peak: dict[str, float] | None = None,
+    diagnostics: dict[str, Any] | None = None,
 ) -> tuple[float, int, int]:
     """Interleaved per-microbatch forward+backward; gradients accumulate.
 
@@ -269,6 +278,13 @@ def _train_step_microbatched(
     bwd_time = 0.0
     loss_accum = 0.0
     max_chunk_size = 0
+    total_tokens = 0
+    ratio_mean_w = 0.0
+    ratio_p95_w = 0.0
+    clip_low_w = 0.0
+    clip_high_w = 0.0
+    neg_lp_w = 0.0
+    ratio_max_global = 0.0
 
     if instrument and torch.cuda.is_available():
         torch.cuda.reset_peak_memory_stats()
@@ -304,7 +320,7 @@ def _train_step_microbatched(
         # the full-batch mean we weight by chunk_size / n_kept; sum of weights
         # over all chunks equals 1.
         weight = chunk_size / n_kept
-        chunk_loss = grpo_loss(
+        chunk_loss_raw, chunk_stats = grpo_loss(
             new_t,
             old_t,
             adv_t,
@@ -313,14 +329,32 @@ def _train_step_microbatched(
             clip_low=clip_low,
             clip_high=clip_high,
             length_norm=length_norm,
-        ) * weight
+            return_stats=True,
+        )
+        chunk_loss = chunk_loss_raw * weight
         chunk_loss.backward()
         if torch.cuda.is_available():
             torch.cuda.synchronize()
         bwd_time += time.monotonic() - t_bwd0
 
         loss_accum += float(chunk_loss.detach().item())
-        del new_lps, new_t, old_t, mask, adv_t, keep_t, chunk_loss
+
+        n_tok = int(chunk_stats["n_tokens"])
+        if n_tok > 0:
+            with torch.no_grad():
+                neg_lp_chunk = float(
+                    (-(new_t.detach() * mask).sum() / mask.sum().clamp(min=1)).item()
+                )
+            total_tokens += n_tok
+            ratio_mean_w += chunk_stats["ratio_mean"] * n_tok
+            ratio_p95_w += chunk_stats["ratio_p95"] * n_tok
+            clip_low_w += chunk_stats["clipped_low_frac"] * n_tok
+            clip_high_w += chunk_stats["clipped_high_frac"] * n_tok
+            neg_lp_w += neg_lp_chunk * n_tok
+            if chunk_stats["ratio_max"] > ratio_max_global:
+                ratio_max_global = chunk_stats["ratio_max"]
+
+        del new_lps, new_t, old_t, mask, adv_t, keep_t, chunk_loss, chunk_loss_raw
 
     total_time = time.monotonic() - t_total0
     phase_times["t_logprob_fwd"] = fwd_time
@@ -332,11 +366,24 @@ def _train_step_microbatched(
         vram_peak["t_logprob_fwd"] = peak_gb
         vram_peak["t_backward"] = peak_gb
 
+    grad_norm_preclip: float | None = None
     if optimizer_step:
         grad_clip = float(cfg.train.get("grad_clip", 1.0))
         with _phase_timer("t_optimizer", instrument, phase_times, vram_peak):
-            torch.nn.utils.clip_grad_norm_(hf_model.parameters(), grad_clip)
+            gn = torch.nn.utils.clip_grad_norm_(hf_model.parameters(), grad_clip)
+            grad_norm_preclip = float(gn.item()) if torch.is_tensor(gn) else float(gn)
             opt.step()
+
+    if diagnostics is not None:
+        if total_tokens > 0:
+            diagnostics["ratio_mean"] = ratio_mean_w / total_tokens
+            diagnostics["ratio_max"] = ratio_max_global
+            diagnostics["ratio_p95"] = ratio_p95_w / total_tokens
+            diagnostics["clipped_low_frac"] = clip_low_w / total_tokens
+            diagnostics["clipped_high_frac"] = clip_high_w / total_tokens
+            diagnostics["mean_neg_logprob"] = neg_lp_w / total_tokens
+        if grad_norm_preclip is not None:
+            diagnostics["grad_norm_preclip"] = grad_norm_preclip
     return loss_accum, max_chunk_size, len(chunk_index_groups)
 
 
@@ -541,6 +588,13 @@ def run_one_grpo_step(
         with _phase_timer("t_rollout", instrument, phase_times, vram_peak):
             rollouts = rollout_engine.generate(formatted, n_rollouts, seeds)
         rollout_tokens = sum(len(r.completion_ids) for r in rollouts)
+        if rollouts:
+            n_roll = len(rollouts)
+            n_stop = sum(1 for r in rollouts if r.finish_reason == "stop")
+            n_length = sum(1 for r in rollouts if r.finish_reason == "length")
+            diagnostics["frac_finish_stop"] = n_stop / n_roll
+            diagnostics["frac_finish_length"] = n_length / n_roll
+            diagnostics["frac_finish_other"] = 1.0 - (n_stop + n_length) / n_roll
         if instrument:
             diagnostics["rollout_output_tokens"] = rollout_tokens
             diagnostics["vram_headroom_gb_after_rollout"] = (
@@ -619,6 +673,7 @@ def run_one_grpo_step(
         instrument=instrument,
         phase_times=phase_times,
         vram_peak=vram_peak,
+        diagnostics=diagnostics,
     )
     diagnostics["grad_accum_at_mb"] = num_chunks
     diagnostics["effective_microbatch"] = max_chunk_size
@@ -688,6 +743,10 @@ def run_one_grpo_step(
         else 0.0
     )
 
+    sample_completions = [
+        rr.completion_text for rr in kept_rollouts[: min(3, len(kept_rollouts))]
+    ]
+
     return StepResult(
         loss=loss_val,
         mean_reward=mean_reward,
@@ -700,6 +759,7 @@ def run_one_grpo_step(
         diagnostics=diagnostics,
         train_wandb=train_wandb,
         step_cache=cache_out,
+        sample_completions=sample_completions,
     )
 
 
@@ -932,6 +992,17 @@ def train(
                 if isinstance(v, (int, float)):
                     log_dict[f"train/{k}"] = v
             wandb.log(log_dict, step=step)
+
+            if step % 50 == 0 and result.sample_completions:
+                wandb.log(
+                    {
+                        f"sample/completion_{i}": wandb.Html(
+                            "<pre>" + html.escape(text) + "</pre>"
+                        )
+                        for i, text in enumerate(result.sample_completions)
+                    },
+                    step=step,
+                )
 
             if should_checkpoint(step, cfg, last_ckpt):
                 save_ckpt(

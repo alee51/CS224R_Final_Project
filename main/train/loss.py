@@ -14,7 +14,8 @@ def grpo_loss(
     clip_low: float = 0.20,
     clip_high: float = 0.28,
     length_norm: str = "per_seq",
-) -> torch.Tensor:
+    return_stats: bool = False,
+):
     """
     REINFORCE-with-asymmetric clip (DAPO ε_low/ε_high).
 
@@ -46,4 +47,34 @@ def grpo_loss(
 
     per_seq = per_seq * keep_mask.float()
     denom = keep_mask.float().sum().clamp(min=1)
-    return per_seq.sum() / denom
+    loss = per_seq.sum() / denom
+
+    if not return_stats:
+        return loss
+
+    # Detach for stats so monitoring tensors never enter the autograd graph.
+    with torch.no_grad():
+        r = ratio.detach()
+        m = mask.detach()
+        mask_sum = m.sum().clamp(min=1)
+        sel = m > 0
+        if sel.any():
+            r_sel = r[sel]
+            ratio_max = float(r_sel.max().item())
+            ratio_p95 = float(r_sel.quantile(0.95).item())
+        else:
+            ratio_max = 0.0
+            ratio_p95 = 0.0
+        stats = {
+            "ratio_mean": float(((r * m).sum() / mask_sum).item()),
+            "ratio_max": ratio_max,
+            "ratio_p95": ratio_p95,
+            "clipped_low_frac": float(
+                (((r < 1.0 - clip_low) & sel).float().sum() / mask_sum).item()
+            ),
+            "clipped_high_frac": float(
+                (((r > 1.0 + clip_high) & sel).float().sum() / mask_sum).item()
+            ),
+            "n_tokens": int(m.sum().item()),
+        }
+    return loss, stats
