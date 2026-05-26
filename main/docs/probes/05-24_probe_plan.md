@@ -95,7 +95,7 @@ Doesn't need our trainer. Needs vLLM + Qwen3-1.7B-Base + Qwen3-4B-Instruct-2507 
 
 Needs the trainer skeleton (`rollout.py` + `reward.py` + `objective.py` + `loss.py` + `trainer.py`) up to one full step. GRPO on 10–50 Polaris prompts. Target GPU class: same as Group A if possible.
 
-**Wandb:** project `cs224r-minority-voting`, run group `probe-B-05-24`.
+**Wandb:** project `cs224r-minority-voting`, run group `probe-B-05-25` (see [`group_b_impl.md`](./group_b_impl.md)).
 
 **B1: End-to-end step probe (combined).**
 

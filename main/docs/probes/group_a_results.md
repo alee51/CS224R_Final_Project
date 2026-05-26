@@ -1,9 +1,13 @@
 # Group A probe — results readout
 
-**Run:** [probe-A_nancy_05-25-2207](https://wandb.ai/224r-project/cs224r-minority-voting/runs/t33091vc) (`t33091vc`)  
-**Artifacts:** Modal volume `main-artifacts` → `probes/05-24/group_a/` (1600 rollouts, 200 judged)  
-**Pointer:** [`artifacts/05-24_group_a.pointer.json`](./artifacts/05-24_group_a.pointer.json)  
-**Modal app:** `ap-c7FATv5JQ8K4BhL5UFlNVM` (full run; some logging bugs — see [`issues.md`](../issues.md))
+**Runs:**
+
+| Scale | Wandb | Artifacts |
+|-------|-------|-----------|
+| 200 prompts | [`t33091vc`](https://wandb.ai/224r-project/cs224r-minority-voting/runs/t33091vc) | `probes/05-24/group_a/` — [`05-24_group_a.pointer.json`](./artifacts/05-24_group_a.pointer.json) |
+| **800 prompts (n800)** | [`mu8kj4ll`](https://wandb.ai/224r-project/cs224r-minority-voting/runs/mu8kj4ll) | `probes/05-25/group_a_n800/` |
+
+The **200-run** tables below are the first readout. **n800** tightens band stats and is the source for **rollout vs judge timing** (same pipeline, 4× scale). Early 200-run logging bugs: [`issues.md`](../issues.md). n800 used fixed git SHA passthrough and VRAM tracking.
 
 ---
 
@@ -71,12 +75,72 @@ From the wandb Table (200 rows):
 
 ---
 
+## Why we report rollout vs judge wall time
+
+Group A measures **inference only** (no HF backward, no `update_weights`). That is still useful for PLAN.md because several open items depend on **how expensive the judge subsystem is relative to policy rollouts** — before Group B adds training time:
+
+- **§5 / §3:** Judge hosting (sidecar vs same GPU vs API) and whether **Minority-CoT** stays in scope.
+- **§7:** Partial **$/step** and wall-clock budget — rollout slice is known; judge slice was the big unknown.
+- **§5:** Async rollout/train overlap is deferred, but **serial judge-after-rollout** would ~double GPU-active time if judge runs every step; this probe quantifies that risk.
+
+We report n800 timing here so the training matrix can treat **CoT arms as ~2× inference GPU** (rollout + judge) vs **~1×** for GRPO / minority-answer / poly-epo-answer, without waiting for the full trainer probe.
+
+---
+
+## n800 timing — rollout vs judge (H100)
+
+**Source:** wandb `mu8kj4ll` — 800 prompts × 8 rollouts (6400 completions), 800 batched judge calls (4B), separate Modal containers, `modal_price_per_sec: 0.001097`.
+
+### Wall time and cost
+
+| Phase | Model | Active GPU time (sum of logged calls) | Approx $ |
+|-------|-------|--------------------------------------|----------|
+| Phase 1 rollouts | Qwen3-1.7B-Base | **~993 s** (~16.5 min) | ~$1.09 |
+| Phase 2 judge | Qwen3-4B-Instruct | **~1003 s** (~16.7 min) | ~$1.10 |
+| **Ratio** | | **~1.01×** (judge ≈ rollout) | ~50/50 split |
+
+Other n800 summary panels: `tokens_per_sec_mean ≈ 4502` (policy); judge median **~1.25 s/call**, **~$0.00137/call**; `judge_vram_gb_used ≈ 70.3` GB; `phase2_json_parse_ok_rate ≈ 96.1%`; 0 truncated judge inputs.
+
+### Extrapolation to one training step (rollout + judge only)
+
+Probe shape matches one step if each of `P` prompts gets 8 rollouts and **one** judge call (8 completions batched per prompt):
+
+| Prompts / step `P` | Rollout GPU (est.) | Judge GPU (est.) | Notes |
+|--------------------|--------------------|------------------|-------|
+| 32 | ~40 s | ~40 s | Linear scale from n800 |
+| 64 | ~79 s | ~80 s | |
+| 128 | ~159 s | ~160 s | Poly-EPO-ish batch size |
+
+Formula: `rollout_s ≈ (P×8/6400)×993`, `judge_s ≈ (P/800)×1003`. **Train/backward not included** — Group B still gates full §7 $/step.
+
+### What this answers in PLAN.md
+
+| Open item | n800 timing readout |
+|-----------|---------------------|
+| Judge cost / CoT go-no-go | **In scope** on latency and $/call; **serial in-loop judge ≈ doubles** GPU-active time vs rollout-only arms at similar `P`. |
+| Judge hosting | Each engine fits **one H100** alone (~71 GB policy, ~70 GB judge). **Collocated** train+vLLM+judge not measured here. |
+| vLLM throughput | **~4.5k tok/s** mean on 1.7B — use for rollout portion of step estimates. |
+| Full step time / $/arm | **Not answered** — need Group B (backward, weight sync, collocated VRAM). |
+| GPU H100 vs H200 $/throughput | **Not answered** — H100 only on this run. |
+
+### Wandb `_step` axis (not “one rollout = one step”)
+
+| Region | `_step` | What was logged | Count |
+|--------|---------|-----------------|-------|
+| Phase 1 | 128 … **6400** | Batch scalars (`vllm_tokens_per_sec`, `wall_clock_s`) | **50** logs (batch size 128) |
+| Gap | **6401–7399** | **Nothing** — intentional buffer | 999 empty steps |
+| Phase 2 | **7401–8200** | Per-prompt `judge_wall_clock_s` | **800** logs |
+
+Phase 2 starts at `n_rollouts + 1000` (= 7400) so judge scalars do not collide with Phase 1’s max step (6400). The gap is not missing work — it is unused chart space (`_phase2_step_offset` in `group_a_rollout_judge.py`).
+
+---
+
 ## What we still can't decide from this run alone
 
 1. **Parser** — 56% `parse_ok` is the biggest blocker; re-probe or implement Rank 2 before locking reward.
 2. **§2 sampling** — band-level pass rates too noisy/low to finalize train subset.
-3. **Judge VRAM** — logged 0 on this run; need one re-run with the fix in `f2c304f`.
-4. **§7 full step cost** — Group B (trainer skeleton end-to-end step) still required for microbatch, collocated VRAM, and $/step.
+3. **Judge VRAM (200-run)** — logged 0 on `t33091vc` (logging bug). **n800 (`mu8kj4ll`) reports ~70 GB** with the fix.
+4. **§7 full step cost** — rollout + judge slices are in **n800 timing** above; Group B still required for backward, `update_weights`, collocated VRAM, and $/step.
 
 ---
 

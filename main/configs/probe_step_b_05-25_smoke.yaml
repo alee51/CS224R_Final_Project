@@ -1,0 +1,3 @@
+extends: configs/probe_step_b_05-25.yaml
+
+smoke: true
