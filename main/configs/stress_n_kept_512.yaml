@@ -1,0 +1,16 @@
+# Worst-case train VRAM: n_kept = batch_size * n_rollouts (64 * 8 = 512).
+# Inherits train_real rollout + train knobs; no wandb required.
+
+extends: train_real.yaml
+
+operator: nancy
+stress:
+  n_kept: 512
+  prompt_tokens: 1024
+  completion_tokens: 2048
+  microbatch: 64
+  scenarios:
+    - hf_only
+    - vllm_awake
+    - vllm_sleep
+  output_dir: probes/stress_n_kept_512

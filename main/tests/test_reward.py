@@ -1,6 +1,7 @@
 from judge.format import _assignment_from_poly_epo_payload, build_judge_messages
 from train.prompts import PROMPT_VARIANTS, format_problem
-from train.reward import compute_reward, extract_rank2
+from train.math_grade_deepscaler import grade_answer_mathd, grade_answer_sympy
+from train.reward import compute_reward, extract_rank2, grade_parsed_answer
 
 
 def test_compute_reward_correct_answer():
@@ -17,8 +18,33 @@ def test_compute_reward_wrong_answer():
 
 def test_compute_reward_boxed_only():
     result = compute_reward("step by step\n\\boxed{42}", "42")
-    assert result["reward"] == 0
-    assert result["parse_ok"] is False
+    assert result["reward"] == 1
+    assert result["parse_ok"] is True
+    assert result["extract_path"] == "boxed"
+
+
+def test_grade_parsed_answer_mathd_or_sympy():
+    assert grade_parsed_answer("01", "1")
+    assert grade_answer_sympy("01", "1")
+    assert not grade_answer_mathd("01", "1")
+    assert grade_parsed_answer("42\\text{ m}", "42")
+    assert grade_answer_mathd("42\\text{ m}", "42")
+    assert not grade_answer_sympy("42\\text{ m}", "42")
+
+
+def test_compute_reward_leading_zero():
+    result = compute_reward("Answer: 01", "1", prompt_variant="dapo_answer_v1")
+    assert result["reward"] == 1
+
+
+def test_compute_reward_hybrid_variant():
+    result = compute_reward(
+        "work\nAnswer: \\boxed{42}",
+        "42",
+        prompt_variant="hybrid_answer_boxed",
+    )
+    assert result["reward"] == 1
+    assert result["extract_path"] == "hybrid"
 
 
 def test_compute_reward_no_answer_marker():

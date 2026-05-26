@@ -1,0 +1,41 @@
+{
+  "n_kept": 512,
+  "prompt_tokens": 1024,
+  "completion_tokens": 2048,
+  "microbatch": 64,
+  "model": "Qwen/Qwen3-1.7B-Base",
+  "gpu_memory_utilization": 0.45,
+  "vllm_sleep_env": true,
+  "scenarios": {
+    "hf_only": {
+      "ok": true,
+      "loss": 0.39996034651994705,
+      "effective_microbatch": 64,
+      "grad_accum": 8,
+      "t_fwd_bwd_s": 1062.9016075069999,
+      "vram_peak_gb": 16.086670398712158,
+      "error": null
+    },
+    "vllm_awake": {
+      "ok": false,
+      "loss": null,
+      "effective_microbatch": 0,
+      "grad_accum": null,
+      "t_fwd_bwd_s": 4.580583673000092,
+      "vram_peak_gb": 137.76162576675415,
+      "error": "CUDA out of memory. Tried to allocate 892.00 MiB. GPU 0 has a total capacity of 139.80 GiB of which 849.25 MiB is free. Process 1 has 138.95 GiB memory in use. Of the allocated memory 137.82 GiB is allocated by PyTorch, with 55.15 MiB allocated in private pools (e.g., CUDA Graphs), and 300.94 MiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Man"
+    },
+    "vllm_sleep": {
+      "ok": false,
+      "loss": null,
+      "effective_microbatch": 0,
+      "grad_accum": null,
+      "t_fwd_bwd_s": 4.590870182999879,
+      "vram_peak_gb": 138.63101434707642,
+      "error": "CUDA out of memory. Tried to allocate 892.00 MiB. GPU 0 has a total capacity of 139.80 GiB of which 529.25 MiB is free. Process 1 has 139.26 GiB memory in use. Of the allocated memory 138.19 GiB is allocated by PyTorch, with 55.15 MiB allocated in private pools (e.g., CUDA Graphs), and 235.38 MiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Man"
+    }
+  },
+  "materialized_at": "2026-05-26T09:34:45.391455+00:00",
+  "vllm_resident_gb_after_init": 68.70362281799316,
+  "vram_gb_after_vllm_sleep": 65.49878883361816
+}

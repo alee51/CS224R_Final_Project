@@ -1,5 +1,5 @@
 # Phase 1 — Run 0 cluster readout
-**Generated:** 2026-05-22  
+**Generated:** 2026-05-26  
 **Ground truth:** `data/cleaned_answers.parquet`  
 **LLM clusters:** `analysis_a/llm_clusters_summary.parquet` (degenerate `100` → `-1`; all `-1` in a prompt = one cluster)  
 

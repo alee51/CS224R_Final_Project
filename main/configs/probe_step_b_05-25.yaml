@@ -1,9 +1,9 @@
-extends: configs/train_grpo_05-25.yaml
+extends: configs/train_real.yaml
 
 global_seed: 42
 operator: nancy
-gpu_class: H100
-modal_price_per_sec: 0.001097
+gpu_class: H200
+modal_price_per_sec: 0.001261
 prompt_variant: hybrid_answer_boxed  # Arm C locked 2026-05-25
 
 smoke: false
@@ -46,10 +46,42 @@ toy_batch:
     - 29
     - 30
     - 31
+    - 32
+    - 33
+    - 34
+    - 35
+    - 36
+    - 37
+    - 38
+    - 39
+    - 40
+    - 41
+    - 42
+    - 43
+    - 44
+    - 45
+    - 46
+    - 47
+    - 48
+    - 49
+    - 50
+    - 51
+    - 52
+    - 53
+    - 54
+    - 55
+    - 56
+    - 57
+    - 58
+    - 59
+    - 60
+    - 61
+    - 62
+    - 63
   n_rollouts: 8
 
 train:
-  batch_size: 32
+  batch_size: 64
   n_rollouts: 8
   starting_microbatch: 1
   checkpoint_every_steps: 999999

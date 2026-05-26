@@ -6,6 +6,8 @@ import logging
 import re
 from typing import Optional
 
+from train.math_grade_deepscaler import grade_answer_mathd_or_sympy
+
 logger = logging.getLogger(__name__)
 
 SUBSTITUTIONS = [
@@ -137,6 +139,11 @@ def is_correct_minerva(
     return (pred == gt), pred
 
 
+def grade_parsed_answer(parsed: str, gold: str) -> bool:
+    """Correctness on Rank-2 extracted answer (DeepScaleR / rLLM: mathd OR sympy)."""
+    return grade_answer_mathd_or_sympy(parsed, gold)
+
+
 def is_correct_strict_box(
     pred: str, gt: str, pause_tokens_index: Optional[list[int]] = None
 ) -> tuple[int, Optional[str]]:
@@ -203,8 +210,10 @@ def extract_rank2(
         parse_ok_rank2 = True
 
     reward = 0
+    correct = False
     if parse_ok_rank2 and parsed_answer is not None:
-        reward = 1 if parsed_answer == gt_norm else 0
+        correct = grade_parsed_answer(parsed_answer, gold)
+        reward = 1 if correct else 0
 
     return {
         "parsed_answer_minerva": parsed_answer_minerva,
@@ -214,16 +223,22 @@ def extract_rank2(
         "parse_ok_rank2": parse_ok_rank2,
         "extract_path": extract_path,
         "reward": reward,
+        "correct": correct,
         "parsed_answer": parsed_answer if parse_ok_rank2 else None,
     }
 
 
-def compute_reward(completion: str, gold: str) -> dict:
+def compute_reward(
+    completion: str,
+    gold: str,
+    prompt_variant: str = "dapo_answer_v1",
+) -> dict:
+    """Train/probe reward: Rank-2 extraction + mathd OR sympy on parsed answer."""
     clipped = completion[-300:]
-    correct, pred = is_correct_minerva(clipped, gold)
-    reward = 1 if correct else 0
-
-    parse_ok = pred != "[INVALID]" and bool(pred.strip())
+    r2 = extract_rank2(completion, gold, prompt_variant=prompt_variant)
+    parsed = r2.get("parsed_answer")
+    parse_ok = bool(r2["parse_ok_rank2"])
+    reward = int(r2["reward"])
 
     strict_score, _ = is_correct_strict_box(completion, gold)
     strict_parse_ok = strict_score > 0
@@ -234,22 +249,23 @@ def compute_reward(completion: str, gold: str) -> dict:
     )
 
     parsed_is_int = False
-    if parse_ok:
-        normalized_digits = pred.replace(",", "").strip()
+    if parse_ok and parsed is not None:
+        normalized_digits = parsed.replace(",", "").strip()
         parsed_is_int = (
             normalized_digits.lstrip("-").isdigit()
             if normalized_digits
             else False
         )
 
-    parsed_answer: str | None = pred if parse_ok else None
-
     return {
         "reward": reward,
         "parse_ok": parse_ok,
-        "parsed_answer": parsed_answer,
+        "parsed_answer": parsed if parse_ok else None,
         "parsed_is_int": parsed_is_int,
         "has_boxed": has_boxed,
         "has_answer_line": has_answer_line,
         "strict_parse_ok": strict_parse_ok,
+        "extract_path": r2.get("extract_path"),
+        "parse_ok_rank2": parse_ok,
+        "correct": bool(r2.get("correct")),
     }

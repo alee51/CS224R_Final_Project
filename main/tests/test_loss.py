@@ -78,3 +78,20 @@ def test_grpo_advantages_hand_computed():
     assert torch.allclose(out.advantages[0], expected_0)
     assert not out.keep_mask[1].item()
     assert out.keep_mask[0].item()
+
+
+def test_grpo_advantages_all_zero_variance_filters_everything():
+    """All-uniform groups → keep_mask all False; trainer's RuntimeError fires when this
+    holds for every prompt in a batch. Verifying the precondition gates that branch."""
+    rewards = torch.tensor(
+        [
+            [1.0, 1.0, 1.0, 1.0],
+            [0.0, 0.0, 0.0, 0.0],
+            [0.5, 0.5, 0.5, 0.5],
+        ]
+    )
+    out = compute_advantages("grpo", rewards)
+    assert torch.all(out.advantages == 0.0)
+    assert not out.keep_mask.any().item()
+    assert out.diagnostics["fraction_filtered"] == 1.0
+    assert out.diagnostics["n_filtered_prompts"] == 3

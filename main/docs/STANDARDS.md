@@ -92,7 +92,7 @@ Decided scope (see `pre-milestone/nancy_explore/narrative/decisions.md`):
 
 | Context | Method | Rationale |
 | --- | --- | --- |
-| **Training reward** (Polaris) | **Rank-2** in `main/train/reward.py`: hybrid regex (if arm C) → last `\boxed{...}` → Minerva `Answer:` tail + normalize + **integer equality** vs gold | Polaris gold is integer; matches Poly-EPO binary RLVR |
+| **Training reward** (Polaris) | Rank-2 extract (`extract_rank2`, arm C) then **`grade_parsed_answer`** = mathd OR sympy (DeepScaleR/rLLM, `math_grade_deepscaler.py`) | Matches upstream rLLM `grade_answer_verl`; rescues strict/format false negatives |
 | **Group A probe parse rate** | Same Rank-2 stack as training when rescoring; live 200-run `parse_ok` was Minerva-only headline | Use `parse_ok_rank2` for train expectations (~85–88% on hybrid) |
 | **OOD eval** (HMMT, MATH-500, etc.) | **Math-Verify** (`math_verify` package) or equivalent | Integer match under-reports on LaTeX/symbolic gold; not for Polaris train reward |
 
@@ -100,7 +100,7 @@ Decided scope (see `pre-milestone/nancy_explore/narrative/decisions.md`):
 
 **Prompt template (train, default 2026-05-25):** **`hybrid_answer_boxed`** (arm C) — see `HYBRID_ANSWER_BOXED_TEMPLATE` in `main/train/prompts.py` and [`probes/prompt_probe.md`](./probes/prompt_probe.md). Unvalidated recipe; fallbacks: `dapo_answer_v1` (DAPO-Math-17k verbatim), `verl_math_boxed` (VeRL MATH).
 
-**Parser:** Rank-2 in `main/train/reward.py` (`extract_rank2`, `extract_path`). Minerva-only path remains for diagnostics. Research / escalation rules: [`probes/prompt_extraction_research.md`](./probes/prompt_extraction_research.md).
+**Parser:** Rank-2 in `main/train/reward.py` (`extract_rank2`, `extract_path`). **Train correctness:** `grade_parsed_answer` = mathd OR sympy (`math_grade_deepscaler.py`, DeepScaleR/rLLM). Minerva strict remains diagnostic only. Research / escalation rules: [`probes/prompt_extraction_research.md`](./probes/prompt_extraction_research.md).
 
 **Inference:** Qwen3-1.7B-Base has no HF chat template — plain string prompt to vLLM, not `apply_chat_template`.
 

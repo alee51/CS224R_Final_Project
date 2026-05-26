@@ -1,0 +1,686 @@
+
+================================================================================
+POOL A
+================================================================================
+
+--- A01 id=49542 overlap=False ---
+GOLD: '14'
+LAST: Find all possible options and prove that there are no others.
+PROBLEM:
+In a two-digit number, each digit was increased by either 2 or 4 (different digits might have been increased by different amounts), resulting in the number increasing fourfold. What could the original number have been? Find all possible options and prove that there are no others.
+----------------------------------------
+
+--- A02 id=8589 overlap=True ---
+GOLD: 'Thesequence{a_n}isanarithmeticsequence.'
+LAST: Prove that \(\{a_n\}\) is an arithmetic sequence.
+PROBLEM:
+Given a real number \(C\) and a sequence of real numbers \(\{a_n\}\). For each positive integer \(n\), let \(M_n = \frac{a_1 + a_2 + \cdots + a_n}{n}\). It is given that for all distinct positive integers \(i, j, k\), the following holds:
+$$
+(i-j) M_k + (j-k) M_i + (k-i) M_j = C.
+$$
+
+Prove that \(\{a_n\}\) is an arithmetic sequence.
+----------------------------------------
+
+--- A03 id=1805 overlap=True ---
+GOLD: '360'
+LAST: Prove that the sum of the dihedral angles between the faces of the trihedral angle with vertex \( O \) and edges \( OA \), \( OB \), and \( OC \) is \( 360^\circ \).
+PROBLEM:
+In a right circular cylinder, select the diametrically opposite points \( A \) and \( B \) on one base. Choose a point \( C \) on the circumference of the other base such that \( C \) is not in the plane \( A B O \), where point \( O \) is the midpoint of the cylinder's axis. Prove that the sum of the dihedral angles between the faces of the trihedral angle with vertex \( O \) and edges \( OA \), \( OB \), and \( OC \) is \( 360^\circ \).
+----------------------------------------
+
+--- A04 id=21382 overlap=True ---
+GOLD: 'V \\leq \\sqrt{S_1 S_2 S_3}'
+LAST: Prove that its volume does not exceed $\sqrt{S_{1} S_{2} S_{3}}$.
+PROBLEM:
+The areas of the projections of a body onto the coordinate planes are $S_{1}, S_{2}$, and $S_{3}$. Prove that its volume does not exceed $\sqrt{S_{1} S_{2} S_{3}}$.
+----------------------------------------
+
+--- A05 id=18940 overlap=True ---
+GOLD: '1+\\sqrt{2}'
+LAST: Prove that the ratio of the projection segments cannot be greater than $(1+\sqrt{2})$!
+PROBLEM:
+A convex polygon is intersected by a line $e$ which bisects the area of the polygon. Project the resulting subpolygons perpendicularly onto a line $f$ that is perpendicular to $e$. Prove that the ratio of the projection segments cannot be greater than $(1+\sqrt{2})$!
+----------------------------------------
+
+--- A06 id=17415 overlap=True ---
+GOLD: '|f(z_0)| \\geq |C_0| + |C_n|'
+LAST: Prove that there exists a complex number \( z_{0} \) such that \( |z_{0}| \leq 1 \) and \( |f(z_{0})| \geq |C_{0}| + |C_{n}| \).
+PROBLEM:
+Given \( f(z) = C_{0} z^{n} + C_{1} z^{n-1} + C_{2} z^{n-2} + \cdots + C_{n-1} z + C_{n} \), which is a polynomial of degree \( n \) with complex coefficients. Prove that there exists a complex number \( z_{0} \) such that \( |z_{0}| \leq 1 \) and \( |f(z_{0})| \geq |C_{0}| + |C_{n}| \).
+----------------------------------------
+
+--- A07 id=10711 overlap=True ---
+GOLD: '\\frac{1}{2^{n-1}}\\lea_n\\le1-\\sin^n2\\theta(1-\\frac{1}{2^{n-1}})'
+LAST: Prove that $\frac{1}{2^{n-1}} \leq a_{n} \leq 1 - \sin^n 2\theta \left(1 - \frac{1}{2^{n-1}}\right)$.
+PROBLEM:
+
+Given the sequence $\left\{a_{n}\right\}$ defined by:
+- $a_{1} = 1$
+- $a_{2} = 1 - 2 \sin^2 \theta \cos^2 \theta$
+- $a_{n+2} - a_{n+1} + a_{n} \sin^2 \theta \cos^2 \theta = 0$, for $\theta \in \left(0, \frac{\pi}{2}\right)$
+
+Prove that $\frac{1}{2^{n-1}} \leq a_{n} \leq 1 - \sin^n 2\theta \left(1 - \frac{1}{2^{n-1}}\right)$.
+----------------------------------------
+
+--- A08 id=7871 overlap=False ---
+GOLD: 't_{12}=\\frac{}{r}\\sqrt{(r\\r_1)(r\\r_2)}'
+LAST: (The minus sign corresponds to external tangency).
+PROBLEM:
+Two circles with radii \( r_1 \) and \( r_2 \) touch the circle \( O \) with radius \( r \) externally (internally) at points such that the distance between these points is \( m \). Prove that the length \( t_{12} \) of the common external tangent of the first two circles is given by the formula:
+
+\[ 
+t_{12} = \frac{m}{r} \sqrt{(r \pm r_1)(r \pm r_2)} 
+\]
+
+(The minus sign corresponds to external tangency).
+----------------------------------------
+
+--- A09 id=40837 overlap=True ---
+GOLD: '\\sum_{i=1}^{n}(-1)^{i} a_{i} \\text{ is a real number}'
+LAST: Prove that \(\sum_{i=1}^{n}(-1)^{i} a_{i} \) is a real number.
+PROBLEM:
+
+Given two complex coefficient functions \( f(x) = \sum_{i=0}^{n} a_{i} x^{n-i} \) and \( g(x) = \sum_{i=0}^{n} b_{i} x^{n-i} \) (where \( a_{0} = b_{0} = 1 \)), \(\sum_{i=1}^{\left\lfloor\frac{n}{2}\right\rfloor} b_{2 i} \) and \(\sum_{i=1}^{\left\lfloor\frac{n+1}{2}\right\rfloor} b_{2 i-1}\) are both real numbers, and the negations of the squares of all roots of \(g(x) = 0\) are exactly all the roots of \(f(x) = 0\). Prove that \(\sum_{i=1}^{n}(-1)^{i} a_{i} \) is a real number.
+----------------------------------------
+
+--- A10 id=6684 overlap=False ---
+GOLD: '4qx\\lep^2'
+LAST: satisfies the inequality \( 4 q x \leq p^{2} \).
+PROBLEM:
+
+Prove that any real solution of
+
+\[ x^{3} + p x + q = 0 \]
+
+satisfies the inequality \( 4 q x \leq p^{2} \).
+----------------------------------------
+
+--- A11 id=44661 overlap=False ---
+GOLD: '5'
+LAST: \]
+PROBLEM:
+Points \( A_{1}, A_{2}, A_{3}, A_{4}, A_{5} \) divide the circumference of a circle with unit radius into five equal parts; prove that the following equality holds between the chords \( A_{1} A_{2} \) and \( A_{1} A_{3} \):
+
+\[ 
+\left( A_{1} A_{2} \cdot A_{1} A_{3} \right)^{2}=5 
+\]
+----------------------------------------
+
+--- A12 id=30711 overlap=True ---
+GOLD: '0'
+LAST: Prove that the sum  $1^{p+2} + 2^{p+2} + ...+ (p-1)^{p+2}$  is divisible by  $p^2$ .
+PROBLEM:
+Let  $p$  be a prime number greater than  $3$ . Prove that the sum  $1^{p+2} + 2^{p+2} + ...+ (p-1)^{p+2}$  is divisible by  $p^2$ .
+----------------------------------------
+
+--- A13 id=2114 overlap=False ---
+GOLD: '1'
+LAST: (b) Prove that, starting from some index  $n_0$ , the sequence  $u_n$  is monotonous.
+PROBLEM:
+Given  $u_0,u_1$  with  $0<u_0,u_1<1$ , define the sequence  $(u_n)$  recurrently by the formula  $$ u_{n+2}=\frac12\left(\sqrt{u_{n+1}}+\sqrt{u_n}\right). $$  (a) Prove that the sequence  $u_n$  is convergent and find its limit.
+(b) Prove that, starting from some index  $n_0$ , the sequence  $u_n$  is monotonous.
+----------------------------------------
+
+--- A14 id=2030 overlap=True ---
+GOLD: '17.5'
+LAST: Prove that $S \leq 17.5$.
+PROBLEM:
+The projections of a polygon onto the $OX$ axis, the bisector of the 1st and 3rd coordinate angles, the $OY$ axis, and the bisector of the 2nd and 4th coordinate angles are equal to $4, 3\sqrt{2}, 5, 4\sqrt{2}$, respectively. The area of the polygon is $-S$. Prove that $S \leq 17.5$.
+----------------------------------------
+
+--- A15 id=7289 overlap=True ---
+GOLD: '\\frac{17}{10} \\sum_{i=1}^{n} a_{i}^{2}'
+LAST: Prove that \( \sum_{i=1}^{n} \frac{a_{i}^{3}}{b_{i}} \leq \frac{17}{10} \sum_{i=1}^{n} a_{i}^{2} \), and determine the necessary and sufficient conditions for equality to hold.
+PROBLEM:
+Let \( a_{1}, a_{2}, \cdots, a_{n}, b_{1}, b_{2}, \cdots, b_{n} \in [1,2] \), and \( \sum_{i=1}^{n} a_{i}^{2} = \sum_{i=1}^{n} b_{i}^{2} \). Prove that \( \sum_{i=1}^{n} \frac{a_{i}^{3}}{b_{i}} \leq \frac{17}{10} \sum_{i=1}^{n} a_{i}^{2} \), and determine the necessary and sufficient conditions for equality to hold.
+----------------------------------------
+
+--- A16 id=17031 overlap=True ---
+GOLD: '2'
+LAST: Prove that there is a line belonging to the grid such that the nodes lying on it are painted in two colors.
+PROBLEM:
+A grid consists of squares of size $1 \times 1$. Each of its nodes is painted in one of four given colors so that the vertices of any $1 \times 1$ square are painted in different colors. Prove that there is a line belonging to the grid such that the nodes lying on it are painted in two colors.
+----------------------------------------
+
+--- A17 id=18057 overlap=True ---
+GOLD: '3'
+LAST: Prove that among the lines drawn, there exists at least one that passes through exactly two points.
+PROBLEM:
+In a plane, there are $n$ arbitrary points that do not lie on a single straight line. A line is drawn through each pair of these points. Prove that among the lines drawn, there exists at least one that passes through exactly two points.
+----------------------------------------
+
+--- A18 id=37436 overlap=True ---
+GOLD: 'R \\text{ lies on } BD'
+LAST: Prove that \(R\) lies on \(BD\).
+PROBLEM:
+Let \(ABCD\) be a convex cyclic quadrilateral with diagonals intersecting at \(S\). Let \(P\) be the circumcenter of triangle \(ABS\) and \(Q\) the circumcenter of triangle \(BCS\). The line parallel to \(AD\) through \(P\) and the line parallel to \(CD\) through \(Q\) intersect at point \(R\).
+
+Prove that \(R\) lies on \(BD\).
+----------------------------------------
+
+--- A19 id=45382 overlap=True ---
+GOLD: '\\frac{b}{2}'
+LAST: Prove that a necessary and sufficient condition for the point of tangency of side $AB$ with the incircle of triangle $ABC$ to bisect the segment between the feet of the altitude and the median is the equality: $c=\frac{a+b}{2}$.
+PROBLEM:
+Prove that a necessary and sufficient condition for the point of tangency of side $AB$ with the incircle of triangle $ABC$ to bisect the segment between the feet of the altitude and the median is the equality: $c=\frac{a+b}{2}$.
+----------------------------------------
+
+--- A20 id=1844 overlap=False ---
+GOLD: 'd_{\\mathrm{}}d_{\\mathrm{}}d_{\\mathrm{ca}}=d_{\\mathrm{ac}}d_{\\mathrm{ba}}d_{\\mathrm{cb}}'
+LAST: \]
+PROBLEM:
+Let \( d_{\mathrm{ab}} \) and \( d_{\mathrm{ac}} \) be the distances from vertices \( B \) and \( C \) to the line \( l_{\mathrm{a}} \), respectively, which is externally tangent to the circles \( S_{\mathrm{b}} \) and \( S_{\mathrm{c}} \) (and distinct from the line \( BC \)). Similarly, define the numbers \( d_{\mathrm{bc}} \), \( d_{\mathrm{ba}} \), \( d_{\mathrm{cb}} \), and \( d_{\mathrm{ca}} \). Prove that 
+\[ d_{\mathrm{ab}} d_{\mathrm{bc}} d_{\mathrm{ca}} = d_{\mathrm{ac}} d_{\mathrm{ba}} d_{\mathrm{cb}}. \]
+----------------------------------------
+
+--- A21 id=42251 overlap=True ---
+GOLD: '(1,2)\\equiv(2,1)\\pmod{3}'
+LAST: Prove that \( m(1,2) \) and \( m(2,1) \) have the same remainder when divided by 3.
+PROBLEM:
+Let \( x_{1}, x_{2}, \cdots, x_{n} \) be \( n \) integers, and \( k \) be an integer less than \( n \). Define
+\[
+\begin{array}{l}
+S_{1} = x_{1} + x_{2} + \cdots + x_{k}, \quad T_{1} = x_{k+1} + x_{k+2} + \cdots + x_{n}, \\
+S_{2} = x_{2} + x_{3} + \cdots + x_{k+1}, \quad T_{2} = x_{k+2} + x_{k+3} + \cdots + x_{n} + x_{1}, \\
+S_{3} = x_{3} + x_{4} + \cdots + x_{k+2}, \quad T_{3} = x_{k+3} + x_{k+4} + \cdots + x_{1} + x_{2}, \\
+\cdots \cdots \\
+S_{n} = x_{n} + x_{1} + \cdots + x_{k-1}, \quad T_{n} = x_{k} + x_{k+1} + \cdots + x_{n-1},
+\end{array}
+\]
+where \( x_{i} \) is cyclic, meaning \( x_{1} \) reappears after \( x_{n} \). Let \( m(a, b) \) be the number of \( i \) such that \( S_{i} \) modulo 3 is \( a \) and \( T_{i} \) modulo 3 is \( b \), where \( a \) and \( b \) can be 0, 1, or 2. Prove that \( m(1,2) \) and \( m(2,1) \) have the same remainder when divided by 3.
+----------------------------------------
+
+--- A22 id=15558 overlap=False ---
+GOLD: '\\frac{1}{R_{1}}+\\frac{1}{R_{2}}=\\frac{2}{}'
+LAST: $$
+PROBLEM:
+The circles $\odot O_{1}$ and $\odot O_{2}$ have radii $R_{1}$ and $R_{2}$ respectively and are externally tangent. Line $AB$ is tangent to $\odot O_{1}$ and $\odot O_{2}$ at points $A$ and $B$ respectively. Line $CD$ is perpendicular to $AB$ at point $D$, and the distance $CD$ is $d$. Prove that:
+$$
+\frac{1}{R_{1}}+\frac{1}{R_{2}}=\frac{2}{d}.
+$$
+----------------------------------------
+
+--- A23 id=50555 overlap=True ---
+GOLD: '\\lfloor^{2014}\\rfloor+\\lfloorb^{2014}\\rfloor=\\lfloor\\rfloor^{2014}+\\lfloorb\\rfloor^{2014}'
+LAST: Prove that  $\lfloor a^{2014} \rfloor + \lfloor  b^{2014}  \rfloor = \lfloor a \rfloor ^{2014} + \lfloor b \rfloor ^{2014}$
+PROBLEM:
+Let  $a, b$  be  positive real numbers such that there exist infinite number of natural numbers  $k$  such that  $\lfloor a^k \rfloor + \lfloor  b^k  \rfloor = \lfloor a \rfloor ^k + \lfloor b \rfloor ^k$  . Prove that  $\lfloor a^{2014} \rfloor + \lfloor  b^{2014}  \rfloor = \lfloor a \rfloor ^{2014} + \lfloor b \rfloor ^{2014}$ 
+----------------------------------------
+
+--- A24 id=40802 overlap=True ---
+GOLD: 'F(p)\\ge(p+k)^4'
+LAST: Prove that  $ F(p)\geq(p\plus{}k)^4$
+PROBLEM:
+Let  $ p\in\mathbb{R}_\plus{}$  and  $ k\in\mathbb{R}_\plus{}$ . The polynomial  $ F(x)\equal{}x^4\plus{}a_3x^3\plus{}a_2x^2\plus{}a_1x\plus{}k^4$  with real coefficients has  $ 4$  negative roots. Prove that  $ F(p)\geq(p\plus{}k)^4$ 
+----------------------------------------
+
+--- A25 id=30611 overlap=True ---
+GOLD: 'f(n)=n'
+LAST: Prove that if for every positive integer \( n \), \( f(n+1) > f[f(n)] \), then for every \( n \), \( f(n) = n \).
+PROBLEM:
+Let \( f(n) \) be a function defined on the set of all positive integers \(\mathbf{N}^{+}\) and taking values in \(\mathbf{N}^{+}\). Prove that if for every positive integer \( n \), \( f(n+1) > f[f(n)] \), then for every \( n \), \( f(n) = n \).
+----------------------------------------
+
+--- A26 id=17208 overlap=True ---
+GOLD: '\\frac{b+}{}'
+LAST: Prove that \(\frac{AE}{ED} = \frac{b+c}{a}\).
+PROBLEM:
+In triangle \( \triangle ABC \), the lengths of sides opposite to vertices \( A, B, \) and \( C \) are \( a, b, \) and \( c \) respectively. Let \( E \) be the center of the incircle, and let \( AE \) intersect \( BC \) at \( D \). Prove that \(\frac{AE}{ED} = \frac{b+c}{a}\).
+----------------------------------------
+
+--- A27 id=32469 overlap=False ---
+GOLD: '\\geb'
+LAST: Antipov)
+PROBLEM:
+Given natural numbers \(a, b,\) and \(c\), none of which is a multiple of the other, it is known that the number \(abc + 1\) is divisible by \(ab - b + 1\). Prove that \(c \geq b\).
+
+(M. Antipov)
+----------------------------------------
+
+--- A28 id=44577 overlap=True ---
+GOLD: '\\text{All numbers in } N \\text{ must be the same color.}'
+LAST: Prove that all numbers in \( N \) must receive the same color.
+PROBLEM:
+Each of the numbers in the set \( N = \{ 1, 2, 3, \ldots, n-1 \} \), where \( n \geq 3 \), is colored with one of two colors, say red or black, so that:
+(i) \( i \) and \( n - i \) always receive the same color, and
+(ii) for some \( j \in N \), relatively prime to \( n \), \( i \) and \( |j - i| \) receive the same color for all \( i \in N, i \neq j \).
+Prove that all numbers in \( N \) must receive the same color.
+----------------------------------------
+
+--- A29 id=21728 overlap=True ---
+GOLD: '10'
+LAST: Prove that the value of the numerical expression \(11^{11} + 12^{12} + 13^{13}\) is divisible by 10.
+PROBLEM:
+Prove that the value of the numerical expression \(11^{11} + 12^{12} + 13^{13}\) is divisible by 10.
+----------------------------------------
+
+--- A30 id=401 overlap=True ---
+GOLD: '\\text{The lines } Q_1P_2, Q_2P_1, \\text{ and } AB \\text{ are concurrent.}'
+LAST: Prove that the lines \( Q_{1} P_{2}, Q_{2} P_{1} \), and \( A B \) are concurrent.
+PROBLEM:
+Let \( A B C \) be any triangle and \( P \) any point in its interior. Let \( P_{1}, P_{2} \) be the feet of the perpendiculars from \( P \) to the two sides \( A C \) and \( B C \). Draw \( A P \) and \( B P \), and from \( C \) drop perpendiculars to \( A P \) and \( B P \). Let \( Q_{1} \) and \( Q_{2} \) be the feet of these perpendiculars. Prove that the lines \( Q_{1} P_{2}, Q_{2} P_{1} \), and \( A B \) are concurrent.
+----------------------------------------
+
+--- A31 id=12494 overlap=False ---
+GOLD: '\\sum_{k=1}^{n}a_{k}<1'
+LAST: Given the sequence $\left\{a_{n}\right\}$ such that $a_{1} \doteq \frac{1}{2}$ and $a_{n} = \left(\frac{2n-3}{2n}\right) a_{n-1}$ for $n=2,3,4,\ldots$, prove that for any positive integer $n$, $\sum_{k=1}^{n} a_{k} < 1$.
+PROBLEM:
+Given the sequence $\left\{a_{n}\right\}$ such that $a_{1} \doteq \frac{1}{2}$ and $a_{n} = \left(\frac{2n-3}{2n}\right) a_{n-1}$ for $n=2,3,4,\ldots$, prove that for any positive integer $n$, $\sum_{k=1}^{n} a_{k} < 1$.
+----------------------------------------
+
+--- A32 id=30770 overlap=True ---
+GOLD: '1994-n'
+LAST: Prove that  $ 1994 \minus{} n$  is the greatest integer less than or equal to  $ a_{n}$ ,  $ 0 \leq n \leq 998$
+PROBLEM:
+Let  $ a_{0} \equal{} 1994$  and  $ a_{n \plus{} 1} \equal{} \frac {a_{n}^{2}}{a_{n} \plus{} 1}$  for each nonnegative integer  $ n$ . Prove that  $ 1994 \minus{} n$  is the greatest integer less than or equal to  $ a_{n}$ ,  $ 0 \leq n \leq 998$ 
+----------------------------------------
+
+--- A33 id=25335 overlap=True ---
+GOLD: 'NP=PQ=QG'
+LAST: Prove that [list=a][*] $Area(ABCD) = 9 \cdot Area(PQRS)$  [*]  $NP=PQ=QG$  [/list]
+PROBLEM:
+Let  $ABCD$  be a convex quadrilateral such that \[\begin{array}{rl} E,F \in [AB],& AE  =  EF = FB  G,H \in [BC],& BG  =  GH = HC  K,L \in [CD],& CK  =  KL = LD  M,N \in [DA],& DM  =  MN = NA  \end{array}\] Let \[[NG] \cap [LE] = \{P\},  [NG]\cap [KF] = \{Q\},\] \[{[}MH] \cap [KF] = \{R\},  [MH]\cap [LE]=\{S\}\]
+Prove that [list=a][*] $Area(ABCD) = 9 \cdot Area(PQRS)$  [*]  $NP=PQ=QG$  [/list]
+----------------------------------------
+
+--- A34 id=21708 overlap=False ---
+GOLD: '24'
+LAST: c) The same question for the Desargues configuration (consisting of ten points and ten lines) shown in the lower image.
+PROBLEM:
+
+a) The image on the left shows six points that lie three on each of four lines. Prove that there are 24 different ways to map this set of six points onto itself such that each group of three points lying on one line is mapped into another group of three points lying on a single line.
+
+b) The image on the right shows nine points lying three on each of nine lines, and through each point, three such lines pass. These nine points and nine lines form the famous Pascal configuration. How many ways can we map our set of nine points onto itself so that each group of three points lying on one of our nine lines is mapped onto a group of three points that also lies on one of the lines in our configuration?
+
+c) The same question for the Desargues configuration (consisting of ten points and ten lines) shown in the lower image.
+----------------------------------------
+
+--- A35 id=12162 overlap=True ---
+GOLD: '2\\cos(\\alpha-\\varphi)=7\\cos(\\beta-\\gamma)'
+LAST: prove that \(2 \cos (\alpha - \varphi) = 7 \cos (\beta - \gamma)\).
+PROBLEM:
+Given that $\alpha, \beta, \gamma, \varphi \in \mathbf{R}$, and they satisfy \(\left\{\begin{array}{l}\sin \alpha+7 \sin \beta=4(\sin \gamma+2 \sin \varphi) \\ \cos \alpha+7 \cos \beta=4(\cos \gamma+2 \cos \varphi)\end{array}\right.\),
+
+prove that \(2 \cos (\alpha - \varphi) = 7 \cos (\beta - \gamma)\).
+----------------------------------------
+
+--- A36 id=16842 overlap=False ---
+GOLD: '4'
+LAST: (IMO - 30th problem)
+PROBLEM:
+In the acute triangle \( \triangle ABC \), the angle bisector of angle \( A \) intersects the circumcircle of the triangle at another point \( A_1 \); similarly define points \( B_1 \) and \( C_1 \). The line \( AA_1 \) intersects the external angle bisectors of angles \( B \) and \( C \) at point \( A_0 \); similarly define points \( B_0 \) and \( C_0 \). Prove that: 
+1. The area of \( \triangle A_0B_0C_0 \) is twice the area of the hexagon \( AC_1BA_1CB_1 \).
+2. The area of \( \triangle A_0B_0C_0 \) is at least four times the area of \( \triangle ABC \).
+(IMO - 30th problem)
+----------------------------------------
+
+--- A37 id=25104 overlap=False ---
+GOLD: '336005'
+LAST: The equation $x+y+z=2011$ satisfies $x<y<z$ to prove: the number of solutions $(x, y, z)$ is $\qquad$ groups.
+PROBLEM:
+5. The equation $x+y+z=2011$ satisfies $x<y<z$ to prove: the number of solutions $(x, y, z)$ is $\qquad$ groups.
+----------------------------------------
+
+--- A38 id=7868 overlap=True ---
+GOLD: 'Thesequence{x_n}isgeometricprogression.'
+LAST: Prove that this sequence \(\left\{x_{n}\right\}\) is a geometric progression.
+PROBLEM:
+An infinite sequence \(\left\{x_{n}\right\}\) \((x_{n} \neq 0)\) satisfies the condition for \(n \geqslant 3\):
+
+\[
+\left(x_{1}^{2} + x_{2}^{2} + \cdots + x_{n-1}^{2}\right) \left(x_{2}^{2} + x_{3}^{2} + \cdots + x_{n}^{2}\right) = \left(x_{1} x_{2} + x_{2} x_{3} + \cdots + x_{n-1} x_{n}\right)^{2}
+\]
+
+Prove that this sequence \(\left\{x_{n}\right\}\) is a geometric progression.
+----------------------------------------
+
+--- A39 id=7225 overlap=False ---
+GOLD: 'e^2'
+LAST: (b) Show that  $\lim_{n\to\infty}b_n>\left(\frac32\right)^{\sqrt3+\sqrt2}$ .
+PROBLEM:
+For  $n\in\mathbb N$ , define  $$ a_n=\frac1{\binom n1}+\frac1{\binom n2}+\ldots+\frac1{\binom nn}. $$  (a) Prove that the sequence  $b_n=a_n^n$  is convergent and determine the limit.
+(b) Show that  $\lim_{n\to\infty}b_n>\left(\frac32\right)^{\sqrt3+\sqrt2}$ .
+----------------------------------------
+
+--- A40 id=28028 overlap=False ---
+GOLD: '12'
+LAST: What is the earliest row in which the number 2004 may appear?
+PROBLEM:
+An infinite table of nonnegative integers is constructed as follows: in the top row, some number is 1 and all other numbers are 0's; in each subsequent row, every number is the sum of some two of the three closest numbers in the preceding row.
+
+The top row (with the one 1) is called row 0; the next row is row 1; the next row is row 2, and so forth.
+
+Note that the following problems require you to prove the statements for every table that can be constructed by the process described above, not just for the example shown.
+1. Show that any number in row \( n \) (for \( n > 0 \)) is at most \( 2^{n-1} \).
+2. What is the earliest row in which the number 2004 may appear?
+----------------------------------------
+
+================================================================================
+POOL B
+================================================================================
+
+--- B01 id=27158 overlap=True ---
+GOLD: '\\frac{3}{2\\sqrt{2}}'
+LAST: Prove that the entire tetrahedron can be inscribed in a sphere with a radius of \(\frac{3}{2 \sqrt{2}}\).
+PROBLEM:
+Each face of a tetrahedron can be inscribed in a circle with a radius of 1. Prove that the entire tetrahedron can be inscribed in a sphere with a radius of \(\frac{3}{2 \sqrt{2}}\).
+----------------------------------------
+
+--- B02 id=25778 overlap=True ---
+GOLD: 'k'
+LAST: Prove that \( k \) is a perfect square.
+PROBLEM:
+Let \( k=\frac{(m+n)^{2}}{4 m(m-n)^{2}+4} \) where \( m, n \in \mathbf{Z}_{+} \) be an integer. Prove that \( k \) is a perfect square.
+----------------------------------------
+
+--- B03 id=13838 overlap=True ---
+GOLD: '\\frac{x}{^{n-1}}+\\frac{y}{b^{n-1}}+\\frac{z}{^{n-1}}=0'
+LAST: Prove that \(\frac{x}{a^{n-1}}+\frac{y}{b^{n-1}}+\frac{z}{c^{n-1}}=0\), where \(a, b, c\) are the lengths of the sides of the triangle and \(A_1 B = b^n : c^n\).
+PROBLEM:
+The circumcircle of the triangle \(A_1B_1C_1\) intersects the sides of the triangle \(ABC\) at segments of lengths \(\pm x\), \(\pm y\), and \(\pm z\) (signs are chosen according to the orientation of the triangle). Prove that \(\frac{x}{a^{n-1}}+\frac{y}{b^{n-1}}+\frac{z}{c^{n-1}}=0\), where \(a, b, c\) are the lengths of the sides of the triangle and \(A_1 B = b^n : c^n\).
+----------------------------------------
+
+--- B04 id=40682 overlap=True ---
+GOLD: '\\sqrt{2}'
+LAST: Prove that  $\frac{|PM-PN|}{PC}$   constant and find its value.
+PROBLEM:
+On a semicircle of diameter  $AB$  and center  $C$ , consider vari­able points  $M$  and  $N$  such that  $MC \perp NC$ . The circumcircle of triangle  $MNC$  intersects  $AB$  for the second time at  $P$ . Prove that  $\frac{|PM-PN|}{PC}$   constant and find its value. 
+----------------------------------------
+
+--- B05 id=12470 overlap=True ---
+GOLD: '2'
+LAST: Prove that any plane passing through \(KL\) divides the tetrahedron into two parts of equal volume.
+PROBLEM:
+In a tetrahedron \(ABCD\), the midpoints of edges \(AB\) and \(CD\) are \(K\) and \(L\) respectively. Prove that any plane passing through \(KL\) divides the tetrahedron into two parts of equal volume.
+----------------------------------------
+
+--- B06 id=16004 overlap=True ---
+GOLD: '1'
+LAST: Prove that at least one of the lengths \( BD \) or \( CD \) is not an integer.
+PROBLEM:
+Given 4 points \( A, B, C, D \) on a plane, with the distances \( AB = 1, BC = 9, CA = 9, AD = 7 \). Prove that at least one of the lengths \( BD \) or \( CD \) is not an integer.
+----------------------------------------
+
+--- B07 id=17237 overlap=True ---
+GOLD: '\\frac{\\sqrt{p}}{2}'
+LAST: Prove that the radius of the circumscribed circle of the triangle with sides \( a_1 = \sqrt{u_a \cot \frac{\alpha}{2}}, b_1 = \sqrt{u_b \cot \frac{\beta}{2}}, \quad c_1=\sqrt{c} \) is equal to \( \frac{\sqrt{p}}{2} \), where \( p \) is the semiperimeter of triangle \( ABC \).
+PROBLEM:
+A circle with radius \( u_a \) is inscribed in angle \( A \) of triangle \( ABC \), and a circle with radius \( u_b \) is inscribed in angle \( B \); these circles touch each other externally. Prove that the radius of the circumscribed circle of the triangle with sides \( a_1 = \sqrt{u_a \cot \frac{\alpha}{2}}, b_1 = \sqrt{u_b \cot \frac{\beta}{2}}, \quad c_1=\sqrt{c} \) is equal to \( \frac{\sqrt{p}}{2} \), where \( p \) is the semiperimeter of triangle \( ABC \).
+----------------------------------------
+
+--- B08 id=9179 overlap=True ---
+GOLD: '2'
+LAST: Prove that the two triangles are similar.
+PROBLEM:
+Given a right-angled triangle, we know that the triangle formed from its medians as sides is also right-angled. Prove that the two triangles are similar.
+----------------------------------------
+
+--- B09 id=5424 overlap=True ---
+GOLD: '45'
+LAST: Prove this.
+PROBLEM:
+The sum of the tangents of the angles measuring $1^{\circ}, 5^{\circ}, 9^{\circ}, 13^{\circ}, \ldots, 173^{\circ}, 177^{\circ}$ is equal to 45. Prove this.
+----------------------------------------
+
+--- B10 id=17446 overlap=True ---
+GOLD: '2'
+LAST: Prove that there are infinitely many positive integers \( n \) such that \( n, n+1 \), and \( n+2 \) can each be written as the sum of two squares.
+PROBLEM:
+Prove that there are infinitely many positive integers \( n \) such that \( n, n+1 \), and \( n+2 \) can each be written as the sum of two squares.
+----------------------------------------
+
+--- B11 id=52264 overlap=True ---
+GOLD: '2S'
+LAST: Prove that hexagon  $AC'BA'CB'$  has area  $2S$ .
+PROBLEM:
+Let  $ABC$  denote a triangle with area  $S$ . Let  $U$  be any point inside the triangle whose vertices are the midpoints of the sides of triangle  $ABC$ . Let  $A'$ ,  $B'$ ,  $C'$  denote the reflections of  $A$ ,  $B$ ,  $C$ , respectively, about the point  $U$ . Prove that hexagon  $AC'BA'CB'$  has area  $2S$ .
+----------------------------------------
+
+--- B12 id=25891 overlap=True ---
+GOLD: '1994-n'
+LAST: Prove that \( 1994 - n \) is the largest integer less than or equal to \( a_{n} \), where \( 1 \leqslant n \leqslant 998 \).
+PROBLEM:
+Let \( a_{0} = 1994 \). For any non-negative integer \( n \), \( a_{n+1} = \frac{a_{n}^{2}}{a_{n+1}} \). Prove that \( 1994 - n \) is the largest integer less than or equal to \( a_{n} \), where \( 1 \leqslant n \leqslant 998 \).
+----------------------------------------
+
+--- B13 id=35025 overlap=True ---
+GOLD: '1000'
+LAST: prove that there are two points such that their distance is at least  $10$  meters ( $1000$  centimeters).
+PROBLEM:
+We have a line and  $1390$  points around it such that the distance of each point to the line is less than  $1$  centimeters and the distance between any two points is more than  $2$  centimeters. prove that there are two points such that their distance is at least  $10$  meters ( $1000$  centimeters).
+----------------------------------------
+
+--- B14 id=47270 overlap=True ---
+GOLD: '4r^2'
+LAST: Prove that \(OP^{2} + OQ^{2} + OR^{2} + OS^{2} = 4r^{2}\).
+PROBLEM:
+
+Given the hyperbola \(x^{2} - y^{2} = a^{2}\) with center \(O\), any circle of radius \(r\) intersects the hyperbola at points \(P\), \(Q\), \(R\), and \(S\). Prove that \(OP^{2} + OQ^{2} + OR^{2} + OS^{2} = 4r^{2}\).
+----------------------------------------
+
+--- B15 id=48996 overlap=True ---
+GOLD: '^3+b^3+3abc>^3'
+LAST: Prove the inequality $a^{3} + b^{3} + 3abc > c^{3}$.
+PROBLEM:
+Let $a, b, c$ be the sides of a triangle. Prove the inequality $a^{3} + b^{3} + 3abc > c^{3}$.
+----------------------------------------
+
+--- B16 id=35383 overlap=True ---
+GOLD: '\\text{The circumcircle of } \\triangle PQR \\text{ is tangent to lines } BP \\text{ and } BR'
+LAST: Prove that the circumcircle of $\triangle PQR$ is tangent to lines $BP$ and $BR$.
+PROBLEM:
+Two circles $\odot O_{1}$ and $\odot O_{2}$ intersect at points $P$ and $Q$. The tangents from $P$ to $\odot O_{1}$ and $\odot O_{2}$ touch the circles again at points $A$ and $B$ respectively, which are closer to $P$. A line tangent to $\odot O_{1}$ at $P$ intersects $\odot O_{2}$ again at point $C$. Additionally, lines $AP$ and $BC$ intersect at point $R$. Prove that the circumcircle of $\triangle PQR$ is tangent to lines $BP$ and $BR$.
+----------------------------------------
+
+--- B17 id=5755 overlap=True ---
+GOLD: '(8, 14, 18)'
+LAST: Prove that there is a unique such triplet $(x, y, z)$.
+PROBLEM:
+4. Petya wants to test the knowledge of his brother Kolya, the winner of the "Higher Test" mathematics Olympiad. For this, Petya thought of three natural numbers $a, b, c$, and calculated $x = \text{GCD}(a, b)$, $y = \text{GCD}(b, c)$, $z = \text{GCD}(c, a)$. Then he wrote three rows of five numbers each on the board:
+
+$$
+\begin{gathered}
+6, 8, 12, 18, 24 \\
+14, 20, 28, 44, 56 \\
+5, 15, 18, 27, 42
+\end{gathered}
+$$
+
+Petya informed Kolya that one of the numbers in the first row is $x$, one of the numbers in the second row is $y$, and one of the numbers in the third row is $z$, and asked him to guess the numbers $x, y, z$. After thinking for a few minutes, Kolya managed to solve the problem, correctly naming all three numbers. Name them and you. Prove that there is a unique such triplet $(x, y, z)$.
+----------------------------------------
+
+--- B18 id=42558 overlap=True ---
+GOLD: '\\frac{p(1-p)}{2}'
+LAST: Prove that there exists a parallel translation \( T \) such that the intersection of \( B \) and \( T(A) \) consists of segments whose total length is no less than \( \frac{p(1-p)}{2} \).
+PROBLEM:
+On a segment of length 1, there are pairwise non-intersecting segments whose total length equals \( p \). Denote this system of segments as \( A \). Let \( B \) be an additional system of segments (the segments of systems \( A \) and \( B \) do not have common internal points and completely cover the given segment). Prove that there exists a parallel translation \( T \) such that the intersection of \( B \) and \( T(A) \) consists of segments whose total length is no less than \( \frac{p(1-p)}{2} \).
+----------------------------------------
+
+--- B19 id=32008 overlap=True ---
+GOLD: '\\dfrac{1}{3} \\leqslant \\dfrac{V_{1}}{V} \\leqslant \\dfrac{3}{8}'
+LAST: Prove that \( \frac{1}{3} \leqslant \frac{V_{1}}{V} \leqslant \frac{3}{8} \), where \( V \) is the volume of the tetrahedron \( S-ABCD \), and \( V_{1} \) is the volume of the tetrahedron \( S-AMKN \).
+PROBLEM:
+The base of the tetrahedron \( S-ABCD \) is a parallelogram \( ABCD \). A plane passes through vertex \( A \) and the midpoint \( K \) of the edge \( SC \), intersecting edges \( SB \) and \( SD \) at points \( M \) and \( N \) respectively. Prove that \( \frac{1}{3} \leqslant \frac{V_{1}}{V} \leqslant \frac{3}{8} \), where \( V \) is the volume of the tetrahedron \( S-ABCD \), and \( V_{1} \) is the volume of the tetrahedron \( S-AMKN \).
+----------------------------------------
+
+--- B20 id=13824 overlap=True ---
+GOLD: '\\varphi(n)'
+LAST: Prove that for some natural number \(m\), the number \(a^{m} - 1\) is divisible by \(n\).
+PROBLEM:
+The numbers \(a\) and \(n\) are coprime. Prove that for some natural number \(m\), the number \(a^{m} - 1\) is divisible by \(n\).
+----------------------------------------
+
+--- B21 id=28262 overlap=True ---
+GOLD: '2^{2n}'
+LAST: Prove that for each \( x \in [-n, n] \), \( P(x) \leqslant 2^{2n} \).
+PROBLEM:
+Given that the polynomial \( P(x) \) has a degree at most \( 2n \), and for each integer \( k \in [-n, n] \), we have \( |P(k)| \leqslant 1 \). Prove that for each \( x \in [-n, n] \), \( P(x) \leqslant 2^{2n} \).
+----------------------------------------
+
+--- B22 id=51791 overlap=True ---
+GOLD: '-\\frac{}{2}'
+LAST: Prove that under these conditions, there is always exactly one real root, and if $a$, $b$, and $c$ are integers, the root is also an integer.
+PROBLEM:
+Solve the equation
+
+$$
+x^{3} + a x^{2} + b x + c = 0
+$$
+
+given that
+
+$$
+a^{2} b = 2 b^{2} = 4 a c.
+$$
+
+Prove that under these conditions, there is always exactly one real root, and if $a$, $b$, and $c$ are integers, the root is also an integer.
+----------------------------------------
+
+--- B23 id=41672 overlap=True ---
+GOLD: '^2+b^2=2c^2'
+LAST: Prove that in a triangle with sides \(a\), \(b\), and \(c\), the line passing through the circumcenter and the centroid is perpendicular to the median of side \(c\) if and only if \(a^{2} + b^{2} = 2c^{2}\).
+PROBLEM:
+Prove that in a triangle with sides \(a\), \(b\), and \(c\), the line passing through the circumcenter and the centroid is perpendicular to the median of side \(c\) if and only if \(a^{2} + b^{2} = 2c^{2}\).
+----------------------------------------
+
+--- B24 id=39718 overlap=True ---
+GOLD: 'Q'
+LAST: Prove that $Q$ is the midpoint of arc $\overparen{BAC}$.
+PROBLEM:
+Given $\triangle ABC$, $A$ excenter $\odot T$ is tangent to the circumcircle $\odot O$ of $\triangle ABC$ at point $P$. Let $I$ be the incenter of $\triangle ABC$. The line $PI$ intersects $\odot O$ at point $Q$. Prove that $Q$ is the midpoint of arc $\overparen{BAC}$.
+----------------------------------------
+
+--- B25 id=14920 overlap=True ---
+GOLD: '\\dfrac{x^2}{4} - y^2 = 1'
+LAST: Prove that the line $PQ$ must pass through a fixed point.
+PROBLEM:
+(12) As shown in the figure, given two points $A(-\sqrt{5}, 0)$ and $B(\sqrt{5}, 0)$, the incenter of $\triangle ABC$ moves on the line $x=2$.
+(1) Find the equation of the locus of point $C$;
+(2) Draw two rays from point $M(2,0)$, intersecting the locus found in (1) at points $P$ and $Q$, respectively, and $\overrightarrow{M P} \cdot \overrightarrow{M Q}=0$. Prove that the line $PQ$ must pass through a fixed point.
+----------------------------------------
+
+--- B26 id=25356 overlap=True ---
+GOLD: 'p-r=1'
+LAST: Prove that $p-q+r=1$ (Euler's formula).
+PROBLEM:
+A polygon is cut into several polygons in such a way that no vertices of the resulting polygons lie on the sides of the original polygon or the sides of the resulting polygons. Let $p$ be the number of resulting polygons, $q$ be the number of segments that are their sides, and $r$ be the number of points that are their vertices. Prove that $p-q+r=1$ (Euler's formula).
+----------------------------------------
+
+--- B27 id=26175 overlap=True ---
+GOLD: 'a_n'
+LAST: Prove that \( a_n \) is strictly monotonic increasing.
+PROBLEM:
+Define \( a_n = \frac{2(1 + \frac{1}{n})^{2n+1}}{(1 + \frac{1}{n})^n + (1 + \frac{1}{n})^{n+1}} \). Prove that \( a_n \) is strictly monotonic increasing.
+----------------------------------------
+
+--- B28 id=46972 overlap=True ---
+GOLD: '243'
+LAST: Prove that a number consisting of 243 ones is divisible by 243.
+PROBLEM:
+Prove that a number consisting of 243 ones is divisible by 243.
+----------------------------------------
+
+--- B29 id=14429 overlap=True ---
+GOLD: 'T_{2023}'
+LAST: Prove that  $T_{2023}$  is odd.
+PROBLEM:
+Given  $n$  a positive integer, define  $T_n$  the number of quadruples of positive integers  $(a,b,x,y)$  such that  $a>b$  and  $n= ax+by$ . Prove that  $T_{2023}$  is odd.
+----------------------------------------
+
+--- B30 id=10364 overlap=True ---
+GOLD: 'n'
+LAST: Prove that it can only return to the origin after an integer number of hours.
+PROBLEM:
+A snail crawled out from the origin and moved on a plane at a constant speed, turning every half an hour by $60^{\circ}$. Prove that it can only return to the origin after an integer number of hours.
+----------------------------------------
+
+--- B31 id=30598 overlap=True ---
+GOLD: '\\cot(\\frac{\\pi}{2^{2018}})'
+LAST: Prove that there exists a number $a$ such that the sequence $\left\{x_{n}\right\}$ has exactly 2018 distinct terms (if any term of the sequence is 0, the sequence stops at that term).
+PROBLEM:
+Define the sequence $\left\{x_{n}\right\}$ by:
+$$
+x_{1}=a, \quad x_{n+1}=\frac{x_{n}^{2}-1}{2x_{n}}, \quad n \in \mathbf{Z}_{+}.
+$$
+
+Prove that there exists a number $a$ such that the sequence $\left\{x_{n}\right\}$ has exactly 2018 distinct terms (if any term of the sequence is 0, the sequence stops at that term).
+----------------------------------------
+
+--- B32 id=45256 overlap=True ---
+GOLD: 'a_{100}>14'
+LAST: Prove that \( a_{100} > 14 \).
+PROBLEM:
+Consider the sequence \( a_{1}, a_{2}, a_{3}, \cdots \) defined as follows:
+\[ a_{1} = 1 \]
+\[ a_{n} = a_{n-1} + \frac{1}{a_{n-1}}, \text{ for } n = 2, 3, \cdots \]
+
+Prove that \( a_{100} > 14 \).
+----------------------------------------
+
+--- B33 id=37995 overlap=True ---
+GOLD: '-7 \\leq f(x) \\leq 7'
+LAST: Prove that when \( x \in [-2, 2] \), we have \(-7 \leq f(x) \leq 7\).
+PROBLEM:
+Given the quadratic function \( f(x) = ax^2 + bx + c \), for any \( x \in [-1, 1] \), it always holds that \(-1 \leq f(x) \leq 1\). Prove that when \( x \in [-2, 2] \), we have \(-7 \leq f(x) \leq 7\).
+----------------------------------------
+
+--- B34 id=23422 overlap=True ---
+GOLD: 'X\\ge\\max{3a,3b,3c}'
+LAST: Prove that: \(X \geq \max \{3a, 3b, 3c\}\), and that among \(\sqrt{X - 3a}, \sqrt{X - 3b}, \sqrt{X - 3c}\), one is equal to the sum of the other two.
+PROBLEM:
+Given:
+$$
+X = a + b + c + 2 \sqrt{a^2 + b^2 + c^2 - ab - bc - ca}
+$$
+
+Prove that: \(X \geq \max \{3a, 3b, 3c\}\), and that among \(\sqrt{X - 3a}, \sqrt{X - 3b}, \sqrt{X - 3c}\), one is equal to the sum of the other two.
+----------------------------------------
+
+--- B35 id=5136 overlap=True ---
+GOLD: '\\frac{1}{\\alpha\\beta}+\\frac{1}{\\beta\\gamma}+\\frac{1}{\\gamma\\alpha}\\ge\\frac{3}{\\delta^2}'
+LAST: Prove that \( \frac{1}{\alpha \beta} + \frac{1}{\beta \gamma} + \frac{1}{\gamma \alpha} \geq \frac{3}{\delta^2} \).
+PROBLEM:
+Let \( D, E, F \) be points on the sides \( BC, CA, \) and \( AB \) of \( \triangle ABC \), respectively. Let \( \alpha, \beta, \gamma, \delta \) be the areas of \( \triangle AEF, \triangle BFD, \triangle CDE, \) and \( \triangle DEF \), respectively. Prove that \( \frac{1}{\alpha \beta} + \frac{1}{\beta \gamma} + \frac{1}{\gamma \alpha} \geq \frac{3}{\delta^2} \).
+----------------------------------------
+
+--- B36 id=50945 overlap=True ---
+GOLD: '10'
+LAST: Prove that there exists a group of 10 members such that no one in the group has received a hat from another one in the group.
+PROBLEM:
+In a club with 30 members, every member initially had a hat. One day each member sent his hat to a different member (a member could have received more than one hat). Prove that there exists a group of 10 members such that no one in the group has received a hat from another one in the group.
+----------------------------------------
+
+--- B37 id=34811 overlap=True ---
+GOLD: '1996'
+LAST: Prove that the hotel's revenue could be at most 1996 gold coins.
+PROBLEM:
+A coastal hotel has 20 rooms. In this single-story hotel located by the bay, all 20 rooms have a sea view. A guest can either rent one room for two days or two adjacent rooms for one day. The price of a room is 1 gold coin per day. According to the guestbook, on the first day of the season, room 1 was empty, and on the last, 100th day, room 20 was not rented by anyone. Prove that the hotel's revenue could be at most 1996 gold coins.
+----------------------------------------
+
+--- B38 id=46638 overlap=True ---
+GOLD: '(\\sqrt{2}-\\frac{1}{2},1)'
+LAST: Prove that \( C_{2} \) always passes through a fixed point and find its coordinates.
+PROBLEM:
+Given that the vertex of the parabola \( C_{1} \) is \((\sqrt{2}-1,1)\) and its focus is \(\left(\sqrt{2}-\frac{3}{4}, 1\right)\), and for another parabola \( C_{2} \) with the equation \( y^{2} - a y + x + 2 b = 0 \), the tangents of \( C_{1} \) and \( C_{2} \) at a common point of intersection are perpendicular to each other. Prove that \( C_{2} \) always passes through a fixed point and find its coordinates.
+----------------------------------------
+
+--- B39 id=5472 overlap=True ---
+GOLD: '\\text{The projections of } M \\text{ form an equilateral triangle.}'
+LAST: Prove that the projections of point \(M\) on the sides of the triangle are the vertices of an equilateral triangle.
+PROBLEM:
+Inside the triangle \(ABC\), a point \(M\) is taken such that
+
+\[
+\angle AMC = 60^\circ + \angle ABC, \quad \angle CMB = 60^\circ + \angle CAB, \quad \angle BMA = 60^\circ + \angle BCA.
+\]
+
+Prove that the projections of point \(M\) on the sides of the triangle are the vertices of an equilateral triangle.
+----------------------------------------
+
+--- B40 id=30943 overlap=True ---
+GOLD: '0 \\leq a_{k} - a_{k+1} < \\frac{2}{k^2}'
+LAST: Prove that for any natural number \(k\), we have \(0 \leq a_{k}-a_{k+1} < \frac{2}{k^2}\).
+PROBLEM:
+The sequence \(\left\{a_{k}\right\}\), for \(k=1,2, \ldots\), is a sequence of non-negative real numbers, satisfying \(a_{k}-2a_{k+1}+a_{k+2} \geqslant 0\) and \(\sum_{i=1}^{k} a_{i} \leq 1\) for \(k=1,2, \ldots\). Prove that for any natural number \(k\), we have \(0 \leq a_{k}-a_{k+1} < \frac{2}{k^2}\).
+----------------------------------------

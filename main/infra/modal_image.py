@@ -35,6 +35,7 @@ image = (
         "wandb",
         "pyyaml>=6.0",
         "pytest",
+        "pylatexenc>=2.10",
     )
     .add_local_dir(
         str(_LOCAL_MAIN_DIR),

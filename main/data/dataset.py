@@ -71,3 +71,22 @@ class JsonlPromptDataset:
         golds = [self._gold_text(r) for r in batch]
         ids = [int(r["problem_id"]) if "problem_id" in r else i for i, r in enumerate(batch)]
         return problems, golds, ids
+
+    def _row_key(self, row: dict[str, Any], index: int) -> int:
+        return int(row["problem_id"]) if "problem_id" in row else index
+
+    def state_dict(self) -> dict[str, Any]:
+        return {
+            "cursor": self._cursor,
+            "rng_state": self._rng.getstate(),
+            "row_keys": [self._row_key(r, i) for i, r in enumerate(self._rows)],
+        }
+
+    def load_state_dict(self, state: dict[str, Any]) -> None:
+        file_rows = self._load()
+        by_key = {self._row_key(r, i): r for i, r in enumerate(file_rows)}
+        keys = state.get("row_keys")
+        if keys is not None:
+            self._rows = [by_key[int(k)] for k in keys]
+        self._cursor = int(state["cursor"])
+        self._rng.setstate(state["rng_state"])

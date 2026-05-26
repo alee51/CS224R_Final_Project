@@ -28,7 +28,7 @@ Soft expectations were not hard gates: ~90% `parse_ok`, monotone pass rate vs di
 
 | Open question (from probe plan) | Answered? | Result | Implication |
 |---|---|---|---|
-| **`max_response_length` cap** (PLAN §5 / §7) | **Yes** | p50=565, p90=1319, p95=1974, **p99=4096**; 20/1600 (1.25%) hit length cap at 4096; ≥3072 = 2.3% | Most completions are well under 4096. **4096 is safe**; lowering to **3072** would truncate ~2% of rollouts — possible savings knob, not urgent. |
+| **`max_response_length` cap** (PLAN §5 / §7) | **Yes** | p50=565, p90=1319, p95=1974, **p99=4096**; 20/1600 (1.25%) hit length cap at 4096; ≥3072 = 2.3% | **4096 locked.** Most completions are well under cap; only 1.25% of rollouts hit it. Length table below is observational distribution only. |
 | **Reward parser sanity** (`parse_ok` rate) | **Yes (200-run); superseded** | **55.9%** Minerva-only on 200-run (`has_answer_line` 56.4%, `has_boxed` 34.6%) | Failed soft gate on Rank-1. **Resolved 2026-05-25:** Rank-2 parser + hybrid prompt (arm C). See addendum below — do not use 56% as train-time expectation. |
 | **Pass rate by difficulty band** (PLAN §2) | **Partially** | Overall pass **2.9%**; per band 1.5–4.5%. **Not monotone** (e.g. 7/8 = 4.0% > 6/8 = 1.5%) | Base model is very weak everywhere; bands are noisy at this sample size. Can't cleanly decide "drop 8/8-easy problems" yet — need post-parser re-run or larger N. |
 | **Mixed-reward rate by band** (PLAN §2 / §7 reward density) | **Yes** | **30/200 prompts (15%)** have mixed correct/incorrect rollouts; per band 8–24% | Minority-answer signal exists on ~15% of prompts — thin but non-zero. GRPO also gets signal wherever any rollout passes (~similar density). |
@@ -65,7 +65,7 @@ From the wandb Table (200 rows):
 
 **Aggregate:** parse_ok_rate=55.9%, pass_rate=2.9%, mixed_reward_prompts=30/200 (15.0%), length_cap_hits=20/1600.
 
-**Length cap sensitivity:**
+**Response length distribution (200-run):**
 
 | Cap | Rollouts at/above |
 |---|---|
@@ -99,7 +99,7 @@ We report n800 timing here so the training matrix can treat **CoT arms as ~2× i
 | Phase 2 judge | Qwen3-4B-Instruct | **~1003 s** (~16.7 min) | ~$1.10 |
 | **Ratio** | | **~1.01×** (judge ≈ rollout) | ~50/50 split |
 
-Other n800 summary panels: `tokens_per_sec_mean ≈ 4502` (policy); judge median **~1.25 s/call**, **~$0.00137/call**; `judge_vram_gb_used ≈ 70.3` GB; `phase2_json_parse_ok_rate ≈ 96.1%`; 0 truncated judge inputs.
+Other n800 summary panels: `tokens_per_sec_mean ≈ 4502` (policy); judge median **~1.25 s/call**, **~$0.00137/call**; `judge_vram_gb_used ≈ 70.3` GB; `phase2_json_parse_ok_rate ≈ 96.1%`; 0 truncated judge inputs. vLLM rollout **decode cost** is driven by tokens actually generated, not `max_tokens` for every sequence; `max_model_len` still sets the KV memory budget.
 
 ### Extrapolation to one training step (rollout + judge only)
 

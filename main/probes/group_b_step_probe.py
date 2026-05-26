@@ -13,7 +13,6 @@ from __future__ import annotations
 import json
 import logging
 import os
-import subprocess
 import sys
 import time
 from datetime import datetime, timezone
@@ -48,6 +47,8 @@ from infra.modal_volume import (
     HF_CACHE_MOUNT,
     HF_CACHE_VOLUME_NAME,
 )
+from train.repro import dep_versions as _dep_versions
+from train.repro import git_metadata as _git_metadata
 from train.rollout import RolloutEngine
 from train.trainer import (
     StepBatch,
@@ -97,14 +98,20 @@ def _deep_merge(base_d: dict, override: dict) -> dict:
     return out
 
 
-def load_merged_config(config_path: str) -> dict[str, Any]:
+def load_merged_config(
+    config_path: str, _visited: tuple[str, ...] = ()
+) -> dict[str, Any]:
     """Merge `extends` chain locally (launcher only)."""
     path = _resolve_config_path(config_path)
+    key = str(path.resolve())
+    if key in _visited:
+        chain = " -> ".join((*_visited, key))
+        raise ValueError(f"Cycle in config `extends` chain: {chain}")
     with path.open() as f:
         cfg = yaml.safe_load(f) or {}
     extends = cfg.pop("extends", None)
     if extends:
-        base = load_merged_config(str(extends))
+        base = load_merged_config(str(extends), _visited=(*_visited, key))
         cfg = _deep_merge(base, cfg)
     return cfg
 
@@ -139,39 +146,6 @@ def _probe_train_cfg(cfg: dict[str, Any]) -> TrainCfg:
         cfg["train"].get("starting_microbatch", 1)
     )
     return train_cfg_from_dict(merged)
-
-
-def _git_metadata() -> dict[str, Any]:
-    env_sha = os.environ.get("CS224R_GIT_SHA")
-    if env_sha:
-        dirty_raw = os.environ.get("CS224R_GIT_DIRTY", "false").lower()
-        return {
-            "git_sha": env_sha,
-            "git_dirty": dirty_raw in ("true", "1", "yes"),
-            "git_sha_short": os.environ.get("CS224R_GIT_SHA_SHORT", env_sha[:7]),
-        }
-
-    def _run(cmd: list[str]) -> str:
-        return subprocess.check_output(cmd, text=True, stderr=subprocess.DEVNULL).strip()
-
-    try:
-        sha = _run(["git", "rev-parse", "HEAD"])
-        dirty = bool(_run(["git", "status", "--porcelain"]))
-        short = _run(["git", "rev-parse", "--short", "HEAD"])
-    except (subprocess.CalledProcessError, FileNotFoundError):
-        sha, dirty, short = "unknown", False, "unknown"
-    return {"git_sha": sha, "git_dirty": dirty, "git_sha_short": short}
-
-
-def _dep_versions() -> dict[str, str]:
-    versions: dict[str, str] = {"python": sys.version.split()[0]}
-    for pkg in ("vllm", "torch", "transformers", "bitsandbytes"):
-        try:
-            mod = __import__(pkg)
-            versions[pkg] = getattr(mod, "__version__", "unknown")
-        except ImportError:
-            versions[pkg] = "not_installed"
-    return versions
 
 
 def _read_jsonl(path: Path) -> list[dict[str, Any]]:
@@ -347,7 +321,7 @@ def _next_microbatch_candidates(
 
 
 _MODAL_FN_KWARGS = dict(
-    gpu="H100",
+    gpu="H200",
     timeout=3600,
     image=image,
     secrets=[
@@ -452,6 +426,7 @@ def run_phase2(config: str, wandb_run_id: str | None = None) -> int:
 
     cache_payload = torch.load(paths["cache"], map_location="cpu", weights_only=False)
     step_cache = cache_payload["cache"]
+    n_kept = int(step_cache.get("n_kept") or len(step_cache.get("rollouts", [])))
 
     run = _resume_wandb(cfg_raw, wandb_run_id)
     import wandb
@@ -473,11 +448,24 @@ def run_phase2(config: str, wandb_run_id: str | None = None) -> int:
     last_fail: int | None = None
     attempts = 0
     max_microbatch_ok = 0
+    limited_by: str | None = None
     to_try: list[int] = [start_mb]
 
     while to_try and attempts < max_attempts:
         mb = to_try.pop(0)
         if smoke_cap and mb > smoke_cap:
+            break
+        # Stop early when requested mb meets/exceeds n_kept: _train_step_microbatched
+        # silently clamps to n_kept, so further requests would re-run identical work
+        # and falsely report the requested mb as "ok".
+        if n_kept > 0 and mb >= n_kept:
+            max_microbatch_ok = max(max_microbatch_ok, n_kept)
+            limited_by = "n_kept"
+            logger.info(
+                "Sweep stop: requested mb=%s >= n_kept=%s; ceiling is n_kept",
+                mb,
+                n_kept,
+            )
             break
         attempts += 1
         torch.cuda.empty_cache()
@@ -520,11 +508,17 @@ def run_phase2(config: str, wandb_run_id: str | None = None) -> int:
                 to_try = _next_microbatch_candidates(last_ok, last_fail, smoke_cap)
         else:
             last_fail = mb
+            limited_by = f"OOM_at_mb={mb}"
             if last_ok == 0:
                 break
             to_try = _next_microbatch_candidates(last_ok, last_fail, smoke_cap)
 
+    if limited_by is None and max_microbatch_ok > 0:
+        limited_by = "max_attempts"
+
     phase1_done["max_microbatch_ok"] = max_microbatch_ok
+    phase1_done["sweep_limited_by"] = limited_by
+    phase1_done["sweep_n_kept"] = n_kept
     with paths["phase1_done"].open("w") as f:
         json.dump(phase1_done, f, indent=2)
     artifacts_volume.commit()
@@ -555,6 +549,21 @@ def run_phase1b(config: str, wandb_run_id: str | None = None) -> str:
     batch = StepBatch(prompts=prompts, golds=golds, problem_ids=pids)
     rollout_engine = RolloutEngine(train_cfg.rollout)
     hf_model, opt = build_hf(train_cfg)
+
+    # Untimed warmup step so Phase 1b's timed step is "warm" like Phase 1 — same
+    # code path (rollout + score + advantage + forward + backward + optim + sync),
+    # but no instrument/timers/wandb/output.
+    logger.info("Phase 1b warmup step @ microbatch=%s", max_mb)
+    run_one_grpo_step(
+        train_cfg,
+        rollout_engine,
+        hf_model,
+        opt,
+        batch,
+        instrument=False,
+        microbatch=max_mb,
+    )
+    torch.cuda.empty_cache()
 
     logger.info("Phase 1b full timed step @ microbatch=%s", max_mb)
     timed = run_one_grpo_step(

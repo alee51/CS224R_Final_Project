@@ -107,7 +107,20 @@ Needs the trainer skeleton (`rollout.py` + `reward.py` + `objective.py` + `loss.
 
 ### Group C — mid-training instrumentation (not separate runs)
 
-Wandb panels on first real GRPO run: reward density (C1), length growth (C2), minority advantages @ step 100 (C3).
+**Not separate Modal jobs** — implement as `wandb.log` lines in `trainer.py` each training step. Required for **Poly-EPO Fig. 2–style** training curves (see PLAN §5 *Training-time reporting*). Checkpoints alone are **not** sufficient (no rollouts saved).
+
+| ID | Wandb key(s) | Poly-EPO analogue | Arms |
+| --- | --- | --- | --- |
+| **C1** | `train/prompt_coverage`, `train/mixed_reward_rate`, `train/frac_prompts_{0..8}_correct` | Fig. 2 **right** + per-step **k-of-8** histogram (9 fractions summing to 1) | **All** |
+| **C1b** | `train/parse_ok_rate`, `train/extract_path_*` | (diagnostic; not in paper) | **All** |
+| **C2** | `train/mean_completion_tokens` (+ optional p95) | length / collapse monitor | **All** |
+| **C3** | marginal-advantage percentiles @ step 100, 200, … | set-RL advantage shape | **Minority-*, Poly-EPO only** |
+| **C4** | `train/mean_unique_strategy_clusters_correct` | Fig. 2 **left** (LM-judge clusters on **correct** rollouts) | **Minority-CoT** (in-loop judge) |
+| **C4b** | `train/mean_unique_answer_clusters_correct` | our cheaper analogue (answer-hash) | **Minority-answer, Poly-EPO-answer** |
+
+**GRPO v1 minimum before full arm:** C1 + C1b + C2. Do **not** block launch on C3/C4.
+
+**Status (2026-05-26):** **C1 + C1b + C2 implemented** in `trainer.py` (`aggregate_train_step_wandb_metrics`). C3/C4 still arm-specific / future.
 
 ## Sequencing
 
@@ -129,7 +142,7 @@ Group A and skeleton build in parallel. Group B after skeleton. Group C on first
 | --- | --- |
 | Group A | §5 `max_response_length`, judge subsystem; §2 sampling; §7 GPU class, step-time, judge cost; possibly cut CoT arms |
 | Group B | §7 microbatch, grad accum, collocated `gpu_memory_utilization`, sync, step-time, async overlap |
-| C1–C3 | Wandb only unless broken |
+| C1–C4b | PLAN §5 + `trainer.py` wandb (not separate probe runs) |
 
 ## Open
 

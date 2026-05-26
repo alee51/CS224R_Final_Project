@@ -6,6 +6,9 @@ import logging
 from dataclasses import dataclass
 from typing import Any
 
+import torch
+
+from train.ablation import prepare_pytorch_alloc_for_vllm_sleep, vllm_sleep_enabled
 from train.weight_sync import SyncStats, sync_hf_to_vllm
 
 logger = logging.getLogger(__name__)
@@ -77,13 +80,28 @@ class RolloutEngine:
 
         self.cfg = cfg
         logger.info("Initializing vLLM RolloutEngine for %s", cfg.model)
-        self._llm = LLM(
+        llm_kwargs: dict[str, Any] = dict(
             model=cfg.model,
             max_model_len=cfg.max_model_len,
             gpu_memory_utilization=cfg.gpu_memory_utilization,
             max_num_seqs=cfg.max_num_seqs,
             enable_prefix_caching=cfg.enable_prefix_caching,
         )
+        self._use_sleep = vllm_sleep_enabled()
+        self._sleep_available = False
+        if self._use_sleep:
+            prepare_pytorch_alloc_for_vllm_sleep()
+            try:
+                self._llm = LLM(**llm_kwargs, enable_sleep_mode=True)
+                self._sleep_available = hasattr(self._llm, "sleep")
+            except TypeError:
+                self._llm = LLM(**llm_kwargs)
+                self._sleep_available = hasattr(self._llm, "sleep")
+            if not self._sleep_available:
+                logger.warning("CS224R_VLLM_SLEEP=1 but vLLM has no sleep(); disabling")
+                self._use_sleep = False
+        else:
+            self._llm = LLM(**llm_kwargs)
 
     @property
     def llm(self) -> Any:
@@ -145,6 +163,63 @@ class RolloutEngine:
 
     def update_weights(self, hf_model: Any) -> SyncStats:
         return sync_hf_to_vllm(hf_model, self._llm)
+
+    @staticmethod
+    def _release_cuda_before_vllm_wake() -> None:
+        """Drop PyTorch cached blocks before vLLM cuMem remap on wake."""
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
+            torch.cuda.synchronize()
+
+    @staticmethod
+    def _vram_mb() -> float:
+        if torch.cuda.is_available():
+            return torch.cuda.memory_allocated() / (1024**2)
+        return 0.0
+
+    def sleep_for_train(self) -> None:
+        """Release vLLM GPU memory so HF logprob_fwd can run collocated."""
+        if self._use_sleep and self._sleep_available:
+            before = self._vram_mb()
+            self._llm.sleep(level=1)
+            after = self._vram_mb()
+            logger.info(
+                "vLLM sleep(level=1): %.0f MB → %.0f MB (freed %.0f MB)",
+                before,
+                after,
+                before - after,
+            )
+        self._release_cuda_before_vllm_wake()
+
+    def wake_weights_only(self) -> None:
+        """Partial wake for HF→vLLM weight sync without allocating KV cache."""
+        if not (self._use_sleep and self._sleep_available):
+            return
+        self._release_cuda_before_vllm_wake()
+        before = self._vram_mb()
+        self._llm.wake_up(tags=["weights"])
+        after = self._vram_mb()
+        logger.info(
+            "vLLM wake_up(tags=['weights']): %.0f MB → %.0f MB (+%.0f MB)",
+            before,
+            after,
+            after - before,
+        )
+
+    def wake_for_rollout(self) -> None:
+        """Full wake before the next rollout step."""
+        if not (self._use_sleep and self._sleep_available):
+            return
+        self._release_cuda_before_vllm_wake()
+        before = self._vram_mb()
+        self._llm.wake_up()
+        after = self._vram_mb()
+        logger.info(
+            "vLLM wake_up(): %.0f MB → %.0f MB (+%.0f MB)",
+            before,
+            after,
+            after - before,
+        )
 
     def shutdown(self) -> None:
         logger.info("RolloutEngine shutdown (vLLM engine released with process exit)")

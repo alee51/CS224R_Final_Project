@@ -29,6 +29,8 @@ from infra.modal_volume import (
     HF_CACHE_MOUNT,
     HF_CACHE_VOLUME_NAME,
 )
+from train.repro import dep_versions as _dep_versions
+from train.repro import git_metadata as _git_metadata
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
@@ -51,39 +53,6 @@ hf_cache_volume = modal.Volume.from_name(HF_CACHE_VOLUME_NAME, create_if_missing
 def _load_yaml(config_path: str) -> dict[str, Any]:
     with open(config_path) as f:
         return yaml.safe_load(f)
-
-
-def _git_metadata() -> dict[str, Any]:
-    env_sha = os.environ.get("CS224R_GIT_SHA")
-    if env_sha:
-        dirty_raw = os.environ.get("CS224R_GIT_DIRTY", "false").lower()
-        return {
-            "git_sha": env_sha,
-            "git_dirty": dirty_raw in ("true", "1", "yes"),
-            "git_sha_short": os.environ.get("CS224R_GIT_SHA_SHORT", env_sha[:7]),
-        }
-
-    def _run(cmd: list[str]) -> str:
-        return subprocess.check_output(cmd, text=True, stderr=subprocess.DEVNULL).strip()
-
-    try:
-        sha = _run(["git", "rev-parse", "HEAD"])
-        dirty = bool(_run(["git", "status", "--porcelain"]))
-        short = _run(["git", "rev-parse", "--short", "HEAD"])
-    except (subprocess.CalledProcessError, FileNotFoundError):
-        sha, dirty, short = "unknown", False, "unknown"
-    return {"git_sha": sha, "git_dirty": dirty, "git_sha_short": short}
-
-
-def _dep_versions() -> dict[str, str]:
-    versions: dict[str, str] = {"python": sys.version.split()[0]}
-    for pkg in ("vllm", "torch", "transformers", "bitsandbytes"):
-        try:
-            mod = __import__(pkg)
-            versions[pkg] = getattr(mod, "__version__", "unknown")
-        except ImportError:
-            versions[pkg] = "not_installed"
-    return versions
 
 
 def _is_integer_gold(answer: Any) -> bool:
@@ -458,7 +427,9 @@ def run_phase1(config: str) -> str:
             batch_output_tokens += length_tokens
 
             entry = manifest[problem_id]
-            reward_fields = compute_reward(completion, entry["gold"])
+            reward_fields = compute_reward(
+                completion, entry["gold"], prompt_variant=prompt_variant
+            )
             record = {
                 "problem_id": problem_id,
                 "rollout_idx": rollout_idx,
@@ -664,11 +635,37 @@ def run_phase2(config: str, wandb_run_id: str | None = None) -> str:
 
     manifest = _read_jsonl(manifest_path)
     rollout_rows = _read_jsonl(rollouts_path)
+
+    smoke = bool(cfg.get("smoke"))
+    rollouts_per_prompt = int(
+        cfg["smoke_n_rollouts"] if smoke else cfg["sampling"]["rollouts_per_prompt"]
+    )
+    expected_total = len(manifest) * rollouts_per_prompt
+    phase1_total = int(phase1_done.get("n_rollouts", expected_total))
+    if len(rollout_rows) != expected_total or len(rollout_rows) != phase1_total:
+        raise RuntimeError(
+            "Rollout count mismatch: rollouts_path has "
+            f"{len(rollout_rows)}, manifest*rollouts_per_prompt={expected_total}, "
+            f"phase1_done.n_rollouts={phase1_total}. Phase-1 file is truncated or "
+            "rollouts_per_prompt drifted between phases."
+        )
+
     rollouts_by_pid: dict[int, list[dict[str, Any]]] = defaultdict(list)
     for row in rollout_rows:
         rollouts_by_pid[int(row["problem_id"])].append(row)
     for pid in rollouts_by_pid:
         rollouts_by_pid[pid].sort(key=lambda r: int(r["rollout_idx"]))
+
+    missing_pids = [
+        int(m["problem_id"])
+        for m in manifest
+        if len(rollouts_by_pid.get(int(m["problem_id"]), [])) != rollouts_per_prompt
+    ]
+    if missing_pids:
+        raise RuntimeError(
+            f"Per-prompt rollout count != {rollouts_per_prompt} for "
+            f"{len(missing_pids)} problem_ids (first 5: {missing_pids[:5]})"
+        )
 
     run = _resume_wandb(cfg, wandb_run_id)
     import wandb

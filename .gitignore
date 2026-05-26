@@ -5,3 +5,4 @@ __pycache__/
 .venv/
 venv/
 main/configs/.probe_b_runtime.yaml
+checkpoints/

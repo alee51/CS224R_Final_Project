@@ -136,7 +136,9 @@ def main() -> None:
         rank2 = extract_rank2(
             row["completion"], gold, prompt_variant=args.prompt_variant
         )
-        live = compute_reward(row["completion"], gold)
+        live = compute_reward(
+            row["completion"], gold, prompt_variant=args.prompt_variant
+        )
         out_row = {
             **row,
             **rank2,

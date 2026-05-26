@@ -1,41 +1,43 @@
 # GRPO training handoff — resume from step 139
 
-You are continuing a CS 224R final project run that Nancy started. Training stopped cleanly at step 141 (out of 850) when the Modal function hit its 8-hour wall-clock timeout. This doc walks you through resuming on **your** Modal credits.
+You are continuing a CS 224R final project run that Nancy started. Training stopped cleanly at step 141 (out of ~799) when the Modal function hit its 8-hour wall-clock timeout. This doc walks you through resuming on **your** Modal credits.
+
+The trainer's Modal-function timeout has been bumped to 24h, so your single leg can cover ~432 more steps (vs ~144 before). Latest commit on `main`: **`3833416`**.
 
 ---
 
 ## What you'll receive from Nancy
 
-1. **`step_000139.pt`** — checkpoint, ~13.7 GB. Contains: model weights, optimizer state, RNG, dataset cursor.
-2. **`polaris_train.jsonl`** — filtered training data, ~50 MB, **51,139 rows**.
-3. A pointer to the repo + git SHA: **`9b9e104`** (or newer — confirm with Nancy).
+1. **`step_000139.pt`** — checkpoint, ~13.7 GB. Contains model weights, optimizer state, RNG, dataset cursor. **Nancy has already stripped her `wandb_run_id` from it** so your launch starts a fresh wandb run.
+2. **`polaris_train.jsonl`** — filtered Polaris training data, ~29 MB, **51,139 rows**.
 
-> The checkpoint will have its `wandb_run_id` stripped, so your launch starts a fresh wandb run under your account. Step numbers stay continuous (140 onward); plotting can stitch the runs in post.
+That's it. Repo + code are public on GitHub.
 
 ---
 
 ## One-time setup on your machine
 
 ```bash
-# 1. Clone repo + check out the right commit
-git clone <repo URL>
-cd cs224r_finalproject
-git checkout 9b9e104
+# 1. Clone Nancy's repo
+git clone https://github.com/alee51/CS224R_Final_Project.git
+cd CS224R_Final_Project
+# Use the latest main; the timeout=24h + handoff docs commit is 3833416 or newer
+git log --oneline -1   # should show 3833416 or descendant
 
 # 2. Install Python deps (venv at main/.venv)
 python3.11 -m venv main/.venv
 main/.venv/bin/pip install -r main/requirements.txt
-# (Modal will rebuild its own image — local venv is just for the CLI/scripts)
+# Modal rebuilds its own image — local venv is only for the CLI + scripts.
 
 # 3. Modal auth (your account)
 main/.venv/bin/modal token new
 
-# 4. Modal secrets — create these in YOUR Modal workspace
+# 4. Modal secrets in YOUR workspace
 main/.venv/bin/modal secret create HUGGINGFACE HF_TOKEN=hf_xxx       # your HF token
 main/.venv/bin/modal secret create WANDB_API_KEY WANDB_API_KEY=xxx   # your wandb key
 ```
 
-If you don't have a wandb account, make one at https://wandb.ai/. The run will log to project `cs224r-minority-voting` under entity `224r-project` — ask Nancy to add you to the team workspace so the run lands in the right place (otherwise it'll log to your personal workspace, which is fine for a one-shot run).
+If you don't have a wandb account, make one at https://wandb.ai/. The run will log to project `cs224r-minority-voting` under entity `224r-project`. Ask Nancy to add you to the team workspace so the run lands with hers; otherwise it logs to your personal workspace which is fine for a one-shot run.
 
 ---
 
@@ -66,15 +68,7 @@ Edit `main/configs/train_real.yaml`:
 operator: emma           # or anastasia — your name
 ```
 
-Leave everything else alone. The yaml already points at `/vol/data/polaris_train.jsonl` and `/vol/checkpoints/train_real/`, and `resume: auto` will auto-load step 139.
-
-**Recommended one-line bump** in `main/train/trainer.py:974` to reduce the number of relaunches you'll need:
-
-```python
-timeout=60 * 60 * 24,    # was 8
-```
-
-Modal allows up to 24h on GPU functions. With 24h legs at ~200s/step, each leg covers ~432 steps → you'd need only ~2 relaunches total for the remaining ~660 steps.
+Leave everything else alone. The yaml already points at `/vol/data/polaris_train.jsonl` and `/vol/checkpoints/train_real/`, `resume: auto` will auto-load step 139, and the Modal function timeout is already 24h (commit `3833416`). At ~200s/step a single 24h leg covers ~432 steps, so you can finish the remaining ~660 steps in ~2 legs.
 
 ---
 

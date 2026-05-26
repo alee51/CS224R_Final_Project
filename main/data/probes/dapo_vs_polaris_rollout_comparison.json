@@ -1,0 +1,103 @@
+{
+  "dapo_pilot_500": {
+    "unified": {
+      "n_prompts": 500,
+      "n_rollouts": 4000,
+      "rollouts_per_prompt": 8,
+      "pass_at_1_rollout_level": 0.0805,
+      "pass_at_1_n_correct": 322,
+      "pass_at_8_prompt_level_mean": 0.326,
+      "pass_at_8_n_prompts_solved": 163,
+      "parse_ok_rank2_rollout_level": 0.7295,
+      "mixed_reward_prompt_rate": 0.326,
+      "mixed_reward_n_prompts": 163,
+      "all_wrong_prompt_rate": 0.674,
+      "all_wrong_n_prompts": 337,
+      "all_correct_prompt_rate": 0.0,
+      "dist_correct_per_prompt": {
+        "0": 337,
+        "1": 81,
+        "2": 38,
+        "3": 24,
+        "4": 11,
+        "5": 6,
+        "6": 2,
+        "7": 1
+      }
+    },
+    "legacy": {
+      "pass_at_1_stored": 0.081,
+      "pass_at_8_stored_any_correct": 0.326,
+      "pass_at_1_correct_clean": 0.0825,
+      "pass_at_8_correct_clean_any": 0.33
+    },
+    "paths": {
+      "predictions": "/Users/nancybao/Desktop/dev/cs224r_finalproject/pre-milestone/pilot/artifacts/run0_proxy/20260519T190202Z/cleaned/predictions.jsonl"
+    }
+  },
+  "polaris_800": {
+    "unified": {
+      "n_prompts": 800,
+      "n_rollouts": 6400,
+      "rollouts_per_prompt": 8,
+      "pass_at_1_rollout_level": 0.0603125,
+      "pass_at_1_n_correct": 386,
+      "pass_at_8_prompt_level_mean": 0.26625,
+      "pass_at_8_n_prompts_solved": 213,
+      "parse_ok_rank2_rollout_level": 0.848125,
+      "mixed_reward_prompt_rate": 0.265,
+      "mixed_reward_n_prompts": 212,
+      "all_wrong_prompt_rate": 0.73375,
+      "all_wrong_n_prompts": 587,
+      "all_correct_prompt_rate": 0.00125,
+      "dist_correct_per_prompt": {
+        "0": 587,
+        "1": 128,
+        "2": 39,
+        "3": 24,
+        "4": 12,
+        "5": 4,
+        "6": 3,
+        "7": 2,
+        "8": 1
+      }
+    },
+    "paths": {
+      "manifest": "/Users/nancybao/Desktop/dev/cs224r_finalproject/main/data/probes/05-25/group_a_n800/manifest.jsonl",
+      "rollouts": "/Users/nancybao/Desktop/dev/cs224r_finalproject/main/data/probes/05-25/group_a_n800/phase1_rollouts.jsonl"
+    }
+  },
+  "polaris_500_subsample": {
+    "unified": {
+      "n_prompts": 500,
+      "n_rollouts": 4000,
+      "rollouts_per_prompt": 8,
+      "pass_at_1_rollout_level": 0.059,
+      "pass_at_1_n_correct": 236,
+      "pass_at_8_prompt_level_mean": 0.262,
+      "pass_at_8_n_prompts_solved": 131,
+      "parse_ok_rank2_rollout_level": 0.84675,
+      "mixed_reward_prompt_rate": 0.262,
+      "mixed_reward_n_prompts": 131,
+      "all_wrong_prompt_rate": 0.738,
+      "all_wrong_n_prompts": 369,
+      "all_correct_prompt_rate": 0.0,
+      "dist_correct_per_prompt": {
+        "0": 369,
+        "1": 82,
+        "2": 23,
+        "3": 11,
+        "4": 7,
+        "5": 3,
+        "6": 3,
+        "7": 2
+      }
+    },
+    "subsample_seed": 0
+  },
+  "grader": {
+    "prompt_variant": "dapo_answer_v1",
+    "matcher": "normalize_final_answer strict equality",
+    "pass_at_k": "Chen unbiased k=8 n=8"
+  }
+}

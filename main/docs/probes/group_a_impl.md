@@ -31,7 +31,7 @@
 | Live judging at training time | **Out of scope for Group A.** Group A's Phase 2 is a one-shot offline batched pass. The $/call + wall-clock + VRAM numbers feed PLAN §5's decision on live-judging architecture (sidecar GPU vs co-located vs API). Do not attempt to solve live judging here. |
 | Phase 1 / Phase 2 isolation | **Split into two Modal `@app.function`s** chained on the volume — Phase 1 writes `phase1_done.json` + rollouts jsonl, Phase 2 reads them. Fresh container per phase avoids vLLM engine-swap VRAM leaks. Pass `wandb_run_id` from Phase 1 to Phase 2 so both log to the same run. |
 | Rollout `finish_reason` | vLLM returns `RequestOutput.outputs[i].finish_reason` as a string (typically `"stop"` or `"length"`; other values possible by version). **Persist verbatim, do not assert a closed set** in every rollout jsonl line. Used in readout to separate "wrong answer" from "hit `max_response_length`" — critical for the PLAN §5 length-cap decision. |
-| Polaris sampling | Stratified 25 per band for `difficulty ∈ {0/8,…,7/8}`; `global_seed`; drop non-integer gold / empty problem; no oversampling needed (each band has ≥25 clean rows). |
+| Polaris sampling | Stratified 25 per band for `difficulty ∈ {0/8,…,7/8}`; `global_seed`; **probe-only:** drop non-integer gold + empty problem (train freeze keeps full gold — PLAN §2). |
 | Seeds | Deterministic formula per STANDARDS: `global_seed + problem_id * rollouts_per_prompt + rollout_idx`. **Do NOT use Python's built-in `hash()`** (process-salted, breaks reproducibility). |
 | Phase 1 artifact | `manifest.jsonl` then `phase1_rollouts.jsonl` on volume (schemas below) |
 | Packaging | Mirror pilot: `add_local_dir(main → /root/main)`, `sys.path` includes `/root/main`; `modal run` from **repo root** with `--config main/configs/probe_a_05-24.yaml` for smoke and full runs |
@@ -253,7 +253,7 @@ Runs as its own function so the Phase 1 container exits and CUDA state is fresh 
 ```python
 # 25 rows per difficulty in ["0/8", "1/8", ..., "7/8"], seed=global_seed
 # Fields: problem, answer, difficulty
-# Cleaning: drop non-integer gold, empty problem (PLAN §2)
+# Probe cleaning only: drop non-integer gold, empty problem (NOT train freeze — see PLAN §2 / decisions.md)
 # Post-clean: each band has >= 25 eligible rows (verified; no oversample / merge)
 ```
 
