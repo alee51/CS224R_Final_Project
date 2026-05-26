@@ -21,6 +21,10 @@ image = (
             "PYTORCH_CUDA_ALLOC_CONF": "expandable_segments:True",
             "PYTHONUNBUFFERED": "1",
             "PYTHONPATH": "/root/main",
+            # Canonical package root (train/, configs/, probes/) on Modal workers.
+            "CS224R_MAIN_ROOT": "/root/main",
+            # vLLM V1 multiprocessing breaks on Modal ("Cannot re-initialize CUDA in forked subprocess").
+            "VLLM_USE_V1": "0",
         }
     )
     .pip_install(f"vllm=={_VLLM_VERSION}")
@@ -35,7 +39,16 @@ image = (
     .add_local_dir(
         str(_LOCAL_MAIN_DIR),
         remote_path="/root/main",
-        ignore=["docs", "data", "*.md", "__pycache__", ".pytest_cache", ".DS_Store"],
+        # Include data/*.py (dataset loader). Exclude large frozen jsonl only.
+        ignore=[
+            "docs",
+            "data/*.jsonl",
+            "data/**/*.jsonl",
+            "*.md",
+            "__pycache__",
+            ".pytest_cache",
+            ".DS_Store",
+        ],
     )
 )
 

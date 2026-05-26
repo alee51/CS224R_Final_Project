@@ -121,7 +121,7 @@ def _backward_microbatched(
     with _phase_timer("t_backward", instrument, phase_times, vram_peak):
         if n_kept == 0:
             return 0.0
-        total_loss = torch.tensor(0.0, device=device)
+        scaled_chunks: list[torch.Tensor] = []
         for start in range(0, n_kept, microbatch):
             end = min(start + microbatch, n_kept)
             chunk_loss = grpo_loss(
@@ -134,11 +134,11 @@ def _backward_microbatched(
                 clip_high=clip_high,
                 length_norm=length_norm,
             )
-            (chunk_loss / grad_accum).backward()
-            total_loss = total_loss + chunk_loss.detach()
-        loss_val = float(
-            (total_loss / max(1, (n_kept + microbatch - 1) // microbatch)).item()
-        )
+            scaled_chunks.append(chunk_loss / grad_accum)
+        # One backward — per-sequence HF forwards share the model graph.
+        loss_for_backward = torch.stack(scaled_chunks).sum()
+        loss_for_backward.backward()
+        loss_val = float(loss_for_backward.detach().item())
 
     if optimizer_step:
         grad_clip = float(cfg.train.get("grad_clip", 1.0))
@@ -154,27 +154,44 @@ def run_microbatch_forward_backward(
     step_cache: dict[str, Any],
     microbatch: int,
 ) -> tuple[bool, float, float]:
-    """Phase 2 sweep: forward+backward on cached logprob tensors (no optim step)."""
+    """Phase 2 sweep: HF forward + backward on cached rollouts (no optim step).
+
+    `new_logprobs` must be recomputed each attempt — cached logprobs are detached and
+    cannot be backproped through. Recomputing also gives a faithful peak-VRAM reading
+    (forward activations dominate, not backward alone).
+    """
     device = next(hf_model.parameters()).device
-    tensors = {
-        k: v.to(device) if isinstance(v, torch.Tensor) else v
-        for k, v in step_cache["tensors"].items()
-    }
+    rollouts = step_cache["rollouts"]
+    adv_list = step_cache["advantages"]
     opt = torch.optim.AdamW(hf_model.parameters(), lr=1e-6)
     hf_model.train()
     if torch.cuda.is_available():
         torch.cuda.reset_peak_memory_stats()
     t0 = time.monotonic()
     try:
+        new_lps_list = [
+            _completion_logprobs_hf(
+                hf_model, r["prompt_ids"], r["completion_ids"], device
+            )
+            for r in rollouts
+        ]
+        old_lps_list = [r["old_logprobs"] for r in rollouts]
+        new_t, mask = _pad_sequences(new_lps_list)
+        old_t, _ = _pad_sequences(old_lps_list)
+        adv_t = torch.tensor(adv_list, dtype=torch.float32, device=device)
+        keep_t = torch.ones(len(rollouts), dtype=torch.bool, device=device)
+        new_t = new_t.to(device)
+        old_t = old_t.to(device)
+        mask = mask.to(device)
         _backward_microbatched(
             cfg,
             hf_model,
             opt,
-            tensors["new_logprobs"],
-            tensors["old_logprobs"],
-            tensors["mask"],
-            tensors["advantages"],
-            tensors["keep_mask"],
+            new_t,
+            old_t,
+            mask,
+            adv_t,
+            keep_t,
             microbatch,
             optimizer_step=False,
             instrument=False,
@@ -254,10 +271,19 @@ def _phase_timer(
 
 
 def _pad_sequences(
-    seqs: list[list[float]], pad: float = 0.0
+    seqs: list[list[float] | torch.Tensor], pad: float = 0.0
 ) -> tuple[torch.Tensor, torch.Tensor]:
     if not seqs:
         raise ValueError("empty sequence list")
+    if isinstance(seqs[0], torch.Tensor):
+        from torch.nn.utils.rnn import pad_sequence
+
+        rows = [s.float() for s in seqs]
+        out = pad_sequence(rows, batch_first=True, padding_value=pad)
+        mask = torch.zeros_like(out)
+        for i, s in enumerate(seqs):
+            mask[i, : len(s)] = 1.0
+        return out, mask
     t_max = max(len(s) for s in seqs)
     b = len(seqs)
     out = torch.full((b, t_max), pad, dtype=torch.float32)
@@ -273,24 +299,22 @@ def _completion_logprobs_hf(
     prompt_ids: list[int],
     completion_ids: list[int],
     device: torch.device,
-) -> list[float]:
-    """Teacher-forcing logprobs on completion tokens only."""
+) -> torch.Tensor:
+    """Teacher-forcing logprobs on completion tokens; differentiable w.r.t. model."""
     if not completion_ids:
-        return []
+        return torch.zeros(0, device=device, dtype=torch.float32)
     input_ids = torch.tensor(
         [prompt_ids + completion_ids], dtype=torch.long, device=device
     )
     attn = torch.ones_like(input_ids)
-    with torch.set_grad_enabled(True):
-        out = model(input_ids=input_ids, attention_mask=attn)
+    out = model(input_ids=input_ids, attention_mask=attn)
     logits = out.logits[0]
     log_probs = torch.log_softmax(logits, dim=-1)
     start = len(prompt_ids) - 1
-    lps: list[float] = []
-    for j, tid in enumerate(completion_ids):
-        pos = start + j
-        lps.append(float(log_probs[pos, tid].detach().cpu()))
-    return lps
+    token_lps = [
+        log_probs[start + j, tid] for j, tid in enumerate(completion_ids)
+    ]
+    return torch.stack(token_lps)
 
 
 def build_hf(cfg: TrainCfg) -> tuple[Any, torch.optim.Optimizer]:
@@ -340,19 +364,10 @@ def run_one_grpo_step(
     device = next(hf_model.parameters()).device
 
     if step_cache is not None:
-        tensors = {
-            k: v.to(device) if isinstance(v, torch.Tensor) else v
-            for k, v in step_cache["tensors"].items()
-        }
-        new_t = tensors["new_logprobs"]
-        old_t = tensors["old_logprobs"]
-        mask = tensors["mask"]
-        adv_t = tensors["advantages"]
-        keep_t = tensors["keep_mask"]
-        n_kept = int(tensors.get("n_kept", new_t.shape[0]))
-        rewards_t = None
-        adv_out = None
-        rollout_tokens = 0
+        raise NotImplementedError(
+            "run_one_grpo_step does not consume step_cache; phase 2 uses "
+            "run_microbatch_forward_backward to recompute new_logprobs under grad."
+        )
     else:
         formatted = [
             format_problem(p, variant=prompt_variant) for p in batch.prompts
@@ -403,6 +418,13 @@ def run_one_grpo_step(
                 flat_idx = p_idx * n_rollouts + r_idx
                 kept_rollouts.append(rollouts[flat_idx])
                 kept_adv.append(float(adv_out.advantages[p_idx, r_idx].item()))
+
+        if not kept_rollouts:
+            raise RuntimeError(
+                "All GRPO groups had zero advantage (every prompt's rollouts agreed). "
+                "Raise batch_size / smoke_prompts so some groups have mixed rewards "
+                f"(this batch: {len(batch.prompts)} prompts x {n_rollouts} rollouts)."
+            )
 
         new_lps_list: list[list[float]] = []
         with _phase_timer("t_logprob_fwd", instrument, phase_times, vram_peak):
@@ -479,14 +501,16 @@ def run_one_grpo_step(
     cache_out = None
     if step_cache is None and n_kept > 0:
         cache_out = {
-            "tensors": {
-                "new_logprobs": new_t.detach().cpu(),
-                "old_logprobs": old_t.detach().cpu(),
-                "mask": mask.detach().cpu(),
-                "advantages": adv_t.detach().cpu(),
-                "keep_mask": keep_t.detach().cpu(),
-                "n_kept": n_kept,
-            }
+            "rollouts": [
+                {
+                    "prompt_ids": rr.prompt_ids,
+                    "completion_ids": rr.completion_ids,
+                    "old_logprobs": rr.old_logprobs,
+                }
+                for rr in kept_rollouts
+            ],
+            "advantages": list(kept_adv),
+            "n_kept": n_kept,
         }
 
     mean_reward = float(rewards_t.mean().item()) if rewards_t is not None else 0.0

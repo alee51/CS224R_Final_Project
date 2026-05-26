@@ -173,7 +173,7 @@ Aggressive optimization here is the only place we can buy back wall-clock before
 - **Reuse vLLM rollout logprobs as `old_logprobs`.** Skip the separate HF forward over rollouts. ~25–30% step time saved. `rollout.py` requests and returns logprobs; `loss.py` consumes them directly.
 - **Inner PPO epochs = 1.** REINFORCE-with-clip semantics. ~3× cheaper on the update phase vs textbook 4 inner epochs. Matches DAPO / Dr.GRPO / Poly-EPO's stack. Affects `trainer.py` loop shape.
 - **Filter zero-advantage prompts before backward.** When all N rollouts get the same reward (GRPO) or all 70 sets get the same f (set-RL arms), the advantage is zero and the prompt contributes nothing to the gradient. Skip it. Particularly relevant for minority-answer: collapsed prompts (all 8 rollouts agree on one answer) produce no signal by construction. `objective.py` returns a mask; `loss.py` honors it.
-- **Judge as a sidecar vLLM engine** (Minority-CoT, Poly-EPO CoT variant). Run Qwen-3-4B-Instruct via vLLM locally — same machine if VRAM allows, second GPU otherwise. `judge/client.py` is a thin wrapper that's swappable to API if probes show local hosting is infeasible. **This is the most uncertain cost on the project; needs an explicit §7 probe before we commit to running the CoT arms.**
+- **Judge as a sidecar vLLM engine** (Minority-CoT, Poly-EPO CoT variant). Run Qwen-3-4B-Instruct via vLLM locally — same machine if VRAM allows, second GPU otherwise. `judge/client.py` is a thin wrapper that's swappable to API if probes show local hosting is infeasible. **Group A n800:** judge ≈ rollout wall-clock and ~$0.0014/call on H100 — CoT arms are ~2× inference GPU vs rollout-only arms, not blocked on $/latency; collocated train+policy+judge still unmeasured.
 - **vLLM prefix caching ON.** Shared system-prompt prefix is reused across all N rollouts per problem. Free.
 - **wandb logging** from `trainer.py`; project `cs224r-minority-voting`. Log step time, mean reward, loss, and advantage stats each training step.
 - **Async rollout / train overlap** — stretch. vLLM rolls out batch t+1 while HF does backward on batch t. Up to ~30% wall-clock saved. Defer unless §7 step-probe shows it's the binding constraint; the code complexity isn't worth it otherwise.
@@ -197,13 +197,24 @@ Aggressive optimization here is the only place we can buy back wall-clock before
 
 We're not importing VeRL — these are read-and-lift references.
 
+### Prompt + parser (locked 2026-05-25)
+
+Resolved by Group A offline analysis, prompt A/B/C probe, and Rank-2 implementation — see [`probes/group_a_results.md`](./probes/group_a_results.md) addendum and [`timeline.md`](./timeline.md).
+
+| Knob | Lock | Fallback |
+| --- | --- | --- |
+| **Train prompt** | **`hybrid_answer_boxed`** (arm C) — `Answer: \boxed{N}` hybrid; no validated upstream recipe | `dapo_answer_v1`, `verl_math_boxed` in `main/train/prompts.py` |
+| **Parser** | **Rank-2** — hybrid regex (arm C) → last `\boxed{}` → Minerva `Answer:` line; `extract_path` logged | Revert variant in yaml if train diverges |
+| **`max_response_length`** | **4096** (Group A: 1.25% cap hits at 4096) | 3072 possible later (~2.3% truncated) |
+
+**Monitor in training:** `extract_path` distribution; if `none` rate climbs above ~20% mid-run, revisit prompt. OOD eval stays Math-Verify (format-agnostic).
+
 ### Open
 
-- Exact vLLM version + `update_weights` API signature (changes between releases — pin a version).
-- Judge hosting: same GPU as policy vs second GPU vs API. Decided by §7 VRAM + cost probe.
-- Answer-extraction prompt template + parser — borrow from VeRL's data preprocess example.
-- Config schema (flat yaml fields).
-- Whether async rollout/train overlap is worth the code complexity (defer to step-time probe).
+- Exact vLLM version + `update_weights` API signature — **pinned 0.8.5** in image; spike in `test_weight_sync.py`.
+- Judge hosting: same GPU vs second GPU vs API — Group A answered $/latency; **collocated** three-way VRAM still open.
+- Config schema — flat yaml in use (`train_grpo_05-25.yaml`); refine as arms land.
+- Whether async rollout/train overlap is worth the code complexity — **Group B** phase-% decides.
 - Whether to re-introduce `kl_coef` if we see mode collapse / reward hacking under KL=0.
 
 ## 6. Operations
@@ -305,9 +316,23 @@ Where every knob that affects cost or step time gets enumerated. **Not comprehen
 - $/full eval matrix
 - total $/matrix incl. buffer
 
+### Probe status (2026-05-25)
+
+| Probe | Status |
+| --- | --- |
+| Group A (rollout + judge) | **Done** — H100; ~4.5k tok/s policy; judge ≈ rollout time; see `group_a_results.md` |
+| Prompt A/B/C | **Done** — arm **C** locked for train |
+| Group B (collocated GRPO step) | **In flight** — microbatch, util, $/step, async |
+| GPU SKU (H100 vs H200) | **Not run** — optional 1-hr re-run of Group B toy slice; not blocking |
+
+### Reward density / batch utilization (flag)
+
+Group A n800 (arm A): **73.4%** of prompts all-wrong (0/8 rollouts correct) → under zero-advantage filtering only **~27%** of prompts contribute gradient per step. Hybrid arm C: **~65.9%** all-wrong (~30% more contributing prompts). **Consider for v1 train:** DAPO-style dynamic sampling (oversample prompts with mixed rewards) or curriculum — not implemented yet; log `fraction_filtered` / `n_kept` each step (Group B + Group C instrumentation).
+
 ### Open
 
-- Whether single A100-80GB is the right baseline GPU class or whether H100 / smaller-quant pays off. NOTE: we may NEED to use a more powerful GPU, even if it's slightly less cost efficient. A100 gives us 640 GPU hours, which is 26 days... even if we are training for 4 different arms, that's still 6 days of computing allowed per arm, which is way too much, given that we want results in 7 days and we don't even have a codebase yet. 
+- Whether **H100** stays default after Group B readout, or a one-off **H200** replay of the Group B slice is worth wall-clock savings.
 - Whether to chase the stretch +$400 credits proactively or only if probes say we need them.
 - Whether some arms (e.g. Poly-EPO-answer stretch) get a smaller training horizon / fewer prompts than the headline arms for cost parity.
+- §2 Polaris freeze (size, bands, drop-easy) — still blocks final train matrix.
 

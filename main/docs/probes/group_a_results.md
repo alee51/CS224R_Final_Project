@@ -29,7 +29,7 @@ Soft expectations were not hard gates: ~90% `parse_ok`, monotone pass rate vs di
 | Open question (from probe plan) | Answered? | Result | Implication |
 |---|---|---|---|
 | **`max_response_length` cap** (PLAN §5 / §7) | **Yes** | p50=565, p90=1319, p95=1974, **p99=4096**; 20/1600 (1.25%) hit length cap at 4096; ≥3072 = 2.3% | Most completions are well under 4096. **4096 is safe**; lowering to **3072** would truncate ~2% of rollouts — possible savings knob, not urgent. |
-| **Reward parser sanity** (`parse_ok` rate) | **Yes — failed soft gate** | **55.9%** parse_ok (has_answer_line 56.4%, has_boxed 34.6%) | Far below ~90% target. **Escalate to Rank 2 parser** per probe plan before trusting reward signal. Do not lock `reward.py` as-is. |
+| **Reward parser sanity** (`parse_ok` rate) | **Yes (200-run); superseded** | **55.9%** Minerva-only on 200-run (`has_answer_line` 56.4%, `has_boxed` 34.6%) | Failed soft gate on Rank-1. **Resolved 2026-05-25:** Rank-2 parser + hybrid prompt (arm C). See addendum below — do not use 56% as train-time expectation. |
 | **Pass rate by difficulty band** (PLAN §2) | **Partially** | Overall pass **2.9%**; per band 1.5–4.5%. **Not monotone** (e.g. 7/8 = 4.0% > 6/8 = 1.5%) | Base model is very weak everywhere; bands are noisy at this sample size. Can't cleanly decide "drop 8/8-easy problems" yet — need post-parser re-run or larger N. |
 | **Mixed-reward rate by band** (PLAN §2 / §7 reward density) | **Yes** | **30/200 prompts (15%)** have mixed correct/incorrect rollouts; per band 8–24% | Minority-answer signal exists on ~15% of prompts — thin but non-zero. GRPO also gets signal wherever any rollout passes (~similar density). |
 | **vLLM tokens/sec on H100** (PLAN §7 step time) | **Yes** | **~4,198 tok/s mean** (Phase 1 wall clock 271s for 1600 rollouts); last batch logged ~2,632 tok/s | H100 throughput is solid for 1.7B policy rollouts. Use for §7 step-time estimates; Group B still needed for full step decomposition. |
@@ -135,17 +135,50 @@ Phase 2 starts at `n_rollouts + 1000` (= 7400) so judge scalars do not collide w
 
 ---
 
-## What we still can't decide from this run alone
+## Addendum (2026-05-25): n800, Rank-2, prompt A/B/C, arm C locked
 
-1. **Parser** — 56% `parse_ok` is the biggest blocker; re-probe or implement Rank 2 before locking reward.
-2. **§2 sampling** — band-level pass rates too noisy/low to finalize train subset.
-3. **Judge VRAM (200-run)** — logged 0 on `t33091vc` (logging bug). **n800 (`mu8kj4ll`) reports ~70 GB** with the fix.
-4. **§7 full step cost** — rollout + judge slices are in **n800 timing** above; Group B still required for backward, `update_weights`, collocated VRAM, and $/step.
+**Context:** 200-run readout above used DAPO arm A + Minerva-only `parse_ok`. Same day: offline Rank-2 rescore on saved completions, 800-prompt rerun (arm A), and parallel Modal rollouts for arms B/C (`probes/05-25/prompt_b/`, `prompt_c/`). Full design: [`prompt_probe.md`](./prompt_probe.md); narrative: [`../timeline.md`](../timeline.md).
+
+### Rank-2 on arm A (offline rescore, n=6400)
+
+| Metric | n=200 | n=800 | Notes |
+| --- | --- | --- | --- |
+| `parse_ok_rank2` | 83.8% | **84.8%** | Boxed-first ∪ Minerva (`main/train/reward.py` `extract_rank2`) |
+| `parse_ok_minerva` | 55.9% | 60.3% | Old Group A headline metric |
+| `mixed_reward` (rank2) | 15.0% | **26.5%** | GRPO signal density under rank2 reward |
+
+**Read:** Low Minerva `parse_ok` was **format compliance**, not a broken parser. Rank-2 is locked for training.
+
+### Prompt A/B/C (offline rank2 on each arm’s rollouts, n=6400 each)
+
+| Metric | A (DAPO) | B (VeRL MATH) | C (Hybrid) |
+| --- | --- | --- | --- |
+| `has_answer_line` | 60.7% | 2.2% | 42.9% |
+| `has_boxed` | 33.7% | 89.3% | **90.2%** |
+| **`parse_ok_rank2`** | 84.8% | 79.0% | **87.6%** |
+| pass_rate | 6.0% | 8.6% | 8.3% |
+| **`mixed_reward`** | 26.5% | 30.9% | **33.9%** |
+| residual (`extract_path: none`) | 15.2% | 21.0% | **12.4%** |
+
+**Decision:** Lock **`hybrid_answer_boxed` (arm C)** for training and Group B. Config key `prompt_variant` in `main/train/prompts.py`. Fallbacks if convergence issues: `dapo_answer_v1`, `verl_math_boxed`.
+
+**PLAN §7 signal density (arm A n800):** **73.4%** of prompts are all-wrong (0/8 correct) → only ~27% of batch contributes under GRPO zero-advantage filter. Arm C lowers all-wrong to **~65.9%** (~30% more effective prompts). Flag: DAPO-style dynamic sampling or curriculum (see PLAN §7).
+
+**Conservative §5 rule in `prompt_probe.md` would default to A** (C did not hit +5pp parse_rank2 threshold); team adopted C on RL-relevant metrics anyway.
+
+---
+
+## What we still can't decide from Group A alone
+
+1. **§2 sampling** — band-level pass rates still noisy/low to finalize train subset size and “drop 8/8-easy” filter.
+2. **§7 full collocated step cost** — rollout + judge slices are in n800 timing above; **Group B** (in flight) gates backward, `update_weights`, microbatch, collocated VRAM, $/step.
+3. **GPU SKU** — H100 only here; H100 vs H200 $/step not compared (optional thin re-run, not blocking).
 
 ---
 
 ## Recommended next moves
 
-1. **Fix parser** (Rank 2 multi-path or investigate why DAPO `Answer:` + Minerva only gets 56% — many completions may lack a parseable `Answer:` line).
-2. **Update PLAN.md** §2 / §5 / §7 with the numbers above (especially length cap = keep 4096, parser escalation, H100 throughput, judge ~$0.0014/call).
-3. **Optional short re-run** only if you need judge VRAM + git SHA on a clean wandb run; Phase 1 numbers are already complete on `t33091vc`.
+1. ~~**Fix parser** — Rank-2 shipped; hybrid prompt locked.~~
+2. ~~**Update PLAN.md** with length cap, H100 rollout/judge $, parser/prompt lock~~ — see PLAN §5/§7 updates (2026-05-25).
+3. **Group B readout** → lock microbatch, collocated `gpu_memory_utilization`, step time, async go/no-go.
+4. **§2 freeze** — materialize `polaris_train.jsonl` once band/size decision is made.

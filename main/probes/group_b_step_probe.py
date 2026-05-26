@@ -24,9 +24,22 @@ import modal
 import torch
 import yaml
 
-_MAIN_ROOT = Path(__file__).resolve().parents[1]
+def package_root() -> Path:
+    """Directory containing train/, configs/, probes/ — from env or local layout."""
+    if env := os.environ.get("CS224R_MAIN_ROOT"):
+        return Path(env)
+    probe = Path(__file__).resolve()
+    for candidate in (probe.parents[1], probe.parents[2] / "main"):
+        if (candidate / "train").is_dir() and (candidate / "configs").is_dir():
+            return candidate
+    return probe.parents[1]
+
+
+_MAIN_ROOT = package_root()
 if str(_MAIN_ROOT) not in sys.path:
     sys.path.insert(0, str(_MAIN_ROOT))
+
+_RUNTIME_CFG_NAME = ".probe_b_runtime.yaml"
 
 from infra.modal_image import image
 from infra.modal_volume import (
@@ -55,33 +68,65 @@ artifacts_volume = modal.Volume.from_name(ARTIFACTS_VOLUME_NAME, create_if_missi
 hf_cache_volume = modal.Volume.from_name(HF_CACHE_VOLUME_NAME, create_if_missing=True)
 
 
+def _resolve_config_path(config_path: str) -> Path:
+    """Resolve yaml path under package root (same contract as Group A `main/configs/...`)."""
+    raw = Path(config_path)
+    if raw.is_absolute():
+        if not raw.is_file():
+            raise FileNotFoundError(config_path)
+        return raw
+    # `main/configs/foo.yaml` from repo root → `{CS224R_MAIN_ROOT}/configs/foo.yaml`
+    rel = Path(*raw.parts[1:]) if raw.parts[:1] == ("main",) else raw
+    under_root = _MAIN_ROOT / rel
+    if under_root.is_file():
+        return under_root
+    if raw.is_file():
+        return raw.resolve()
+    raise FileNotFoundError(
+        f"Config not found: {config_path} (expected under {_MAIN_ROOT})"
+    )
+
+
+def _deep_merge(base_d: dict, override: dict) -> dict:
+    out = dict(base_d)
+    for key, val in override.items():
+        if key in out and isinstance(out[key], dict) and isinstance(val, dict):
+            out[key] = _deep_merge(out[key], val)
+        else:
+            out[key] = val
+    return out
+
+
 def load_merged_config(config_path: str) -> dict[str, Any]:
-    path = Path(config_path)
-    if not path.is_absolute():
-        path = _MAIN_ROOT / path
+    """Merge `extends` chain locally (launcher only)."""
+    path = _resolve_config_path(config_path)
     with path.open() as f:
         cfg = yaml.safe_load(f) or {}
     extends = cfg.pop("extends", None)
     if extends:
-        base_path = Path(extends)
-        if not base_path.is_absolute():
-            base_path = _MAIN_ROOT / base_path
-        base = load_merged_config(str(base_path))
+        base = load_merged_config(str(extends))
+        cfg = _deep_merge(base, cfg)
+    return cfg
 
-        def deep_merge(base_d: dict, override: dict) -> dict:
-            out = dict(base_d)
-            for key, val in override.items():
-                if (
-                    key in out
-                    and isinstance(out[key], dict)
-                    and isinstance(val, dict)
-                ):
-                    out[key] = deep_merge(out[key], val)
-                else:
-                    out[key] = val
-            return out
 
-        cfg = deep_merge(base, cfg)
+def write_merged_runtime_config(config_path: str) -> str:
+    """Merge yaml locally; return path for Modal (`main/configs/.probe_b_runtime.yaml`)."""
+    cfg = load_merged_config(config_path)
+    out = _MAIN_ROOT / "configs" / _RUNTIME_CFG_NAME
+    with out.open("w") as f:
+        yaml.safe_dump(cfg, f, sort_keys=False)
+    return f"main/configs/{_RUNTIME_CFG_NAME}"
+
+
+def load_probe_config(config_path: str) -> dict[str, Any]:
+    """Load flat yaml on Modal — no `extends` (merged by launch script)."""
+    path = _resolve_config_path(config_path)
+    with path.open() as f:
+        cfg = yaml.safe_load(f) or {}
+    if cfg.get("extends"):
+        raise ValueError(
+            "Remote probe expects a merged config; launcher must call write_merged_runtime_config"
+        )
     return cfg
 
 
@@ -318,7 +363,7 @@ _MODAL_FN_KWARGS = dict(
 
 @app.function(**_MODAL_FN_KWARGS)
 def run_phase1(config: str) -> str:
-    cfg_raw = load_merged_config(config)
+    cfg_raw = load_probe_config(config)
     train_cfg = _probe_train_cfg(cfg_raw)
     repro = _git_metadata()
     vol_root = Path(ARTIFACTS_MOUNT)
@@ -390,7 +435,7 @@ def run_phase1(config: str) -> str:
 
 @app.function(**_MODAL_FN_KWARGS)
 def run_phase2(config: str, wandb_run_id: str | None = None) -> int:
-    cfg_raw = load_merged_config(config)
+    cfg_raw = load_probe_config(config)
     train_cfg = _probe_train_cfg(cfg_raw)
     vol_root = Path(ARTIFACTS_MOUNT)
     paths = _artifact_paths(cfg_raw, vol_root)
@@ -490,7 +535,7 @@ def run_phase2(config: str, wandb_run_id: str | None = None) -> int:
 
 @app.function(**_MODAL_FN_KWARGS)
 def run_phase1b(config: str, wandb_run_id: str | None = None) -> str:
-    cfg_raw = load_merged_config(config)
+    cfg_raw = load_probe_config(config)
     train_cfg = _probe_train_cfg(cfg_raw)
     vol_root = Path(ARTIFACTS_MOUNT)
     paths = _artifact_paths(cfg_raw, vol_root)
@@ -548,7 +593,8 @@ def run_phase1b(config: str, wandb_run_id: str | None = None) -> str:
 
 
 @app.function(image=image, timeout=3600)
-def run_full(config: str) -> str:
+def run_pipeline(config: str) -> str:
+    """Orchestrate Phase 1 → Phase 2 → Phase 1b (Modal-side chaining)."""
     wandb_run_id = run_phase1.remote(config=config)
     max_mb = run_phase2.remote(config=config, wandb_run_id=wandb_run_id)
     if max_mb < 1:
@@ -558,6 +604,13 @@ def run_full(config: str) -> str:
 
 
 @app.local_entrypoint()
-def main(config: str) -> None:
-    call = run_full.spawn(config=config)
+def run_full(config: str) -> None:
+    """Detached launch (matches Group A `run_full`)."""
+    call = run_pipeline.spawn(config=config)
     print(f"Spawned Group B pipeline: {call.object_id}")
+
+
+@app.local_entrypoint()
+def run_full_sync(config: str) -> str:
+    """Foreground launch — blocks until pipeline finishes (smoke debugging)."""
+    return run_pipeline.remote(config=config)

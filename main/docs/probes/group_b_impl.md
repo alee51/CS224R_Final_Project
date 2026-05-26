@@ -1,6 +1,6 @@
 # Group B probe — implementation guide
 
-**Drafted:** 2026-05-25. **Updated:** 2026-05-25 (n800 cohort, arm A, headroom logging, phase contract). **Strategic plan:** [`05-24_probe_plan.md`](./05-24_probe_plan.md) § "Group B". **Prerequisite:** trainer skeleton ([`../trainer_skeleton.md`](../trainer_skeleton.md)) built; `run_one_grpo_step()` works locally on a toy batch.
+**Drafted:** 2026-05-25. **Updated:** 2026-05-25 (hybrid arm C, implementation shipped, full H100 run in flight). **Strategic plan:** [`05-24_probe_plan.md`](./05-24_probe_plan.md) § "Group B". **Prerequisite:** satisfied — trainer skeleton + `run_one_grpo_step(..., instrument=True)` in `main/train/trainer.py`; probe in `main/probes/group_b_step_probe.py`.
 
 **Purpose:** thin scaffolding on the trainer: timing, VRAM headroom, microbatch OOM ladder, wandb readout. Architecture lives in `trainer_skeleton.md`; this doc is probe-specific only.
 
@@ -30,6 +30,8 @@ From [`05-24_probe_plan.md`](./05-24_probe_plan.md) § Group B / B1:
 | VRAM headroom @ 0.45 | §5 collocated vLLM util (manual bump/down after probe, not swept here) |
 | $/step | §7 cost-per-arm |
 
+**Out of scope for Group B:** cross-GPU $/throughput (H100 vs H200 vs B200). Group A + prompt probe measured rollout/judge on **H100 only**. This probe gives **collocated GRPO $/step on H100**; a separate thin re-run (same yaml, change `gpu` + `modal_price_per_sec`) is the right place to compare SKUs — not a new architecture agent.
+
 ---
 
 ## 2. Locked choices
@@ -39,7 +41,7 @@ From [`05-24_probe_plan.md`](./05-24_probe_plan.md) § Group B / B1:
 | GPU | H100 (`modal_price_per_sec: 0.001097`) | Collocated train + policy vLLM |
 | Training arm | GRPO only | Set-based arms out of scope |
 | Model | `Qwen/Qwen3-1.7B-Base` | Per trainer skeleton |
-| **Prompt + reward** | **`dapo_answer_v1`** (prompt probe arm A) | `format_problem` + `compute_reward()` as in `train/prompts.py` / `train/reward.py`. **Built assuming arm A;** may re-run probe after prompt probe picks B/C if lengths/filter rates shift materially. |
+| **Prompt + reward** | **`hybrid_answer_boxed`** (prompt probe arm C) | Verbatim in `train/prompts.py` `HYBRID_ANSWER_BOXED_TEMPLATE`. Locked 2026-05-25 per team decision; Group B full run uses this variant. |
 | Toy batch | **32 prompts × 8 rollouts = 256 completions** | Systems slice only — **not** representative of final §2 train mix |
 | Toy data | `probes/05-25/group_a_n800/manifest.jsonl`, **`problem_id` 0–31** | Reuse n800 cohort (prompt probe). Not §2 freeze. Band-skewed (≈25× `0/8` + 7× `1/8`). |
 | Seeds | `global_seed + problem_id * n_rollouts + rollout_idx` | STANDARDS / Group A; **use manifest `problem_id`**, not batch index. Step = 0. |
@@ -55,17 +57,18 @@ From [`05-24_probe_plan.md`](./05-24_probe_plan.md) § Group B / B1:
 
 | Item | Status | Effect on probe |
 |---|---|---|
-| Reward parser (Rank 2) | Pending | Still call `compute_reward()`; log `parse_ok_rate` sentinel vs **n800 + arm A**, not old 200-run 56% |
+| Reward parser (Rank 2) | **Resolved** (2026-05-25) | `compute_reward()` / `extract_rank2()`; log `parse_ok_rate` sentinel vs **n800 hybrid (arm C) ~87.6% rank2**, not 200-run 56% Minerva |
 | `max_response_length` | 4096 safe (Group A) | Use **4096** for probe |
 | §2 training freeze | Undecided | Probe does **not** use `polaris_train.jsonl` |
-| Prompt probe winner | A assumed | Re-smoke Group B if B/C wins and changes lengths a lot |
+| Prompt variant | **Locked: `hybrid_answer_boxed`** (arm C) | Group B smoke + full use this variant |
 | Judge | Out of scope | No judge GPU in this probe |
+| GPU SKU (H100 vs H200 vs B200) | **Not in this probe** | H100 only; see §1 note — optional follow-up re-run of same toy slice on other SKUs |
 
 ---
 
-## 4. Trainer contract (required before probe)
+## 4. Trainer contract (implemented)
 
-§4 “no new trainer **architecture**” — one small export is required:
+§4 “no new trainer **architecture**” — export in `main/train/trainer.py`:
 
 ```python
 # train/trainer.py
@@ -78,19 +81,15 @@ def run_one_grpo_step(cfg, rollout_engine, hf_model, opt, batch, *, instrument=F
 
 ---
 
-## 5. Files to create
+## 5. Files (shipped)
 
-```
-main/
-  probes/
-    group_b_step_probe.py
-  configs/
-    probe_step_b_05-25.yaml      # extends train_grpo_05-25.yaml — avoid probe_b_* (prompt probe uses that prefix)
-  scripts/
-    launch_probe_step_b.sh
-main/docs/probes/artifacts/
-  .gitkeep
-```
+| Path | Role |
+|---|---|
+| `main/probes/group_b_step_probe.py` | Modal app: `run_phase1` → `run_phase2` → `run_phase1b`, `run_full` |
+| `main/configs/probe_step_b_05-25.yaml` | Full run (`smoke: false`) |
+| `main/configs/probe_step_b_05-25_smoke.yaml` | Smoke (`extends` full config, `smoke: true`) |
+| `main/scripts/launch_probe_step_b.sh` | Detached launch + `CS224R_APP_NAME` tagging |
+| `main/docs/probes/artifacts/.gitkeep` | Pointer written post-run to `05-25_group_b.pointer.json` |
 
 ---
 
@@ -98,7 +97,7 @@ main/docs/probes/artifacts/
 
 Mirror `group_a_rollout_judge.py`: `from infra.modal_image import image`, `CS224R_APP_NAME`, secrets `HUGGINGFACE` + `WANDB_API_KEY`, volumes `main-artifacts` → `/vol`, **`hf-cache`** → `/root/.cache/huggingface`, `gpu="H100"`, `timeout` ≤ 3600.
 
-**Wandb:** entity `224r-project`, project `cs224r-minority-voting`, group **`probe-B-05-25`**, run name `probe-B_{operator}_{MM-DD-HHMM}`, tags: `phase=probe`, `operator`, `gpu_class`, `arm=grpo`, `git_sha_short`, `prompt_variant=dapo_answer_v1`.
+**Wandb:** entity `224r-project`, project `cs224r-minority-voting`, group **`probe-B-05-25`**, run name `probe-B_{operator}_{MM-DD-HHMM}`, tags: `phase=probe`, `operator`, `gpu_class`, `arm=grpo`, `git_sha_short`, `prompt_variant=hybrid_answer_boxed`.
 
 **Pipeline:** `run_full` → `run_phase1.remote` → `run_phase2.remote` → `run_phase1b.remote` (same wandb run throughout).
 
@@ -106,7 +105,7 @@ Mirror `group_a_rollout_judge.py`: `from infra.modal_image import image`, `CS224
 
 1. Load yaml (merged with base trainer config).
 2. Init wandb; log config, git SHA/dirty, dep versions, `prompt_variant`, `gpu_memory_utilization`.
-3. Load manifest rows `problem_id` 0..31; build prompts via `format_problem` (arm A).
+3. Load manifest rows `problem_id` 0..31; build prompts via `format_problem(..., variant=hybrid_answer_boxed)` from config.
 4. Build collocated `RolloutEngine` + HF model.
 5. **Warmup** (untimed): `run_one_grpo_step(..., instrument=False)` at `microbatch=1`.
 6. **Timed step** @ `train.starting_microbatch` (yaml, default 1): `run_one_grpo_step(..., instrument=True)`.
@@ -128,8 +127,8 @@ Mirror `group_a_rollout_judge.py`: `from infra.modal_image import image`, `CS224
 
 ### Phase 1b — timed step @ `max_microbatch_ok` (fresh container ok; **same wandb run**)
 
-1. Resume wandb; reload engines; load **`train_step_cache.pt`** OR re-run one untimed rollout+score+advantage then timed step only at `max_microbatch_ok` (prefer **regenerate** if cache invalidates after Phase 2 experiments — document which path implementer chose).
-2. **Timed** `run_one_grpo_step` at `max_microbatch_ok` with full instrumentation.
+1. Resume wandb; reload engines (fresh container).
+2. **Timed** full `run_one_grpo_step` at `max_microbatch_ok` with full instrumentation — **regenerates rollouts** (production-shaped timings at max microbatch; Phase 2 sweep only touched cached tensors).
 3. Update `phase1_done.json` with `phase1b_times_s`, `vram_peak_gb_at_max_mb`; final `volume.commit()`.
 
 ### Smoke mode
@@ -175,7 +174,7 @@ Log every phase and derived scalars (wandb):
 ```json
 {
   "wandb_run_id": "...",
-  "prompt_variant": "dapo_answer_v1",
+  "prompt_variant": "hybrid_answer_boxed",
   "phase_times_s": {},
   "phase1b_times_s": {},
   "vram_peak_gb": 0.0,
@@ -207,7 +206,7 @@ global_seed: 42
 operator: nancy
 gpu_class: H100
 modal_price_per_sec: 0.001097
-prompt_variant: dapo_answer_v1
+prompt_variant: hybrid_answer_boxed
 
 smoke: false
 smoke_prompts: 4
@@ -256,11 +255,11 @@ Same as `launch_probe_a.sh`: read `smoke` from yaml → phase `smoke`|`full`; se
 
 ## 12. Build order
 
-- [ ] Trainer skeleton + `run_one_grpo_step(..., instrument=True)`
-- [ ] `group_b_step_probe.py` Phase 1 → smoke
-- [ ] Phase 2 sweep + Phase 1b → smoke
-- [ ] Full H100 detached run
-- [ ] Readout → PLAN §5 / §7
+- [x] Trainer skeleton + `run_one_grpo_step(..., instrument=True)`
+- [x] `group_b_step_probe.py` Phase 1 → smoke
+- [x] Phase 2 sweep + Phase 1b → smoke
+- [ ] Full H100 detached run (launched 2026-05-25; Modal app `ap-CDWaOaDdYVLSNyRsqxjxtd` at time of doc update)
+- [ ] Readout → PLAN §5 / §7 + `group_b_results.md` (or timeline addendum)
 
 ---
 
@@ -274,10 +273,10 @@ Same as `launch_probe_a.sh`: read `smoke` from yaml → phase `smoke`|`full`; se
 | Tokens/sec collocated | §7 vs Group A 4.2k |
 | `vram_headroom_gb_step` @ 0.45 | §5 util (manual follow-up) |
 | $/step | §7 affordability |
-| `parse_ok_rate` | Sentinel vs n800 arm A only |
+| `parse_ok_rate` | Sentinel vs n800 hybrid (~87.6% rank2 offline) |
 
 ---
 
 ## 14. Hand-off prompt
 
-> Implement Group B per `main/docs/probes/group_b_impl.md`. Prerequisite: `train/trainer.py` exports `run_one_grpo_step` with optional instrumentation. Files: `main/probes/group_b_step_probe.py`, `main/configs/probe_step_b_05-25.yaml`, `main/scripts/launch_probe_step_b.sh`. Three Modal functions + `run_full`; one wandb run with resume. Toy batch: n800 manifest `problem_id` 0–31. Prompt: `dapo_answer_v1` (arm A). `gpu_memory_utilization: 0.45` fixed; log VRAM headroom (§7). Phase 2: forward+backward sweep on `train_step_cache.pt`, vLLM loaded. Phase 1b: timed step at `max_microbatch_ok`. Out of scope: judge, set-based arms, §2 freeze, util sweep.
+> **Post-run only:** Pull artifacts from `probes/05-25/group_b/`, write readout, update PLAN §5/§7. Implementation is shipped. Prompt: `hybrid_answer_boxed` (arm C). `gpu_memory_utilization: 0.45` fixed; log VRAM headroom (§7). Phase 2: forward+backward sweep on `train_step_cache.pt`, vLLM loaded. Phase 1b: full timed step at `max_microbatch_ok` (fresh rollouts). Out of scope: judge, set-based arms, §2 freeze, util sweep, H100/H200/B200 SKU ladder.

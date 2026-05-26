@@ -4,7 +4,7 @@ global_seed: 42
 operator: nancy
 gpu_class: H100
 modal_price_per_sec: 0.001097
-prompt_variant: dapo_answer_v1
+prompt_variant: hybrid_answer_boxed  # Arm C locked 2026-05-25
 
 smoke: false
 smoke_prompts: 4

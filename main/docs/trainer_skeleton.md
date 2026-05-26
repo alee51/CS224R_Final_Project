@@ -1,6 +1,6 @@
 # Trainer skeleton — build doc
 
-**Drafted:** 2026-05-25. **Purpose:** the "how to build it" doc for the lightweight GRPO trainer described in [`PLAN.md`](./PLAN.md) §5. Mirrors the pattern of [`probes/group_a_impl.md`](./probes/group_a_impl.md): take the strategic choices from PLAN, lock the implementation-level details, and hand off to an agent.
+**Drafted:** 2026-05-25. **Updated:** 2026-05-25 (skeleton shipped; Rank-2 + hybrid prompt locked). **Purpose:** the "how to build it" doc for the lightweight GRPO trainer described in [`PLAN.md`](./PLAN.md) §5. Mirrors the pattern of [`probes/group_a_impl.md`](./probes/group_a_impl.md): take the strategic choices from PLAN, lock the implementation-level details, and hand off to an agent.
 
 **Prerequisites to read first:**
 
@@ -44,17 +44,23 @@ Pulled verbatim from PLAN §5 "Architecture (commit now)". **If any of these cha
 
 ---
 
-## 2. UNDECIDED / inherited-open from Group A
+## 2. Resolved from probes (2026-05-25)
 
-These do **not** block writing the skeleton, but the skeleton must accommodate them as config knobs (not hardcoded constants). Resolution lives elsewhere; just don't lock them into code.
-
-| Item | Why undecided | How skeleton handles it |
+| Item | Resolution | Config / code |
 |---|---|---|
-| **Reward parser** (`reward.py`) | Group A: only **56% parse_ok** with DAPO `Answer:` + Minerva. Rank 2 multi-path parser is pending. See `group_a_results.md`. | `compute_reward()` API stays as-is (returns dict with `reward`, `parse_ok`, …). Parser internals change; callers don't. Skeleton consumes whatever it returns. |
-| **`max_response_length`** | Group A: 4096 is safe (1.25% cap hits); 3072 would truncate ~2.3% — possible savings, not urgent. | Config knob `phase1.max_response_length`, default **4096**. Easy to lower later. |
-| **§2 sampling / training freeze** | Group A: band-level pass rates too noisy at N=200 to lock train subset or "drop 8/8-correct" filter. | Skeleton trains on whatever jsonl is at `train.data_path`. The freeze script (`main/data/preprocess_polaris.py` — separate work) writes that jsonl. Skeleton doesn't care about band logic. |
-| **Judge VRAM / hosting** | Group A: VRAM logging bug, value=0. Judge $/call and latency known and cheap. | Out of scope for skeleton (judge is a sidecar; loaded only by CoT arms). |
-| **Loss normalization for *new* arms** | Locked for GRPO and Poly-EPO-style only. Minority-answer/CoT not explicitly specified in source. | Treat Minority-* as set-based → `T_max` until told otherwise. Make it a config field per arm. |
+| **Reward parser** | **Rank-2 locked** — boxed-first ∪ Minerva; `extract_path` diagnostic. 200-run 56% Minerva-only was format compliance, not parser failure. Offline rank2 ~**87.6%** on hybrid rollouts. | `main/train/reward.py` — `compute_reward()`, `extract_rank2()` |
+| **Prompt template** | **Hybrid arm C locked** — `hybrid_answer_boxed` (`HYBRID_ANSWER_BOXED_TEMPLATE`). Fallbacks: `dapo_answer_v1`, `verl_math_boxed`. | `prompt_variant` in yaml → `format_problem(..., variant=...)` |
+
+See [`probes/group_a_results.md`](./probes/group_a_results.md) addendum and [`timeline.md`](./timeline.md).
+
+## 2b. Still open (config knobs)
+
+| Item | Status | How skeleton handles it |
+|---|---|---|
+| **`max_response_length`** | 4096 safe (Group A); 3072 truncates ~2.3% | `rollout.max_response_length`, default **4096** |
+| **§2 sampling / training freeze** | Undecided | `train.data_path` → frozen jsonl from `preprocess_polaris.py` |
+| **Judge VRAM / hosting** | n800: ~70 GB judge alone; collocated train+policy+judge unmeasured | Sidecar / second GPU for CoT arms only |
+| **Loss normalization for *new* arms** | GRPO + Poly-EPO-style locked | Minority-* → `T_max` via config per arm |
 
 ---
 
@@ -65,8 +71,8 @@ These do **not** block writing the skeleton, but the skeleton must accommodate t
 | vLLM version | **0.8.5** (matches `modal_image.py`; Group A validated for Qwen3 family). Bump only after the API spike (§9) if `update_weights` is unstable. |
 | HF Transformers | `>=4.55.2,<5.0.0` (pinned in image; Qwen2Tokenizer cache-path constraint) |
 | Model | `Qwen/Qwen3-1.7B-Base` — plain string to vLLM, no chat template (per STANDARDS Reward §) |
-| Prompt template | DAPO `Answer:` (STANDARDS verbatim block) — already in `main/train/prompts.py` |
-| Reward API | `compute_reward(completion: str, gold: str) -> dict` — already in `main/train/reward.py`. Skeleton imports as-is. |
+| Prompt template (default train) | **`hybrid_answer_boxed`** (arm C) — `main/train/prompts.py`; override via `prompt_variant` |
+| Reward API | `compute_reward(completion, gold, prompt_variant=...)` — Rank-2 in `main/train/reward.py` |
 | Polaris sampling | **Not in skeleton.** Training reads frozen jsonl produced by separate `main/data/preprocess_polaris.py` (PLAN §2). For Group B's toy batch, reuse Group A's manifest (`probes/05-24/group_a/manifest.jsonl` on `main-artifacts`). |
 | Seeds | STANDARDS formula: `global_seed + step * batch_size * N + prompt_idx * N + rollout_idx`. Never Python `hash()`. |
 | Modal image | `from main.infra.modal_image import image` — already exists |
@@ -78,24 +84,20 @@ These do **not** block writing the skeleton, but the skeleton must accommodate t
 
 ---
 
-## 4. Files to create
+## 4. Files (shipped)
 
 ```
 main/
   train/
-    rollout.py        # vLLM engine wrapper, generation, logprob capture, weight sync
-    objective.py      # advantage computation; pluggable per arm (grpo, minority_answer, …)
-    loss.py           # PPO-clipped surrogate, length-normalized, microbatched backward
-    trainer.py        # main loop: rollout → reward → advantage → loss → step → sync → log
-    weight_sync.py    # HF state_dict → vLLM update_weights (isolated so it can be unit-tested)
+    rollout.py, objective.py, loss.py, trainer.py, weight_sync.py   # shipped
   data/
-    preprocess_polaris.py   # one-shot script: PLAN §2 freeze → polaris_train.jsonl + meta.json
-    dataset.py              # tiny jsonl reader + batching for trainer
+    preprocess_polaris.py, dataset.py   # preprocess = §2 freeze (separate decision)
   configs/
-    train_grpo_05-25.yaml   # first concrete trainer config (GRPO arm)
+    train_grpo_05-25.yaml   # set prompt_variant: hybrid_answer_boxed before first production train
   tests/
-    test_loss.py            # shape + clip + length-norm unit tests on synthetic tensors
-    test_weight_sync.py     # tiny model: change HF weight → vLLM generation reflects it
+    test_loss.py, test_weight_sync.py, test_dataset.py
+  probes/
+    group_b_step_probe.py + probe_step_b_05-25*.yaml   # see group_b_impl.md
 ```
 
 **Files that already exist and stay as-is** (Group A built them):
@@ -293,7 +295,7 @@ train:
 rollout:
   model: Qwen/Qwen3-1.7B-Base
   max_prompt_length: 1024
-  max_response_length: 4096    # UNDECIDED per Group A (3072 possible later)
+  max_response_length: 4096    # locked (Group A); 3072 possible later
   temperature: 1.0
   top_p: 1.0
   gpu_memory_utilization: 0.45 # collocated; Group B tunes
@@ -376,4 +378,4 @@ Suggested order — each row is a green checkpoint to ship before moving on.
 
 ## 10. Hand-off prompt (copy-paste to an agent)
 
-> Implement the trainer skeleton per `main/docs/trainer_skeleton.md`. Locked architecture is in PLAN.md §5 (do not re-litigate). Files to create: `main/train/{rollout,objective,loss,trainer,weight_sync}.py`, `main/data/{preprocess_polaris,dataset}.py`, `main/configs/train_grpo_05-25.yaml`, plus `tests/test_{loss,weight_sync}.py`. Reuse existing `main/train/{reward,prompts}.py` and `main/infra/modal_{image,volume}.py` as-is. **Do the vLLM `update_weights` spike first** (§9) — get `test_weight_sync.py` passing on a 125M model before building `rollout.py`. Follow STANDARDS for wandb / Modal / seeds / checkpoint contents. The reward parser, `max_response_length`, and Polaris training freeze are UNDECIDED (Group A results); treat them as config knobs, do not hardcode. Out of scope: the Group B step probe (separate doc), the sidecar judge, the eval harness.
+> Trainer skeleton is **shipped**. For new work: Group B readout, §2 freeze, first production train, eval harness. Use `prompt_variant: hybrid_answer_boxed` and Rank-2 reward (see PLAN §5). Polaris training freeze still open. Out of scope here: sidecar judge, eval harness.

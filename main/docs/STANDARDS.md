@@ -92,23 +92,15 @@ Decided scope (see `pre-milestone/nancy_explore/narrative/decisions.md`):
 
 | Context | Method | Rationale |
 | --- | --- | --- |
-| **Training reward** (Polaris, DAPO-style) | VeRL/DAPO-style: last `\boxed{...}` + normalize + **integer/string equality** vs gold | Polaris gold is integer; matches Poly-EPO binary RLVR; lift/adapt from `verl/utils/reward_score/math_dapo.py` or hardened pilot `answer_clean.py` (brace-balanced `\boxed{}`) |
-| **Group A probe parse rate** | Same as training reward — do not use a different parser in the probe | Parse rate must predict training behavior |
+| **Training reward** (Polaris) | **Rank-2** in `main/train/reward.py`: hybrid regex (if arm C) → last `\boxed{...}` → Minerva `Answer:` tail + normalize + **integer equality** vs gold | Polaris gold is integer; matches Poly-EPO binary RLVR |
+| **Group A probe parse rate** | Same Rank-2 stack as training when rescoring; live 200-run `parse_ok` was Minerva-only headline | Use `parse_ok_rank2` for train expectations (~85–88% on hybrid) |
 | **OOD eval** (HMMT, MATH-500, etc.) | **Math-Verify** (`math_verify` package) or equivalent | Integer match under-reports on LaTeX/symbolic gold; not for Polaris train reward |
 
 **MathReward / RewardMATH:** those names refer to **reward-model benchmarks** (LLM-as-judge, PRM), not our train-time parser. Do not use for Polaris 0/1 reward unless we explicitly pivot to learned RMs.
 
-**Prompt template (train + Group A probe):** DAPO-Math-17k verbatim (paired with `math_dapo` default parser — see `main/docs/probes/prompt_extraction_research.md`):
+**Prompt template (train, default 2026-05-25):** **`hybrid_answer_boxed`** (arm C) — see `HYBRID_ANSWER_BOXED_TEMPLATE` in `main/train/prompts.py` and [`probes/prompt_probe.md`](./probes/prompt_probe.md). Unvalidated recipe; fallbacks: `dapo_answer_v1` (DAPO-Math-17k verbatim), `verl_math_boxed` (VeRL MATH).
 
-```text
-Solve the following math problem step by step. The last line of your response should be of the form Answer: $Answer (without quotes) where $Answer is the answer to the problem.
-
-{problem}
-
-Remember to put your answer on its own line after "Answer:".
-```
-
-**Parser:** port `verl/utils/reward_score/math_dapo.py` default path (`Answer:` regex on last 300 chars + `normalize_final_answer`, 0/1 vs integer gold). `strict_box_verify` is diagnostic only unless explicitly enabled.
+**Parser:** Rank-2 in `main/train/reward.py` (`extract_rank2`, `extract_path`). Minerva-only path remains for diagnostics. Research / escalation rules: [`probes/prompt_extraction_research.md`](./probes/prompt_extraction_research.md).
 
 **Inference:** Qwen3-1.7B-Base has no HF chat template — plain string prompt to vLLM, not `apply_chat_template`.
 
