@@ -1,0 +1,51 @@
+{
+  "source": {
+    "input_jsonl": "/Users/nancybao/Desktop/dev/cs224r_finalproject/main/data/polaris_train.jsonl",
+    "parent_meta": "/Users/nancybao/Desktop/dev/cs224r_finalproject/main/data/polaris_train.meta.json",
+    "parent_freeze": "frozen",
+    "parent_dataset_id": "POLARIS-Project/Polaris-Dataset-53K",
+    "parent_dataset_revision": "296f8e34132e63f4a1d70e0dcc8bddebb43f03e4"
+  },
+  "prompt_filter": {
+    "rule_id": "2026-05-27_train_prompt_filter",
+    "predicate": "last_starts_prove OR (gold_in_prompt AND (prove anywhere OR contains_show_that))",
+    "decision_doc": "main/docs/decisions.md \u00a72026-05-27"
+  },
+  "counts": {
+    "n_input": 53291,
+    "n_kept": 51139,
+    "n_dropped": 2152,
+    "drop_reasons": {
+      "last_starts_prove": 1507,
+      "gold_in_prompt_and_prove_or_show_that": 645
+    },
+    "per_band_kept": {
+      "0/8": 14749,
+      "1/8": 6686,
+      "2/8": 5159,
+      "3/8": 4874,
+      "4/8": 5007,
+      "5/8": 4560,
+      "6/8": 3842,
+      "7/8": 6262
+    },
+    "per_band_dropped": {
+      "0/8": 619,
+      "1/8": 270,
+      "2/8": 300,
+      "3/8": 263,
+      "4/8": 204,
+      "5/8": 160,
+      "6/8": 158,
+      "7/8": 178
+    }
+  },
+  "materialized_at": "2026-05-26T08:56:26Z",
+  "freeze_status": "frozen",
+  "freeze_note": "Trimmed from polaris_train.jsonl; do not re-materialize without dated note in main/docs/context.md.",
+  "output_files": {
+    "jsonl": "/Users/nancybao/Desktop/dev/cs224r_finalproject/main/data/polaris_train_filtered.jsonl",
+    "meta": "/Users/nancybao/Desktop/dev/cs224r_finalproject/main/data/polaris_train_filtered.meta.json",
+    "dropped_audit_jsonl": "main/data/polaris_train_filtered_dropped.jsonl"
+  }
+}

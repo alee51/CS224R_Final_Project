@@ -1,0 +1,61 @@
+# Production GRPO training config (H200, train.batch_size=64 locked).
+# Launch: bash main/scripts/launch_train.sh --mode smoke|full
+#   smoke → 10 steps (CS224R_TOTAL_STEPS override only)
+#   full  → total_steps below
+# Requires /vol/data/polaris_train_filtered.jsonl on main-artifacts (§2 freeze + prompt filter).
+
+global_seed: 42
+operator: nancy
+gpu_class: H200
+modal_price_per_sec: 0.001261
+arm: grpo
+prompt_variant: hybrid_answer_boxed
+
+train:
+  data_path: /vol/data/polaris_train_filtered.jsonl
+  total_steps: 850
+  batch_size: 64
+  n_rollouts: 8
+  microbatch: 64
+  grad_accum: 1
+  lr: 1.0e-6
+  weight_decay: 0.0
+  grad_clip: 1.0
+  warmup_steps: 20
+  gradient_checkpointing: true
+  # ~20 min between ckpts at ~120 s/step (bs=64 probe); also hourly wall-clock in trainer.
+  checkpoint_every_steps: 10
+  checkpoint_dir: /vol/checkpoints/train_real/
+  resume: auto
+
+rollout:
+  model: Qwen/Qwen3-1.7B-Base
+  max_prompt_length: 1024
+  max_response_length: 4096
+  temperature: 1.0
+  top_p: 1.0
+  gpu_memory_utilization: 0.45
+  max_model_len: 5120
+  max_num_seqs: 128
+  enable_prefix_caching: true
+  logprobs: 1
+
+loss:
+  clip_low: 0.20
+  clip_high: 0.28
+  length_norm: per_seq
+  entropy_coef: 0.0
+
+weight_sync:
+  every_n_steps: 1
+
+artifacts:
+  volume_name: main-artifacts
+  volume_mount: /vol
+  hf_cache_volume: hf-cache
+  pointer_path: docs/artifacts/train_real.pointer.json
+
+wandb:
+  entity: 224r-project
+  project: cs224r-minority-voting
+  group: train-real
