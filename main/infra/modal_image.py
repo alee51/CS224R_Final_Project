@@ -30,6 +30,11 @@ image = (
     .pip_install(f"vllm=={_VLLM_VERSION}")
     # vllm 0.8.5 otherwise pulls transformers 5.x; breaks Qwen2Tokenizer in vLLM cache path.
     .pip_install("transformers>=4.55.2,<5.0.0")
+    # FlashAttention-2 for the HF train-side forward/backward (build_hf uses
+    # attn_implementation="flash_attention_2"). Must install after vllm so it links
+    # against vllm's torch; --no-build-isolation avoids re-fetching torch.
+    # See docs/efficiency_wins_2026-05-26.md.
+    .pip_install("flash-attn==2.7.4.post1", extra_options="--no-build-isolation")
     .pip_install(
         "datasets>=2.20",
         "wandb",

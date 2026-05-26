@@ -533,6 +533,7 @@ def build_hf(cfg: TrainCfg) -> tuple[Any, torch.optim.Optimizer]:
         model_name,
         torch_dtype=dtype,
         trust_remote_code=True,
+        attn_implementation="flash_attention_2",
     )
     if cfg.train.get("gradient_checkpointing", True):
         model.gradient_checkpointing_enable()
@@ -789,8 +790,13 @@ def setup_wandb(
     abl = cfg.raw.get("ablation")
     if abl:
         tags.append(f"ablation={abl}")
+        tags.append("smoke")
         tags.append(f"vllm_sleep={cfg.raw.get('vllm_sleep', False)}")
         tags.append(f"logprob_chunk={cfg.raw.get('logprob_chunk', 0)}")
+    elif launch_mode == "smoke":
+        tags.append("smoke")
+    else:
+        tags.append("production")
     if wandb_run_id:
         tags.append("resumed=true")
     init_kw: dict[str, Any] = {

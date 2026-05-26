@@ -20,9 +20,12 @@ train:
   # Token-budget packing: when set, each train microbatch holds ≤ token_budget total
   # completion tokens regardless of sequence count. Bounds peak VRAM independent of
   # n_kept and per-step completion-length variance. Calibration from postfix-A smoke:
-  # 100-105 GB peak at ~51k tokens/chunk on H200; 90k token budget targets ~120 GB peak
-  # (~20 GB headroom) with deterministic per-chunk VRAM.
-  token_budget: 90000
+  # 100-105 GB peak at ~51k tokens/chunk on H200; 90k targets ~120 GB peak.
+  # Bumped 90k → 105k on 2026-05-26: handoff doc + FA2 (build_hf) free ~20 GB
+  # headroom; 105k drops most steps from 2 chunks → 1 → ~25% faster.
+  # See docs/efficiency_wins_2026-05-26.md. Watch train/vram_peak_gb_step on resume;
+  # if it touches 140 dial back to 95–100k; if it stays < 130 try 110k.
+  token_budget: 105000
   grad_accum: 1
   lr: 1.0e-6
   weight_decay: 0.0
