@@ -1042,7 +1042,7 @@ try:
     @app.function(
         image=image,
         gpu="H200",
-        timeout=60 * 60 * 8,
+        timeout=60 * 60 * 24,
         volumes={
             ARTIFACTS_MOUNT: _artifacts_vol,
             HF_CACHE_MOUNT: _hf_vol,

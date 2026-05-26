@@ -361,3 +361,64 @@ DROP  last_starts_prove
 **Result:** **2,152 dropped (4.0%)**, **51,139 kept (96.0%)** on the frozen 53,291 pool.
 
 **Materialized (frozen):** [`polaris_train.jsonl`](../data/polaris_train.jsonl) (51,139 rows) + [`polaris_train.meta.json`](../data/polaris_train.meta.json) via `filter_polaris_train.py` from full pool; dropped audit [`polaris_train_dropped.jsonl`](../data/polaris_train_dropped.jsonl) (2,152 rows). `train_real.yaml` → `/vol/data/polaris_train.jsonl`. Upload train jsonl to Modal `main-artifacts` before full train.
+
+---
+
+## 2026-05-28 (Thursday) — GRPO full run launch, mid-epoch handoff
+
+### Trainer fix + token-budget packing (commit `039ad38`)
+
+Pre-launch, fixed a structural OOM in `_train_step_microbatched`: previously the per-sequence forwards' autograd graphs stayed alive simultaneously across all `n_kept` until a single backward at the end, so the `microbatch` knob did not actually bound VRAM. Refactored to interleave forward+backward per chunk (graphs freed after each chunk's `.backward()`). Added **token-budget packing** (`train.token_budget=90000` in yaml) — greedy first-fit-decreasing by completion length so each chunk holds ≤ budget total tokens, decoupling peak VRAM from per-step completion-length variance. Variable-chunk loss weighting (chunk_size / n_kept) verified equivalent to full-batch mean (within 1e-5).
+
+Also added VRAM telemetry to the train loop: `vram_peak_gb_step`, `vram_headroom_gb_step`, per-phase peaks, `t_train_fwd_bwd_s`, `num_chunks`, `max_chunk_size`, `effective_microbatch`.
+
+### Full run launched — wandb `8qesa78k`, app `ap-yzf7ep0GD5mA2m5boc88JR`
+
+Config: `train_real.yaml`, H200, bs=64, n_rollouts=8, microbatch=64, `token_budget=90000`, lr=1e-6, warmup_steps=20, total_steps=850, checkpoint_every_steps=10, `polaris_train.jsonl` (51,139 rows).
+
+### Observations through step 141 (Modal 8h timeout cut us off mid-step 142)
+
+| Metric | Value |
+|---|---|
+| Step time | median 197s, mean 201s, max 287s |
+| VRAM peak | 109–126 GB (~14–31 GB headroom on 140 GB device) — token-budget validated |
+| Chunks per step | 2 typical; 3 when `n_kept` × completion length spilled the budget; 1 when both were small |
+| n_kept range | 96–216 (mean ~160) |
+| t_train_fwd_bwd | dominated by backward (gradient checkpointing recompute) — ~7s forward vs ~65s backward typical |
+| Checkpoints saved | step 9, 19, 29, …, 139 (14 ckpts) on `/vol/checkpoints/train_real/` |
+
+**Reward trajectory (20-step windows):**
+
+| Window | n | mean reward | sd |
+|---|---|---|---|
+| s 0–19 (pre-warmup) | 20 | 0.0864 | 0.027 |
+| s 20–39 | 20 | 0.0817 | 0.020 |
+| s 40–59 | 20 | 0.0800 | 0.016 |
+| s 60–79 | 20 | 0.0951 | 0.023 |
+| s 80–99 | 20 | 0.0971 | 0.018 ← peak |
+| s 100–119 | 20 | 0.0888 | 0.024 |
+| s 120–139 | 19 | 0.0855 | 0.021 |
+
+U-shape early dip + recovery, then regression to baseline by step 140. No collapse, no instability. n_kept stable; `mean_completion_tokens` flat (831 → 850); no length blowup. No OOM, no errors — exit was Modal's 8-hour function-call timeout, not a code failure.
+
+### Handoff
+
+Stopping here at the natural Modal-timeout break to transfer to **Emma or Anastasia** to continue the run on their Modal credits. Checkpoint at step 139 (~13.7 GB) + filtered Polaris jsonl + handoff doc shipped. They resume via `resume: auto` which picks up step 140 from `step_000139.pt`. Wandb runs will be discontinuous (two run IDs) but step numbers stay continuous; stitch in post via `wandb.Api`.
+
+### Pre-handoff monitoring patch (commit `9b9e104`)
+
+Added 6 health metrics before handoff so the next operator has better signal during their leg:
+- **Importance ratio stats** (`ratio_mean/max/p95`, `clipped_low_frac`, `clipped_high_frac`) — DAPO clip stress diagnostic
+- **`grad_norm_preclip`** — instability / clipping-attenuation watch
+- **`mean_neg_logprob`** — cheap entropy proxy for mode-collapse early warning
+- **`finish_reason` distribution** (`frac_finish_stop/length/other`) — catches length blowup
+- **Reward by extract path** (`mean_reward_extract_{hybrid,boxed,answer_line,none}`) — separates "learning math" from "learning format compliance"
+- **Sample completions every 50 steps** — visual sanity check for reward hacking / garbage tokens
+
+All 53 CPU tests still pass; smoke-tested via direct `grpo_loss(..., return_stats=True)` and `aggregate_train_step_wandb_metrics` invocations.
+
+### Open follow-ups for next operator
+
+- Bump `timeout=60*60*8` → `24` in `trainer.py:974` to halve relaunch count per epoch (currently ~5 legs needed for 41h epoch).
+- Consider raising `token_budget` to 105–110k once a few steps of the new run confirm peak VRAM stays comfortable; reduces multi-chunk steps (each chunk has ~30s recompute overhead).
+- Consider deferred experiment: `gradient_checkpointing=False` with smaller `token_budget` to halve backward time — biggest possible single win (~25% step time), but needs careful VRAM calibration.
