@@ -68,7 +68,7 @@ Edit `main/configs/train_real.yaml`:
 operator: emma           # or anastasia — your name
 ```
 
-Leave everything else alone. The yaml already points at `/vol/data/polaris_train.jsonl` and `/vol/checkpoints/train_real/`, `resume: auto` will auto-load step 139, and the Modal function timeout is already 24h (commit `3833416`). At ~200s/step a single 24h leg covers ~432 steps, so you can finish the remaining ~660 steps in ~2 legs.
+Leave everything else alone. The yaml already points at `/vol/data/polaris_train.jsonl` and `/vol/checkpoints/train_real/`, and `resume: auto` will auto-load step 139. The Modal function timeout is already 24h (commit `3833416`). At ~200s/step a single 24h leg covers ~432 steps, so you can finish the remaining ~660 steps in ~2 legs.
 
 ---
 
