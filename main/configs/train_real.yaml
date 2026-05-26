@@ -17,13 +17,19 @@ train:
   batch_size: 64
   n_rollouts: 8
   microbatch: 64
+  # Token-budget packing: when set, each train microbatch holds ≤ token_budget total
+  # completion tokens regardless of sequence count. Bounds peak VRAM independent of
+  # n_kept and per-step completion-length variance. Calibration from postfix-A smoke:
+  # 100-105 GB peak at ~51k tokens/chunk on H200; 90k token budget targets ~120 GB peak
+  # (~20 GB headroom) with deterministic per-chunk VRAM.
+  token_budget: 90000
   grad_accum: 1
   lr: 1.0e-6
   weight_decay: 0.0
   grad_clip: 1.0
   warmup_steps: 20
   gradient_checkpointing: true
-  # ~20 min between ckpts at ~120 s/step (bs=64 probe); also hourly wall-clock in trainer.
+  # ~20 min between ckpts at ~180 s/step (bs=64 smoke); also hourly wall-clock in trainer.
   checkpoint_every_steps: 10
   checkpoint_dir: /vol/checkpoints/train_real/
   resume: auto
