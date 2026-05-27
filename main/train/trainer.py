@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import html
+import json
 import logging
 import math
 import os
@@ -26,7 +27,8 @@ if str(_MAIN_ROOT) not in sys.path:
 from data.dataset import JsonlPromptDataset
 from train.loss import grpo_loss
 from train.ablation import ablation_label, logprob_chunk_size, vllm_sleep_enabled
-from train.objective import compute_advantages
+from train.clustering import answer_hash_clusters, sympy_equiv, sympy_equiv_allowlist
+from train.objective import SET_ARMS, compute_advantages
 from train.prompts import format_problem
 from train.repro import dep_versions as _dep_versions
 from train.repro import git_metadata as _git_metadata
@@ -72,6 +74,7 @@ def aggregate_train_step_wandb_metrics(
     rewards_grid: list[list[float]],
     reward_meta: list[list[dict[str, Any]]],
     completion_token_lens: list[int],
+    clusters_grid: list[list[int]] | None = None,
 ) -> dict[str, float]:
     """Poly-EPO Fig. 2–style training dynamics (PLAN §5 / probe plan Group C1–C2)."""
     n_prompts = len(rewards_grid)
@@ -127,6 +130,19 @@ def aggregate_train_step_wandb_metrics(
         p95_idx = min(len(lens_sorted) - 1, int(0.95 * (len(lens_sorted) - 1)))
         out["train/p95_completion_tokens"] = float(lens_sorted[p95_idx])
 
+    if clusters_grid is not None:
+        # C4b: distinct answer-hash cluster ids among rollouts with reward > 0,
+        # averaged over the batch (prompts with zero correct contribute 0).
+        unique_correct = []
+        for p_idx in range(n_prompts):
+            cids = clusters_grid[p_idx]
+            row = rewards_grid[p_idx]
+            distinct = {c for c, r in zip(cids, row) if r > 0.0}
+            unique_correct.append(len(distinct))
+        out["train/mean_unique_answer_clusters_correct"] = (
+            sum(unique_correct) / n_prompts
+        )
+
     return out
 
 
@@ -143,16 +159,93 @@ class TrainCfg:
 
     @classmethod
     def from_dict(cls, d: dict[str, Any]) -> TrainCfg:
+        arm = str(d.get("arm", "grpo"))
+        loss = dict(d["loss"])
+        # Arm-driven length_norm: set-based arms (minority_*, poly_epo_*) require
+        # Dr.GRPO / Poly-EPO batch_max normalization. Enforce here so a YAML that
+        # forgets to flip it can't silently train with per-seq norm.
+        if arm in SET_ARMS:
+            want = "batch_max"
+            cur = loss.get("length_norm")
+            if cur and cur != want:
+                logger.warning(
+                    "arm %s overriding loss.length_norm: %s -> %s", arm, cur, want
+                )
+            loss["length_norm"] = want
         return cls(
             raw=d,
             global_seed=int(d["global_seed"]),
-            arm=str(d.get("arm", "grpo")),
+            arm=arm,
             train=d["train"],
             rollout=RolloutCfg.from_dict(d["rollout"]),
-            loss=d["loss"],
+            loss=loss,
             weight_sync=d.get("weight_sync", {"every_n_steps": 1}),
             wandb=d["wandb"],
         )
+
+
+def _deep_merge_dict(base: dict[str, Any], overlay: dict[str, Any]) -> dict[str, Any]:
+    out = dict(base)
+    for key, val in overlay.items():
+        if (
+            key in out
+            and isinstance(out[key], dict)
+            and isinstance(val, dict)
+        ):
+            out[key] = _deep_merge_dict(out[key], val)
+        else:
+            out[key] = val
+    return out
+
+
+def _resolve_cfg_path(base_path: Path, extends_path: str) -> Path:
+    """Resolve `extends` targets relative to config, then main root fallbacks."""
+    cand = Path(extends_path)
+    if cand.is_absolute():
+        return cand
+    rel = base_path.parent / cand
+    if rel.is_file():
+        return rel
+    main_rel = _MAIN_ROOT / cand
+    if main_rel.is_file():
+        return main_rel
+    if cand.parts[:1] == ("main",):
+        trimmed = _MAIN_ROOT / Path(*cand.parts[1:])
+        if trimmed.is_file():
+            return trimmed
+    return rel
+
+
+def _load_cfg_dict(path: Path, _visited: tuple[str, ...] = ()) -> dict[str, Any]:
+    resolved = path.resolve()
+    key = str(resolved)
+    if key in _visited:
+        chain = " -> ".join((*_visited, key))
+        raise ValueError(f"Cycle in config extends chain: {chain}")
+    with open(resolved) as f:
+        data = yaml.safe_load(f) or {}
+    extends = data.pop("extends", None)
+    if not extends:
+        return data
+    base_path = _resolve_cfg_path(resolved, str(extends))
+    base = _load_cfg_dict(base_path, _visited=(*_visited, key))
+    return _deep_merge_dict(base, data)
+
+
+def apply_arm_profile(raw: dict[str, Any]) -> dict[str, Any]:
+    """Merge arm_profiles[arm] into the shared config (train_real.yaml layout)."""
+    out = dict(raw)
+    arm = os.environ.get("CS224R_ARM") or out.get("arm", "grpo")
+    profiles = out.pop("arm_profiles", None)
+    if profiles and arm in profiles:
+        out = _deep_merge_dict(out, profiles[arm])
+        if profiles[arm].get("arm"):
+            out["arm"] = str(profiles[arm]["arm"])
+        else:
+            out["arm"] = arm
+    else:
+        out["arm"] = arm
+    return out
 
 
 def apply_launch_overrides(raw: dict[str, Any]) -> dict[str, Any]:
@@ -163,24 +256,40 @@ def apply_launch_overrides(raw: dict[str, Any]) -> dict[str, Any]:
     if steps_env:
         train["total_steps"] = int(steps_env)
         logger.info("CS224R_TOTAL_STEPS override → total_steps=%s", train["total_steps"])
-    out["train"] = train
     mode = os.environ.get("CS224R_TRAIN_MODE")
     if mode:
         out["launch_mode"] = mode
+    if mode == "smoke":
+        probes = raw.get("smoke_probes") or {}
+        tpl = probes.get("rollouts_jsonl_path")
+        if tpl:
+            train["rollouts_jsonl_path"] = str(tpl).format(arm=out.get("arm", "grpo"))
+            logger.info(
+                "smoke_probes → train.rollouts_jsonl_path=%s",
+                train["rollouts_jsonl_path"],
+            )
     abl = ablation_label()
     if abl:
         out["ablation"] = abl
         out["vllm_sleep"] = os.environ.get("CS224R_VLLM_SLEEP", "0") == "1"
         out["logprob_chunk"] = logprob_chunk_size()
-        train = dict(out.get("train", {}))
         train["checkpoint_dir"] = f"/vol/checkpoints/train_real_ablate_{abl}/"
-        out["train"] = train
+    out["train"] = train
     return out
 
 
 def load_cfg(path: str | Path) -> TrainCfg:
-    with open(path) as f:
-        return TrainCfg.from_dict(apply_launch_overrides(yaml.safe_load(f) or {}))
+    path = Path(path)
+    data = _load_cfg_dict(path)
+    # Shim: legacy configs that only set `arm:` merge into train_real.yaml.
+    if set(data.keys()) <= {"arm"}:
+        arm = str(data["arm"])
+        os.environ.setdefault("CS224R_ARM", arm)
+        path = _MAIN_ROOT / "configs" / "train_real.yaml"
+        with open(path) as f:
+            data = yaml.safe_load(f) or {}
+    data = apply_arm_profile(data)
+    return TrainCfg.from_dict(apply_launch_overrides(data))
 
 
 def train_cfg_from_dict(d: dict[str, Any]) -> TrainCfg:
@@ -440,6 +549,47 @@ def rollout_seed(global_seed: int, problem_id: int, n_rollouts: int, rollout_idx
     return global_seed + problem_id * n_rollouts + rollout_idx
 
 
+def _append_train_rollout_records(
+    path: Path,
+    *,
+    step: int,
+    batch: StepBatch,
+    rollouts: list[RolloutResult],
+    reward_meta: list[list[dict[str, Any]]],
+    clusters_grid: list[list[int]] | None,
+    n_rollouts: int,
+    prompt_variant: str,
+) -> None:
+    """Append one jsonl record per rollout (probe-compatible; no gold in row)."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("a") as f:
+        for p_idx in range(len(batch.prompts)):
+            for r_idx in range(n_rollouts):
+                flat_idx = p_idx * n_rollouts + r_idx
+                rr = rollouts[flat_idx]
+                rw = reward_meta[p_idx][r_idx]
+                rec: dict[str, Any] = {
+                    "step": step,
+                    "problem_id": batch.problem_ids[p_idx],
+                    "rollout_idx": r_idx,
+                    "prompt_variant": prompt_variant,
+                    "completion": rr.completion_text,
+                    "reward": rw["reward"],
+                    "parse_ok": rw["parse_ok"],
+                    "parsed_answer": rw.get("parsed_answer"),
+                    "parsed_is_int": rw.get("parsed_is_int"),
+                    "has_boxed": rw.get("has_boxed"),
+                    "has_answer_line": rw.get("has_answer_line"),
+                    "strict_parse_ok": rw.get("strict_parse_ok"),
+                    "extract_path": rw.get("extract_path"),
+                    "length_tokens": len(rr.completion_ids),
+                    "finish_reason": rr.finish_reason,
+                }
+                if clusters_grid is not None:
+                    rec["cluster_id"] = clusters_grid[p_idx][r_idx]
+                f.write(json.dumps(rec) + "\n")
+
+
 def set_seeds(global_seed: int) -> None:
     random.seed(global_seed)
     np.random.seed(global_seed)
@@ -529,13 +679,13 @@ def build_hf(cfg: TrainCfg) -> tuple[Any, torch.optim.Optimizer]:
     model_name = cfg.rollout.model
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     dtype = torch.bfloat16 if device.type == "cuda" else torch.float32
-    # FA2 disabled 2026-05-26 after first relaunch died during HF model load.
-    # The flash-attn wheel is still installed in the image so we can re-enable
-    # once we know-good in isolation. See docs/efficiency_wins_2026-05-26.md.
+    # FA2 re-enabled 2026-05-27 after smoke_flash_attn.py passed on Modal H200
+    # (import, load, forward, collocated vLLM+HF). See docs/efficiency_wins_2026-05-26.md.
     model = AutoModelForCausalLM.from_pretrained(
         model_name,
         torch_dtype=dtype,
         trust_remote_code=True,
+        attn_implementation="flash_attention_2",
     )
     if cfg.train.get("gradient_checkpointing", True):
         model.gradient_checkpointing_enable()
@@ -630,14 +780,89 @@ def run_one_grpo_step(
                 reward_meta.append(meta_row)
         if instrument and total_rw:
             diagnostics["parse_ok_rate"] = parse_ok / total_rw
+
+        # Set-based arms (minority_answer, poly_epo_answer) need per-rollout
+        # cluster ids derived from parsed-answer identity. minority_cot uses
+        # the LLM judge instead and is not wired here yet.
+        clusters_grid: list[list[int]] | None = None
+        if cfg.arm in SET_ARMS:
+            if cfg.arm == "minority_cot":
+                raise NotImplementedError(
+                    "minority_cot judge integration pending; see "
+                    "docs/build_spec/remaining_arms.md §4"
+                )
+            clusters_grid = []
+            clustering_cfg = cfg.raw.get("clustering", {})
+            sympy_mode = clustering_cfg.get("sympy_mode", "allowlist")
+            if sympy_mode == "off":
+                use_sympy = False
+                sympy_fn = None
+            elif sympy_mode == "blocklist":
+                use_sympy = True
+                sympy_fn = sympy_equiv
+            elif sympy_mode == "allowlist":
+                use_sympy = True
+                sympy_fn = sympy_equiv_allowlist
+            else:
+                raise ValueError(
+                    f"clustering.sympy_mode must be one of allowlist|blocklist|off, "
+                    f"got {sympy_mode!r}"
+                )
+            for p_idx in range(len(batch.prompts)):
+                parsed = [
+                    reward_meta[p_idx][r].get("parsed_answer")
+                    for r in range(n_rollouts)
+                ]
+                ok = [
+                    bool(reward_meta[p_idx][r].get("parse_ok"))
+                    for r in range(n_rollouts)
+                ]
+                clusters_grid.append(
+                    answer_hash_clusters(
+                        parsed, ok, use_sympy=use_sympy, sympy_equiv_fn=sympy_fn
+                    )
+                )
+
         train_wandb = aggregate_train_step_wandb_metrics(
-            rewards_grid, reward_meta, completion_token_lens
+            rewards_grid,
+            reward_meta,
+            completion_token_lens,
+            clusters_grid=clusters_grid,
         )
 
         rewards_t = torch.tensor(rewards_grid, dtype=torch.float32)
 
         with _phase_timer("t_advantage", instrument, phase_times, vram_peak):
-            adv_out = compute_advantages(cfg.arm, rewards_t)
+            if cfg.arm in SET_ARMS:
+                assert clusters_grid is not None
+                clusters_t = torch.tensor(clusters_grid, dtype=torch.long)
+                adv_out = compute_advantages(
+                    cfg.arm,
+                    rewards_t,
+                    clusters_t,
+                    global_seed=cfg.global_seed,
+                    problem_ids=batch.problem_ids,
+                )
+            else:
+                adv_out = compute_advantages(cfg.arm, rewards_t)
+
+        # C3: surface set-arm marginal-advantage percentiles to wandb if present.
+        for k in ("adv_marginal_p05", "adv_marginal_p50", "adv_marginal_p95"):
+            if k in adv_out.diagnostics:
+                train_wandb[f"train/{k}"] = float(adv_out.diagnostics[k])
+
+        rollouts_path = cfg.train.get("rollouts_jsonl_path")
+        if rollouts_path:
+            _append_train_rollout_records(
+                Path(str(rollouts_path)),
+                step=step,
+                batch=batch,
+                rollouts=rollouts,
+                reward_meta=reward_meta,
+                clusters_grid=clusters_grid,
+                n_rollouts=n_rollouts,
+                prompt_variant=prompt_variant,
+            )
 
         kept_rollouts: list[RolloutResult] = []
         kept_adv: list[float] = []
@@ -924,6 +1149,11 @@ def train(
         Modal container, which will pick up via `resume: auto`.
     """
     repro = _git_metadata()
+    init_t0 = time.monotonic()
+
+    def _init_elapsed(label: str) -> None:
+        logger.info("train init [%s] +%.1fs since start", label, time.monotonic() - init_t0)
+
     ckpt_dir = Path(cfg.train.get("checkpoint_dir", "/vol/checkpoints/train/"))
     resume_path: Path | None = None
     if _resume_enabled(cfg):
@@ -938,7 +1168,9 @@ def train(
     resumed_from_step: int | None = None
     if resume_path is not None and resume_path.is_file():
         logger.info("Resuming from checkpoint %s", resume_path)
+        _init_elapsed("before checkpoint head load")
         head = torch.load(resume_path, map_location="cpu", weights_only=False)
+        _init_elapsed("after checkpoint head load")
         resumed_from_step = int(head["step"])
         start_step = resumed_from_step + 1
         # CS224R_FRESH_WANDB: one-shot escape hatch when the live wandb run has
@@ -955,12 +1187,21 @@ def train(
 
     run = setup_wandb(cfg, repro, wandb_run_id=wandb_run_id)
     log_repro(cfg, repro)
+    _init_elapsed("after wandb setup")
 
+    logger.info("Initializing vLLM RolloutEngine (expect ~60-120s before HF load)")
     rollout_engine = RolloutEngine(cfg.rollout)
+    _init_elapsed("after vLLM RolloutEngine")
+
+    logger.info("Loading HF model (attn_implementation=flash_attention_2 when enabled)")
     hf_model, opt = build_hf(cfg)
+    _init_elapsed("after build_hf")
+
     dataset = JsonlPromptDataset(cfg.train["data_path"], cfg.global_seed)
     if resumed_from_step is not None and resume_path is not None:
+        logger.info("Loading full checkpoint state into HF model + optimizer")
         load_ckpt(resume_path, hf_model, opt, dataset)
+        _init_elapsed("after load_ckpt")
         import wandb
 
         wandb.log({"train/resumed_from_step": resumed_from_step}, step=start_step)
@@ -979,9 +1220,12 @@ def train(
     batch_size = int(cfg.train["batch_size"])
     last_ckpt = time.monotonic()
     leg_start = time.monotonic()
+    _init_elapsed("entering train loop")
 
     try:
         for step in range(start_step, total_steps):
+            if step == start_step:
+                logger.info("Starting step %s (init complete)", step)
             problems, golds, pids = dataset.next_batch_with_ids(batch_size)
             batch = StepBatch(
                 prompts=problems,
@@ -1094,20 +1338,9 @@ try:
     _artifacts_vol = modal.Volume.from_name(ARTIFACTS_VOLUME_NAME, create_if_missing=True)
     _hf_vol = modal.Volume.from_name(HF_CACHE_VOLUME_NAME, create_if_missing=True)
 
-    @app.function(
-        image=image,
-        gpu="H200",
-        timeout=60 * 60 * 24,
-        volumes={
-            ARTIFACTS_MOUNT: _artifacts_vol,
-            HF_CACHE_MOUNT: _hf_vol,
-        },
-        secrets=[
-            modal.Secret.from_name("HUGGINGFACE"),
-            modal.Secret.from_name("WANDB_API_KEY"),
-        ],
-    )
-    def train_remote(
+    def _train_remote_impl(
+        *,
+        spawn_fn: Any,
         config_path: str,
         ablation: str = "",
         vllm_sleep: int = 0,
@@ -1115,6 +1348,10 @@ try:
         leg_number: int = 1,
         max_legs: int = 10,
         fresh_wandb: bool = False,
+        launch_mode: str = "",
+        total_steps_override: int = 0,
+        no_resume: bool = False,
+        arm_override: str = "",
     ) -> None:
         """Modal entrypoint.
 
@@ -1123,8 +1360,20 @@ try:
         spawns a successor container via `train_remote.spawn(...)`. The new
         container resumes from the latest checkpoint. `leg_number` increments
         per chained leg; `max_legs` is a runaway guard.
+
+        Launch overrides (`launch_mode`, `total_steps_override`, `no_resume`,
+        `arm_override`) are Modal CLI args — host-shell exports are not forwarded.
         """
         from train.ablation import apply_ablation_env
+
+        if arm_override:
+            os.environ["CS224R_ARM"] = arm_override
+        if launch_mode:
+            os.environ["CS224R_TRAIN_MODE"] = launch_mode
+        if total_steps_override > 0:
+            os.environ["CS224R_TOTAL_STEPS"] = str(total_steps_override)
+        if no_resume:
+            os.environ["CS224R_NO_RESUME"] = "1"
 
         apply_ablation_env(
             ablation=ablation,
@@ -1159,13 +1408,14 @@ try:
                 final_step,
                 config_path,
             )
-            train_remote.spawn(
+            spawn_fn(
                 config_path=config_path,
                 ablation=ablation,
                 vllm_sleep=vllm_sleep,
                 logprob_chunk=logprob_chunk,
                 leg_number=next_leg,
                 max_legs=max_legs,
+                arm_override=arm_override,
             )
 
         train(
@@ -1176,6 +1426,93 @@ try:
         )
         _commit_volume()
 
+    @app.function(
+        image=image,
+        gpu="H200",
+        timeout=60 * 60 * 24,
+        volumes={
+            ARTIFACTS_MOUNT: _artifacts_vol,
+            HF_CACHE_MOUNT: _hf_vol,
+        },
+        secrets=[
+            modal.Secret.from_name("HUGGINGFACE"),
+            modal.Secret.from_name("WANDB_API_KEY"),
+        ],
+    )
+    def train_remote_h200(
+        config_path: str,
+        ablation: str = "",
+        vllm_sleep: int = 0,
+        logprob_chunk: int = 0,
+        leg_number: int = 1,
+        max_legs: int = 10,
+        fresh_wandb: bool = False,
+        launch_mode: str = "",
+        total_steps_override: int = 0,
+        no_resume: bool = False,
+        arm_override: str = "",
+    ) -> None:
+        _train_remote_impl(
+            spawn_fn=train_remote_h200.spawn,
+            config_path=config_path,
+            ablation=ablation,
+            vllm_sleep=vllm_sleep,
+            logprob_chunk=logprob_chunk,
+            leg_number=leg_number,
+            max_legs=max_legs,
+            fresh_wandb=fresh_wandb,
+            launch_mode=launch_mode,
+            total_steps_override=total_steps_override,
+            no_resume=no_resume,
+            arm_override=arm_override,
+        )
+
+    @app.function(
+        image=image,
+        gpu="B200",
+        timeout=60 * 60 * 24,
+        volumes={
+            ARTIFACTS_MOUNT: _artifacts_vol,
+            HF_CACHE_MOUNT: _hf_vol,
+        },
+        secrets=[
+            modal.Secret.from_name("HUGGINGFACE"),
+            modal.Secret.from_name("WANDB_API_KEY"),
+        ],
+    )
+    def train_remote_b200(
+        config_path: str,
+        ablation: str = "",
+        vllm_sleep: int = 0,
+        logprob_chunk: int = 0,
+        leg_number: int = 1,
+        max_legs: int = 10,
+        fresh_wandb: bool = False,
+        launch_mode: str = "",
+        total_steps_override: int = 0,
+        no_resume: bool = False,
+        arm_override: str = "",
+    ) -> None:
+        _train_remote_impl(
+            spawn_fn=train_remote_b200.spawn,
+            config_path=config_path,
+            ablation=ablation,
+            vllm_sleep=vllm_sleep,
+            logprob_chunk=logprob_chunk,
+            leg_number=leg_number,
+            max_legs=max_legs,
+            fresh_wandb=fresh_wandb,
+            launch_mode=launch_mode,
+            total_steps_override=total_steps_override,
+            no_resume=no_resume,
+            arm_override=arm_override,
+        )
+
+    # Backward-compatible alias: default target stays H200.
+    train_remote = train_remote_h200
+
 except ImportError:
     app = None  # type: ignore[assignment, misc]
     train_remote = None  # type: ignore[assignment, misc]
+    train_remote_h200 = None  # type: ignore[assignment, misc]
+    train_remote_b200 = None  # type: ignore[assignment, misc]

@@ -22,18 +22,21 @@ Step time decomposition from Group B probe (H200, bs=64): **rollout ≈ 73%**, *
 
 **Verify after launch.** Watch `train/vram_peak_gb_step` for ~10 steps. If it touches 140 GB, dial back to 95–100k. If it stays < 130, consider 110k.
 
-### 2. FlashAttention-2 on the HF model  — **[ATTEMPTED, REVERTED — 2026-05-26]**
+### 2. FlashAttention-2 on the HF model  — **[RE-ENABLED — 2026-05-27]**
 
-**Status update:** Wired the `attn_implementation="flash_attention_2"` arg into `build_hf` and added the prebuilt flash-attn wheel to the Modal image. Image built cleanly. First relaunch (`ap-ojqOqa0PgKoHk6O5QWmVw1`) **died ~90s into the container — exactly in the window where `build_hf` calls `from_pretrained` and triggers `import flash_attn`.** Modal's 100-line log buffer was saturated with image-build noise by the time we noticed, so no stack trace was recovered.
+**2026-05-26 attempt:** First relaunch (`ap-ojqOqa0PgKoHk6O5QWmVw1`) died ~90s in; no stack trace (log buffer saturated with image-build output). FA2 was suspected because `build_hf` runs in that window; trainer change was reverted.
 
-Self-spawn / token_budget / fresh-wandb were ruled out by timing: none of those code paths execute in the first 90 seconds. FA2 is the only suspect that fires in that window.
+**2026-05-27 debug:** `main/probes/smoke_flash_attn.py` + `bash main/scripts/launch_smoke_flash_attn.sh` — **all stages pass on H200** with the current image:
+- `flash_attn==2.7.4.post1`, `torch==2.6.0+cu124`, `transformers==4.57.6`
+- HF load + forward with `attn_implementation=flash_attention_2`
+- **Collocated** vLLM (`gpu_memory_utilization=0.45`) then HF FA2 + grad checkpointing → ~65 GB peak, no OOM
 
-**Reverted** the trainer change (FA2 arg removed); **kept** the wheel install in `modal_image.py` so re-enabling is a one-line change with no image rebuild.
+**Revised root-cause hypothesis:** The ~90s death may have been **vLLM init** (RolloutEngine runs *before* `build_hf` and takes ~60–90s alone), a transient Modal failure, or resume/checkpoint I/O — not a broken FA2 wheel. FA2 was re-enabled in `build_hf`.
 
-**To re-enable cleanly (next debug session):**
-1. Smoke-test FA2 in isolation: small Modal function that just does `AutoModelForCausalLM.from_pretrained("Qwen/Qwen3-1.7B-Base", attn_implementation="flash_attention_2", torch_dtype=torch.bfloat16).cuda()` and reports stack trace if any. This will surface the actual import / runtime error.
-2. Common fixes if `import flash_attn` fails at runtime: try `cxx11abiTRUE` wheel instead of FALSE; add `nvidia-cuda-cccl-cu12` to the image; pin transformers to a tested release.
-3. Once smoke is green, re-add `attn_implementation="flash_attention_2"` to `build_hf` and relaunch.
+**Smoke launcher (for future regressions):**
+```bash
+bash main/scripts/launch_smoke_flash_attn.sh
+```
 
 ---
 
@@ -140,7 +143,8 @@ modal run --detach main/train/trainer.py::train_remote \
 
 - `main/configs/train_real.yaml`: `token_budget: 90000` → `105000` (+ updated inline comment).
 - `main/train/trainer.py`:
-  - **FA2 arg reverted** (`attn_implementation` not passed) — see #2 status update above.
+  - **FA2 re-enabled** (`attn_implementation="flash_attention_2"`) — see #2 status update above.
+  - `main/probes/smoke_flash_attn.py` + `main/scripts/launch_smoke_flash_attn.sh` for FA2 regression checks.
   - `train()` accepts `leg_budget_s` and `on_leg_exhausted` kwargs.
   - `train_remote` accepts `leg_number` / `max_legs` / `fresh_wandb`, computes the budget, chains itself via `train_remote.spawn(...)` before the 24h Modal timeout.
   - `setup_wandb` adds a `leg_number=N` tag when `CS224R_LEG_NUMBER` is set.

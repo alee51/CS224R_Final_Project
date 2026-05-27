@@ -1,4 +1,4 @@
-"""HF → vLLM weight sync (vLLM 0.8.5 load_weights path)."""
+"""HF → vLLM weight sync (vLLM 0.9.x compatible path resolution)."""
 
 from __future__ import annotations
 
@@ -23,17 +23,42 @@ def _hf_weight_iterator(hf_model: Any) -> Iterator[tuple[str, Any]]:
 
 
 def _vllm_runner_model(vllm_llm: Any) -> Any:
+    """Resolve model object behind LLM across vLLM 0.8/0.9 variants."""
     engine = getattr(vllm_llm, "llm_engine", vllm_llm)
-    executor = engine.model_executor
-    worker = executor.driver_worker
-    return worker.model_runner.model
+    executor = getattr(engine, "model_executor", None)
+    if executor is None:
+        raise RuntimeError("vLLM engine has no model_executor; check VLLM_USE_V1 and version")
+
+    worker = getattr(executor, "driver_worker", None)
+    if worker is None:
+        raise RuntimeError("vLLM executor has no driver_worker")
+
+    # vLLM wrappers may store the worker object in .worker.
+    worker_obj = getattr(worker, "worker", worker)
+    model_runner = getattr(worker_obj, "model_runner", None)
+    if model_runner is None:
+        raise RuntimeError("vLLM worker has no model_runner")
+
+    model = getattr(model_runner, "model", None)
+    if model is None and hasattr(model_runner, "get_model"):
+        model = model_runner.get_model()
+    if model is None:
+        raise RuntimeError("vLLM model_runner has no model/get_model")
+
+    logger.info(
+        "Resolved vLLM sync target type=%s runner=%s worker=%s",
+        type(model).__name__,
+        type(model_runner).__name__,
+        type(worker_obj).__name__,
+    )
+    return model
 
 
 def sync_hf_to_vllm(hf_model: Any, vllm_llm: Any) -> SyncStats:
     """
     Push HF weights into a collocated vLLM LLM instance.
 
-    Uses model.load_weights(iterator) on the driver worker (vLLM 0.8.5).
+    Uses model.load_weights(iterator) on the driver worker.
     See trainer_skeleton.md §9 — API may change across vLLM versions.
     """
     t0 = time.monotonic()

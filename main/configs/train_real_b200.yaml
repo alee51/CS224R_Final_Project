@@ -1,0 +1,5 @@
+extends: configs/train_real.yaml
+
+# B200 overlay for train_real baseline.
+gpu_class: B200
+modal_price_per_sec: 0.001736

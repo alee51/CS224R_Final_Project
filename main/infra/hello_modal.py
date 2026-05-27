@@ -44,6 +44,28 @@ def hello() -> None:
     entries = sorted(p.name for p in vol.iterdir()) if vol.is_dir() else []
     print("/vol listing:", entries if entries else "(empty)")
     print("HF cache path:", HF_CACHE_MOUNT)
+    try:
+        import flash_attn
+    except Exception as exc:  # pragma: no cover - smoke/debug print only
+        print("flash_attn import failed:", repr(exc))
+        flash_attn = None  # type: ignore[assignment]
+    try:
+        import torch
+    except Exception as exc:  # pragma: no cover - smoke/debug print only
+        print("torch import failed:", repr(exc))
+        torch = None  # type: ignore[assignment]
+    try:
+        import vllm
+    except Exception as exc:  # pragma: no cover - smoke/debug print only
+        print("vllm import failed:", repr(exc))
+        vllm = None  # type: ignore[assignment]
+
+    print("torch version:", getattr(torch, "__version__", "unavailable"))
+    print("vllm version:", getattr(vllm, "__version__", "unavailable"))
+    print(
+        "flash_attn version:",
+        getattr(flash_attn, "__version__", "unavailable"),
+    )
 
 
 @app.local_entrypoint()

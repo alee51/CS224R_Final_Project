@@ -292,6 +292,8 @@ Only import/instantiate `JudgeClient` when `cfg.arm == "minority_cot"` so GRPO a
 
 ## 5. Training-time metrics (PLAN §5, train-time only)
 
+**Authoritative priority / interpretation (2026-05-26 review):** [`train_wandb_metrics_verdict.md`](./train_wandb_metrics_verdict.md) — what to add when arms 2–4 ship, what to skip, and dashboard doc fixes. GRPO trains in flight without new keys.
+
 Extend logging beyond existing C1/C1b/C2 metrics currently emitted by `aggregate_train_step_wandb_metrics`.
 
 ### 5.1 All set arms — C3
@@ -328,24 +330,26 @@ Keep logging `fraction_filtered`, `n_kept`, `mean_advantage` — for set arms, `
 
 ## 6. Config files and launch
 
-### 6.1 New yamls (copy `train_real.yaml`)
+### 6.1 Single yaml + `arm_profiles`
 
-| File | Changes |
-|------|---------|
-| `configs/train_real_minority_answer.yaml` | `arm: minority_answer`, `loss.length_norm: batch_max`, `checkpoint_dir: .../train_minority_answer/`, `wandb.group: train-minority-answer` |
-| `configs/train_real_poly_epo_answer.yaml` | `arm: poly_epo_answer`, same `batch_max`, own checkpoint dir + wandb group |
-| `configs/train_real_minority_cot.yaml` | `arm: minority_cot`, `batch_max`, plus `judge:` block (model, `max_model_len`, `gpu`, `apply_chat_template`, price for logging) |
+All arms share `configs/train_real.yaml` (train / rollout / loss blocks). Per-arm overrides live under `arm_profiles` (checkpoint dir, wandb group, `length_norm`). Smoke-only rollout logging: `smoke_probes.rollouts_jsonl_path` (applied when `launch_mode=smoke`).
 
-All other fields should remain aligned with GRPO defaults unless a deliberate arm-specific change is required: data path, `batch_size: 64`, `n_rollouts: 8`, `token_budget`, rollout block, prompt variant, LR, clip settings, etc.
+| Arm | Profile keys |
+|------|----------------|
+| `grpo` | `checkpoint_dir: .../train_real/`, `length_norm: per_seq`, `wandb.group: train-real` |
+| `minority_answer` | `.../train_minority_answer/`, `batch_max`, `train-minority-answer` |
+| `poly_epo_answer` | `.../train_poly_epo_answer/`, `batch_max`, `train-poly-epo-answer` |
+| `minority_cot` | `.../train_minority_cot/`, `batch_max`, `train-minority-cot` (+ `judge:` block TBD) |
+
+Legacy `configs/train_real_<arm>.yaml` files are **arm-only shims** (`arm: <name>`) merged into `train_real.yaml` at load time.
 
 ### 6.2 Launch script
 
-`main/scripts/launch_train.sh` already reads `arm` from YAML for app naming. Supported options:
+```bash
+bash main/scripts/launch_train.sh --mode smoke --arm minority_answer
+```
 
-- Add a `--config` argument path (preferred), or
-- maintain one-line arm-specific wrappers.
-
-No trainer fork is required.
+`--arm` sets `CS224R_ARM` / Modal `--arm-override` (host env is not forwarded). `--config` still supported for shims.
 
 ---
 
@@ -387,10 +391,10 @@ Case E - tie-break reproducibility
 
 ## 8. Recommended implementation order
 
-1. **`objective.py`** — kernel + `_minority_subset_score` + `_poly_epo_subset_score` + dispatch + unit tests (Cases A–E with small k where needed).
-2. **`clustering.py`** — `answer_hash_clusters` + tests.
-3. **`trainer.py`** — build `clusters_grid` for `minority_answer` / `poly_epo_answer`, pass clusters + problem_ids, arm-driven `length_norm`, C3/C4b wandb.
-4. **`train_real_minority_answer.yaml`** — smoke 10 steps on Modal.
+1. **`objective.py`** — kernel + `_minority_subset_score` + `_poly_epo_subset_score` + dispatch + unit tests (Cases A–E with small k where needed). — **Done (arm 2)**
+2. **`clustering.py`** — `answer_hash_clusters` + tests. — **Done (arm 2)**
+3. **`trainer.py`** — build `clusters_grid` for `minority_answer` / `poly_epo_answer`, pass clusters + problem_ids, arm-driven `length_norm`, C3/C4b wandb. — **Done (arm 2; judge hook pending arm 3)**
+4. **`train_real_minority_answer.yaml`** — smoke 10 steps on Modal. — **Config done; Modal smoke in flight**
 5. **`poly_epo_answer`** - dispatch branch + YAML (small delta once kernel exists).
 6. **`judge/client.py`** + Modal GPU plan + trainer hook for `minority_cot` + `train_real_minority_cot.yaml` + C4 wandb.
 

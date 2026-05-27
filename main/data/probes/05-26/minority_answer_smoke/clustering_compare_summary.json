@@ -1,0 +1,68 @@
+{
+  "rollouts_path": "data/probes/05-26/minority_answer_smoke/train_rollouts.jsonl",
+  "n_rollout_rows": 5120,
+  "n_prompt_groups": 640,
+  "steps": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9
+  ],
+  "methods": [
+    "old_canon",
+    "hardened_canon",
+    "hardened_sympy_blocklist",
+    "hardened_sympy_allowlist"
+  ],
+  "partition_agreement": [
+    {
+      "a": "old_canon",
+      "b": "hardened_canon",
+      "prompts_same_partition": 633,
+      "prompts_differ": 7,
+      "frac_same": 0.9890625
+    },
+    {
+      "a": "old_canon",
+      "b": "hardened_sympy_blocklist",
+      "prompts_same_partition": 608,
+      "prompts_differ": 32,
+      "frac_same": 0.95
+    },
+    {
+      "a": "old_canon",
+      "b": "hardened_sympy_allowlist",
+      "prompts_same_partition": 619,
+      "prompts_differ": 21,
+      "frac_same": 0.9671875
+    },
+    {
+      "a": "hardened_canon",
+      "b": "hardened_sympy_blocklist",
+      "prompts_same_partition": 614,
+      "prompts_differ": 26,
+      "frac_same": 0.959375
+    },
+    {
+      "a": "hardened_canon",
+      "b": "hardened_sympy_allowlist",
+      "prompts_same_partition": 626,
+      "prompts_differ": 14,
+      "frac_same": 0.978125
+    },
+    {
+      "a": "hardened_sympy_blocklist",
+      "b": "hardened_sympy_allowlist",
+      "prompts_same_partition": 628,
+      "prompts_differ": 12,
+      "frac_same": 0.98125
+    }
+  ],
+  "detail_path": "data/probes/05-26/minority_answer_smoke/clustering_compare_detail.jsonl"
+}

@@ -1,0 +1,3 @@
+# Shim — merged into configs/train_real.yaml via arm_profiles.poly_epo_answer.
+# Prefer: bash main/scripts/launch_train.sh --mode full --arm poly_epo_answer
+arm: poly_epo_answer

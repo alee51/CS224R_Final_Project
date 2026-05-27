@@ -1,0 +1,46 @@
+# Large fixed-slice checkpoint eval: DAPO 2k on B200.
+# Launch:
+#   bash main/scripts/launch_checkpoint_eval.sh --config main/configs/checkpoint_eval_2k_dapo_b200.yaml --detach
+
+operator: nancy
+gpu_class: B200
+global_seed: 43
+modal_price_per_sec: 0.001736
+
+eval:
+  checkpoint_dir: /vol/checkpoints/train_real/
+  checkpoint_steps: [49, 99, 149]
+  n_rollouts: 8
+  rollout_chunk_prompts: 64
+  output_dir: /vol/probes/checkpoint_eval_2k_dapo
+
+  datasets:
+    dapo:
+      kind: hf
+      hf_dataset: open-r1/DAPO-Math-17k-Processed
+      hf_config: en
+      hf_split: train
+      n_prompts: 2000
+      seed: 43
+      prompt_variant: dapo_answer_v1
+
+rollout:
+  model: Qwen/Qwen3-1.7B-Base
+  max_prompt_length: 1024
+  max_response_length: 4096
+  temperature: 1.0
+  top_p: 1.0
+  gpu_memory_utilization: 0.45
+  max_model_len: 5120
+  max_num_seqs: 128
+  enable_prefix_caching: true
+  logprobs: 1
+
+train:
+  lr: 1.0e-6
+  weight_decay: 0.0
+  gradient_checkpointing: false
+
+artifacts:
+  volume_name: main-artifacts
+  volume_mount: /vol

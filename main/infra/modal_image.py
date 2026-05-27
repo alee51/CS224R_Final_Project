@@ -11,8 +11,8 @@ _LOCAL_REPO_ROOT = Path(__file__).resolve().parents[2]
 _LOCAL_MAIN_DIR = _LOCAL_REPO_ROOT / "main"
 
 # vLLM 0.6.x does not support Qwen3ForCausalLM; 0.8.5+ required for Qwen3-1.7B / 4B-Instruct.
-# Let vllm own torch/transformers/xformers pins to avoid version skew.
-_VLLM_VERSION = "0.8.5"
+# Keep dependency pins explicit here so image rebuilds are deterministic.
+_VLLM_VERSION = "0.9.0"
 
 image = (
     modal.Image.debian_slim(python_version="3.11")
@@ -27,17 +27,27 @@ image = (
             "VLLM_USE_V1": "0",
         }
     )
-    .pip_install(f"vllm=={_VLLM_VERSION}")
-    # vllm 0.8.5 otherwise pulls transformers 5.x; breaks Qwen2Tokenizer in vLLM cache path.
-    .pip_install("transformers>=4.55.2,<5.0.0")
-    # FlashAttention-2 for the HF train-side forward/backward (build_hf uses
-    # attn_implementation="flash_attention_2"). Prebuilt wheel matched to
-    # torch 2.6 + cu12 + py311 + cxx11abiFALSE (PyPI default ABI). Source build
-    # fails because debian_slim has no nvcc; the wheel ships compiled kernels.
-    # See docs/efficiency_wins_2026-05-26.md.
+    # vLLM 0.9.0 upgrades to torch 2.7 and CUDA 12.8-compatible wheels by default.
+    # Keep an explicit cu128 torch index for Blackwell/B200 compatibility:
+    # https://download.pytorch.org/whl/cu128
+    # vLLM release: https://pypi.org/project/vllm/0.9.0/
     .pip_install(
-        "https://github.com/Dao-AILab/flash-attention/releases/download/v2.7.4.post1/"
-        "flash_attn-2.7.4.post1+cu12torch2.6cxx11abiFALSE-cp311-cp311-linux_x86_64.whl"
+        f"vllm=={_VLLM_VERSION}",
+        extra_index_url="https://download.pytorch.org/whl/cu128",
+    )
+    # vLLM 0.9.0 currently conflicts with transformers>=4.54
+    # (`aimv2` AutoConfig registration collision during import).
+    # Temporary compatibility pin for collocated rollout/train workers.
+    .pip_install("transformers<4.54.0")
+    # FlashAttention wheel for HF train-side forward/backward on Blackwell.
+    # We pin a torch2.7 build aligned with vLLM 0.9.0's torch baseline.
+    # Wheel source (includes Blackwell-capable kernels in this release line):
+    # https://github.com/Dao-AILab/flash-attention/releases/tag/v2.8.3
+    # Exact wheel:
+    # flash_attn-2.8.3+cu12torch2.7cxx11abiFALSE-cp311-cp311-linux_x86_64.whl
+    .pip_install(
+        "https://github.com/Dao-AILab/flash-attention/releases/download/v2.8.3/"
+        "flash_attn-2.8.3+cu12torch2.7cxx11abiFALSE-cp311-cp311-linux_x86_64.whl"
     )
     .pip_install(
         "datasets>=2.20",

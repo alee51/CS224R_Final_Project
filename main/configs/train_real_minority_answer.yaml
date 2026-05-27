@@ -1,0 +1,3 @@
+# Shim — merged into configs/train_real.yaml via arm_profiles.minority_answer.
+# Prefer: bash main/scripts/launch_train.sh --mode smoke --arm minority_answer
+arm: minority_answer

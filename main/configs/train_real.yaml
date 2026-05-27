@@ -1,8 +1,13 @@
-# Production GRPO training config (H200, train.batch_size=64 locked).
-# Launch: bash main/scripts/launch_train.sh --mode smoke|full
-#   smoke → 10 steps (CS224R_TOTAL_STEPS override only)
-#   full  → total_steps below
-# Requires /vol/data/polaris_train.jsonl on main-artifacts (canonical train freeze; §2 + prompt filter).
+# Production training config (H200, train.batch_size=64 locked).
+# Shared train/rollout/loss blocks; per-arm overrides in arm_profiles.
+#
+# Launch (from repo root):
+#   bash main/scripts/launch_train.sh --mode smoke|full
+#   bash main/scripts/launch_train.sh --mode smoke --arm minority_answer
+#   bash main/scripts/launch_train.sh --mode full  --arm poly_epo_answer
+#
+# Legacy per-arm yaml files are shims only (arm: <name> → merges this file).
+# Requires /vol/data/polaris_train.jsonl on main-artifacts.
 
 global_seed: 42
 operator: nancy
@@ -11,20 +16,23 @@ modal_price_per_sec: 0.001261
 arm: grpo
 prompt_variant: hybrid_answer_boxed
 
+# Clustering for set arms (minority_answer, poly_epo_answer).
+# Production default: hardened canonicalize + sympy union-find with allowlist gate.
+# `sympy_mode`: allowlist (default — vetted commands only, fails closed on unknowns)
+#             | blocklist (sympy by default, skip known-unsafe; legacy v1)
+#             | off       (canonicalize only)
+# Selected from the 2026-05-26 clustering ablation on smoke rollouts; see
+# docs/build_spec/answer_clustering.md and docs/timeline.md for the decision +
+# documented limitations.
+clustering:
+  sympy_mode: allowlist
+
 train:
   data_path: /vol/data/polaris_train.jsonl
   total_steps: 799
   batch_size: 64
   n_rollouts: 8
   microbatch: 64
-  # Token-budget packing: when set, each train microbatch holds ≤ token_budget total
-  # completion tokens regardless of sequence count. Bounds peak VRAM independent of
-  # n_kept and per-step completion-length variance. Calibration from postfix-A smoke:
-  # 100-105 GB peak at ~51k tokens/chunk on H200; 90k targets ~120 GB peak.
-  # Bumped 90k → 105k on 2026-05-26: handoff doc + FA2 (build_hf) free ~20 GB
-  # headroom; 105k drops most steps from 2 chunks → 1 → ~25% faster.
-  # See docs/efficiency_wins_2026-05-26.md. Watch train/vram_peak_gb_step on resume;
-  # if it touches 140 dial back to 95–100k; if it stays < 130 try 110k.
   token_budget: 105000
   grad_accum: 1
   lr: 1.0e-6
@@ -32,9 +40,7 @@ train:
   grad_clip: 1.0
   warmup_steps: 20
   gradient_checkpointing: true
-  # ~20 min between ckpts at ~180 s/step (bs=64 smoke); also hourly wall-clock in trainer.
   checkpoint_every_steps: 10
-  checkpoint_dir: /vol/checkpoints/train_real/
   resume: auto
 
 rollout:
@@ -52,7 +58,6 @@ rollout:
 loss:
   clip_low: 0.20
   clip_high: 0.28
-  length_norm: per_seq
   entropy_coef: 0.0
 
 weight_sync:
@@ -62,9 +67,58 @@ artifacts:
   volume_name: main-artifacts
   volume_mount: /vol
   hf_cache_volume: hf-cache
-  pointer_path: docs/artifacts/train_real.pointer.json
 
 wandb:
   entity: 224r-project
   project: cs224r-minority-voting
-  group: train-real
+
+# Per-arm: checkpoint dir, wandb group, length_norm (set arms → batch_max enforced
+# in TrainCfg.from_dict). Only keys that differ from shared blocks above.
+arm_profiles:
+  grpo:
+    train:
+      checkpoint_dir: /vol/checkpoints/train_real/
+    loss:
+      length_norm: per_seq
+    artifacts:
+      pointer_path: docs/artifacts/train_real.pointer.json
+    wandb:
+      group: train-real
+
+  minority_answer:
+    arm: minority_answer
+    train:
+      checkpoint_dir: /vol/checkpoints/train_minority_answer/
+    loss:
+      length_norm: batch_max
+    artifacts:
+      pointer_path: docs/artifacts/train_minority_answer.pointer.json
+    wandb:
+      group: train-minority-answer
+
+  poly_epo_answer:
+    arm: poly_epo_answer
+    train:
+      checkpoint_dir: /vol/checkpoints/train_poly_epo_answer/
+    loss:
+      length_norm: batch_max
+    artifacts:
+      pointer_path: docs/artifacts/train_poly_epo_answer.pointer.json
+    wandb:
+      group: train-poly-epo-answer
+
+  minority_cot:
+    arm: minority_cot
+    train:
+      checkpoint_dir: /vol/checkpoints/train_minority_cot/
+    loss:
+      length_norm: batch_max
+    artifacts:
+      pointer_path: docs/artifacts/train_minority_cot.pointer.json
+    wandb:
+      group: train-minority-cot
+
+# Smoke only: append all rollouts each step for offline clustering / answer-matching
+# probes ({arm} substituted at launch). Not used on full production runs.
+smoke_probes:
+  rollouts_jsonl_path: /vol/probes/05-26/{arm}_smoke/train_rollouts.jsonl
