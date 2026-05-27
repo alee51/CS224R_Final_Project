@@ -2,7 +2,7 @@
 
 You are continuing a CS 224R final project GRPO run that Nancy started. As of the 2026-05-26 restart, the trainer **auto-relaunches itself** across Modal's 24h timeout, so once you launch, you can walk away — chained legs handle themselves until `total_steps=799` is reached.
 
-**Step count:** 149 done out of 799 (`total_steps=799` in yaml = one epoch on filtered Polaris: 51,139 rows / 64-prompt batch ≈ 799 unique batches). The handoff checkpoint is **`step_000149.pt`**.
+**Step count:** 159 done out of 799 (`total_steps=799` in yaml = one epoch on filtered Polaris: 51,139 rows / 64-prompt batch ≈ 799 unique batches). The handoff checkpoint is **`step_000159.pt`**.
 
 **Key improvements landed 2026-05-26** (see [`efficiency_wins_2026-05-26.md`](../efficiency_wins_2026-05-26.md) for full reasoning):
 
@@ -15,7 +15,7 @@ You are continuing a CS 224R final project GRPO run that Nancy started. As of th
 
 ## What you'll receive from Nancy
 
-1. **`step_000149.pt`** (~9.6 GB). Contains model weights, optimizer state, RNG, dataset cursor. Nancy already stripped the `wandb_run_id` from it so your launch starts a fresh wandb run.
+1. **`step_000159.pt`** (~9.6 GB). Contains model weights, optimizer state, RNG, dataset cursor. Launch with `--fresh-wandb` to start a new wandb run (Nancy's wandb run `pcas3emd` is past the checkpoint step, so the silent-log-drop would otherwise bite).
 2. **`polaris_train.jsonl`** — filtered Polaris training data, ~29 MB, **51,139 rows**. **Skip this if you already have it from a previous Nancy handoff** — the file hasn't changed since 2026-05-26.
 
 That's it. Repo + code are public on GitHub.
@@ -54,7 +54,7 @@ If you don't have a wandb account, make one at https://wandb.ai/. The run will l
 
 ```bash
 main/.venv/bin/modal volume create main-artifacts          # one-time, idempotent
-main/.venv/bin/modal volume put main-artifacts step_000149.pt checkpoints/train_real/step_000149.pt
+main/.venv/bin/modal volume put main-artifacts step_000159.pt checkpoints/train_real/step_000159.pt
 # Skip the next line if you already have polaris_train.jsonl on your volume from a prior handoff:
 main/.venv/bin/modal volume put main-artifacts polaris_train.jsonl data/polaris_train.jsonl
 ```
@@ -62,7 +62,7 @@ main/.venv/bin/modal volume put main-artifacts polaris_train.jsonl data/polaris_
 Sanity check:
 ```bash
 main/.venv/bin/modal volume ls main-artifacts checkpoints/train_real/
-# should show: step_000149.pt
+# should show: step_000159.pt
 main/.venv/bin/modal volume ls main-artifacts data/
 # should show: polaris_train.jsonl
 ```
@@ -101,12 +101,12 @@ The first launch in your workspace triggers a **~3–5 min Modal image rebuild**
 
 Within ~2–5 minutes you'll see:
 ```
-INFO Resuming from checkpoint /vol/checkpoints/train_real/step_000149.pt
+INFO Resuming from checkpoint /vol/checkpoints/train_real/step_000159.pt
 INFO CS224R_FRESH_WANDB set; starting fresh wandb run
 wandb: View run at https://wandb.ai/.../runs/<your_new_run_id>
 ```
 
-Training picks up at **step 150**. Checkpoints land every 10 steps on the volume.
+Training picks up at **step 160**. Checkpoints land every 10 steps on the volume.
 
 After ~23h the leg will log:
 ```

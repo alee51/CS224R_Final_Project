@@ -280,7 +280,7 @@ arm: grpo                      # grpo | minority_answer | minority_cot | poly_ep
 
 train:
   data_path: /vol/data/polaris_train.jsonl   # set by §2 freeze; toy path for Group B
-  total_steps: 850             # PLAN §5 calibration; tune from probes
+  total_steps: 799             # one epoch on filtered Polaris (51,139 rows / bs=64)
   batch_size: 64               # prompts per step — Group B sets
   n_rollouts: 8                # locked
   microbatch: 4                # Group B sets via OOM sweep

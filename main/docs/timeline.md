@@ -501,6 +501,27 @@ Watch these for the first ~10 post-resume steps:
 
 ### Notes for next operator
 
-- Old wandb run `8qesa78k` has the pre-change baseline through step 155; new wandb run continues from step 150 with FA2 + 105k. Compare `t_logprob_fwd_s` and `t_backward_s` between the two to quantify FA2 win.
+- Old wandb run `8qesa78k` has the pre-change baseline through step 155; the post-revert run `pcas3emd` covers steps 150–159 with 105k token_budget (FA2 reverted). Use these two runs as the A/B baseline if/when FA2 lands cleanly.
 - The 2026-05-28 entry's "Open follow-ups" are mostly resolved here (Modal 24h timeout already set in `trainer.py`; token_budget bumped; FA2 not in that list but landed). Remaining deferred: `gradient_checkpointing=False` experiment (next-biggest win, requires careful VRAM calibration; do as an A/B on a fresh branch, not mid-run).
 - `--fresh-wandb` is a one-shot. Don't bake it into normal launches — auto-resume after a crash should preserve history.
+
+### Handoff to Anastasia (post-restart, step 159)
+
+After the post-revert relaunch (app `ap-TPL9A7X2WjbAHFzcibHfq5`, wandb run `pcas3emd`) ran cleanly through step 159, Nancy stopped the run to hand off. Live-run snapshot at stop time:
+
+| Metric | Value |
+|---|---|
+| Steps trained this leg | 150–159 (10 steps post-resume) |
+| `vram_peak_gb_step` | ~125 GB (well under 140 GB threshold) |
+| `t_rollout_s` | ~101s |
+| `t_train_fwd_bwd_s` | ~102s |
+| `num_chunks` | 2 (token_budget=105k didn't drop to 1 at `n_kept=192`; would need ~170k+) |
+| `mean_reward` | 0.064–0.078 (within historical noise band) |
+| Step time | ~210s — **similar to pre-restart 197s** |
+
+**Honest revision of the token_budget projection:** at the n_kept range we're seeing (mean ~160, occasionally 192+), total per-step tokens often exceed 105k, so chunks stay at 2. Realistic gain from the 90k→105k bump is **5–10% on average**, not the 25% I projected upfront. The bigger lever in retrospect is still self-spawn (eliminates ~5 manual relaunches per branch) and FA2 once we get it working.
+
+**Handoff packet:**
+- Latest checkpoint: `step_000159.pt` on volume
+- Code on `origin/main` at `97236a8` (efficiency knobs + self-spawn, FA2 deferred)
+- Anastasia launches with `bash main/scripts/launch_train.sh --mode full --fresh-wandb` on her Modal account; resumes at step 160; self-spawn handles legs 2+ across the remaining ~640 steps (~37h wall-clock at current pace ≈ 2 chained 23h legs).

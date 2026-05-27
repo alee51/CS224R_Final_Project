@@ -167,7 +167,7 @@ Aggressive optimization here is the only place we can buy back wall-clock before
 | Prompts / batch / microbatch | 128 / 64 | Locked **64** on single H200† |
 | LR / KL / clip low/high | 1e-6 / 0.0 / 0.20 / 0.28 (DAPO-asym) | Adopt KL=0 and asym clip; LR sweep if needed |
 | Entropy / rollout temp | 0.0 / 1.0 | Adopt |
-| Training steps | 850 | Scope from probes |
+| Training steps | 799 | One epoch on filtered Polaris (51,139 rows / 64-prompt batch ≈ 799) |
 | Codebase | VeRL via Tajwar et al MLRL fork | Read-and-lift, not import |
 
 † Poly-EPO **128 prompts / batch 64** is on **4× H200** (4B, VeRL) — not our single-GPU collocated 1.7B stack. We lock **`train.batch_size: 64`** on one H200; bs=128 OOMs in `logprob_fwd` after rollout ([`decisions.md`](./decisions.md) §2026-05-26).
