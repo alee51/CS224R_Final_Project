@@ -826,3 +826,8 @@ This substrate is imperfect by design — we accept the floor, log the limitatio
 - **Not a substitute for held-out eval** — 128 training-distribution prompts; directional only. Scale up or run AIME/HMMT harness before paper claims.
 
 **Artifacts.** Volume: `/vol/probes/checkpoint_eval/20260527T041910Z/results.json`. Local copy: `[main/data/probes/checkpoint_eval/results_20260527T041910Z.json](../data/probes/checkpoint_eval/results_20260527T041910Z.json)`.
+
+### Addendum (late night) — DAPO 2k eval intentionally paused
+
+- We intentionally paused the detached DAPO 2k+B200 checkpoint-eval app (`ap-acyT5Dk5PzVLtlzdGDTm37`) to reduce active GPU usage while preserving focus on the remaining eval stream.
+- This was an operator resource-allocation decision (pause for now), not a new eval harness failure.

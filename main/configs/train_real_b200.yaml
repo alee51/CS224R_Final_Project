@@ -1,4 +1,4 @@
-extends: configs/train_real.yaml
+extends: train_real.yaml
 
 # B200 overlay for train_real baseline.
 gpu_class: B200
