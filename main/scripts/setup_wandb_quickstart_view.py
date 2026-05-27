@@ -22,6 +22,22 @@ ENTITY = "224r-project"
 PROJECT = "cs224r-minority-voting"
 VIEW_NAME = "GRPO quickstart"
 
+# Non-overlapping `phase_times` keys logged as `train/{phase}_s` (see train/trainer.py).
+# Omit t_logprob_fwd / t_backward (subsumed by t_train_fwd_bwd) and t_vllm_wake_weights
+# (nested inside t_weight_sync). Omit train/weight_sync_s (duplicate of sync wall time).
+STEP_TIME_PHASES = [
+    "train/t_rollout_s",
+    "train/t_score_s",
+    "train/t_advantage_s",
+    "train/t_vllm_sleep_s",
+    "train/t_train_fwd_bwd_s",
+    "train/t_optimizer_s",
+    "train/t_weight_sync_s",
+    "train/t_vllm_wake_kv_s",
+]
+STEP_TIME_TOTAL_EXPR = " + ".join(STEP_TIME_PHASES)
+STEP_TIME_TOTAL_LABEL = "total step (instrumented)"
+
 
 @dataclass(eq=False, frozen=True)
 class RunTags(_expr.BaseMetric):
@@ -117,13 +133,17 @@ def build_workspace() -> ws.Workspace:
                         range_y=(80, 145),
                     ),
                     wr.LinePlot(
-                        title="Time per step (s, stacked)",
-                        y=[
-                            "train/t_rollout_s",
-                            "train/t_train_fwd_bwd_s",
-                            "train/t_weight_sync_s",
-                        ],
+                        title="Total step time (s)",
+                        y=[STEP_TIME_PHASES[0]],
+                        custom_expressions=[STEP_TIME_TOTAL_EXPR],
+                        line_titles={STEP_TIME_TOTAL_EXPR: STEP_TIME_TOTAL_LABEL},
+                        title_y="seconds",
+                    ),
+                    wr.LinePlot(
+                        title="Step time breakdown (s, stacked)",
+                        y=STEP_TIME_PHASES,
                         plot_type="stacked-area",
+                        title_y="seconds",
                     ),
                     wr.MediaBrowser(
                         title="Sample completions (every 50 steps)",

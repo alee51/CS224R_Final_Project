@@ -6,6 +6,7 @@ Code and docs for the post-milestone minority-voting training run. Run Modal job
 
 | Doc | Path | Read when you need… |
 | --- | --- | --- |
+| **Launch training** | [`docs/launch_training.md`](docs/launch_training.md) | **How to launch smokes and full runs** — copy-paste commands for agents (`--gpu-class`, `--arm`, no bad config pairings). |
 | **Context** | [`docs/context.md`](docs/context.md) | Team facts, deadlines, budget, reading list. Start here for orientation. |
 | **Plan** | [`docs/PLAN.md`](docs/PLAN.md) | What we're building and why: dataset, training arms, eval, ops, cost sizing. Updated from probe readouts. |
 | **Standards** | [`docs/STANDARDS.md`](docs/STANDARDS.md) | Cross-cutting engineering rules: configs, seeds, wandb, Modal, artifacts. All code must follow this. |
@@ -91,3 +92,11 @@ modal volume ls main-artifacts probes/05-24/group_a/
 ```
 
 Full run: set `smoke: false` in the yaml, then launch again (~2 hr H100).
+
+### 6. Production training (B200)
+
+See **[`docs/launch_training.md`](docs/launch_training.md)** for canonical commands. Example:
+
+```bash
+bash main/scripts/launch_train.sh --mode full --gpu-class b200 --arm grpo
+```

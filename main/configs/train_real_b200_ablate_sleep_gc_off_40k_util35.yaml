@@ -1,0 +1,10 @@
+extends: train_real_b200.yaml
+
+# Fit probe: sleep + gc off + tiny token budget, and reduce vLLM KV reservation.
+train:
+  gradient_checkpointing: false
+  token_budget: 40000
+
+rollout:
+  gpu_memory_utilization: 0.35
+

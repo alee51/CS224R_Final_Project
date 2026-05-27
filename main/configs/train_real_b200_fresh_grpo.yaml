@@ -1,0 +1,7 @@
+extends: train_real_b200.yaml
+
+# Fresh B200 GRPO production — isolated from H200 line at /vol/checkpoints/train_real/
+arm_profiles:
+  grpo:
+    train:
+      checkpoint_dir: /vol/checkpoints/train_real_b200/

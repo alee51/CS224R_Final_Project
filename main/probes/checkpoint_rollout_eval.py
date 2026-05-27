@@ -249,7 +249,7 @@ def _generate_and_score(
             raise FileNotFoundError(f"checkpoint missing: {ckpt_path}")
         dataset = JsonlPromptDataset(str(data_path), global_seed)
         hf_model, opt = build_hf(cfg)
-        load_ckpt(ckpt_path, hf_model, opt, dataset)
+        load_ckpt(ckpt_path, hf_model, opt, dataset, restore_dataset=False)
         hf_model.eval()
         sync_stats = rollout_engine.update_weights(hf_model)
         logger.info(
@@ -399,12 +399,11 @@ def eval_one_checkpoint(
     dataset_kind = str(ds_spec.get("kind", "jsonl"))
     if "polaris" in eval_cfg["datasets"]:
         data_path = Path(str(eval_cfg["datasets"]["polaris"]["path"]))
-    elif dataset_kind == "jsonl" and "path" in ds_spec:
-        data_path = _resolve_jsonl_path(Path(str(ds_spec["path"])))
     else:
-        # Fallback for HF-only configs: checkpoint load needs a dataset object, but any
-        # stable local jsonl path is fine since eval metrics come from manifest_path.
+        # Checkpoint load only needs HF weights; eval metrics come from manifest_path.
         data_path = Path("/vol/data/polaris_train.jsonl")
+        if not data_path.is_file():
+            data_path = _MAIN_ROOT / "data/polaris_train.jsonl"
 
     rows = _load_jsonl_rows(Path(manifest_path))
     problems, golds, problem_ids = _rows_to_slice(rows)

@@ -1,0 +1,6 @@
+extends: train_real_b200.yaml
+
+# Very conservative fit probe: sleep + gc off + tiny token budget.
+train:
+  gradient_checkpointing: false
+  token_budget: 40000

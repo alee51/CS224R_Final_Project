@@ -1,0 +1,2 @@
+sleep_only cs224r-train-minority_answer-smoke-b200eff-sleep_only-05-27-0139 main/configs/train_real_b200.yaml
+sleep_gc75 cs224r-train-minority_answer-smoke-b200eff-sleep_gc75-05-27-0139 main/configs/train_real_b200_ablate_sleep_gc_off_75k.yaml

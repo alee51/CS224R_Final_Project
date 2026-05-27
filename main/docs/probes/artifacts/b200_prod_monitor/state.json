@@ -1,0 +1,44 @@
+{
+  "milestones_done": {
+    "both": [
+      1,
+      10,
+      20
+    ]
+  },
+  "relaunchs": [],
+  "last_report": {
+    "checked_at": "2026-05-27T20:16:58.752138+00:00",
+    "runs": [
+      {
+        "name": "grpo",
+        "modal_app": "ap-VBmgTVFefkECyZa0r52RMb",
+        "modal_state": "not_listed",
+        "wandb": "https://wandb.ai/224r-project/cs224r-minority-voting/runs/t11jct0t",
+        "wandb_state": "running",
+        "wandb_step": 304,
+        "has_loss": true,
+        "ok_running": false,
+        "crashed": false
+      },
+      {
+        "name": "minority",
+        "modal_app": "ap-3Acz8FrtQY4D4ubqkzJ4jB",
+        "modal_state": "not_listed",
+        "wandb": "https://wandb.ai/224r-project/cs224r-minority-voting/runs/o5ypkzja",
+        "wandb_state": "running",
+        "wandb_step": 137,
+        "has_loss": true,
+        "ok_running": false,
+        "crashed": false
+      }
+    ],
+    "max_step": 304,
+    "milestones_done": [
+      1,
+      10,
+      20
+    ],
+    "next_poll_seconds": 3600
+  }
+}

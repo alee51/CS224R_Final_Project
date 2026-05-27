@@ -1,0 +1,55 @@
+# OOD checkpoint eval on AIME-25 + DAPO, H200.
+# Variants: base + step 99 + step 339.
+# Launch (anastasia profile):
+#   bash main/scripts/launch_checkpoint_eval.sh --config main/configs/checkpoint_eval_ood_aime_dapo_99_339_h200.yaml --detach
+
+operator: anastasia
+gpu_class: H200
+global_seed: 42
+modal_price_per_sec: 0.001261
+
+eval:
+  include_base: true
+  checkpoint_dir: /vol/checkpoints/train_real/
+  checkpoint_steps: [99, 339]
+  n_rollouts: 8
+  rollout_chunk_prompts: 64
+  output_dir: /vol/probes/checkpoint_eval_ood_aime_dapo_99_339
+
+  datasets:
+    dapo:
+      kind: hf
+      hf_dataset: open-r1/DAPO-Math-17k-Processed
+      hf_config: en
+      hf_split: train
+      n_prompts: 2000
+      seed: 43
+      prompt_variant: dapo_answer_v1
+
+    aime25:
+      kind: jsonl
+      path: /vol/data/eval/aime25.jsonl
+      n_prompts: 30
+      seed: 0
+      prompt_variant: dapo_answer_v1
+
+rollout:
+  model: Qwen/Qwen3-1.7B-Base
+  max_prompt_length: 1024
+  max_response_length: 4096
+  temperature: 1.0
+  top_p: 1.0
+  gpu_memory_utilization: 0.45
+  max_model_len: 5120
+  max_num_seqs: 128
+  enable_prefix_caching: true
+  logprobs: 1
+
+train:
+  lr: 1.0e-6
+  weight_decay: 0.0
+  gradient_checkpointing: false
+
+artifacts:
+  volume_name: main-artifacts
+  volume_mount: /vol

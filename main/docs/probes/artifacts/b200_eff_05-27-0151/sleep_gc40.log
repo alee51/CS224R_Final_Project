@@ -1,0 +1,6 @@
+✓ Initialized. View run at 
+https://modal.com/apps/chicken602/main/ap-WWxK9jvOwTfy8ryiAJm3Jf
+╭─ Error ──────────────────────────────────────────────────────────────────────╮
+│ /Users/nancybao/Desktop/dev/cs224r_finalproject/main/data/checkpoints_transf │
+│ er/step_000099.pt was modified during build process.                         │
+╰──────────────────────────────────────────────────────────────────────────────╯

@@ -1,0 +1,7 @@
+extends: train_real_b200.yaml
+
+# Fresh B200 minority_answer — isolated from smoke ckpts at /vol/checkpoints/train_minority_answer/
+arm_profiles:
+  minority_answer:
+    train:
+      checkpoint_dir: /vol/checkpoints/train_minority_answer_b200/

@@ -1,0 +1,1241 @@
+✓ Initialized. View run at 
+https://modal.com/apps/alee72/main/ap-Va65cRFZUdOp5EE3Iw9J5X
+Building image im-DeDL0RQEl9rUniOK7oVWhs
+
+=> Step 0: FROM base
+
+=> Step 1: RUN python -m pip install vllm==0.9.0 --extra-index-url https://download.pytorch.org/whl/cu128
+Looking in indexes: http://pypi-mirror.modal.local:5555/simple, https://download.pytorch.org/whl/cu128
+Collecting vllm==0.9.0
+  Downloading http://pypi-mirror.modal.local:5555/simple/vllm/vllm-0.9.0-cp38-abi3-manylinux1_x86_64.whl.metadata (15 kB)
+Collecting regex (from vllm==0.9.0)
+  Downloading http://pypi-mirror.modal.local:5555/simple/regex/regex-2026.5.9-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (40 kB)
+Collecting cachetools (from vllm==0.9.0)
+  Downloading http://pypi-mirror.modal.local:5555/simple/cachetools/cachetools-7.1.4-py3-none-any.whl.metadata (5.5 kB)
+Collecting psutil (from vllm==0.9.0)
+  Downloading http://pypi-mirror.modal.local:5555/simple/psutil/psutil-7.2.2-cp36-abi3-manylinux2010_x86_64.manylinux_2_12_x86_64.manylinux_2_28_x86_64.whl.metadata (22 kB)
+Collecting sentencepiece (from vllm==0.9.0)
+  Downloading http://pypi-mirror.modal.local:5555/simple/sentencepiece/sentencepiece-0.2.1-cp311-cp311-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl.metadata (10 kB)
+Collecting numpy (from vllm==0.9.0)
+  Downloading http://pypi-mirror.modal.local:5555/simple/numpy/numpy-2.4.6-cp311-cp311-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl.metadata (6.6 kB)
+Collecting requests>=2.26.0 (from vllm==0.9.0)
+  Downloading http://pypi-mirror.modal.local:5555/simple/requests/requests-2.34.2-py3-none-any.whl.metadata (4.8 kB)
+Collecting tqdm (from vllm==0.9.0)
+  Downloading http://pypi-mirror.modal.local:5555/simple/tqdm/tqdm-4.67.3-py3-none-any.whl.metadata (57 kB)
+Collecting blake3 (from vllm==0.9.0)
+  Downloading http://pypi-mirror.modal.local:5555/simple/blake3/blake3-1.0.8-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (4.6 kB)
+Collecting py-cpuinfo (from vllm==0.9.0)
+  Downloading http://pypi-mirror.modal.local:5555/simple/py-cpuinfo/py_cpuinfo-9.0.0-py3-none-any.whl.metadata (794 bytes)
+Collecting transformers>=4.51.1 (from vllm==0.9.0)
+  Downloading http://pypi-mirror.modal.local:5555/simple/transformers/transformers-5.9.0-py3-none-any.whl.metadata (33 kB)
+Collecting huggingface-hub>=0.32.0 (from huggingface-hub[hf_xet]>=0.32.0->vllm==0.9.0)
+  Downloading http://pypi-mirror.modal.local:5555/simple/huggingface-hub/huggingface_hub-1.16.4-py3-none-any.whl.metadata (14 kB)
+Collecting tokenizers>=0.21.1 (from vllm==0.9.0)
+  Downloading http://pypi-mirror.modal.local:5555/simple/tokenizers/tokenizers-0.23.1-cp310-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (9.8 kB)
+Collecting protobuf (from vllm==0.9.0)
+  Downloading http://pypi-mirror.modal.local:5555/simple/protobuf/protobuf-7.35.0-cp310-abi3-manylinux2014_x86_64.whl.metadata (595 bytes)
+Collecting fastapi>=0.115.0 (from fastapi[standard]>=0.115.0->vllm==0.9.0)
+  Downloading http://pypi-mirror.modal.local:5555/simple/fastapi/fastapi-0.136.3-py3-none-any.whl.metadata (27 kB)
+Collecting aiohttp (from vllm==0.9.0)
+  Downloading http://pypi-mirror.modal.local:5555/simple/aiohttp/aiohttp-3.13.5-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (8.1 kB)
+Collecting openai>=1.52.0 (from vllm==0.9.0)
+  Downloading http://pypi-mirror.modal.local:5555/simple/openai/openai-2.38.0-py3-none-any.whl.metadata (31 kB)
+Collecting pydantic>=2.9 (from vllm==0.9.0)
+  Downloading http://pypi-mirror.modal.local:5555/simple/pydantic/pydantic-2.13.4-py3-none-any.whl.metadata (109 kB)
+Collecting prometheus_client>=0.18.0 (from vllm==0.9.0)
+  Downloading http://pypi-mirror.modal.local:5555/simple/prometheus-client/prometheus_client-0.25.0-py3-none-any.whl.metadata (2.1 kB)
+Collecting pillow (from vllm==0.9.0)
+  Downloading pillow-12.2.0-cp311-cp311-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl.metadata (8.8 kB)
+Collecting prometheus-fastapi-instrumentator>=7.0.0 (from vllm==0.9.0)
+  Downloading http://pypi-mirror.modal.local:5555/simple/prometheus-fastapi-instrumentator/prometheus_fastapi_instrumentator-7.1.0-py3-none-any.whl.metadata (13 kB)
+Collecting tiktoken>=0.6.0 (from vllm==0.9.0)
+  Downloading http://pypi-mirror.modal.local:5555/simple/tiktoken/tiktoken-0.13.0-cp311-cp311-manylinux_2_28_x86_64.whl.metadata (6.7 kB)
+Collecting lm-format-enforcer<0.11,>=0.10.11 (from vllm==0.9.0)
+  Downloading http://pypi-mirror.modal.local:5555/simple/lm-format-enforcer/lm_format_enforcer-0.10.12-py3-none-any.whl.metadata (17 kB)
+Collecting llguidance<0.8.0,>=0.7.11 (from vllm==0.9.0)
+  Downloading http://pypi-mirror.modal.local:5555/simple/llguidance/llguidance-0.7.30-cp39-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (10 kB)
+Collecting outlines==0.1.11 (from vllm==0.9.0)
+  Downloading http://pypi-mirror.modal.local:5555/simple/outlines/outlines-0.1.11-py3-none-any.whl.metadata (17 kB)
+Collecting lark==1.2.2 (from vllm==0.9.0)
+  Downloading http://pypi-mirror.modal.local:5555/simple/lark/lark-1.2.2-py3-none-any.whl.metadata (1.8 kB)
+Collecting xgrammar==0.1.19 (from vllm==0.9.0)
+  Downloading http://pypi-mirror.modal.local:5555/simple/xgrammar/xgrammar-0.1.19-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (3.6 kB)
+Collecting typing_extensions>=4.10 (from vllm==0.9.0)
+  Downloading https://download.pytorch.org/whl/typing_extensions-4.15.0-py3-none-any.whl.metadata (3.3 kB)
+Collecting filelock>=3.16.1 (from vllm==0.9.0)
+  Downloading filelock-3.29.0-py3-none-any.whl.metadata (2.0 kB)
+Collecting partial-json-parser (from vllm==0.9.0)
+  Downloading http://pypi-mirror.modal.local:5555/simple/partial-json-parser/partial_json_parser-0.2.1.1.post7-py3-none-any.whl.metadata (6.1 kB)
+Collecting pyzmq>=25.0.0 (from vllm==0.9.0)
+  Downloading http://pypi-mirror.modal.local:5555/simple/pyzmq/pyzmq-27.1.0-cp311-cp311-manylinux_2_26_x86_64.manylinux_2_28_x86_64.whl.metadata (6.0 kB)
+Collecting msgspec (from vllm==0.9.0)
+  Downloading http://pypi-mirror.modal.local:5555/simple/msgspec/msgspec-0.21.1-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (5.8 kB)
+Collecting gguf>=0.13.0 (from vllm==0.9.0)
+  Downloading http://pypi-mirror.modal.local:5555/simple/gguf/gguf-0.19.0-py3-none-any.whl.metadata (4.1 kB)
+Collecting mistral_common>=1.5.4 (from mistral_common[opencv]>=1.5.4->vllm==0.9.0)
+  Downloading http://pypi-mirror.modal.local:5555/simple/mistral-common/mistral_common-1.11.2-py3-none-any.whl.metadata (5.9 kB)
+Collecting opencv-python-headless>=4.11.0 (from vllm==0.9.0)
+  Downloading http://pypi-mirror.modal.local:5555/simple/opencv-python-headless/opencv_python_headless-4.13.0.92-cp37-abi3-manylinux_2_28_x86_64.whl.metadata (19 kB)
+Collecting pyyaml (from vllm==0.9.0)
+  Downloading http://pypi-mirror.modal.local:5555/simple/pyyaml/pyyaml-6.0.3-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (2.4 kB)
+Collecting einops (from vllm==0.9.0)
+  Downloading http://pypi-mirror.modal.local:5555/simple/einops/einops-0.8.2-py3-none-any.whl.metadata (13 kB)
+Collecting compressed-tensors==0.9.4 (from vllm==0.9.0)
+  Downloading http://pypi-mirror.modal.local:5555/simple/compressed-tensors/compressed_tensors-0.9.4-py3-none-any.whl.metadata (7.0 kB)
+Collecting depyf==0.18.0 (from vllm==0.9.0)
+  Downloading http://pypi-mirror.modal.local:5555/simple/depyf/depyf-0.18.0-py3-none-any.whl.metadata (7.1 kB)
+Collecting cloudpickle (from vllm==0.9.0)
+  Downloading http://pypi-mirror.modal.local:5555/simple/cloudpickle/cloudpickle-3.1.2-py3-none-any.whl.metadata (7.1 kB)
+Collecting watchfiles (from vllm==0.9.0)
+  Downloading http://pypi-mirror.modal.local:5555/simple/watchfiles/watchfiles-1.2.0-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (4.9 kB)
+Collecting python-json-logger (from vllm==0.9.0)
+  Downloading http://pypi-mirror.modal.local:5555/simple/python-json-logger/python_json_logger-4.1.0-py3-none-any.whl.metadata (3.7 kB)
+Collecting scipy (from vllm==0.9.0)
+  Downloading http://pypi-mirror.modal.local:5555/simple/scipy/scipy-1.17.1-cp311-cp311-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl.metadata (62 kB)
+Collecting ninja (from vllm==0.9.0)
+  Downloading http://pypi-mirror.modal.local:5555/simple/ninja/ninja-1.13.0-py3-none-manylinux2014_x86_64.manylinux_2_17_x86_64.whl.metadata (5.1 kB)
+Collecting opentelemetry-sdk>=1.26.0 (from vllm==0.9.0)
+  Downloading http://pypi-mirror.modal.local:5555/simple/opentelemetry-sdk/opentelemetry_sdk-1.42.1-py3-none-any.whl.metadata (1.7 kB)
+Collecting opentelemetry-api>=1.26.0 (from vllm==0.9.0)
+  Downloading http://pypi-mirror.modal.local:5555/simple/opentelemetry-api/opentelemetry_api-1.42.1-py3-none-any.whl.metadata (1.4 kB)
+Collecting opentelemetry-exporter-otlp>=1.26.0 (from vllm==0.9.0)
+  Downloading http://pypi-mirror.modal.local:5555/simple/opentelemetry-exporter-otlp/opentelemetry_exporter_otlp-1.42.1-py3-none-any.whl.metadata (2.4 kB)
+Collecting opentelemetry-semantic-conventions-ai>=0.4.1 (from vllm==0.9.0)
+  Downloading http://pypi-mirror.modal.local:5555/simple/opentelemetry-semantic-conventions-ai/opentelemetry_semantic_conventions_ai-0.5.1-py3-none-any.whl.metadata (997 bytes)
+Collecting numba==0.61.2 (from vllm==0.9.0)
+  Downloading http://pypi-mirror.modal.local:5555/simple/numba/numba-0.61.2-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.whl.metadata (2.8 kB)
+Collecting ray!=2.44.*,>=2.43.0 (from ray[cgraph]!=2.44.*,>=2.43.0->vllm==0.9.0)
+  Downloading http://pypi-mirror.modal.local:5555/simple/ray/ray-2.55.1-cp311-cp311-manylinux2014_x86_64.whl.metadata (21 kB)
+Collecting torch==2.7.0 (from vllm==0.9.0)
+  Downloading https://download-r2.pytorch.org/whl/cu128/torch-2.7.0%2Bcu128-cp311-cp311-manylinux_2_28_x86_64.whl.metadata (29 kB)
+Collecting torchaudio==2.7.0 (from vllm==0.9.0)
+  Downloading https://download-r2.pytorch.org/whl/cu128/torchaudio-2.7.0%2Bcu128-cp311-cp311-manylinux_2_28_x86_64.whl.metadata (6.6 kB)
+Collecting torchvision==0.22.0 (from vllm==0.9.0)
+  Downloading https://download-r2.pytorch.org/whl/cu128/torchvision-0.22.0%2Bcu128-cp311-cp311-manylinux_2_28_x86_64.whl.metadata (6.1 kB)
+Collecting xformers==0.0.30 (from vllm==0.9.0)
+  Downloading https://download.pytorch.org/whl/cu128/xformers-0.0.30-cp311-cp311-manylinux_2_28_x86_64.whl.metadata (1.0 kB)
+Collecting astor (from depyf==0.18.0->vllm==0.9.0)
+  Downloading http://pypi-mirror.modal.local:5555/simple/astor/astor-0.8.1-py2.py3-none-any.whl.metadata (4.2 kB)
+Collecting dill (from depyf==0.18.0->vllm==0.9.0)
+  Downloading http://pypi-mirror.modal.local:5555/simple/dill/dill-0.4.1-py3-none-any.whl.metadata (10 kB)
+Collecting llvmlite<0.45,>=0.44.0dev0 (from numba==0.61.2->vllm==0.9.0)
+  Downloading http://pypi-mirror.modal.local:5555/simple/llvmlite/llvmlite-0.44.0-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (4.8 kB)
+Collecting numpy (from vllm==0.9.0)
+  Downloading numpy-2.2.6-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (62 kB)
+Collecting interegular (from outlines==0.1.11->vllm==0.9.0)
+  Downloading http://pypi-mirror.modal.local:5555/simple/interegular/interegular-0.3.3-py37-none-any.whl.metadata (3.0 kB)
+Collecting jinja2 (from outlines==0.1.11->vllm==0.9.0)
+  Downloading https://download.pytorch.org/whl/jinja2-3.1.6-py3-none-any.whl.metadata (2.9 kB)
+Collecting nest_asyncio (from outlines==0.1.11->vllm==0.9.0)
+  Downloading http://pypi-mirror.modal.local:5555/simple/nest-asyncio/nest_asyncio-1.6.0-py3-none-any.whl.metadata (2.8 kB)
+Collecting diskcache (from outlines==0.1.11->vllm==0.9.0)
+  Downloading http://pypi-mirror.modal.local:5555/simple/diskcache/diskcache-5.6.3-py3-none-any.whl.metadata (20 kB)
+Collecting referencing (from outlines==0.1.11->vllm==0.9.0)
+  Downloading http://pypi-mirror.modal.local:5555/simple/referencing/referencing-0.37.0-py3-none-any.whl.metadata (2.8 kB)
+Collecting jsonschema (from outlines==0.1.11->vllm==0.9.0)
+  Downloading http://pypi-mirror.modal.local:5555/simple/jsonschema/jsonschema-4.26.0-py3-none-any.whl.metadata (7.6 kB)
+Collecting pycountry (from outlines==0.1.11->vllm==0.9.0)
+  Downloading http://pypi-mirror.modal.local:5555/simple/pycountry/pycountry-26.2.16-py3-none-any.whl.metadata (12 kB)
+Collecting airportsdata (from outlines==0.1.11->vllm==0.9.0)
+  Downloading http://pypi-mirror.modal.local:5555/simple/airportsdata/airportsdata-20260315-py3-none-any.whl.metadata (8.0 kB)
+Collecting outlines_core==0.1.26 (from outlines==0.1.11->vllm==0.9.0)
+  Downloading http://pypi-mirror.modal.local:5555/simple/outlines-core/outlines_core-0.1.26-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (3.8 kB)
+Collecting sympy>=1.13.3 (from torch==2.7.0->vllm==0.9.0)
+  Downloading sympy-1.14.0-py3-none-any.whl.metadata (12 kB)
+Collecting networkx (from torch==2.7.0->vllm==0.9.0)
+  Downloading networkx-3.6.1-py3-none-any.whl.metadata (6.8 kB)
+Collecting fsspec (from torch==2.7.0->vllm==0.9.0)
+  Downloading fsspec-2026.4.0-py3-none-any.whl.metadata (10 kB)
+Collecting nvidia-cuda-nvrtc-cu12==12.8.61 (from torch==2.7.0->vllm==0.9.0)
+  Downloading https://pypi.nvidia.com/nvidia-cuda-nvrtc-cu12/nvidia_cuda_nvrtc_cu12-12.8.61-py3-none-manylinux2010_x86_64.manylinux_2_12_x86_64.whl (88.0 MB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 88.0/88.0 MB 156.8 MB/s  0:00:00
+Collecting nvidia-cuda-runtime-cu12==12.8.57 (from torch==2.7.0->vllm==0.9.0)
+  Downloading https://pypi.nvidia.com/nvidia-cuda-runtime-cu12/nvidia_cuda_runtime_cu12-12.8.57-py3-none-manylinux2014_x86_64.manylinux_2_17_x86_64.whl (954 kB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 954.8/954.8 kB 45.5 MB/s  0:00:00
+Collecting nvidia-cuda-cupti-cu12==12.8.57 (from torch==2.7.0->vllm==0.9.0)
+  Downloading https://pypi.nvidia.com/nvidia-cuda-cupti-cu12/nvidia_cuda_cupti_cu12-12.8.57-py3-none-manylinux2014_x86_64.manylinux_2_17_x86_64.whl (10.2 MB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 10.2/10.2 MB 134.9 MB/s  0:00:00
+Collecting nvidia-cudnn-cu12==9.7.1.26 (from torch==2.7.0->vllm==0.9.0)
+  Downloading https://pypi.nvidia.com/nvidia-cudnn-cu12/nvidia_cudnn_cu12-9.7.1.26-py3-none-manylinux_2_27_x86_64.whl (726.9 MB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 726.9/726.9 MB 226.6 MB/s  0:00:03
+Collecting nvidia-cublas-cu12==12.8.3.14 (from torch==2.7.0->vllm==0.9.0)
+  Downloading https://pypi.nvidia.com/nvidia-cublas-cu12/nvidia_cublas_cu12-12.8.3.14-py3-none-manylinux_2_27_x86_64.whl (609.6 MB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 609.6/609.6 MB 189.8 MB/s  0:00:03
+Collecting nvidia-cufft-cu12==11.3.3.41 (from torch==2.7.0->vllm==0.9.0)
+  Downloading https://pypi.nvidia.com/nvidia-cufft-cu12/nvidia_cufft_cu12-11.3.3.41-py3-none-manylinux2014_x86_64.manylinux_2_17_x86_64.whl (193.1 MB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 193.1/193.1 MB 217.5 MB/s  0:00:00
+Collecting nvidia-curand-cu12==10.3.9.55 (from torch==2.7.0->vllm==0.9.0)
+  Downloading https://pypi.nvidia.com/nvidia-curand-cu12/nvidia_curand_cu12-10.3.9.55-py3-none-manylinux_2_27_x86_64.whl (63.6 MB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 63.6/63.6 MB 216.0 MB/s  0:00:00
+Collecting nvidia-cusolver-cu12==11.7.2.55 (from torch==2.7.0->vllm==0.9.0)
+  Downloading https://pypi.nvidia.com/nvidia-cusolver-cu12/nvidia_cusolver_cu12-11.7.2.55-py3-none-manylinux_2_27_x86_64.whl (260.4 MB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 260.4/260.4 MB 171.7 MB/s  0:00:01
+Collecting nvidia-cusparse-cu12==12.5.7.53 (from torch==2.7.0->vllm==0.9.0)
+  Downloading https://pypi.nvidia.com/nvidia-cusparse-cu12/nvidia_cusparse_cu12-12.5.7.53-py3-none-manylinux2014_x86_64.manylinux_2_17_x86_64.whl (292.1 MB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 292.1/292.1 MB 235.1 MB/s  0:00:01
+Collecting nvidia-cusparselt-cu12==0.6.3 (from torch==2.7.0->vllm==0.9.0)
+  Downloading https://pypi.nvidia.com/nvidia-cusparselt-cu12/nvidia_cusparselt_cu12-0.6.3-py3-none-manylinux2014_x86_64.whl (156.8 MB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 156.8/156.8 MB 180.3 MB/s  0:00:00
+Collecting nvidia-nccl-cu12==2.26.2 (from torch==2.7.0->vllm==0.9.0)
+  Downloading https://pypi.nvidia.com/nvidia-nccl-cu12/nvidia_nccl_cu12-2.26.2-py3-none-manylinux2014_x86_64.manylinux_2_17_x86_64.whl (201.3 MB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 201.3/201.3 MB 187.9 MB/s  0:00:01
+Collecting nvidia-nvtx-cu12==12.8.55 (from torch==2.7.0->vllm==0.9.0)
+  Downloading https://pypi.nvidia.com/nvidia-nvtx-cu12/nvidia_nvtx_cu12-12.8.55-py3-none-manylinux2014_x86_64.manylinux_2_17_x86_64.whl (89 kB)
+Collecting nvidia-nvjitlink-cu12==12.8.61 (from torch==2.7.0->vllm==0.9.0)
+  Downloading https://pypi.nvidia.com/nvidia-nvjitlink-cu12/nvidia_nvjitlink_cu12-12.8.61-py3-none-manylinux2010_x86_64.manylinux_2_12_x86_64.whl (39.2 MB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 39.2/39.2 MB 205.5 MB/s  0:00:00
+Collecting nvidia-cufile-cu12==1.13.0.11 (from torch==2.7.0->vllm==0.9.0)
+  Downloading https://pypi.nvidia.com/nvidia-cufile-cu12/nvidia_cufile_cu12-1.13.0.11-py3-none-manylinux2014_x86_64.manylinux_2_17_x86_64.whl (1.2 MB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.2/1.2 MB 261.6 MB/s  0:00:00
+Collecting triton==3.3.0 (from torch==2.7.0->vllm==0.9.0)
+  Downloading https://download-r2.pytorch.org/whl/triton-3.3.0-cp311-cp311-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl.metadata (1.5 kB)
+Requirement already satisfied: setuptools>=40.8.0 in /usr/local/lib/python3.11/site-packages (from triton==3.3.0->torch==2.7.0->vllm==0.9.0) (65.5.1)
+Collecting packaging (from lm-format-enforcer<0.11,>=0.10.11->vllm==0.9.0)
+  Downloading http://pypi-mirror.modal.local:5555/simple/packaging/packaging-26.2-py3-none-any.whl.metadata (3.5 kB)
+Collecting starlette>=0.46.0 (from fastapi>=0.115.0->fastapi[standard]>=0.115.0->vllm==0.9.0)
+  Downloading http://pypi-mirror.modal.local:5555/simple/starlette/starlette-1.1.0-py3-none-any.whl.metadata (6.3 kB)
+Collecting typing-inspection>=0.4.2 (from fastapi>=0.115.0->fastapi[standard]>=0.115.0->vllm==0.9.0)
+  Downloading http://pypi-mirror.modal.local:5555/simple/typing-inspection/typing_inspection-0.4.2-py3-none-any.whl.metadata (2.6 kB)
+Collecting annotated-doc>=0.0.2 (from fastapi>=0.115.0->fastapi[standard]>=0.115.0->vllm==0.9.0)
+  Downloading http://pypi-mirror.modal.local:5555/simple/annotated-doc/annotated_doc-0.0.4-py3-none-any.whl.metadata (6.6 kB)
+Collecting fastapi-cli>=0.0.8 (from fastapi-cli[standard]>=0.0.8; extra == "standard"->fastapi[standard]>=0.115.0->vllm==0.9.0)
+  Downloading http://pypi-mirror.modal.local:5555/simple/fastapi-cli/fastapi_cli-0.0.24-py3-none-any.whl.metadata (6.4 kB)
+Collecting fastar>=0.9.0 (from fastapi[standard]>=0.115.0->vllm==0.9.0)
+  Downloading http://pypi-mirror.modal.local:5555/simple/fastar/fastar-0.11.0-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (4.0 kB)
+Collecting httpx<1.0.0,>=0.23.0 (from fastapi[standard]>=0.115.0->vllm==0.9.0)
+  Downloading http://pypi-mirror.modal.local:5555/simple/httpx/httpx-0.28.1-py3-none-any.whl.metadata (7.1 kB)
+Collecting python-multipart>=0.0.18 (from fastapi[standard]>=0.115.0->vllm==0.9.0)
+  Downloading http://pypi-mirror.modal.local:5555/simple/python-multipart/python_multipart-0.0.29-py3-none-any.whl.metadata (2.1 kB)
+Collecting email-validator>=2.0.0 (from fastapi[standard]>=0.115.0->vllm==0.9.0)
+  Downloading http://pypi-mirror.modal.local:5555/simple/email-validator/email_validator-2.3.0-py3-none-any.whl.metadata (26 kB)
+Collecting uvicorn>=0.12.0 (from uvicorn[standard]>=0.12.0; extra == "standard"->fastapi[standard]>=0.115.0->vllm==0.9.0)
+  Downloading http://pypi-mirror.modal.local:5555/simple/uvicorn/uvicorn-0.48.0-py3-none-any.whl.metadata (6.7 kB)
+Collecting pydantic-settings>=2.0.0 (from fastapi[standard]>=0.115.0->vllm==0.9.0)
+  Downloading http://pypi-mirror.modal.local:5555/simple/pydantic-settings/pydantic_settings-2.14.1-py3-none-any.whl.metadata (3.4 kB)
+Collecting pydantic-extra-types>=2.0.0 (from fastapi[standard]>=0.115.0->vllm==0.9.0)
+  Downloading http://pypi-mirror.modal.local:5555/simple/pydantic-extra-types/pydantic_extra_types-2.11.1-py3-none-any.whl.metadata (4.2 kB)
+Collecting anyio (from httpx<1.0.0,>=0.23.0->fastapi[standard]>=0.115.0->vllm==0.9.0)
+  Downloading http://pypi-mirror.modal.local:5555/simple/anyio/anyio-4.13.0-py3-none-any.whl.metadata (4.5 kB)
+Collecting certifi (from httpx<1.0.0,>=0.23.0->fastapi[standard]>=0.115.0->vllm==0.9.0)
+  Downloading http://pypi-mirror.modal.local:5555/simple/certifi/certifi-2026.5.20-py3-none-any.whl.metadata (2.5 kB)
+Collecting httpcore==1.* (from httpx<1.0.0,>=0.23.0->fastapi[standard]>=0.115.0->vllm==0.9.0)
+  Downloading http://pypi-mirror.modal.local:5555/simple/httpcore/httpcore-1.0.9-py3-none-any.whl.metadata (21 kB)
+Collecting idna (from httpx<1.0.0,>=0.23.0->fastapi[standard]>=0.115.0->vllm==0.9.0)
+  Downloading http://pypi-mirror.modal.local:5555/simple/idna/idna-3.16-py3-none-any.whl.metadata (6.4 kB)
+Collecting h11>=0.16 (from httpcore==1.*->httpx<1.0.0,>=0.23.0->fastapi[standard]>=0.115.0->vllm==0.9.0)
+  Downloading http://pypi-mirror.modal.local:5555/simple/h11/h11-0.16.0-py3-none-any.whl.metadata (8.3 kB)
+Collecting dnspython>=2.0.0 (from email-validator>=2.0.0->fastapi[standard]>=0.115.0->vllm==0.9.0)
+  Downloading http://pypi-mirror.modal.local:5555/simple/dnspython/dnspython-2.8.0-py3-none-any.whl.metadata (5.7 kB)
+Collecting typer>=0.16.0 (from fastapi-cli>=0.0.8->fastapi-cli[standard]>=0.0.8; extra == "standard"->fastapi[standard]>=0.115.0->vllm==0.9.0)
+  Downloading http://pypi-mirror.modal.local:5555/simple/typer/typer-0.26.1-py3-none-any.whl.metadata (16 kB)
+Collecting rich-toolkit>=0.14.8 (from fastapi-cli>=0.0.8->fastapi-cli[standard]>=0.0.8; extra == "standard"->fastapi[standard]>=0.115.0->vllm==0.9.0)
+  Downloading http://pypi-mirror.modal.local:5555/simple/rich-toolkit/rich_toolkit-0.19.10-py3-none-any.whl.metadata (1.0 kB)
+Collecting fastapi-cloud-cli>=0.1.1 (from fastapi-cli[standard]>=0.0.8; extra == "standard"->fastapi[standard]>=0.115.0->vllm==0.9.0)
+  Downloading http://pypi-mirror.modal.local:5555/simple/fastapi-cloud-cli/fastapi_cloud_cli-0.18.0-py3-none-any.whl.metadata (3.3 kB)
+Collecting rignore>=0.5.1 (from fastapi-cloud-cli>=0.1.1->fastapi-cli[standard]>=0.0.8; extra == "standard"->fastapi[standard]>=0.115.0->vllm==0.9.0)
+  Downloading http://pypi-mirror.modal.local:5555/simple/rignore/rignore-0.7.6-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (4.2 kB)
+Collecting sentry-sdk>=2.20.0 (from fastapi-cloud-cli>=0.1.1->fastapi-cli[standard]>=0.0.8; extra == "standard"->fastapi[standard]>=0.115.0->vllm==0.9.0)
+  Downloading http://pypi-mirror.modal.local:5555/simple/sentry-sdk/sentry_sdk-2.60.0-py3-none-any.whl.metadata (10 kB)
+Collecting detect-installer>=0.1.0 (from fastapi-cloud-cli>=0.1.1->fastapi-cli[standard]>=0.0.8; extra == "standard"->fastapi[standard]>=0.115.0->vllm==0.9.0)
+  Downloading http://pypi-mirror.modal.local:5555/simple/detect-installer/detect_installer-0.1.0-py3-none-any.whl.metadata (1.2 kB)
+Collecting click>=8.4.0 (from huggingface-hub>=0.32.0->huggingface-hub[hf_xet]>=0.32.0->vllm==0.9.0)
+  Downloading http://pypi-mirror.modal.local:5555/simple/click/click-8.4.1-py3-none-any.whl.metadata (2.6 kB)
+Collecting hf-xet<2.0.0,>=1.4.3 (from huggingface-hub>=0.32.0->huggingface-hub[hf_xet]>=0.32.0->vllm==0.9.0)
+  Downloading http://pypi-mirror.modal.local:5555/simple/hf-xet/hf_xet-1.5.0-cp37-abi3-manylinux2014_x86_64.manylinux_2_17_x86_64.whl.metadata (4.9 kB)
+Collecting typer>=0.16.0 (from fastapi-cli>=0.0.8->fastapi-cli[standard]>=0.0.8; extra == "standard"->fastapi[standard]>=0.115.0->vllm==0.9.0)
+  Downloading http://pypi-mirror.modal.local:5555/simple/typer/typer-0.25.1-py3-none-any.whl.metadata (15 kB)
+Collecting shellingham>=1.3.0 (from typer>=0.16.0->fastapi-cli>=0.0.8->fastapi-cli[standard]>=0.0.8; extra == "standard"->fastapi[standard]>=0.115.0->vllm==0.9.0)
+  Downloading http://pypi-mirror.modal.local:5555/simple/shellingham/shellingham-1.5.4-py2.py3-none-any.whl.metadata (3.5 kB)
+Collecting rich>=13.8.0 (from typer>=0.16.0->fastapi-cli>=0.0.8->fastapi-cli[standard]>=0.0.8; extra == "standard"->fastapi[standard]>=0.115.0->vllm==0.9.0)
+  Downloading http://pypi-mirror.modal.local:5555/simple/rich/rich-15.0.0-py3-none-any.whl.metadata (18 kB)
+Collecting MarkupSafe>=2.0 (from jinja2->outlines==0.1.11->vllm==0.9.0)
+  Downloading https://download.pytorch.org/whl/markupsafe-3.0.3-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (2.7 kB)
+Collecting annotated-types>=0.6.0 (from pydantic>=2.9->vllm==0.9.0)
+  Downloading http://pypi-mirror.modal.local:5555/simple/annotated-types/annotated_types-0.7.0-py3-none-any.whl.metadata (15 kB)
+Collecting pydantic-core==2.46.4 (from pydantic>=2.9->vllm==0.9.0)
+  Downloading http://pypi-mirror.modal.local:5555/simple/pydantic-core/pydantic_core-2.46.4-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (6.6 kB)
+Collecting attrs>=22.2.0 (from jsonschema->outlines==0.1.11->vllm==0.9.0)
+  Downloading http://pypi-mirror.modal.local:5555/simple/attrs/attrs-26.1.0-py3-none-any.whl.metadata (8.8 kB)
+Collecting jsonschema-specifications>=2023.03.6 (from jsonschema->outlines==0.1.11->vllm==0.9.0)
+  Downloading http://pypi-mirror.modal.local:5555/simple/jsonschema-specifications/jsonschema_specifications-2025.9.1-py3-none-any.whl.metadata (2.9 kB)
+Collecting rpds-py>=0.25.0 (from jsonschema->outlines==0.1.11->vllm==0.9.0)
+  Downloading http://pypi-mirror.modal.local:5555/simple/rpds-py/rpds_py-0.30.0-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (4.1 kB)
+Collecting distro<2,>=1.7.0 (from openai>=1.52.0->vllm==0.9.0)
+  Downloading http://pypi-mirror.modal.local:5555/simple/distro/distro-1.9.0-py3-none-any.whl.metadata (6.8 kB)
+Collecting jiter<1,>=0.10.0 (from openai>=1.52.0->vllm==0.9.0)
+  Downloading http://pypi-mirror.modal.local:5555/simple/jiter/jiter-0.15.0-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (5.2 kB)
+Collecting sniffio (from openai>=1.52.0->vllm==0.9.0)
+  Downloading http://pypi-mirror.modal.local:5555/simple/sniffio/sniffio-1.3.1-py3-none-any.whl.metadata (3.9 kB)
+Collecting opentelemetry-exporter-otlp-proto-grpc==1.42.1 (from opentelemetry-exporter-otlp>=1.26.0->vllm==0.9.0)
+  Downloading http://pypi-mirror.modal.local:5555/simple/opentelemetry-exporter-otlp-proto-grpc/opentelemetry_exporter_otlp_proto_grpc-1.42.1-py3-none-any.whl.metadata (2.6 kB)
+Collecting opentelemetry-exporter-otlp-proto-http==1.42.1 (from opentelemetry-exporter-otlp>=1.26.0->vllm==0.9.0)
+  Downloading http://pypi-mirror.modal.local:5555/simple/opentelemetry-exporter-otlp-proto-http/opentelemetry_exporter_otlp_proto_http-1.42.1-py3-none-any.whl.metadata (2.4 kB)
+Collecting googleapis-common-protos~=1.57 (from opentelemetry-exporter-otlp-proto-grpc==1.42.1->opentelemetry-exporter-otlp>=1.26.0->vllm==0.9.0)
+  Downloading http://pypi-mirror.modal.local:5555/simple/googleapis-common-protos/googleapis_common_protos-1.75.0-py3-none-any.whl.metadata (8.6 kB)
+Collecting grpcio<2.0.0,>=1.63.2 (from opentelemetry-exporter-otlp-proto-grpc==1.42.1->opentelemetry-exporter-otlp>=1.26.0->vllm==0.9.0)
+  Downloading http://pypi-mirror.modal.local:5555/simple/grpcio/grpcio-1.80.0-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.whl.metadata (3.8 kB)
+Collecting opentelemetry-exporter-otlp-proto-common==1.42.1 (from opentelemetry-exporter-otlp-proto-grpc==1.42.1->opentelemetry-exporter-otlp>=1.26.0->vllm==0.9.0)
+  Downloading http://pypi-mirror.modal.local:5555/simple/opentelemetry-exporter-otlp-proto-common/opentelemetry_exporter_otlp_proto_common-1.42.1-py3-none-any.whl.metadata (1.8 kB)
+Collecting opentelemetry-proto==1.42.1 (from opentelemetry-exporter-otlp-proto-grpc==1.42.1->opentelemetry-exporter-otlp>=1.26.0->vllm==0.9.0)
+  Downloading http://pypi-mirror.modal.local:5555/simple/opentelemetry-proto/opentelemetry_proto-1.42.1-py3-none-any.whl.metadata (2.3 kB)
+Collecting protobuf (from vllm==0.9.0)
+  Downloading http://pypi-mirror.modal.local:5555/simple/protobuf/protobuf-6.33.6-cp39-abi3-manylinux2014_x86_64.whl.metadata (593 bytes)
+Collecting opentelemetry-semantic-conventions==0.63b1 (from opentelemetry-sdk>=1.26.0->vllm==0.9.0)
+  Downloading http://pypi-mirror.modal.local:5555/simple/opentelemetry-semantic-conventions/opentelemetry_semantic_conventions-0.63b1-py3-none-any.whl.metadata (2.4 kB)
+Collecting charset_normalizer<4,>=2 (from requests>=2.26.0->vllm==0.9.0)
+  Downloading http://pypi-mirror.modal.local:5555/simple/charset-normalizer/charset_normalizer-3.4.7-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (40 kB)
+Collecting urllib3<3,>=1.26 (from requests>=2.26.0->vllm==0.9.0)
+  Downloading http://pypi-mirror.modal.local:5555/simple/urllib3/urllib3-2.7.0-py3-none-any.whl.metadata (6.9 kB)
+Collecting starlette>=0.46.0 (from fastapi>=0.115.0->fastapi[standard]>=0.115.0->vllm==0.9.0)
+  Downloading http://pypi-mirror.modal.local:5555/simple/starlette/starlette-0.52.1-py3-none-any.whl.metadata (6.3 kB)
+Collecting python-dotenv>=0.21.0 (from pydantic-settings>=2.0.0->fastapi[standard]>=0.115.0->vllm==0.9.0)
+  Downloading http://pypi-mirror.modal.local:5555/simple/python-dotenv/python_dotenv-1.2.2-py3-none-any.whl.metadata (27 kB)
+Collecting msgpack<2.0.0,>=1.0.0 (from ray!=2.44.*,>=2.43.0->ray[cgraph]!=2.44.*,>=2.43.0->vllm==0.9.0)
+  Downloading http://pypi-mirror.modal.local:5555/simple/msgpack/msgpack-1.1.2-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (8.1 kB)
+Collecting cupy-cuda12x (from ray[cgraph]!=2.44.*,>=2.43.0->vllm==0.9.0)
+  Downloading http://pypi-mirror.modal.local:5555/simple/cupy-cuda12x/cupy_cuda12x-14.1.0-cp311-cp311-manylinux2014_x86_64.whl.metadata (2.8 kB)
+Collecting markdown-it-py>=2.2.0 (from rich>=13.8.0->typer>=0.16.0->fastapi-cli>=0.0.8->fastapi-cli[standard]>=0.0.8; extra == "standard"->fastapi[standard]>=0.115.0->vllm==0.9.0)
+  Downloading http://pypi-mirror.modal.local:5555/simple/markdown-it-py/markdown_it_py-4.2.0-py3-none-any.whl.metadata (7.4 kB)
+Collecting pygments<3.0.0,>=2.13.0 (from rich>=13.8.0->typer>=0.16.0->fastapi-cli>=0.0.8->fastapi-cli[standard]>=0.0.8; extra == "standard"->fastapi[standard]>=0.115.0->vllm==0.9.0)
+  Downloading http://pypi-mirror.modal.local:5555/simple/pygments/pygments-2.20.0-py3-none-any.whl.metadata (2.5 kB)
+Collecting mdurl~=0.1 (from markdown-it-py>=2.2.0->rich>=13.8.0->typer>=0.16.0->fastapi-cli>=0.0.8->fastapi-cli[standard]>=0.0.8; extra == "standard"->fastapi[standard]>=0.115.0->vllm==0.9.0)
+  Downloading http://pypi-mirror.modal.local:5555/simple/mdurl/mdurl-0.1.2-py3-none-any.whl.metadata (1.6 kB)
+Collecting mpmath<1.4,>=1.1.0 (from sympy>=1.13.3->torch==2.7.0->vllm==0.9.0)
+  Downloading mpmath-1.3.0-py3-none-any.whl.metadata (8.6 kB)
+Collecting tokenizers>=0.21.1 (from vllm==0.9.0)
+  Downloading http://pypi-mirror.modal.local:5555/simple/tokenizers/tokenizers-0.22.2-cp39-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (7.3 kB)
+Collecting safetensors>=0.4.3 (from transformers>=4.51.1->vllm==0.9.0)
+  Downloading http://pypi-mirror.modal.local:5555/simple/safetensors/safetensors-0.7.0-cp38-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (4.1 kB)
+Collecting httptools>=0.6.3 (from uvicorn[standard]>=0.12.0; extra == "standard"->fastapi[standard]>=0.115.0->vllm==0.9.0)
+  Downloading http://pypi-mirror.modal.local:5555/simple/httptools/httptools-0.8.0-cp311-cp311-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl.metadata (3.5 kB)
+Collecting uvloop>=0.15.1 (from uvicorn[standard]>=0.12.0; extra == "standard"->fastapi[standard]>=0.115.0->vllm==0.9.0)
+  Downloading http://pypi-mirror.modal.local:5555/simple/uvloop/uvloop-0.22.1-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (4.9 kB)
+Collecting websockets>=10.4 (from uvicorn[standard]>=0.12.0; extra == "standard"->fastapi[standard]>=0.115.0->vllm==0.9.0)
+  Downloading http://pypi-mirror.modal.local:5555/simple/websockets/websockets-16.0-cp311-cp311-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl.metadata (6.8 kB)
+Collecting aiohappyeyeballs>=2.5.0 (from aiohttp->vllm==0.9.0)
+  Downloading http://pypi-mirror.modal.local:5555/simple/aiohappyeyeballs/aiohappyeyeballs-2.6.2-py3-none-any.whl.metadata (5.9 kB)
+Collecting aiosignal>=1.4.0 (from aiohttp->vllm==0.9.0)
+  Downloading http://pypi-mirror.modal.local:5555/simple/aiosignal/aiosignal-1.4.0-py3-none-any.whl.metadata (3.7 kB)
+Collecting frozenlist>=1.1.1 (from aiohttp->vllm==0.9.0)
+  Downloading http://pypi-mirror.modal.local:5555/simple/frozenlist/frozenlist-1.8.0-cp311-cp311-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl.metadata (20 kB)
+Collecting multidict<7.0,>=4.5 (from aiohttp->vllm==0.9.0)
+  Downloading http://pypi-mirror.modal.local:5555/simple/multidict/multidict-6.7.1-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (5.3 kB)
+Collecting propcache>=0.2.0 (from aiohttp->vllm==0.9.0)
+  Downloading http://pypi-mirror.modal.local:5555/simple/propcache/propcache-0.5.2-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (16 kB)
+Collecting yarl<2.0,>=1.17.0 (from aiohttp->vllm==0.9.0)
+  Downloading http://pypi-mirror.modal.local:5555/simple/yarl/yarl-1.24.2-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (94 kB)
+Collecting cuda-pathfinder==1.*,>=1.3.4 (from cupy-cuda12x->ray[cgraph]!=2.44.*,>=2.43.0->vllm==0.9.0)
+  Downloading http://pypi-mirror.modal.local:5555/simple/cuda-pathfinder/cuda_pathfinder-1.5.5-py3-none-any.whl.metadata (1.9 kB)
+Downloading http://pypi-mirror.modal.local:5555/simple/vllm/vllm-0.9.0-cp38-abi3-manylinux1_x86_64.whl (377.2 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 377.2/377.2 MB 105.7 MB/s  0:00:03
+Downloading http://pypi-mirror.modal.local:5555/simple/compressed-tensors/compressed_tensors-0.9.4-py3-none-any.whl (100 kB)
+Downloading http://pypi-mirror.modal.local:5555/simple/depyf/depyf-0.18.0-py3-none-any.whl (38 kB)
+Downloading http://pypi-mirror.modal.local:5555/simple/lark/lark-1.2.2-py3-none-any.whl (111 kB)
+Downloading http://pypi-mirror.modal.local:5555/simple/numba/numba-0.61.2-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.whl (3.8 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 3.8/3.8 MB 198.1 MB/s  0:00:00
+Downloading http://pypi-mirror.modal.local:5555/simple/outlines/outlines-0.1.11-py3-none-any.whl (87 kB)
+Downloading http://pypi-mirror.modal.local:5555/simple/outlines-core/outlines_core-0.1.26-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (343 kB)
+Downloading https://download-r2.pytorch.org/whl/cu128/torch-2.7.0%2Bcu128-cp311-cp311-manylinux_2_28_x86_64.whl (1097.8 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.1/1.1 GB 243.1 MB/s  0:00:04
+Downloading https://download-r2.pytorch.org/whl/cu128/torchaudio-2.7.0%2Bcu128-cp311-cp311-manylinux_2_28_x86_64.whl (3.9 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 3.9/3.9 MB 265.1 MB/s  0:00:00
+Downloading https://download-r2.pytorch.org/whl/cu128/torchvision-0.22.0%2Bcu128-cp311-cp311-manylinux_2_28_x86_64.whl (8.7 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 8.7/8.7 MB 258.0 MB/s  0:00:00
+Downloading https://download-r2.pytorch.org/whl/triton-3.3.0-cp311-cp311-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl (156.5 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 156.5/156.5 MB 243.6 MB/s  0:00:00
+Downloading https://download.pytorch.org/whl/cu128/xformers-0.0.30-cp311-cp311-manylinux_2_28_x86_64.whl (31.7 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 31.7/31.7 MB 94.2 MB/s  0:00:00
+Downloading http://pypi-mirror.modal.local:5555/simple/xgrammar/xgrammar-0.1.19-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (5.8 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 5.8/5.8 MB 155.9 MB/s  0:00:00
+Downloading http://pypi-mirror.modal.local:5555/simple/llguidance/llguidance-0.7.30-cp39-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (15.0 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 15.0/15.0 MB 157.5 MB/s  0:00:00
+Downloading http://pypi-mirror.modal.local:5555/simple/llvmlite/llvmlite-0.44.0-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (42.4 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 42.4/42.4 MB 162.7 MB/s  0:00:00
+Downloading http://pypi-mirror.modal.local:5555/simple/lm-format-enforcer/lm_format_enforcer-0.10.12-py3-none-any.whl (44 kB)
+Downloading numpy-2.2.6-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (16.8 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 16.8/16.8 MB 225.0 MB/s  0:00:00
+Downloading http://pypi-mirror.modal.local:5555/simple/fastapi/fastapi-0.136.3-py3-none-any.whl (117 kB)
+Downloading http://pypi-mirror.modal.local:5555/simple/annotated-doc/annotated_doc-0.0.4-py3-none-any.whl (5.3 kB)
+Downloading http://pypi-mirror.modal.local:5555/simple/httpx/httpx-0.28.1-py3-none-any.whl (73 kB)
+Downloading http://pypi-mirror.modal.local:5555/simple/httpcore/httpcore-1.0.9-py3-none-any.whl (78 kB)
+Downloading http://pypi-mirror.modal.local:5555/simple/email-validator/email_validator-2.3.0-py3-none-any.whl (35 kB)
+Downloading http://pypi-mirror.modal.local:5555/simple/dnspython/dnspython-2.8.0-py3-none-any.whl (331 kB)
+Downloading http://pypi-mirror.modal.local:5555/simple/fastapi-cli/fastapi_cli-0.0.24-py3-none-any.whl (12 kB)
+Downloading http://pypi-mirror.modal.local:5555/simple/fastapi-cloud-cli/fastapi_cloud_cli-0.18.0-py3-none-any.whl (37 kB)
+Downloading http://pypi-mirror.modal.local:5555/simple/detect-installer/detect_installer-0.1.0-py3-none-any.whl (4.5 kB)
+Downloading http://pypi-mirror.modal.local:5555/simple/fastar/fastar-0.11.0-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (822 kB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 822.8/822.8 kB 169.4 MB/s  0:00:00
+Downloading filelock-3.29.0-py3-none-any.whl (39 kB)
+Downloading http://pypi-mirror.modal.local:5555/simple/gguf/gguf-0.19.0-py3-none-any.whl (118 kB)
+Downloading http://pypi-mirror.modal.local:5555/simple/h11/h11-0.16.0-py3-none-any.whl (37 kB)
+Downloading http://pypi-mirror.modal.local:5555/simple/huggingface-hub/huggingface_hub-1.16.4-py3-none-any.whl (668 kB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 668.2/668.2 kB 248.1 MB/s  0:00:00
+Downloading http://pypi-mirror.modal.local:5555/simple/hf-xet/hf_xet-1.5.0-cp37-abi3-manylinux2014_x86_64.manylinux_2_17_x86_64.whl (4.5 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 4.5/4.5 MB 408.7 MB/s  0:00:00
+Downloading http://pypi-mirror.modal.local:5555/simple/typer/typer-0.25.1-py3-none-any.whl (58 kB)
+Downloading http://pypi-mirror.modal.local:5555/simple/click/click-8.4.1-py3-none-any.whl (116 kB)
+Downloading fsspec-2026.4.0-py3-none-any.whl (203 kB)
+Downloading http://pypi-mirror.modal.local:5555/simple/idna/idna-3.16-py3-none-any.whl (74 kB)
+Downloading http://pypi-mirror.modal.local:5555/simple/interegular/interegular-0.3.3-py37-none-any.whl (23 kB)
+Downloading https://download.pytorch.org/whl/jinja2-3.1.6-py3-none-any.whl (134 kB)
+Downloading https://download.pytorch.org/whl/markupsafe-3.0.3-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (22 kB)
+Downloading http://pypi-mirror.modal.local:5555/simple/mistral-common/mistral_common-1.11.2-py3-none-any.whl (6.5 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 6.5/6.5 MB 172.3 MB/s  0:00:00
+Downloading http://pypi-mirror.modal.local:5555/simple/pydantic/pydantic-2.13.4-py3-none-any.whl (472 kB)
+Downloading http://pypi-mirror.modal.local:5555/simple/pydantic-core/pydantic_core-2.46.4-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (2.1 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 2.1/2.1 MB 259.8 MB/s  0:00:00
+Downloading http://pypi-mirror.modal.local:5555/simple/annotated-types/annotated_types-0.7.0-py3-none-any.whl (13 kB)
+Downloading http://pypi-mirror.modal.local:5555/simple/jsonschema/jsonschema-4.26.0-py3-none-any.whl (90 kB)
+Downloading http://pypi-mirror.modal.local:5555/simple/attrs/attrs-26.1.0-py3-none-any.whl (67 kB)
+Downloading http://pypi-mirror.modal.local:5555/simple/jsonschema-specifications/jsonschema_specifications-2025.9.1-py3-none-any.whl (18 kB)
+Downloading http://pypi-mirror.modal.local:5555/simple/openai/openai-2.38.0-py3-none-any.whl (1.3 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.3/1.3 MB 439.8 MB/s  0:00:00
+Downloading http://pypi-mirror.modal.local:5555/simple/anyio/anyio-4.13.0-py3-none-any.whl (114 kB)
+Downloading http://pypi-mirror.modal.local:5555/simple/distro/distro-1.9.0-py3-none-any.whl (20 kB)
+Downloading http://pypi-mirror.modal.local:5555/simple/jiter/jiter-0.15.0-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (349 kB)
+Downloading https://download.pytorch.org/whl/typing_extensions-4.15.0-py3-none-any.whl (44 kB)
+Downloading http://pypi-mirror.modal.local:5555/simple/opencv-python-headless/opencv_python_headless-4.13.0.92-cp37-abi3-manylinux_2_28_x86_64.whl (60.4 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 60.4/60.4 MB 162.1 MB/s  0:00:00
+Downloading http://pypi-mirror.modal.local:5555/simple/opentelemetry-api/opentelemetry_api-1.42.1-py3-none-any.whl (61 kB)
+Downloading http://pypi-mirror.modal.local:5555/simple/opentelemetry-exporter-otlp/opentelemetry_exporter_otlp-1.42.1-py3-none-any.whl (6.7 kB)
+Downloading http://pypi-mirror.modal.local:5555/simple/opentelemetry-exporter-otlp-proto-grpc/opentelemetry_exporter_otlp_proto_grpc-1.42.1-py3-none-any.whl (19 kB)
+Downloading http://pypi-mirror.modal.local:5555/simple/opentelemetry-exporter-otlp-proto-common/opentelemetry_exporter_otlp_proto_common-1.42.1-py3-none-any.whl (17 kB)
+Downloading http://pypi-mirror.modal.local:5555/simple/opentelemetry-exporter-otlp-proto-http/opentelemetry_exporter_otlp_proto_http-1.42.1-py3-none-any.whl (21 kB)
+Downloading http://pypi-mirror.modal.local:5555/simple/opentelemetry-proto/opentelemetry_proto-1.42.1-py3-none-any.whl (71 kB)
+Downloading http://pypi-mirror.modal.local:5555/simple/googleapis-common-protos/googleapis_common_protos-1.75.0-py3-none-any.whl (300 kB)
+Downloading http://pypi-mirror.modal.local:5555/simple/grpcio/grpcio-1.80.0-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.whl (6.8 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 6.8/6.8 MB 187.4 MB/s  0:00:00
+Downloading http://pypi-mirror.modal.local:5555/simple/opentelemetry-sdk/opentelemetry_sdk-1.42.1-py3-none-any.whl (170 kB)
+Downloading http://pypi-mirror.modal.local:5555/simple/opentelemetry-semantic-conventions/opentelemetry_semantic_conventions-0.63b1-py3-none-any.whl (203 kB)
+Downloading http://pypi-mirror.modal.local:5555/simple/protobuf/protobuf-6.33.6-cp39-abi3-manylinux2014_x86_64.whl (323 kB)
+Downloading http://pypi-mirror.modal.local:5555/simple/requests/requests-2.34.2-py3-none-any.whl (73 kB)
+Downloading http://pypi-mirror.modal.local:5555/simple/charset-normalizer/charset_normalizer-3.4.7-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (214 kB)
+Downloading http://pypi-mirror.modal.local:5555/simple/urllib3/urllib3-2.7.0-py3-none-any.whl (131 kB)
+Downloading http://pypi-mirror.modal.local:5555/simple/certifi/certifi-2026.5.20-py3-none-any.whl (134 kB)
+Downloading http://pypi-mirror.modal.local:5555/simple/opentelemetry-semantic-conventions-ai/opentelemetry_semantic_conventions_ai-0.5.1-py3-none-any.whl (11 kB)
+Downloading http://pypi-mirror.modal.local:5555/simple/packaging/packaging-26.2-py3-none-any.whl (100 kB)
+Downloading pillow-12.2.0-cp311-cp311-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl (7.1 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 7.1/7.1 MB 201.8 MB/s  0:00:00
+Downloading http://pypi-mirror.modal.local:5555/simple/prometheus-client/prometheus_client-0.25.0-py3-none-any.whl (64 kB)
+Downloading http://pypi-mirror.modal.local:5555/simple/prometheus-fastapi-instrumentator/prometheus_fastapi_instrumentator-7.1.0-py3-none-any.whl (19 kB)
+Downloading http://pypi-mirror.modal.local:5555/simple/starlette/starlette-0.52.1-py3-none-any.whl (74 kB)
+Downloading http://pypi-mirror.modal.local:5555/simple/pydantic-extra-types/pydantic_extra_types-2.11.1-py3-none-any.whl (79 kB)
+Downloading http://pypi-mirror.modal.local:5555/simple/pycountry/pycountry-26.2.16-py3-none-any.whl (8.0 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 8.0/8.0 MB 148.3 MB/s  0:00:00
+Downloading http://pypi-mirror.modal.local:5555/simple/pydantic-settings/pydantic_settings-2.14.1-py3-none-any.whl (60 kB)
+Downloading http://pypi-mirror.modal.local:5555/simple/python-dotenv/python_dotenv-1.2.2-py3-none-any.whl (22 kB)
+Downloading http://pypi-mirror.modal.local:5555/simple/python-multipart/python_multipart-0.0.29-py3-none-any.whl (29 kB)
+Downloading http://pypi-mirror.modal.local:5555/simple/pyyaml/pyyaml-6.0.3-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (806 kB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 806.6/806.6 kB 256.1 MB/s  0:00:00
+Downloading http://pypi-mirror.modal.local:5555/simple/pyzmq/pyzmq-27.1.0-cp311-cp311-manylinux_2_26_x86_64.manylinux_2_28_x86_64.whl (857 kB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 857.0/857.0 kB 318.3 MB/s  0:00:00
+Downloading http://pypi-mirror.modal.local:5555/simple/ray/ray-2.55.1-cp311-cp311-manylinux2014_x86_64.whl (73.7 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 73.7/73.7 MB 166.3 MB/s  0:00:00
+Downloading http://pypi-mirror.modal.local:5555/simple/msgpack/msgpack-1.1.2-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (426 kB)
+Downloading http://pypi-mirror.modal.local:5555/simple/referencing/referencing-0.37.0-py3-none-any.whl (26 kB)
+Downloading http://pypi-mirror.modal.local:5555/simple/rich/rich-15.0.0-py3-none-any.whl (310 kB)
+Downloading http://pypi-mirror.modal.local:5555/simple/pygments/pygments-2.20.0-py3-none-any.whl (1.2 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.2/1.2 MB 350.1 MB/s  0:00:00
+Downloading http://pypi-mirror.modal.local:5555/simple/markdown-it-py/markdown_it_py-4.2.0-py3-none-any.whl (91 kB)
+Downloading http://pypi-mirror.modal.local:5555/simple/mdurl/mdurl-0.1.2-py3-none-any.whl (10.0 kB)
+Downloading http://pypi-mirror.modal.local:5555/simple/rich-toolkit/rich_toolkit-0.19.10-py3-none-any.whl (33 kB)
+Downloading http://pypi-mirror.modal.local:5555/simple/rignore/rignore-0.7.6-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (959 kB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 959.5/959.5 kB 272.1 MB/s  0:00:00
+Downloading http://pypi-mirror.modal.local:5555/simple/rpds-py/rpds_py-0.30.0-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (390 kB)
+Downloading http://pypi-mirror.modal.local:5555/simple/sentry-sdk/sentry_sdk-2.60.0-py3-none-any.whl (475 kB)
+Downloading http://pypi-mirror.modal.local:5555/simple/shellingham/shellingham-1.5.4-py2.py3-none-any.whl (9.8 kB)
+Downloading sympy-1.14.0-py3-none-any.whl (6.3 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 6.3/6.3 MB 253.3 MB/s  0:00:00
+Downloading mpmath-1.3.0-py3-none-any.whl (536 kB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 536.2/536.2 kB 319.3 MB/s  0:00:00
+Downloading http://pypi-mirror.modal.local:5555/simple/tiktoken/tiktoken-0.13.0-cp311-cp311-manylinux_2_28_x86_64.whl (1.1 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.1/1.1 MB 248.2 MB/s  0:00:00
+Downloading http://pypi-mirror.modal.local:5555/simple/tqdm/tqdm-4.67.3-py3-none-any.whl (78 kB)
+Downloading http://pypi-mirror.modal.local:5555/simple/transformers/transformers-5.9.0-py3-none-any.whl (10.8 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 10.8/10.8 MB 181.3 MB/s  0:00:00
+Downloading http://pypi-mirror.modal.local:5555/simple/tokenizers/tokenizers-0.22.2-cp39-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (3.3 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 3.3/3.3 MB 423.7 MB/s  0:00:00
+Downloading http://pypi-mirror.modal.local:5555/simple/regex/regex-2026.5.9-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (799 kB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 799.8/799.8 kB 247.7 MB/s  0:00:00
+Downloading http://pypi-mirror.modal.local:5555/simple/safetensors/safetensors-0.7.0-cp38-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (507 kB)
+Downloading http://pypi-mirror.modal.local:5555/simple/typing-inspection/typing_inspection-0.4.2-py3-none-any.whl (14 kB)
+Downloading http://pypi-mirror.modal.local:5555/simple/uvicorn/uvicorn-0.48.0-py3-none-any.whl (71 kB)
+Downloading http://pypi-mirror.modal.local:5555/simple/httptools/httptools-0.8.0-cp311-cp311-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl (464 kB)
+Downloading http://pypi-mirror.modal.local:5555/simple/uvloop/uvloop-0.22.1-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (3.8 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 3.8/3.8 MB 191.3 MB/s  0:00:00
+Downloading http://pypi-mirror.modal.local:5555/simple/watchfiles/watchfiles-1.2.0-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (456 kB)
+Downloading http://pypi-mirror.modal.local:5555/simple/websockets/websockets-16.0-cp311-cp311-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl (184 kB)
+Downloading http://pypi-mirror.modal.local:5555/simple/aiohttp/aiohttp-3.13.5-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (1.8 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.8/1.8 MB 227.1 MB/s  0:00:00
+Downloading http://pypi-mirror.modal.local:5555/simple/multidict/multidict-6.7.1-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (246 kB)
+Downloading http://pypi-mirror.modal.local:5555/simple/yarl/yarl-1.24.2-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (106 kB)
+Downloading http://pypi-mirror.modal.local:5555/simple/aiohappyeyeballs/aiohappyeyeballs-2.6.2-py3-none-any.whl (15 kB)
+Downloading http://pypi-mirror.modal.local:5555/simple/aiosignal/aiosignal-1.4.0-py3-none-any.whl (7.5 kB)
+Downloading http://pypi-mirror.modal.local:5555/simple/frozenlist/frozenlist-1.8.0-cp311-cp311-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl (231 kB)
+Downloading http://pypi-mirror.modal.local:5555/simple/propcache/propcache-0.5.2-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (58 kB)
+Downloading http://pypi-mirror.modal.local:5555/simple/airportsdata/airportsdata-20260315-py3-none-any.whl (935 kB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 935.4/935.4 kB 301.4 MB/s  0:00:00
+Downloading http://pypi-mirror.modal.local:5555/simple/astor/astor-0.8.1-py2.py3-none-any.whl (27 kB)
+Downloading http://pypi-mirror.modal.local:5555/simple/blake3/blake3-1.0.8-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (387 kB)
+Downloading http://pypi-mirror.modal.local:5555/simple/cachetools/cachetools-7.1.4-py3-none-any.whl (16 kB)
+Downloading http://pypi-mirror.modal.local:5555/simple/cloudpickle/cloudpickle-3.1.2-py3-none-any.whl (22 kB)
+Downloading http://pypi-mirror.modal.local:5555/simple/cupy-cuda12x/cupy_cuda12x-14.1.0-cp311-cp311-manylinux2014_x86_64.whl (134.0 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 134.0/134.0 MB 153.4 MB/s  0:00:00
+Downloading http://pypi-mirror.modal.local:5555/simple/cuda-pathfinder/cuda_pathfinder-1.5.5-py3-none-any.whl (51 kB)
+Downloading http://pypi-mirror.modal.local:5555/simple/dill/dill-0.4.1-py3-none-any.whl (120 kB)
+Downloading http://pypi-mirror.modal.local:5555/simple/diskcache/diskcache-5.6.3-py3-none-any.whl (45 kB)
+Downloading http://pypi-mirror.modal.local:5555/simple/einops/einops-0.8.2-py3-none-any.whl (65 kB)
+Downloading http://pypi-mirror.modal.local:5555/simple/msgspec/msgspec-0.21.1-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (219 kB)
+Downloading http://pypi-mirror.modal.local:5555/simple/nest-asyncio/nest_asyncio-1.6.0-py3-none-any.whl (5.2 kB)
+Downloading networkx-3.6.1-py3-none-any.whl (2.1 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 2.1/2.1 MB 192.1 MB/s  0:00:00
+Downloading http://pypi-mirror.modal.local:5555/simple/ninja/ninja-1.13.0-py3-none-manylinux2014_x86_64.manylinux_2_17_x86_64.whl (180 kB)
+Downloading http://pypi-mirror.modal.local:5555/simple/partial-json-parser/partial_json_parser-0.2.1.1.post7-py3-none-any.whl (10 kB)
+Downloading http://pypi-mirror.modal.local:5555/simple/psutil/psutil-7.2.2-cp36-abi3-manylinux2010_x86_64.manylinux_2_12_x86_64.manylinux_2_28_x86_64.whl (155 kB)
+Downloading http://pypi-mirror.modal.local:5555/simple/py-cpuinfo/py_cpuinfo-9.0.0-py3-none-any.whl (22 kB)
+Downloading http://pypi-mirror.modal.local:5555/simple/python-json-logger/python_json_logger-4.1.0-py3-none-any.whl (15 kB)
+Downloading http://pypi-mirror.modal.local:5555/simple/scipy/scipy-1.17.1-cp311-cp311-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl (35.3 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 35.3/35.3 MB 181.3 MB/s  0:00:00
+Downloading http://pypi-mirror.modal.local:5555/simple/sentencepiece/sentencepiece-0.2.1-cp311-cp311-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl (1.4 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.4/1.4 MB 245.2 MB/s  0:00:00
+Downloading http://pypi-mirror.modal.local:5555/simple/sniffio/sniffio-1.3.1-py3-none-any.whl (10 kB)
+Installing collected packages: py-cpuinfo, nvidia-cusparselt-cu12, mpmath, websockets, uvloop, urllib3, typing_extensions, triton, tqdm, sympy, sniffio, shellingham, sentencepiece, safetensors, rpds-py, rignore, regex, pyzmq, pyyaml, python-multipart, python-json-logger, python-dotenv, pygments, pycountry, psutil, protobuf, propcache, prometheus_client, pillow, partial-json-parser, packaging, nvidia-nvtx-cu12, nvidia-nvjitlink-cu12, nvidia-nccl-cu12, nvidia-curand-cu12, nvidia-cufile-cu12, nvidia-cuda-runtime-cu12, nvidia-cuda-nvrtc-cu12, nvidia-cuda-cupti-cu12, nvidia-cublas-cu12, numpy, ninja, networkx, nest_asyncio, multidict, msgspec, msgpack, mdurl, MarkupSafe, llvmlite, llguidance, lark, jiter, interegular, idna, httptools, hf-xet, h11, fsspec, frozenlist, filelock, fastar, einops, dnspython, distro, diskcache, dill, detect-installer, cuda-pathfinder, cloudpickle, click, charset_normalizer, certifi, cachetools, attrs, astor, annotated-types, annotated-doc, airportsdata, aiohappyeyeballs, yarl, uvicorn, typing-inspection, sentry-sdk, scipy, requests, referencing, pydantic-core, opentelemetry-proto, opentelemetry-api, opencv-python-headless, nvidia-cusparse-cu12, nvidia-cufft-cu12, nvidia-cudnn-cu12, numba, markdown-it-py, jinja2, httpcore, grpcio, googleapis-common-protos, email-validator, depyf, cupy-cuda12x, blake3, anyio, aiosignal, watchfiles, tiktoken, starlette, rich, pydantic, opentelemetry-semantic-conventions, opentelemetry-exporter-otlp-proto-common, nvidia-cusolver-cu12, jsonschema-specifications, httpx, gguf, aiohttp, typer, torch, rich-toolkit, pydantic-settings, pydantic-extra-types, prometheus-fastapi-instrumentator, opentelemetry-sdk, openai, lm-format-enforcer, jsonschema, fastapi, xformers, torchvision, torchaudio, ray, outlines_core, opentelemetry-semantic-conventions-ai, opentelemetry-exporter-otlp-proto-http, opentelemetry-exporter-otlp-proto-grpc, huggingface-hub, fastapi-cloud-cli, fastapi-cli, tokenizers, outlines, opentelemetry-exporter-otlp, mistral_common, transformers, xgrammar, compressed-tensors, vllm
+
+Successfully installed MarkupSafe-3.0.3 aiohappyeyeballs-2.6.2 aiohttp-3.13.5 aiosignal-1.4.0 airportsdata-20260315 annotated-doc-0.0.4 annotated-types-0.7.0 anyio-4.13.0 astor-0.8.1 attrs-26.1.0 blake3-1.0.8 cachetools-7.1.4 certifi-2026.5.20 charset_normalizer-3.4.7 click-8.4.1 cloudpickle-3.1.2 compressed-tensors-0.9.4 cuda-pathfinder-1.5.5 cupy-cuda12x-14.1.0 depyf-0.18.0 detect-installer-0.1.0 dill-0.4.1 diskcache-5.6.3 distro-1.9.0 dnspython-2.8.0 einops-0.8.2 email-validator-2.3.0 fastapi-0.136.3 fastapi-cli-0.0.24 fastapi-cloud-cli-0.18.0 fastar-0.11.0 filelock-3.29.0 frozenlist-1.8.0 fsspec-2026.4.0 gguf-0.19.0 googleapis-common-protos-1.75.0 grpcio-1.80.0 h11-0.16.0 hf-xet-1.5.0 httpcore-1.0.9 httptools-0.8.0 httpx-0.28.1 huggingface-hub-1.16.4 idna-3.16 interegular-0.3.3 jinja2-3.1.6 jiter-0.15.0 jsonschema-4.26.0 jsonschema-specifications-2025.9.1 lark-1.2.2 llguidance-0.7.30 llvmlite-0.44.0 lm-format-enforcer-0.10.12 markdown-it-py-4.2.0 mdurl-0.1.2 mistral_common-1.11.2 mpmath-1.3.0 msgpack-1.1.2 msgspec-0.21.1 multidict-6.7.1 nest_asyncio-1.6.0 networkx-3.6.1 ninja-1.13.0 numba-0.61.2 numpy-2.2.6 nvidia-cublas-cu12-12.8.3.14 nvidia-cuda-cupti-cu12-12.8.57 nvidia-cuda-nvrtc-cu12-12.8.61 nvidia-cuda-runtime-cu12-12.8.57 nvidia-cudnn-cu12-9.7.1.26 nvidia-cufft-cu12-11.3.3.41 nvidia-cufile-cu12-1.13.0.11 nvidia-curand-cu12-10.3.9.55 nvidia-cusolver-cu12-11.7.2.55 nvidia-cusparse-cu12-12.5.7.53 nvidia-cusparselt-cu12-0.6.3 nvidia-nccl-cu12-2.26.2 nvidia-nvjitlink-cu12-12.8.61 nvidia-nvtx-cu12-12.8.55 openai-2.38.0 opencv-python-headless-4.13.0.92 opentelemetry-api-1.42.1 opentelemetry-exporter-otlp-1.42.1 opentelemetry-exporter-otlp-proto-common-1.42.1 opentelemetry-exporter-otlp-proto-grpc-1.42.1 opentelemetry-exporter-otlp-proto-http-1.42.1 opentelemetry-proto-1.42.1 opentelemetry-sdk-1.42.1 opentelemetry-semantic-conventions-0.63b1 opentelemetry-semantic-conventions-ai-0.5.1 outlines-0.1.11 outlines_core-0.1.26 packaging-26.2 partial-json-parser-0.2.1.1.post7 pillow-12.2.0 prometheus-fastapi-instrumentator-7.1.0 prometheus_client-0.25.0 propcache-0.5.2 protobuf-6.33.6 psutil-7.2.2 py-cpuinfo-9.0.0 pycountry-26.2.16 pydantic-2.13.4 pydantic-core-2.46.4 pydantic-extra-types-2.11.1 pydantic-settings-2.14.1 pygments-2.20.0 python-dotenv-1.2.2 python-json-logger-4.1.0 python-multipart-0.0.29 pyyaml-6.0.3 pyzmq-27.1.0 ray-2.55.1 referencing-0.37.0 regex-2026.5.9 requests-2.34.2 rich-15.0.0 rich-toolkit-0.19.10 rignore-0.7.6 rpds-py-0.30.0 safetensors-0.7.0 scipy-1.17.1 sentencepiece-0.2.1 sentry-sdk-2.60.0 shellingham-1.5.4 sniffio-1.3.1 starlette-0.52.1 sympy-1.14.0 tiktoken-0.13.0 tokenizers-0.22.2 torch-2.7.0+cu128 torchaudio-2.7.0+cu128 torchvision-0.22.0+cu128 tqdm-4.67.3 transformers-5.9.0 triton-3.3.0 typer-0.25.1 typing-inspection-0.4.2 typing_extensions-4.15.0 urllib3-2.7.0 uvicorn-0.48.0 uvloop-0.22.1 vllm-0.9.0 watchfiles-1.2.0 websockets-16.0 xformers-0.0.30 xgrammar-0.1.19 yarl-1.24.2
+
+[notice] A new release of pip is available: 25.2 -> 26.1.1
+[notice] To update, run: pip install --upgrade pip
+Saving image...
+Image saved, took 7.41s
+
+Built image im-DeDL0RQEl9rUniOK7oVWhs in 145.24s
+
+
+Building image im-1h9Ohu75awbigmUtmt1zYO
+
+=> Step 0: FROM base
+
+=> Step 1: RUN python -m pip install 'transformers<4.54.0'
+Looking in indexes: http://pypi-mirror.modal.local:5555/simple
+Collecting transformers<4.54.0
+  Downloading http://pypi-mirror.modal.local:5555/simple/transformers/transformers-4.53.3-py3-none-any.whl.metadata (40 kB)
+Requirement already satisfied: filelock in /usr/local/lib/python3.11/site-packages (from transformers<4.54.0) (3.29.0)
+Collecting huggingface-hub<1.0,>=0.30.0 (from transformers<4.54.0)
+  Downloading http://pypi-mirror.modal.local:5555/simple/huggingface-hub/huggingface_hub-0.36.2-py3-none-any.whl.metadata (15 kB)
+Requirement already satisfied: numpy>=1.17 in /usr/local/lib/python3.11/site-packages (from transformers<4.54.0) (2.2.6)
+Requirement already satisfied: packaging>=20.0 in /usr/local/lib/python3.11/site-packages (from transformers<4.54.0) (26.2)
+Requirement already satisfied: pyyaml>=5.1 in /usr/local/lib/python3.11/site-packages (from transformers<4.54.0) (6.0.3)
+Requirement already satisfied: regex!=2019.12.17 in /usr/local/lib/python3.11/site-packages (from transformers<4.54.0) (2026.5.9)
+Requirement already satisfied: requests in /usr/local/lib/python3.11/site-packages (from transformers<4.54.0) (2.34.2)
+Collecting tokenizers<0.22,>=0.21 (from transformers<4.54.0)
+  Downloading http://pypi-mirror.modal.local:5555/simple/tokenizers/tokenizers-0.21.4-cp39-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (6.7 kB)
+Requirement already satisfied: safetensors>=0.4.3 in /usr/local/lib/python3.11/site-packages (from transformers<4.54.0) (0.7.0)
+Requirement already satisfied: tqdm>=4.27 in /usr/local/lib/python3.11/site-packages (from transformers<4.54.0) (4.67.3)
+Requirement already satisfied: fsspec>=2023.5.0 in /usr/local/lib/python3.11/site-packages (from huggingface-hub<1.0,>=0.30.0->transformers<4.54.0) (2026.4.0)
+Requirement already satisfied: hf-xet<2.0.0,>=1.1.3 in /usr/local/lib/python3.11/site-packages (from huggingface-hub<1.0,>=0.30.0->transformers<4.54.0) (1.5.0)
+Requirement already satisfied: typing-extensions>=3.7.4.3 in /usr/local/lib/python3.11/site-packages (from huggingface-hub<1.0,>=0.30.0->transformers<4.54.0) (4.15.0)
+Requirement already satisfied: charset_normalizer<4,>=2 in /usr/local/lib/python3.11/site-packages (from requests->transformers<4.54.0) (3.4.7)
+Requirement already satisfied: idna<4,>=2.5 in /usr/local/lib/python3.11/site-packages (from requests->transformers<4.54.0) (3.16)
+Requirement already satisfied: urllib3<3,>=1.26 in /usr/local/lib/python3.11/site-packages (from requests->transformers<4.54.0) (2.7.0)
+Requirement already satisfied: certifi>=2023.5.7 in /usr/local/lib/python3.11/site-packages (from requests->transformers<4.54.0) (2026.5.20)
+Downloading http://pypi-mirror.modal.local:5555/simple/transformers/transformers-4.53.3-py3-none-any.whl (10.8 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 10.8/10.8 MB 66.9 MB/s  0:00:00
+Downloading http://pypi-mirror.modal.local:5555/simple/huggingface-hub/huggingface_hub-0.36.2-py3-none-any.whl (566 kB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 566.4/566.4 kB 428.5 MB/s  0:00:00
+Downloading http://pypi-mirror.modal.local:5555/simple/tokenizers/tokenizers-0.21.4-cp39-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (3.1 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 3.1/3.1 MB 470.2 MB/s  0:00:00
+Installing collected packages: huggingface-hub, tokenizers, transformers
+  Attempting uninstall: huggingface-hub
+    Found existing installation: huggingface_hub 1.16.4
+    Uninstalling huggingface_hub-1.16.4:
+      Successfully uninstalled huggingface_hub-1.16.4
+  Attempting uninstall: tokenizers
+    Found existing installation: tokenizers 0.22.2
+    Uninstalling tokenizers-0.22.2:
+      Successfully uninstalled tokenizers-0.22.2
+  Attempting uninstall: transformers
+    Found existing installation: transformers 5.9.0
+    Uninstalling transformers-5.9.0:
+      Successfully uninstalled transformers-5.9.0
+
+Successfully installed huggingface-hub-0.36.2 tokenizers-0.21.4 transformers-4.53.3
+
+[notice] A new release of pip is available: 25.2 -> 26.1.1
+[notice] To update, run: pip install --upgrade pip
+Saving image...
+Image saved, took 3.69s
+
+Built image im-1h9Ohu75awbigmUtmt1zYO in 32.05s
+
+
+Building image im-CrZTq97XdWRnj75Ny4aXiG
+
+=> Step 0: FROM base
+
+=> Step 1: RUN python -m pip install https://github.com/Dao-AILab/flash-attention/releases/download/v2.8.3/flash_attn-2.8.3+cu12torch2.7cxx11abiFALSE-cp311-cp311-linux_x86_64.whl
+Looking in indexes: http://pypi-mirror.modal.local:5555/simple
+Collecting flash-attn==2.8.3+cu12torch2.7cxx11abifalse
+  Downloading https://github.com/Dao-AILab/flash-attention/releases/download/v2.8.3/flash_attn-2.8.3+cu12torch2.7cxx11abiFALSE-cp311-cp311-linux_x86_64.whl (256.0 MB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 256.0/256.0 MB 120.3 MB/s  0:00:02
+Requirement already satisfied: torch in /usr/local/lib/python3.11/site-packages (from flash-attn==2.8.3+cu12torch2.7cxx11abifalse) (2.7.0+cu128)
+Requirement already satisfied: einops in /usr/local/lib/python3.11/site-packages (from flash-attn==2.8.3+cu12torch2.7cxx11abifalse) (0.8.2)
+Requirement already satisfied: filelock in /usr/local/lib/python3.11/site-packages (from torch->flash-attn==2.8.3+cu12torch2.7cxx11abifalse) (3.29.0)
+Requirement already satisfied: typing-extensions>=4.10.0 in /usr/local/lib/python3.11/site-packages (from torch->flash-attn==2.8.3+cu12torch2.7cxx11abifalse) (4.15.0)
+Requirement already satisfied: sympy>=1.13.3 in /usr/local/lib/python3.11/site-packages (from torch->flash-attn==2.8.3+cu12torch2.7cxx11abifalse) (1.14.0)
+Requirement already satisfied: networkx in /usr/local/lib/python3.11/site-packages (from torch->flash-attn==2.8.3+cu12torch2.7cxx11abifalse) (3.6.1)
+Requirement already satisfied: jinja2 in /usr/local/lib/python3.11/site-packages (from torch->flash-attn==2.8.3+cu12torch2.7cxx11abifalse) (3.1.6)
+Requirement already satisfied: fsspec in /usr/local/lib/python3.11/site-packages (from torch->flash-attn==2.8.3+cu12torch2.7cxx11abifalse) (2026.4.0)
+Requirement already satisfied: nvidia-cuda-nvrtc-cu12==12.8.61 in /usr/local/lib/python3.11/site-packages (from torch->flash-attn==2.8.3+cu12torch2.7cxx11abifalse) (12.8.61)
+Requirement already satisfied: nvidia-cuda-runtime-cu12==12.8.57 in /usr/local/lib/python3.11/site-packages (from torch->flash-attn==2.8.3+cu12torch2.7cxx11abifalse) (12.8.57)
+Requirement already satisfied: nvidia-cuda-cupti-cu12==12.8.57 in /usr/local/lib/python3.11/site-packages (from torch->flash-attn==2.8.3+cu12torch2.7cxx11abifalse) (12.8.57)
+Requirement already satisfied: nvidia-cudnn-cu12==9.7.1.26 in /usr/local/lib/python3.11/site-packages (from torch->flash-attn==2.8.3+cu12torch2.7cxx11abifalse) (9.7.1.26)
+Requirement already satisfied: nvidia-cublas-cu12==12.8.3.14 in /usr/local/lib/python3.11/site-packages (from torch->flash-attn==2.8.3+cu12torch2.7cxx11abifalse) (12.8.3.14)
+Requirement already satisfied: nvidia-cufft-cu12==11.3.3.41 in /usr/local/lib/python3.11/site-packages (from torch->flash-attn==2.8.3+cu12torch2.7cxx11abifalse) (11.3.3.41)
+Requirement already satisfied: nvidia-curand-cu12==10.3.9.55 in /usr/local/lib/python3.11/site-packages (from torch->flash-attn==2.8.3+cu12torch2.7cxx11abifalse) (10.3.9.55)
+Requirement already satisfied: nvidia-cusolver-cu12==11.7.2.55 in /usr/local/lib/python3.11/site-packages (from torch->flash-attn==2.8.3+cu12torch2.7cxx11abifalse) (11.7.2.55)
+Requirement already satisfied: nvidia-cusparse-cu12==12.5.7.53 in /usr/local/lib/python3.11/site-packages (from torch->flash-attn==2.8.3+cu12torch2.7cxx11abifalse) (12.5.7.53)
+Requirement already satisfied: nvidia-cusparselt-cu12==0.6.3 in /usr/local/lib/python3.11/site-packages (from torch->flash-attn==2.8.3+cu12torch2.7cxx11abifalse) (0.6.3)
+Requirement already satisfied: nvidia-nccl-cu12==2.26.2 in /usr/local/lib/python3.11/site-packages (from torch->flash-attn==2.8.3+cu12torch2.7cxx11abifalse) (2.26.2)
+Requirement already satisfied: nvidia-nvtx-cu12==12.8.55 in /usr/local/lib/python3.11/site-packages (from torch->flash-attn==2.8.3+cu12torch2.7cxx11abifalse) (12.8.55)
+Requirement already satisfied: nvidia-nvjitlink-cu12==12.8.61 in /usr/local/lib/python3.11/site-packages (from torch->flash-attn==2.8.3+cu12torch2.7cxx11abifalse) (12.8.61)
+Requirement already satisfied: nvidia-cufile-cu12==1.13.0.11 in /usr/local/lib/python3.11/site-packages (from torch->flash-attn==2.8.3+cu12torch2.7cxx11abifalse) (1.13.0.11)
+Requirement already satisfied: triton==3.3.0 in /usr/local/lib/python3.11/site-packages (from torch->flash-attn==2.8.3+cu12torch2.7cxx11abifalse) (3.3.0)
+Requirement already satisfied: setuptools>=40.8.0 in /usr/local/lib/python3.11/site-packages (from triton==3.3.0->torch->flash-attn==2.8.3+cu12torch2.7cxx11abifalse) (65.5.1)
+Requirement already satisfied: mpmath<1.4,>=1.1.0 in /usr/local/lib/python3.11/site-packages (from sympy>=1.13.3->torch->flash-attn==2.8.3+cu12torch2.7cxx11abifalse) (1.3.0)
+Requirement already satisfied: MarkupSafe>=2.0 in /usr/local/lib/python3.11/site-packages (from jinja2->torch->flash-attn==2.8.3+cu12torch2.7cxx11abifalse) (3.0.3)
+Installing collected packages: flash-attn
+Successfully installed flash-attn-2.8.3
+
+[notice] A new release of pip is available: 25.2 -> 26.1.1
+[notice] To update, run: pip install --upgrade pip
+Saving image...
+Image saved, took 4.38s
+
+Built image im-CrZTq97XdWRnj75Ny4aXiG in 18.15s
+
+
+Building image im-RYLaC4DJac4GqVz8AwWA5e
+
+=> Step 0: FROM base
+
+=> Step 1: RUN python -m pip install 'datasets>=2.20' 'pylatexenc>=2.10' pytest 'pyyaml>=6.0' wandb
+Looking in indexes: http://pypi-mirror.modal.local:5555/simple
+Collecting datasets>=2.20
+  Downloading http://pypi-mirror.modal.local:5555/simple/datasets/datasets-4.8.5-py3-none-any.whl.metadata (19 kB)
+Collecting pylatexenc>=2.10
+  Downloading http://pypi-mirror.modal.local:5555/simple/pylatexenc/pylatexenc-2.10.tar.gz (162 kB)
+  Preparing metadata (setup.py): started
+  Preparing metadata (setup.py): finished with status 'done'
+Collecting pytest
+  Downloading http://pypi-mirror.modal.local:5555/simple/pytest/pytest-9.0.3-py3-none-any.whl.metadata (7.6 kB)
+Requirement already satisfied: pyyaml>=6.0 in /usr/local/lib/python3.11/site-packages (6.0.3)
+Collecting wandb
+  Downloading http://pypi-mirror.modal.local:5555/simple/wandb/wandb-0.27.0-py3-none-manylinux_2_28_x86_64.whl.metadata (11 kB)
+Requirement already satisfied: filelock in /usr/local/lib/python3.11/site-packages (from datasets>=2.20) (3.29.0)
+Requirement already satisfied: numpy>=1.17 in /usr/local/lib/python3.11/site-packages (from datasets>=2.20) (2.2.6)
+Collecting pyarrow>=21.0.0 (from datasets>=2.20)
+  Downloading http://pypi-mirror.modal.local:5555/simple/pyarrow/pyarrow-24.0.0-cp311-cp311-manylinux_2_28_x86_64.whl.metadata (3.0 kB)
+Requirement already satisfied: dill<0.4.2,>=0.3.0 in /usr/local/lib/python3.11/site-packages (from datasets>=2.20) (0.4.1)
+Collecting pandas (from datasets>=2.20)
+  Downloading http://pypi-mirror.modal.local:5555/simple/pandas/pandas-3.0.3-cp311-cp311-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl.metadata (79 kB)
+Requirement already satisfied: requests>=2.32.2 in /usr/local/lib/python3.11/site-packages (from datasets>=2.20) (2.34.2)
+Requirement already satisfied: httpx<1.0.0 in /usr/local/lib/python3.11/site-packages (from datasets>=2.20) (0.28.1)
+Requirement already satisfied: tqdm>=4.66.3 in /usr/local/lib/python3.11/site-packages (from datasets>=2.20) (4.67.3)
+Collecting xxhash (from datasets>=2.20)
+  Downloading http://pypi-mirror.modal.local:5555/simple/xxhash/xxhash-3.7.0-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (13 kB)
+Collecting multiprocess<0.70.20 (from datasets>=2.20)
+  Downloading http://pypi-mirror.modal.local:5555/simple/multiprocess/multiprocess-0.70.19-py311-none-any.whl.metadata (7.5 kB)
+Collecting fsspec<=2026.2.0,>=2023.1.0 (from fsspec[http]<=2026.2.0,>=2023.1.0->datasets>=2.20)
+  Downloading http://pypi-mirror.modal.local:5555/simple/fsspec/fsspec-2026.2.0-py3-none-any.whl.metadata (10 kB)
+Requirement already satisfied: huggingface-hub<2.0,>=0.25.0 in /usr/local/lib/python3.11/site-packages (from datasets>=2.20) (0.36.2)
+Requirement already satisfied: packaging in /usr/local/lib/python3.11/site-packages (from datasets>=2.20) (26.2)
+Requirement already satisfied: aiohttp!=4.0.0a0,!=4.0.0a1 in /usr/local/lib/python3.11/site-packages (from fsspec[http]<=2026.2.0,>=2023.1.0->datasets>=2.20) (3.13.5)
+Requirement already satisfied: anyio in /usr/local/lib/python3.11/site-packages (from httpx<1.0.0->datasets>=2.20) (4.13.0)
+Requirement already satisfied: certifi in /usr/local/lib/python3.11/site-packages (from httpx<1.0.0->datasets>=2.20) (2026.5.20)
+Requirement already satisfied: httpcore==1.* in /usr/local/lib/python3.11/site-packages (from httpx<1.0.0->datasets>=2.20) (1.0.9)
+Requirement already satisfied: idna in /usr/local/lib/python3.11/site-packages (from httpx<1.0.0->datasets>=2.20) (3.16)
+Requirement already satisfied: h11>=0.16 in /usr/local/lib/python3.11/site-packages (from httpcore==1.*->httpx<1.0.0->datasets>=2.20) (0.16.0)
+Requirement already satisfied: hf-xet<2.0.0,>=1.1.3 in /usr/local/lib/python3.11/site-packages (from huggingface-hub<2.0,>=0.25.0->datasets>=2.20) (1.5.0)
+Requirement already satisfied: typing-extensions>=3.7.4.3 in /usr/local/lib/python3.11/site-packages (from huggingface-hub<2.0,>=0.25.0->datasets>=2.20) (4.15.0)
+Collecting iniconfig>=1.0.1 (from pytest)
+  Downloading http://pypi-mirror.modal.local:5555/simple/iniconfig/iniconfig-2.3.0-py3-none-any.whl.metadata (2.5 kB)
+Collecting pluggy<2,>=1.5 (from pytest)
+  Downloading http://pypi-mirror.modal.local:5555/simple/pluggy/pluggy-1.6.0-py3-none-any.whl.metadata (4.8 kB)
+Requirement already satisfied: pygments>=2.7.2 in /usr/local/lib/python3.11/site-packages (from pytest) (2.20.0)
+Requirement already satisfied: click>=8.2.0 in /usr/local/lib/python3.11/site-packages (from wandb) (8.4.1)
+Collecting gitpython!=3.1.29,>=1.0.0 (from wandb)
+  Downloading http://pypi-mirror.modal.local:5555/simple/gitpython/gitpython-3.1.50-py3-none-any.whl.metadata (14 kB)
+Collecting platformdirs (from wandb)
+  Downloading http://pypi-mirror.modal.local:5555/simple/platformdirs/platformdirs-4.9.6-py3-none-any.whl.metadata (4.7 kB)
+Requirement already satisfied: protobuf!=5.28.0,!=5.29.0,<8,>4.21.0 in /usr/local/lib/python3.11/site-packages (from wandb) (6.33.6)
+Requirement already satisfied: pydantic<3,>=2.6 in /usr/local/lib/python3.11/site-packages (from wandb) (2.13.4)
+Requirement already satisfied: sentry-sdk>=2.0.0 in /usr/local/lib/python3.11/site-packages (from wandb) (2.60.0)
+Requirement already satisfied: annotated-types>=0.6.0 in /usr/local/lib/python3.11/site-packages (from pydantic<3,>=2.6->wandb) (0.7.0)
+Requirement already satisfied: pydantic-core==2.46.4 in /usr/local/lib/python3.11/site-packages (from pydantic<3,>=2.6->wandb) (2.46.4)
+Requirement already satisfied: typing-inspection>=0.4.2 in /usr/local/lib/python3.11/site-packages (from pydantic<3,>=2.6->wandb) (0.4.2)
+Requirement already satisfied: charset_normalizer<4,>=2 in /usr/local/lib/python3.11/site-packages (from requests>=2.32.2->datasets>=2.20) (3.4.7)
+Requirement already satisfied: urllib3<3,>=1.26 in /usr/local/lib/python3.11/site-packages (from requests>=2.32.2->datasets>=2.20) (2.7.0)
+Requirement already satisfied: aiohappyeyeballs>=2.5.0 in /usr/local/lib/python3.11/site-packages (from aiohttp!=4.0.0a0,!=4.0.0a1->fsspec[http]<=2026.2.0,>=2023.1.0->datasets>=2.20) (2.6.2)
+Requirement already satisfied: aiosignal>=1.4.0 in /usr/local/lib/python3.11/site-packages (from aiohttp!=4.0.0a0,!=4.0.0a1->fsspec[http]<=2026.2.0,>=2023.1.0->datasets>=2.20) (1.4.0)
+Requirement already satisfied: attrs>=17.3.0 in /usr/local/lib/python3.11/site-packages (from aiohttp!=4.0.0a0,!=4.0.0a1->fsspec[http]<=2026.2.0,>=2023.1.0->datasets>=2.20) (26.1.0)
+Requirement already satisfied: frozenlist>=1.1.1 in /usr/local/lib/python3.11/site-packages (from aiohttp!=4.0.0a0,!=4.0.0a1->fsspec[http]<=2026.2.0,>=2023.1.0->datasets>=2.20) (1.8.0)
+Requirement already satisfied: multidict<7.0,>=4.5 in /usr/local/lib/python3.11/site-packages (from aiohttp!=4.0.0a0,!=4.0.0a1->fsspec[http]<=2026.2.0,>=2023.1.0->datasets>=2.20) (6.7.1)
+Requirement already satisfied: propcache>=0.2.0 in /usr/local/lib/python3.11/site-packages (from aiohttp!=4.0.0a0,!=4.0.0a1->fsspec[http]<=2026.2.0,>=2023.1.0->datasets>=2.20) (0.5.2)
+Requirement already satisfied: yarl<2.0,>=1.17.0 in /usr/local/lib/python3.11/site-packages (from aiohttp!=4.0.0a0,!=4.0.0a1->fsspec[http]<=2026.2.0,>=2023.1.0->datasets>=2.20) (1.24.2)
+Collecting gitdb<5,>=4.0.1 (from gitpython!=3.1.29,>=1.0.0->wandb)
+  Downloading http://pypi-mirror.modal.local:5555/simple/gitdb/gitdb-4.0.12-py3-none-any.whl.metadata (1.2 kB)
+Collecting smmap<6,>=3.0.1 (from gitdb<5,>=4.0.1->gitpython!=3.1.29,>=1.0.0->wandb)
+  Downloading http://pypi-mirror.modal.local:5555/simple/smmap/smmap-5.0.3-py3-none-any.whl.metadata (4.6 kB)
+Collecting python-dateutil>=2.8.2 (from pandas->datasets>=2.20)
+  Downloading http://pypi-mirror.modal.local:5555/simple/python-dateutil/python_dateutil-2.9.0.post0-py2.py3-none-any.whl.metadata (8.4 kB)
+Collecting six>=1.5 (from python-dateutil>=2.8.2->pandas->datasets>=2.20)
+  Downloading http://pypi-mirror.modal.local:5555/simple/six/six-1.17.0-py2.py3-none-any.whl.metadata (1.7 kB)
+Downloading http://pypi-mirror.modal.local:5555/simple/datasets/datasets-4.8.5-py3-none-any.whl (528 kB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 529.0/529.0 kB 395.4 MB/s  0:00:00
+Downloading http://pypi-mirror.modal.local:5555/simple/fsspec/fsspec-2026.2.0-py3-none-any.whl (202 kB)
+Downloading http://pypi-mirror.modal.local:5555/simple/multiprocess/multiprocess-0.70.19-py311-none-any.whl (144 kB)
+Downloading http://pypi-mirror.modal.local:5555/simple/pytest/pytest-9.0.3-py3-none-any.whl (375 kB)
+Downloading http://pypi-mirror.modal.local:5555/simple/pluggy/pluggy-1.6.0-py3-none-any.whl (20 kB)
+Downloading http://pypi-mirror.modal.local:5555/simple/wandb/wandb-0.27.0-py3-none-manylinux_2_28_x86_64.whl (27.3 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 27.3/27.3 MB 347.1 MB/s  0:00:00
+Downloading http://pypi-mirror.modal.local:5555/simple/gitpython/gitpython-3.1.50-py3-none-any.whl (212 kB)
+Downloading http://pypi-mirror.modal.local:5555/simple/gitdb/gitdb-4.0.12-py3-none-any.whl (62 kB)
+Downloading http://pypi-mirror.modal.local:5555/simple/smmap/smmap-5.0.3-py3-none-any.whl (24 kB)
+Downloading http://pypi-mirror.modal.local:5555/simple/iniconfig/iniconfig-2.3.0-py3-none-any.whl (7.5 kB)
+Downloading http://pypi-mirror.modal.local:5555/simple/pyarrow/pyarrow-24.0.0-cp311-cp311-manylinux_2_28_x86_64.whl (48.8 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 48.8/48.8 MB 328.1 MB/s  0:00:00
+Downloading http://pypi-mirror.modal.local:5555/simple/pandas/pandas-3.0.3-cp311-cp311-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl (11.3 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 11.3/11.3 MB 332.8 MB/s  0:00:00
+Downloading http://pypi-mirror.modal.local:5555/simple/python-dateutil/python_dateutil-2.9.0.post0-py2.py3-none-any.whl (229 kB)
+Downloading http://pypi-mirror.modal.local:5555/simple/six/six-1.17.0-py2.py3-none-any.whl (11 kB)
+Downloading http://pypi-mirror.modal.local:5555/simple/platformdirs/platformdirs-4.9.6-py3-none-any.whl (21 kB)
+Downloading http://pypi-mirror.modal.local:5555/simple/xxhash/xxhash-3.7.0-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (193 kB)
+Building wheels for collected packages: pylatexenc
+  DEPRECATION: Building 'pylatexenc' using the legacy setup.py bdist_wheel mechanism, which will be removed in a future version. pip 25.3 will enforce this behaviour change. A possible replacement is to use the standardized build interface by setting the `--use-pep517` option, (possibly combined with `--no-build-isolation`), or adding a `pyproject.toml` file to the source tree of 'pylatexenc'. Discussion can be found at https://github.com/pypa/pip/issues/6334
+  Building wheel for pylatexenc (setup.py): started
+  Building wheel for pylatexenc (setup.py): finished with status 'done'
+  Created wheel for pylatexenc: filename=pylatexenc-2.10-py3-none-any.whl size=136818 sha256=278479fba9e6df9490306652fe3cbb224c57fda9d15dd5630945da3f8ac7b275
+  Stored in directory: /tmp/pip-ephem-wheel-cache-r10ol5ie/wheels/5f/c4/c7/f844eaf87ea389efcc9888e2552a555cac89c372f1c491e3f7
+Successfully built pylatexenc
+Installing collected packages: pylatexenc, xxhash, smmap, six, pyarrow, pluggy, platformdirs, multiprocess, iniconfig, fsspec, python-dateutil, pytest, gitdb, pandas, gitpython, wandb, datasets
+  Attempting uninstall: fsspec
+    Found existing installation: fsspec 2026.4.0
+    Uninstalling fsspec-2026.4.0:
+      Successfully uninstalled fsspec-2026.4.0
+
+Successfully installed datasets-4.8.5 fsspec-2026.2.0 gitdb-4.0.12 gitpython-3.1.50 iniconfig-2.3.0 multiprocess-0.70.19 pandas-3.0.3 platformdirs-4.9.6 pluggy-1.6.0 pyarrow-24.0.0 pylatexenc-2.10 pytest-9.0.3 python-dateutil-2.9.0.post0 six-1.17.0 smmap-5.0.3 wandb-0.27.0 xxhash-3.7.0
+
+[notice] A new release of pip is available: 25.2 -> 26.1.1
+[notice] To update, run: pip install --upgrade pip
+Saving image...
+Image saved, took 1.24s
+
+Built image im-RYLaC4DJac4GqVz8AwWA5e in 14.74s
+
+
+✓ Created objects.
+├── 🔨 Created mount 
+│   /Users/nancybao/Desktop/dev/cs224r_finalproject/main/train/trainer.py
+├── 🔨 Created mount /Users/nancybao/Desktop/dev/cs224r_finalproject/main
+├── 🔨 Created function train_remote_h200.
+└── 🔨 Created function train_remote_b200.
+INFO 05-27 07:31:22 [__init__.py:243] Automatically detected platform cuda.
+wandb: [wandb.login()] Loaded credentials for https://api.wandb.ai from WANDB_API_KEY.
+wandb: Currently logged in as: anastasia-lee (224r-project) to https://api.wandb.ai. Use `wandb login --relogin` to force relogin
+wandb: setting up run yqlmvnw0
+wandb: Tracking run with wandb version 0.27.0
+wandb: Run data is saved locally in /root/wandb/run-20260527_073127-yqlmvnw0
+wandb: Run `wandb offline` to turn off syncing.
+wandb: Syncing run train-minority_answer_nancy_ablate-b200eff-sleep
+wandb: ⭐️ View project at https://wandb.ai/224r-project/cs224r-minority-voting
+wandb: 🚀 View run at https://wandb.ai/224r-project/cs224r-minority-voting/runs/yqlmvnw0
+wandb: Detected [openai] in use.
+wandb: Use W&B Weave for improved LLM call tracing. Install Weave with `pip install weave` then add `import weave` to the top of your script.
+wandb: For more information, check out the docs at: https://weave-docs.wandb.ai
+INFO 05-27 07:31:30 [__init__.py:31] Available plugins for group vllm.general_plugins:
+INFO 05-27 07:31:30 [__init__.py:33] - lora_filesystem_resolver -> vllm.plugins.lora_resolvers.filesystem_resolver:register_filesystem_resolver
+INFO 05-27 07:31:30 [__init__.py:36] All plugins in this group will be loaded. Set `VLLM_PLUGINS` to control which plugins to load.
+INFO 05-27 07:31:53 [config.py:793] This model supports multiple tasks: {'reward', 'generate', 'embed', 'score', 'classify'}. Defaulting to 'generate'.
+INFO 05-27 07:31:53 [llm_engine.py:230] Initializing a V0 LLM engine (v0.9.0) with config: model='Qwen/Qwen3-1.7B-Base', speculative_config=None, tokenizer='Qwen/Qwen3-1.7B-Base', skip_tokenizer_init=False, tokenizer_mode=auto, revision=None, override_neuron_config={}, tokenizer_revision=None, trust_remote_code=False, dtype=torch.bfloat16, max_seq_len=5120, download_dir=None, load_format=LoadFormat.AUTO, tensor_parallel_size=1, pipeline_parallel_size=1, disable_custom_all_reduce=False, quantization=None, enforce_eager=False, kv_cache_dtype=auto,  device_config=cuda, decoding_config=DecodingConfig(backend='xgrammar', disable_fallback=False, disable_any_whitespace=False, disable_additional_properties=False, reasoning_backend=''), observability_config=ObservabilityConfig(show_hidden_metrics_for_version=None, otlp_traces_endpoint=None, collect_detailed_traces=None), seed=None, served_model_name=Qwen/Qwen3-1.7B-Base, num_scheduler_steps=1, multi_step_stream_outputs=True, enable_prefix_caching=True, chunked_prefill_enabled=False, use_async_output_proc=True, pooler_config=None, compilation_config={"compile_sizes": [], "inductor_compile_config": {"enable_auto_functionalized_v2": false}, "cudagraph_capture_sizes": [128, 120, 112, 104, 96, 88, 80, 72, 64, 56, 48, 40, 32, 24, 16, 8, 4, 2, 1], "max_capture_size": 128}, use_cached_outputs=False, 
+INFO 05-27 07:31:57 [cuda.py:292] Using Flash Attention backend.
+INFO 05-27 07:31:58 [parallel_state.py:1064] rank 0 in world size 1 is assigned as DP rank 0, PP rank 0, TP rank 0, EP rank 0
+INFO 05-27 07:31:58 [model_runner.py:1170] Starting to load model Qwen/Qwen3-1.7B-Base...
+INFO 05-27 07:31:58 [weight_utils.py:291] Using model weights format ['*.safetensors']
+INFO 05-27 07:31:59 [weight_utils.py:344] No model.safetensors.index.json found in remote.
+Loading safetensors checkpoint shards:   0% Completed | 0/1 [00:00<?, ?it/s]
+Loading safetensors checkpoint shards: 100% Completed | 1/1 [00:02<00:00,  2.10s/it]
+Loading safetensors checkpoint shards: 100% Completed | 1/1 [00:02<00:00,  2.11s/it]
+
+INFO 05-27 07:32:01 [default_loader.py:280] Loading weights took 2.23 seconds
+INFO 05-27 07:32:01 [model_runner.py:1202] Model loading took 3.2132 GiB and 3.426152 seconds
+INFO 05-27 07:32:03 [worker.py:291] Memory profiling takes 1.22 seconds
+INFO 05-27 07:32:03 [worker.py:291] the current vLLM instance can use total_gpu_memory (178.35GiB) x gpu_memory_utilization (0.45) = 80.26GiB
+INFO 05-27 07:32:03 [worker.py:291] model weights take 3.21GiB; non_torch_memory takes 0.16GiB; PyTorch activation peak memory takes 0.72GiB; the rest of the memory reserved for KV Cache is 76.17GiB.
+INFO 05-27 07:32:03 [executor_base.py:112] # cuda blocks: 44568, # CPU blocks: 2340
+INFO 05-27 07:32:03 [executor_base.py:117] Maximum concurrency for 5120 tokens per request: 139.28x
+INFO 05-27 07:32:10 [model_runner.py:1512] Capturing cudagraphs for decoding. This may lead to unexpected consequences if the model is not static. To run the model in eager mode, set 'enforce_eager=True' or use '--enforce-eager' in the CLI. If out-of-memory error occurs during cudagraph capture, consider decreasing `gpu_memory_utilization` or switching to eager mode. You can also reduce the `max_num_seqs` as needed to decrease memory usage.
+
+[1ACapturing CUDA graph shapes:   0%|          | 0/19 [00:00<?, ?it/s]
+[1ACapturing CUDA graph shapes:   5%|▌         | 1/19 [00:00<00:11,  1.59it/s]
+[1ACapturing CUDA graph shapes:  11%|█         | 2/19 [00:01<00:08,  2.00it/s]
+[1ACapturing CUDA graph shapes:  16%|█▌        | 3/19 [00:01<00:07,  2.15it/s]
+[1ACapturing CUDA graph shapes:  21%|██        | 4/19 [00:01<00:06,  2.29it/s]
+[1ACapturing CUDA graph shapes:  26%|██▋       | 5/19 [00:02<00:06,  2.31it/s]
+[1ACapturing CUDA graph shapes:  32%|███▏      | 6/19 [00:02<00:05,  2.36it/s]
+[1ACapturing CUDA graph shapes:  37%|███▋      | 7/19 [00:03<00:05,  2.29it/s]
+[1ACapturing CUDA graph shapes:  42%|████▏     | 8/19 [00:03<00:04,  2.29it/s]
+[1ACapturing CUDA graph shapes:  47%|████▋     | 9/19 [00:04<00:04,  2.28it/s]
+[1ACapturing CUDA graph shapes:  53%|█████▎    | 10/19 [00:04<00:03,  2.37it/s]
+[1ACapturing CUDA graph shapes:  58%|█████▊    | 11/19 [00:04<00:03,  2.38it/s]
+[1ACapturing CUDA graph shapes:  63%|██████▎   | 12/19 [00:05<00:02,  2.36it/s]
+[1ACapturing CUDA graph shapes:  68%|██████▊   | 13/19 [00:05<00:02,  2.34it/s]
+[1ACapturing CUDA graph shapes:  74%|███████▎  | 14/19 [00:06<00:02,  2.36it/s]
+[1ACapturing CUDA graph shapes:  79%|███████▉  | 15/19 [00:06<00:01,  2.38it/s]
+[1ACapturing CUDA graph shapes:  84%|████████▍ | 16/19 [00:06<00:01,  2.43it/s]
+[1ACapturing CUDA graph shapes:  89%|████████▉ | 17/19 [00:07<00:00,  2.50it/s]
+[1ACapturing CUDA graph shapes:  95%|█████████▍| 18/19 [00:07<00:00,  2.52it/s]
+[1ACapturing CUDA graph shapes: 100%|██████████| 19/19 [00:08<00:00,  2.50it/s]
+[1ACapturing CUDA graph shapes: 100%|██████████| 19/19 [00:08<00:00,  2.35it/s]
+INFO 05-27 07:32:18 [model_runner.py:1670] Graph capturing finished in 8 secs, took 0.13 GiB
+INFO 05-27 07:32:18 [llm_engine.py:428] init engine (profile, create kv cache, warmup model) took 16.67 seconds
+You are attempting to use Flash Attention 2.0 with a model not initialized on GPU. Make sure to move the model to GPU after initializing it on CPU with `model.to('cuda')`.
+
+[1AAdding requests:   0%|          | 0/512 [00:00<?, ?it/s]
+[1AAdding requests:  30%|██▉       | 153/512 [00:00<00:00, 1520.80it/s]
+[1AAdding requests:  63%|██████▎   | 323/512 [00:00<00:00, 1625.64it/s]
+[1AAdding requests:  95%|█████████▍| 486/512 [00:00<00:00, 1446.93it/s]
+[1AAdding requests: 100%|██████████| 512/512 [00:00<00:00, 1465.86it/s]
+
+[1AProcessed prompts:   0%|          | 0/512 [00:00<?, ?it/s, est. speed input: 0.00 toks/s, output: 0.00 toks/s]
+[1AProcessed prompts:   0%|          | 1/512 [00:00<03:41,  2.31it/s, est. speed input: 251.48 toks/s, output: 20.76 toks/s]
+[1AProcessed prompts:   1%|          | 3/512 [00:00<01:24,  6.05it/s, est. speed input: 1501.58 toks/s, output: 55.54 toks/s]
+[1AProcessed prompts:   1%|          | 4/512 [00:00<01:56,  4.37it/s, est. speed input: 1061.74 toks/s, output: 66.96 toks/s]
+[1AProcessed prompts:   1%|          | 5/512 [00:02<06:34,  1.29it/s, est. speed input: 399.76 toks/s, output: 58.63 toks/s] 
+[1AProcessed prompts:   1%|▏         | 7/512 [00:03<04:57,  1.70it/s, est. speed input: 375.93 toks/s, output: 113.89 toks/s]
+[1AProcessed prompts:   2%|▏         | 8/512 [00:04<04:33,  1.84it/s, est. speed input: 365.99 toks/s, output: 141.65 toks/s]
+[1AProcessed prompts:   2%|▏         | 9/512 [00:04<03:34,  2.34it/s, est. speed input: 385.11 toks/s, output: 177.23 toks/s]
+[1AProcessed prompts:   2%|▏         | 10/512 [00:04<02:53,  2.89it/s, est. speed input: 398.32 toks/s, output: 210.80 toks/s]
+[1AProcessed prompts:   2%|▏         | 11/512 [00:04<02:47,  2.98it/s, est. speed input: 396.71 toks/s, output: 236.31 toks/s]
+[1AProcessed prompts:   3%|▎         | 13/512 [00:05<03:04,  2.70it/s, est. speed input: 377.94 toks/s, output: 274.49 toks/s]
+[1AProcessed prompts:   3%|▎         | 14/512 [00:06<03:47,  2.19it/s, est. speed input: 346.69 toks/s, output: 283.17 toks/s]
+[1AProcessed prompts:   3%|▎         | 15/512 [00:06<03:41,  2.25it/s, est. speed input: 342.80 toks/s, output: 306.61 toks/s]
+[1AProcessed prompts:   3%|▎         | 17/512 [00:06<02:39,  3.10it/s, est. speed input: 355.35 toks/s, output: 373.78 toks/s]
+[1AProcessed prompts:   4%|▎         | 18/512 [00:07<02:23,  3.43it/s, est. speed input: 372.95 toks/s, output: 404.85 toks/s]
+[1AProcessed prompts:   4%|▎         | 19/512 [00:07<02:24,  3.42it/s, est. speed input: 369.23 toks/s, output: 429.77 toks/s]
+[1AProcessed prompts:   4%|▍         | 20/512 [00:07<03:08,  2.61it/s, est. speed input: 350.10 toks/s, output: 436.97 toks/s]
+[1AProcessed prompts:   4%|▍         | 22/512 [00:08<02:00,  4.07it/s, est. speed input: 378.19 toks/s, output: 512.58 toks/s]
+[1AProcessed prompts:   5%|▍         | 24/512 [00:08<02:06,  3.86it/s, est. speed input: 380.76 toks/s, output: 559.91 toks/s]
+[1AProcessed prompts:   5%|▍         | 25/512 [00:08<01:52,  4.32it/s, est. speed input: 447.65 toks/s, output: 592.99 toks/s]
+[1AProcessed prompts:   5%|▌         | 26/512 [00:09<02:15,  3.58it/s, est. speed input: 439.44 toks/s, output: 606.59 toks/s]
+[1AProcessed prompts:   5%|▌         | 27/512 [00:09<02:02,  3.95it/s, est. speed input: 443.48 toks/s, output: 636.82 toks/s]
+[1AProcessed prompts:   5%|▌         | 28/512 [00:09<02:18,  3.49it/s, est. speed input: 437.45 toks/s, output: 653.71 toks/s]
+[1AProcessed prompts:   6%|▌         | 29/512 [00:09<01:58,  4.08it/s, est. speed input: 443.49 toks/s, output: 686.31 toks/s]
+[1AProcessed prompts:   6%|▌         | 31/512 [00:10<01:48,  4.43it/s, est. speed input: 489.34 toks/s, output: 741.09 toks/s]
+[1AProcessed prompts:   6%|▋         | 33/512 [00:10<01:21,  5.87it/s, est. speed input: 512.41 toks/s, output: 772.20 toks/s]
+[1AProcessed prompts:   7%|▋         | 35/512 [00:10<01:02,  7.58it/s, est. speed input: 528.85 toks/s, output: 845.08 toks/s]
+[1AProcessed prompts:   7%|▋         | 37/512 [00:10<00:50,  9.36it/s, est. speed input: 543.65 toks/s, output: 917.60 toks/s]
+[1AProcessed prompts:   8%|▊         | 39/512 [00:11<01:07,  7.02it/s, est. speed input: 543.17 toks/s, output: 962.40 toks/s]
+[1AProcessed prompts:   8%|▊         | 41/512 [00:11<00:58,  8.11it/s, est. speed input: 554.67 toks/s, output: 991.28 toks/s]
+[1AProcessed prompts:   8%|▊         | 43/512 [00:11<00:58,  8.00it/s, est. speed input: 563.52 toks/s, output: 1011.85 toks/s]
+[1AProcessed prompts:   9%|▊         | 44/512 [00:11<01:00,  7.79it/s, est. speed input: 565.99 toks/s, output: 1039.92 toks/s]
+[1AProcessed prompts:   9%|▉         | 45/512 [00:11<01:10,  6.58it/s, est. speed input: 566.38 toks/s, output: 1059.32 toks/s]
+[1AProcessed prompts:   9%|▉         | 46/512 [00:12<01:36,  4.83it/s, est. speed input: 557.62 toks/s, output: 1066.12 toks/s]
+[1AProcessed prompts:   9%|▉         | 47/512 [00:12<01:32,  5.00it/s, est. speed input: 558.81 toks/s, output: 1083.33 toks/s]
+[1AProcessed prompts:   9%|▉         | 48/512 [00:12<01:25,  5.45it/s, est. speed input: 561.40 toks/s, output: 1112.19 toks/s]
+[1AProcessed prompts:  10%|▉         | 49/512 [00:12<01:29,  5.16it/s, est. speed input: 560.89 toks/s, output: 1133.59 toks/s]
+[1AProcessed prompts:  10%|▉         | 51/512 [00:13<01:13,  6.29it/s, est. speed input: 574.75 toks/s, output: 1194.37 toks/s]
+[1AProcessed prompts:  10%|█         | 52/512 [00:13<01:12,  6.30it/s, est. speed input: 576.12 toks/s, output: 1220.56 toks/s]
+[1AProcessed prompts:  10%|█         | 53/512 [00:13<01:20,  5.71it/s, est. speed input: 574.64 toks/s, output: 1240.74 toks/s]
+[1AProcessed prompts:  11%|█         | 54/512 [00:13<01:19,  5.78it/s, est. speed input: 576.33 toks/s, output: 1265.93 toks/s]
+[1AProcessed prompts:  11%|█         | 56/512 [00:14<01:27,  5.19it/s, est. speed input: 577.55 toks/s, output: 1306.16 toks/s]
+[1AProcessed prompts:  11%|█▏        | 58/512 [00:14<01:17,  5.89it/s, est. speed input: 584.98 toks/s, output: 1361.94 toks/s]
+[1AProcessed prompts:  12%|█▏        | 59/512 [00:14<01:26,  5.24it/s, est. speed input: 583.99 toks/s, output: 1377.23 toks/s]
+[1AProcessed prompts:  12%|█▏        | 60/512 [00:14<01:28,  5.12it/s, est. speed input: 618.66 toks/s, output: 1397.89 toks/s]
+[1AProcessed prompts:  12%|█▏        | 62/512 [00:14<01:05,  6.92it/s, est. speed input: 630.97 toks/s, output: 1443.00 toks/s]
+[1AProcessed prompts:  12%|█▏        | 63/512 [00:15<01:06,  6.78it/s, est. speed input: 634.28 toks/s, output: 1446.08 toks/s]
+[1AProcessed prompts:  13%|█▎        | 65/512 [00:15<01:21,  5.50it/s, est. speed input: 628.86 toks/s, output: 1442.59 toks/s]
+[1AProcessed prompts:  13%|█▎        | 67/512 [00:15<01:15,  5.88it/s, est. speed input: 635.62 toks/s, output: 1494.92 toks/s]
+[1AProcessed prompts:  13%|█▎        | 69/512 [00:16<00:59,  7.50it/s, est. speed input: 647.42 toks/s, output: 1556.76 toks/s]
+[1AProcessed prompts:  14%|█▎        | 70/512 [00:16<01:02,  7.08it/s, est. speed input: 647.49 toks/s, output: 1578.05 toks/s]
+[1AProcessed prompts:  14%|█▍        | 72/512 [00:16<01:03,  6.91it/s, est. speed input: 651.68 toks/s, output: 1596.96 toks/s]
+[1AProcessed prompts:  14%|█▍        | 73/512 [00:16<01:06,  6.61it/s, est. speed input: 651.87 toks/s, output: 1619.84 toks/s]
+[1AProcessed prompts:  14%|█▍        | 74/512 [00:16<01:07,  6.45it/s, est. speed input: 651.86 toks/s, output: 1643.57 toks/s]
+[1AProcessed prompts:  15%|█▍        | 75/512 [00:17<01:26,  5.06it/s, est. speed input: 645.95 toks/s, output: 1651.29 toks/s]
+[1AProcessed prompts:  15%|█▌        | 77/512 [00:17<01:02,  7.00it/s, est. speed input: 658.38 toks/s, output: 1718.48 toks/s]
+[1AProcessed prompts:  15%|█▌        | 78/512 [00:17<01:09,  6.21it/s, est. speed input: 656.75 toks/s, output: 1736.44 toks/s]
+[1AProcessed prompts:  15%|█▌        | 79/512 [00:17<01:16,  5.66it/s, est. speed input: 654.85 toks/s, output: 1753.42 toks/s]
+[1AProcessed prompts:  16%|█▌        | 82/512 [00:17<00:50,  8.58it/s, est. speed input: 670.01 toks/s, output: 1830.57 toks/s]
+[1AProcessed prompts:  16%|█▌        | 83/512 [00:18<00:52,  8.24it/s, est. speed input: 672.30 toks/s, output: 1831.69 toks/s]
+[1AProcessed prompts:  16%|█▋        | 84/512 [00:18<00:53,  8.00it/s, est. speed input: 675.44 toks/s, output: 1857.42 toks/s]
+[1AProcessed prompts:  17%|█▋        | 87/512 [00:18<01:10,  5.99it/s, est. speed input: 675.91 toks/s, output: 1901.31 toks/s]
+[1AProcessed prompts:  17%|█▋        | 88/512 [00:18<01:07,  6.27it/s, est. speed input: 679.29 toks/s, output: 1912.14 toks/s]
+[1AProcessed prompts:  17%|█▋        | 89/512 [00:19<01:05,  6.41it/s, est. speed input: 680.44 toks/s, output: 1936.26 toks/s]
+[1AProcessed prompts:  18%|█▊        | 91/512 [00:19<00:50,  8.26it/s, est. speed input: 709.84 toks/s, output: 2000.29 toks/s]
+[1AProcessed prompts:  18%|█▊        | 94/512 [00:19<00:43,  9.64it/s, est. speed input: 728.00 toks/s, output: 2028.14 toks/s]
+[1AProcessed prompts:  19%|█▉        | 96/512 [00:19<00:56,  7.32it/s, est. speed input: 725.16 toks/s, output: 2060.78 toks/s]
+[1AProcessed prompts:  19%|█▉        | 97/512 [00:20<01:01,  6.75it/s, est. speed input: 749.55 toks/s, output: 2078.42 toks/s]
+[1AProcessed prompts:  19%|█▉        | 98/512 [00:20<00:57,  7.21it/s, est. speed input: 753.24 toks/s, output: 2089.73 toks/s]
+[1AProcessed prompts:  20%|█▉        | 100/512 [00:20<01:17,  5.35it/s, est. speed input: 748.18 toks/s, output: 2101.95 toks/s]
+[1AProcessed prompts:  20%|█▉        | 101/512 [00:20<01:14,  5.52it/s, est. speed input: 748.14 toks/s, output: 2124.28 toks/s]
+[1AProcessed prompts:  20%|█▉        | 102/512 [00:21<01:06,  6.14it/s, est. speed input: 774.88 toks/s, output: 2152.38 toks/s]
+[1AProcessed prompts:  20%|██        | 103/512 [00:21<01:33,  4.39it/s, est. speed input: 766.22 toks/s, output: 2147.89 toks/s]
+[1AProcessed prompts:  20%|██        | 104/512 [00:21<01:27,  4.65it/s, est. speed input: 766.95 toks/s, output: 2168.45 toks/s]
+[1AProcessed prompts:  21%|██        | 106/512 [00:21<01:07,  6.05it/s, est. speed input: 770.68 toks/s, output: 2218.96 toks/s]
+[1AProcessed prompts:  21%|██        | 107/512 [00:21<01:02,  6.49it/s, est. speed input: 772.84 toks/s, output: 2223.27 toks/s]
+[1AProcessed prompts:  21%|██▏       | 110/512 [00:22<00:42,  9.56it/s, est. speed input: 804.81 toks/s, output: 2321.07 toks/s]
+[1AProcessed prompts:  22%|██▏       | 112/512 [00:22<00:41,  9.71it/s, est. speed input: 806.19 toks/s, output: 2313.08 toks/s]
+[1AProcessed prompts:  22%|██▏       | 114/512 [00:22<01:04,  6.15it/s, est. speed input: 813.95 toks/s, output: 2315.71 toks/s]
+[1AProcessed prompts:  22%|██▏       | 115/512 [00:23<01:16,  5.17it/s, est. speed input: 808.79 toks/s, output: 2308.49 toks/s]
+[1AProcessed prompts:  23%|██▎       | 117/512 [00:23<01:35,  4.14it/s, est. speed input: 799.86 toks/s, output: 2293.72 toks/s]
+[1AProcessed prompts:  23%|██▎       | 120/512 [00:24<01:06,  5.91it/s, est. speed input: 829.98 toks/s, output: 2361.55 toks/s]
+[1AProcessed prompts:  24%|██▎       | 121/512 [00:24<01:05,  5.94it/s, est. speed input: 828.90 toks/s, output: 2384.02 toks/s]
+[1AProcessed prompts:  24%|██▍       | 122/512 [00:24<01:34,  4.12it/s, est. speed input: 813.81 toks/s, output: 2369.43 toks/s]
+[1AProcessed prompts:  24%|██▍       | 124/512 [00:25<01:22,  4.72it/s, est. speed input: 817.76 toks/s, output: 2387.06 toks/s]
+[1AProcessed prompts:  24%|██▍       | 125/512 [00:25<01:22,  4.68it/s, est. speed input: 818.16 toks/s, output: 2404.67 toks/s]
+[1AProcessed prompts:  25%|██▍       | 126/512 [00:25<01:17,  4.96it/s, est. speed input: 820.54 toks/s, output: 2428.09 toks/s]
+[1AProcessed prompts:  25%|██▍       | 127/512 [00:25<01:28,  4.33it/s, est. speed input: 816.20 toks/s, output: 2436.16 toks/s]
+[1AProcessed prompts:  25%|██▌       | 129/512 [00:26<01:10,  5.43it/s, est. speed input: 820.62 toks/s, output: 2480.56 toks/s]
+[1AProcessed prompts:  26%|██▌       | 131/512 [00:26<00:58,  6.48it/s, est. speed input: 825.92 toks/s, output: 2503.77 toks/s]
+[1AProcessed prompts:  26%|██▌       | 132/512 [00:26<01:09,  5.50it/s, est. speed input: 822.12 toks/s, output: 2497.96 toks/s]
+[1AProcessed prompts:  26%|██▌       | 133/512 [00:26<01:05,  5.77it/s, est. speed input: 821.41 toks/s, output: 2500.05 toks/s]
+[1AProcessed prompts:  26%|██▋       | 135/512 [00:26<00:51,  7.25it/s, est. speed input: 845.39 toks/s, output: 2560.86 toks/s]
+[1AProcessed prompts:  27%|██▋       | 136/512 [00:27<00:53,  7.01it/s, est. speed input: 846.75 toks/s, output: 2570.58 toks/s]
+[1AProcessed prompts:  27%|██▋       | 138/512 [00:27<00:51,  7.27it/s, est. speed input: 849.84 toks/s, output: 2613.12 toks/s]
+[1AProcessed prompts:  27%|██▋       | 140/512 [00:27<00:49,  7.54it/s, est. speed input: 852.16 toks/s, output: 2631.07 toks/s]
+[1AProcessed prompts:  28%|██▊       | 141/512 [00:27<00:52,  7.03it/s, est. speed input: 849.90 toks/s, output: 2621.88 toks/s]
+[1AProcessed prompts:  28%|██▊       | 142/512 [00:28<01:08,  5.39it/s, est. speed input: 846.40 toks/s, output: 2619.25 toks/s]
+[1AProcessed prompts:  28%|██▊       | 143/512 [00:28<01:20,  4.61it/s, est. speed input: 843.01 toks/s, output: 2613.32 toks/s]
+[1AProcessed prompts:  28%|██▊       | 144/512 [00:28<01:10,  5.24it/s, est. speed input: 843.11 toks/s, output: 2619.92 toks/s]
+[1AProcessed prompts:  28%|██▊       | 145/512 [00:28<01:01,  5.99it/s, est. speed input: 843.92 toks/s, output: 2648.80 toks/s]
+[1AProcessed prompts:  29%|██▊       | 147/512 [00:28<00:43,  8.33it/s, est. speed input: 847.76 toks/s, output: 2685.14 toks/s]
+[1AProcessed prompts:  29%|██▉       | 149/512 [00:28<00:37,  9.73it/s, est. speed input: 853.04 toks/s, output: 2708.80 toks/s]
+[1AProcessed prompts:  29%|██▉       | 151/512 [00:29<00:39,  9.13it/s, est. speed input: 853.61 toks/s, output: 2762.07 toks/s]
+[1AProcessed prompts:  30%|██▉       | 153/512 [00:29<00:41,  8.73it/s, est. speed input: 857.54 toks/s, output: 2807.24 toks/s]
+[1AProcessed prompts:  30%|███       | 156/512 [00:29<00:34, 10.46it/s, est. speed input: 862.43 toks/s, output: 2823.51 toks/s]
+[1AProcessed prompts:  31%|███       | 158/512 [00:30<00:56,  6.26it/s, est. speed input: 865.09 toks/s, output: 2824.46 toks/s]
+[1AProcessed prompts:  31%|███▏      | 160/512 [00:30<00:45,  7.77it/s, est. speed input: 867.91 toks/s, output: 2858.80 toks/s]
+[1AProcessed prompts:  32%|███▏      | 162/512 [00:30<00:47,  7.37it/s, est. speed input: 867.69 toks/s, output: 2856.53 toks/s]
+[1AProcessed prompts:  32%|███▏      | 164/512 [00:30<00:51,  6.78it/s, est. speed input: 868.85 toks/s, output: 2839.62 toks/s]
+[1AProcessed prompts:  32%|███▏      | 165/512 [00:31<01:20,  4.30it/s, est. speed input: 854.51 toks/s, output: 2801.74 toks/s]
+[1AProcessed prompts:  32%|███▏      | 166/512 [00:32<01:53,  3.06it/s, est. speed input: 839.48 toks/s, output: 2778.81 toks/s]
+[1AProcessed prompts:  33%|███▎      | 168/512 [00:32<01:23,  4.14it/s, est. speed input: 858.61 toks/s, output: 2802.38 toks/s]
+[1AProcessed prompts:  33%|███▎      | 169/512 [00:32<01:21,  4.20it/s, est. speed input: 855.54 toks/s, output: 2792.97 toks/s]
+[1AProcessed prompts:  33%|███▎      | 170/512 [00:33<01:34,  3.61it/s, est. speed input: 849.27 toks/s, output: 2765.17 toks/s]
+[1AProcessed prompts:  33%|███▎      | 171/512 [00:33<01:26,  3.94it/s, est. speed input: 848.75 toks/s, output: 2773.08 toks/s]
+[1AProcessed prompts:  34%|███▎      | 172/512 [00:33<01:20,  4.24it/s, est. speed input: 846.76 toks/s, output: 2770.91 toks/s]
+[1AProcessed prompts:  34%|███▍      | 173/512 [00:33<01:19,  4.29it/s, est. speed input: 844.61 toks/s, output: 2790.70 toks/s]
+[1AProcessed prompts:  34%|███▍      | 176/512 [00:34<01:13,  4.55it/s, est. speed input: 841.21 toks/s, output: 2783.25 toks/s]
+[1AProcessed prompts:  35%|███▍      | 179/512 [00:34<00:48,  6.90it/s, est. speed input: 847.11 toks/s, output: 2811.75 toks/s]
+[1AProcessed prompts:  35%|███▌      | 180/512 [00:34<01:05,  5.09it/s, est. speed input: 840.58 toks/s, output: 2814.21 toks/s]
+[1AProcessed prompts:  35%|███▌      | 181/512 [00:35<01:02,  5.27it/s, est. speed input: 840.73 toks/s, output: 2809.88 toks/s]
+[1AProcessed prompts:  36%|███▌      | 183/512 [00:35<00:54,  6.02it/s, est. speed input: 841.74 toks/s, output: 2820.21 toks/s]
+[1AProcessed prompts:  36%|███▌      | 184/512 [00:35<00:55,  5.86it/s, est. speed input: 840.10 toks/s, output: 2827.36 toks/s]
+[1AProcessed prompts:  36%|███▋      | 186/512 [00:35<00:47,  6.88it/s, est. speed input: 842.40 toks/s, output: 2843.86 toks/s]
+[1AProcessed prompts:  37%|███▋      | 187/512 [00:35<00:45,  7.21it/s, est. speed input: 843.98 toks/s, output: 2855.14 toks/s]
+[1AProcessed prompts:  37%|███▋      | 188/512 [00:35<00:46,  6.95it/s, est. speed input: 844.43 toks/s, output: 2862.89 toks/s]
+[1AProcessed prompts:  37%|███▋      | 190/512 [00:36<00:36,  8.72it/s, est. speed input: 847.24 toks/s, output: 2876.68 toks/s]
+[1AProcessed prompts:  37%|███▋      | 191/512 [00:36<00:38,  8.43it/s, est. speed input: 849.76 toks/s, output: 2884.05 toks/s]
+[1AProcessed prompts:  38%|███▊      | 192/512 [00:36<00:41,  7.70it/s, est. speed input: 849.17 toks/s, output: 2909.19 toks/s]
+[1AProcessed prompts:  38%|███▊      | 193/512 [00:36<00:40,  7.90it/s, est. speed input: 849.36 toks/s, output: 2912.84 toks/s]
+[1AProcessed prompts:  38%|███▊      | 194/512 [00:36<00:40,  7.94it/s, est. speed input: 849.64 toks/s, output: 2911.40 toks/s]
+[1AProcessed prompts:  38%|███▊      | 195/512 [00:36<00:40,  7.77it/s, est. speed input: 851.15 toks/s, output: 2927.69 toks/s]
+[1AProcessed prompts:  38%|███▊      | 197/512 [00:37<00:47,  6.66it/s, est. speed input: 853.37 toks/s, output: 2961.43 toks/s]
+[1AProcessed prompts:  39%|███▉      | 199/512 [00:37<00:38,  8.05it/s, est. speed input: 858.49 toks/s, output: 2976.83 toks/s]
+[1AProcessed prompts:  39%|███▉      | 200/512 [00:37<00:37,  8.39it/s, est. speed input: 859.33 toks/s, output: 3006.98 toks/s]
+[1AProcessed prompts:  40%|███▉      | 203/512 [00:37<00:32,  9.65it/s, est. speed input: 862.36 toks/s, output: 3019.04 toks/s]
+[1AProcessed prompts:  40%|███▉      | 204/512 [00:37<00:40,  7.66it/s, est. speed input: 862.10 toks/s, output: 3017.31 toks/s]
+[1AProcessed prompts:  40%|████      | 205/512 [00:38<00:47,  6.43it/s, est. speed input: 859.08 toks/s, output: 3006.43 toks/s]
+[1AProcessed prompts:  40%|████      | 206/512 [00:39<01:45,  2.90it/s, est. speed input: 840.07 toks/s, output: 2944.44 toks/s]
+[1AProcessed prompts:  40%|████      | 207/512 [00:39<01:29,  3.41it/s, est. speed input: 841.05 toks/s, output: 2971.76 toks/s]
+[1AProcessed prompts:  41%|████      | 208/512 [00:39<01:23,  3.62it/s, est. speed input: 855.71 toks/s, output: 2972.64 toks/s]
+[1AProcessed prompts:  41%|████      | 209/512 [00:39<01:21,  3.74it/s, est. speed input: 852.94 toks/s, output: 2963.71 toks/s]
+[1AProcessed prompts:  41%|████      | 210/512 [00:39<01:12,  4.17it/s, est. speed input: 854.02 toks/s, output: 2984.28 toks/s]
+[1AProcessed prompts:  41%|████▏     | 212/512 [00:40<00:58,  5.14it/s, est. speed input: 853.34 toks/s, output: 2987.57 toks/s]
+[1AProcessed prompts:  42%|████▏     | 214/512 [00:40<00:42,  7.07it/s, est. speed input: 857.88 toks/s, output: 3012.49 toks/s]
+[1AProcessed prompts:  42%|████▏     | 215/512 [00:40<00:41,  7.09it/s, est. speed input: 869.41 toks/s, output: 3003.10 toks/s]
+[1AProcessed prompts:  42%|████▏     | 217/512 [00:40<00:43,  6.74it/s, est. speed input: 868.78 toks/s, output: 3010.89 toks/s]
+[1AProcessed prompts:  43%|████▎     | 218/512 [00:40<00:42,  6.84it/s, est. speed input: 871.72 toks/s, output: 3020.45 toks/s]
+[1AProcessed prompts:  43%|████▎     | 220/512 [00:41<00:36,  8.01it/s, est. speed input: 874.49 toks/s, output: 3044.11 toks/s]
+[1AProcessed prompts:  43%|████▎     | 221/512 [00:41<00:49,  5.88it/s, est. speed input: 870.89 toks/s, output: 3056.87 toks/s]
+[1AProcessed prompts:  44%|████▎     | 223/512 [00:42<01:09,  4.14it/s, est. speed input: 863.25 toks/s, output: 3034.16 toks/s]
+[1AProcessed prompts:  44%|████▍     | 225/512 [00:42<00:55,  5.14it/s, est. speed input: 864.61 toks/s, output: 3051.09 toks/s]
+[1AProcessed prompts:  44%|████▍     | 226/512 [00:42<00:50,  5.63it/s, est. speed input: 865.12 toks/s, output: 3054.84 toks/s]
+[1AProcessed prompts:  44%|████▍     | 227/512 [00:42<00:46,  6.07it/s, est. speed input: 865.39 toks/s, output: 3057.56 toks/s]
+[1AProcessed prompts:  45%|████▍     | 228/512 [00:42<00:44,  6.32it/s, est. speed input: 868.24 toks/s, output: 3068.34 toks/s]
+[1AProcessed prompts:  45%|████▍     | 230/512 [00:42<00:34,  8.21it/s, est. speed input: 885.69 toks/s, output: 3091.40 toks/s]
+[1AProcessed prompts:  45%|████▌     | 231/512 [00:43<00:45,  6.13it/s, est. speed input: 881.80 toks/s, output: 3085.69 toks/s]
+[1AProcessed prompts:  45%|████▌     | 232/512 [00:43<00:48,  5.75it/s, est. speed input: 880.99 toks/s, output: 3077.41 toks/s]
+[1AProcessed prompts:  46%|████▌     | 233/512 [00:43<00:58,  4.76it/s, est. speed input: 878.14 toks/s, output: 3078.48 toks/s]
+[1AProcessed prompts:  46%|████▌     | 235/512 [00:43<00:46,  5.95it/s, est. speed input: 879.54 toks/s, output: 3109.45 toks/s]
+[1AProcessed prompts:  46%|████▌     | 236/512 [00:44<00:58,  4.72it/s, est. speed input: 875.44 toks/s, output: 3087.85 toks/s]
+[1AProcessed prompts:  46%|████▋     | 237/512 [00:44<01:03,  4.30it/s, est. speed input: 872.12 toks/s, output: 3105.02 toks/s]
+[1AProcessed prompts:  46%|████▋     | 238/512 [00:44<00:57,  4.80it/s, est. speed input: 872.57 toks/s, output: 3117.44 toks/s]
+[1AProcessed prompts:  47%|████▋     | 240/512 [00:44<00:43,  6.25it/s, est. speed input: 888.04 toks/s, output: 3143.00 toks/s]
+[1AProcessed prompts:  47%|████▋     | 241/512 [00:45<01:17,  3.50it/s, est. speed input: 878.27 toks/s, output: 3124.19 toks/s]
+[1AProcessed prompts:  47%|████▋     | 242/512 [00:45<01:17,  3.50it/s, est. speed input: 875.65 toks/s, output: 3109.69 toks/s]
+[1AProcessed prompts:  47%|████▋     | 243/512 [00:46<01:11,  3.78it/s, est. speed input: 876.16 toks/s, output: 3117.34 toks/s]
+[1AProcessed prompts:  48%|████▊     | 245/512 [00:46<00:46,  5.71it/s, est. speed input: 880.32 toks/s, output: 3161.26 toks/s]
+[1AProcessed prompts:  48%|████▊     | 246/512 [00:46<01:06,  3.98it/s, est. speed input: 873.88 toks/s, output: 3139.98 toks/s]
+[1AProcessed prompts:  48%|████▊     | 247/512 [00:47<01:16,  3.44it/s, est. speed input: 870.44 toks/s, output: 3139.27 toks/s]
+[1AProcessed prompts:  48%|████▊     | 248/512 [00:47<01:03,  4.13it/s, est. speed input: 871.50 toks/s, output: 3154.84 toks/s]
+[1AProcessed prompts:  49%|████▉     | 251/512 [00:47<00:42,  6.08it/s, est. speed input: 879.76 toks/s, output: 3182.58 toks/s]
+[1AProcessed prompts:  49%|████▉     | 252/512 [00:47<00:41,  6.28it/s, est. speed input: 880.16 toks/s, output: 3189.14 toks/s]
+[1AProcessed prompts:  49%|████▉     | 253/512 [00:47<00:42,  6.07it/s, est. speed input: 881.81 toks/s, output: 3199.61 toks/s]
+[1AProcessed prompts:  50%|████▉     | 254/512 [00:47<00:42,  6.08it/s, est. speed input: 881.71 toks/s, output: 3202.03 toks/s]
+[1AProcessed prompts:  50%|████▉     | 255/512 [00:48<00:47,  5.36it/s, est. speed input: 889.30 toks/s, output: 3192.26 toks/s]
+[1AProcessed prompts:  50%|█████     | 257/512 [00:48<00:38,  6.64it/s, est. speed input: 890.24 toks/s, output: 3230.98 toks/s]
+[1AProcessed prompts:  50%|█████     | 258/512 [00:48<00:37,  6.70it/s, est. speed input: 897.83 toks/s, output: 3258.91 toks/s]
+[1AProcessed prompts:  51%|█████     | 259/512 [00:48<00:37,  6.80it/s, est. speed input: 898.77 toks/s, output: 3255.44 toks/s]
+[1AProcessed prompts:  51%|█████     | 261/512 [00:48<00:32,  7.77it/s, est. speed input: 900.71 toks/s, output: 3271.60 toks/s]
+[1AProcessed prompts:  51%|█████     | 262/512 [00:49<00:39,  6.40it/s, est. speed input: 899.16 toks/s, output: 3265.77 toks/s]
+[1AProcessed prompts:  51%|█████▏    | 263/512 [00:49<00:36,  6.79it/s, est. speed input: 899.13 toks/s, output: 3277.37 toks/s]
+[1AProcessed prompts:  52%|█████▏    | 264/512 [00:49<00:40,  6.15it/s, est. speed input: 899.46 toks/s, output: 3274.62 toks/s]
+[1AProcessed prompts:  52%|█████▏    | 265/512 [00:49<00:44,  5.56it/s, est. speed input: 902.04 toks/s, output: 3269.27 toks/s]
+[1AProcessed prompts:  52%|█████▏    | 266/512 [00:49<00:42,  5.73it/s, est. speed input: 905.80 toks/s, output: 3268.72 toks/s]
+[1AProcessed prompts:  52%|█████▏    | 267/512 [00:50<00:40,  6.08it/s, est. speed input: 909.90 toks/s, output: 3269.49 toks/s]
+[1AProcessed prompts:  52%|█████▏    | 268/512 [00:50<00:41,  5.89it/s, est. speed input: 909.36 toks/s, output: 3270.40 toks/s]
+[1AProcessed prompts:  53%|█████▎    | 269/512 [00:50<00:37,  6.44it/s, est. speed input: 909.99 toks/s, output: 3278.58 toks/s]
+[1AProcessed prompts:  53%|█████▎    | 271/512 [00:50<00:40,  5.95it/s, est. speed input: 908.56 toks/s, output: 3280.10 toks/s]
+[1AProcessed prompts:  54%|█████▎    | 274/512 [00:51<00:32,  7.39it/s, est. speed input: 919.98 toks/s, output: 3290.84 toks/s]
+[1AProcessed prompts:  54%|█████▎    | 275/512 [00:51<00:45,  5.22it/s, est. speed input: 915.61 toks/s, output: 3270.59 toks/s]
+[1AProcessed prompts:  54%|█████▍    | 276/512 [00:51<00:43,  5.41it/s, est. speed input: 916.72 toks/s, output: 3283.67 toks/s]
+[1AProcessed prompts:  54%|█████▍    | 277/512 [00:52<01:05,  3.56it/s, est. speed input: 909.12 toks/s, output: 3257.81 toks/s]
+[1AProcessed prompts:  54%|█████▍    | 278/512 [00:52<00:58,  4.00it/s, est. speed input: 908.74 toks/s, output: 3258.82 toks/s]
+[1AProcessed prompts:  54%|█████▍    | 279/512 [00:52<00:50,  4.64it/s, est. speed input: 909.53 toks/s, output: 3256.96 toks/s]
+[1AProcessed prompts:  55%|█████▍    | 280/512 [00:52<00:45,  5.14it/s, est. speed input: 909.85 toks/s, output: 3272.50 toks/s]
+[1AProcessed prompts:  55%|█████▌    | 282/512 [00:52<00:30,  7.53it/s, est. speed input: 916.68 toks/s, output: 3284.83 toks/s]
+[1AProcessed prompts:  55%|█████▌    | 284/512 [00:53<00:47,  4.85it/s, est. speed input: 922.37 toks/s, output: 3275.47 toks/s]
+[1AProcessed prompts:  56%|█████▌    | 286/512 [00:53<00:50,  4.45it/s, est. speed input: 918.43 toks/s, output: 3266.30 toks/s]
+[1AProcessed prompts:  56%|█████▌    | 287/512 [00:54<00:46,  4.89it/s, est. speed input: 920.30 toks/s, output: 3259.26 toks/s]
+[1AProcessed prompts:  56%|█████▋    | 289/512 [00:54<00:41,  5.39it/s, est. speed input: 920.07 toks/s, output: 3273.72 toks/s]
+[1AProcessed prompts:  57%|█████▋    | 290/512 [00:54<00:51,  4.33it/s, est. speed input: 915.18 toks/s, output: 3254.68 toks/s]
+[1AProcessed prompts:  57%|█████▋    | 292/512 [00:54<00:39,  5.63it/s, est. speed input: 916.08 toks/s, output: 3256.62 toks/s]
+[1AProcessed prompts:  57%|█████▋    | 293/512 [00:55<00:37,  5.87it/s, est. speed input: 917.22 toks/s, output: 3275.75 toks/s]
+[1AProcessed prompts:  57%|█████▋    | 294/512 [00:55<00:49,  4.41it/s, est. speed input: 924.26 toks/s, output: 3274.51 toks/s]
+[1AProcessed prompts:  58%|█████▊    | 295/512 [00:55<00:52,  4.17it/s, est. speed input: 923.29 toks/s, output: 3282.50 toks/s]
+[1AProcessed prompts:  58%|█████▊    | 296/512 [00:55<00:46,  4.66it/s, est. speed input: 923.17 toks/s, output: 3282.97 toks/s]
+[1AProcessed prompts:  58%|█████▊    | 299/512 [00:56<00:37,  5.61it/s, est. speed input: 925.02 toks/s, output: 3311.77 toks/s]
+[1AProcessed prompts:  59%|█████▊    | 300/512 [00:56<00:34,  6.10it/s, est. speed input: 925.89 toks/s, output: 3319.30 toks/s]
+[1AProcessed prompts:  59%|█████▉    | 301/512 [00:56<00:35,  5.91it/s, est. speed input: 925.28 toks/s, output: 3325.03 toks/s]
+[1AProcessed prompts:  59%|█████▉    | 303/512 [00:56<00:25,  8.13it/s, est. speed input: 928.89 toks/s, output: 3337.57 toks/s]
+[1AProcessed prompts:  60%|█████▉    | 305/512 [00:57<00:33,  6.21it/s, est. speed input: 926.36 toks/s, output: 3320.14 toks/s]
+[1AProcessed prompts:  60%|█████▉    | 306/512 [00:57<00:34,  5.93it/s, est. speed input: 936.58 toks/s, output: 3331.71 toks/s]
+[1AProcessed prompts:  60%|█████▉    | 307/512 [00:57<00:34,  5.97it/s, est. speed input: 935.96 toks/s, output: 3359.75 toks/s]
+[1AProcessed prompts:  60%|██████    | 308/512 [00:57<00:38,  5.30it/s, est. speed input: 934.43 toks/s, output: 3353.53 toks/s]
+[1AProcessed prompts:  61%|██████    | 310/512 [00:58<00:38,  5.28it/s, est. speed input: 934.30 toks/s, output: 3357.03 toks/s]
+[1AProcessed prompts:  61%|██████    | 312/512 [00:58<00:31,  6.45it/s, est. speed input: 944.96 toks/s, output: 3354.22 toks/s]
+[1AProcessed prompts:  61%|██████▏   | 314/512 [00:58<00:29,  6.82it/s, est. speed input: 949.38 toks/s, output: 3360.77 toks/s]
+[1AProcessed prompts:  62%|██████▏   | 315/512 [00:58<00:30,  6.47it/s, est. speed input: 949.29 toks/s, output: 3361.53 toks/s]
+[1AProcessed prompts:  62%|██████▏   | 316/512 [00:59<00:40,  4.81it/s, est. speed input: 945.44 toks/s, output: 3348.74 toks/s]
+[1AProcessed prompts:  62%|██████▏   | 317/512 [00:59<00:37,  5.27it/s, est. speed input: 949.36 toks/s, output: 3348.50 toks/s]
+[1AProcessed prompts:  62%|██████▏   | 319/512 [00:59<00:29,  6.60it/s, est. speed input: 963.32 toks/s, output: 3387.13 toks/s]
+[1AProcessed prompts:  62%|██████▎   | 320/512 [00:59<00:31,  6.08it/s, est. speed input: 962.44 toks/s, output: 3385.36 toks/s]
+[1AProcessed prompts:  63%|██████▎   | 321/512 [01:00<00:42,  4.49it/s, est. speed input: 959.35 toks/s, output: 3378.84 toks/s]
+[1AProcessed prompts:  63%|██████▎   | 322/512 [01:00<00:42,  4.50it/s, est. speed input: 958.03 toks/s, output: 3378.94 toks/s]
+[1AProcessed prompts:  63%|██████▎   | 323/512 [01:01<01:32,  2.03it/s, est. speed input: 942.26 toks/s, output: 3327.76 toks/s]
+[1AProcessed prompts:  63%|██████▎   | 324/512 [01:01<01:20,  2.34it/s, est. speed input: 940.66 toks/s, output: 3350.84 toks/s]
+[1AProcessed prompts:  63%|██████▎   | 325/512 [01:02<01:22,  2.26it/s, est. speed input: 938.68 toks/s, output: 3339.60 toks/s]
+[1AProcessed prompts:  64%|██████▎   | 326/512 [01:02<01:04,  2.90it/s, est. speed input: 939.54 toks/s, output: 3344.28 toks/s]
+[1AProcessed prompts:  64%|██████▍   | 327/512 [01:02<00:59,  3.13it/s, est. speed input: 937.64 toks/s, output: 3344.73 toks/s]
+[1AProcessed prompts:  64%|██████▍   | 328/512 [01:03<01:00,  3.04it/s, est. speed input: 934.79 toks/s, output: 3341.75 toks/s]
+[1AProcessed prompts:  64%|██████▍   | 329/512 [01:03<00:51,  3.57it/s, est. speed input: 935.75 toks/s, output: 3338.52 toks/s]
+[1AProcessed prompts:  65%|██████▍   | 331/512 [01:04<01:04,  2.79it/s, est. speed input: 930.00 toks/s, output: 3307.21 toks/s]
+[1AProcessed prompts:  65%|██████▍   | 332/512 [01:04<01:27,  2.05it/s, est. speed input: 919.33 toks/s, output: 3277.74 toks/s]
+[1AProcessed prompts:  65%|██████▌   | 333/512 [01:05<01:30,  1.98it/s, est. speed input: 913.42 toks/s, output: 3265.72 toks/s]
+[1AProcessed prompts:  65%|██████▌   | 335/512 [01:05<00:58,  3.03it/s, est. speed input: 915.75 toks/s, output: 3290.14 toks/s]
+[1AProcessed prompts:  66%|██████▌   | 336/512 [01:05<00:52,  3.36it/s, est. speed input: 917.71 toks/s, output: 3280.74 toks/s]
+[1AProcessed prompts:  66%|██████▌   | 337/512 [01:06<00:48,  3.57it/s, est. speed input: 919.19 toks/s, output: 3269.69 toks/s]
+[1AProcessed prompts:  66%|██████▌   | 339/512 [01:06<00:41,  4.16it/s, est. speed input: 922.75 toks/s, output: 3264.34 toks/s]
+[1AProcessed prompts:  66%|██████▋   | 340/512 [01:06<00:36,  4.69it/s, est. speed input: 926.43 toks/s, output: 3268.85 toks/s]
+[1AProcessed prompts:  67%|██████▋   | 342/512 [01:07<00:33,  5.03it/s, est. speed input: 926.41 toks/s, output: 3265.55 toks/s]
+[1AProcessed prompts:  67%|██████▋   | 344/512 [01:07<00:27,  6.10it/s, est. speed input: 927.04 toks/s, output: 3292.80 toks/s]
+[1AProcessed prompts:  68%|██████▊   | 346/512 [01:07<00:22,  7.49it/s, est. speed input: 931.78 toks/s, output: 3318.19 toks/s]
+[1AProcessed prompts:  68%|██████▊   | 347/512 [01:07<00:21,  7.67it/s, est. speed input: 931.74 toks/s, output: 3317.51 toks/s]
+[1AProcessed prompts:  68%|██████▊   | 348/512 [01:07<00:28,  5.77it/s, est. speed input: 930.09 toks/s, output: 3330.92 toks/s]
+[1AProcessed prompts:  68%|██████▊   | 350/512 [01:08<00:32,  5.06it/s, est. speed input: 928.41 toks/s, output: 3351.32 toks/s]
+[1AProcessed prompts:  69%|██████▉   | 352/512 [01:08<00:33,  4.82it/s, est. speed input: 931.57 toks/s, output: 3375.91 toks/s]
+[1AProcessed prompts:  69%|██████▉   | 354/512 [01:08<00:25,  6.28it/s, est. speed input: 934.49 toks/s, output: 3388.89 toks/s]
+[1AProcessed prompts:  69%|██████▉   | 355/512 [01:09<00:32,  4.88it/s, est. speed input: 935.82 toks/s, output: 3376.27 toks/s]
+[1AProcessed prompts:  70%|██████▉   | 356/512 [01:09<00:30,  5.06it/s, est. speed input: 935.67 toks/s, output: 3400.72 toks/s]
+[1AProcessed prompts:  70%|██████▉   | 357/512 [01:09<00:31,  4.96it/s, est. speed input: 934.58 toks/s, output: 3407.15 toks/s]
+[1AProcessed prompts:  70%|██████▉   | 358/512 [01:09<00:31,  4.83it/s, est. speed input: 936.35 toks/s, output: 3413.69 toks/s]
+[1AProcessed prompts:  70%|███████   | 360/512 [01:10<00:30,  5.00it/s, est. speed input: 942.37 toks/s, output: 3424.52 toks/s]
+[1AProcessed prompts:  71%|███████   | 361/512 [01:10<00:30,  4.92it/s, est. speed input: 941.59 toks/s, output: 3432.43 toks/s]
+[1AProcessed prompts:  71%|███████   | 362/512 [01:10<00:38,  3.87it/s, est. speed input: 937.44 toks/s, output: 3436.04 toks/s]
+[1AProcessed prompts:  71%|███████   | 363/512 [01:11<00:36,  4.07it/s, est. speed input: 939.70 toks/s, output: 3437.66 toks/s]
+[1AProcessed prompts:  71%|███████   | 364/512 [01:11<00:31,  4.69it/s, est. speed input: 939.98 toks/s, output: 3442.16 toks/s]
+[1AProcessed prompts:  72%|███████▏  | 367/512 [01:12<00:35,  4.12it/s, est. speed input: 946.37 toks/s, output: 3439.39 toks/s]
+[1AProcessed prompts:  72%|███████▏  | 369/512 [01:12<00:26,  5.32it/s, est. speed input: 947.18 toks/s, output: 3445.39 toks/s]
+[1AProcessed prompts:  72%|███████▏  | 370/512 [01:12<00:37,  3.83it/s, est. speed input: 942.15 toks/s, output: 3430.52 toks/s]
+[1AProcessed prompts:  73%|███████▎  | 372/512 [01:12<00:28,  4.94it/s, est. speed input: 947.20 toks/s, output: 3463.61 toks/s]
+[1AProcessed prompts:  73%|███████▎  | 373/512 [01:13<00:27,  4.99it/s, est. speed input: 946.28 toks/s, output: 3465.16 toks/s]
+[1AProcessed prompts:  73%|███████▎  | 374/512 [01:13<00:25,  5.48it/s, est. speed input: 946.52 toks/s, output: 3476.14 toks/s]
+[1AProcessed prompts:  73%|███████▎  | 376/512 [01:13<00:18,  7.45it/s, est. speed input: 949.35 toks/s, output: 3494.21 toks/s]
+[1AProcessed prompts:  74%|███████▍  | 378/512 [01:13<00:15,  8.67it/s, est. speed input: 950.56 toks/s, output: 3519.74 toks/s]
+[1AProcessed prompts:  74%|███████▍  | 380/512 [01:13<00:12, 10.27it/s, est. speed input: 957.02 toks/s, output: 3538.90 toks/s]
+[1AProcessed prompts:  75%|███████▍  | 382/512 [01:15<00:37,  3.47it/s, est. speed input: 943.72 toks/s, output: 3515.28 toks/s]
+[1AProcessed prompts:  75%|███████▍  | 383/512 [01:15<00:33,  3.84it/s, est. speed input: 943.91 toks/s, output: 3523.54 toks/s]
+[1AProcessed prompts:  75%|███████▌  | 384/512 [01:15<00:37,  3.38it/s, est. speed input: 939.73 toks/s, output: 3507.35 toks/s]
+[1AProcessed prompts:  75%|███████▌  | 386/512 [01:15<00:28,  4.46it/s, est. speed input: 940.15 toks/s, output: 3509.36 toks/s]
+[1AProcessed prompts:  76%|███████▌  | 387/512 [01:16<00:36,  3.39it/s, est. speed input: 937.30 toks/s, output: 3490.38 toks/s]
+[1AProcessed prompts:  76%|███████▌  | 388/512 [01:16<00:35,  3.51it/s, est. speed input: 935.61 toks/s, output: 3487.58 toks/s]
+[1AProcessed prompts:  76%|███████▌  | 389/512 [01:16<00:32,  3.73it/s, est. speed input: 934.36 toks/s, output: 3486.80 toks/s]
+[1AProcessed prompts:  76%|███████▋  | 391/512 [01:16<00:21,  5.53it/s, est. speed input: 944.95 toks/s, output: 3513.11 toks/s]
+[1AProcessed prompts:  77%|███████▋  | 392/512 [01:17<00:21,  5.70it/s, est. speed input: 944.59 toks/s, output: 3509.61 toks/s]
+[1AProcessed prompts:  77%|███████▋  | 394/512 [01:17<00:19,  6.10it/s, est. speed input: 946.96 toks/s, output: 3507.88 toks/s]
+[1AProcessed prompts:  77%|███████▋  | 396/512 [01:17<00:17,  6.74it/s, est. speed input: 953.47 toks/s, output: 3524.16 toks/s]
+[1AProcessed prompts:  78%|███████▊  | 398/512 [01:17<00:15,  7.21it/s, est. speed input: 953.75 toks/s, output: 3532.41 toks/s]
+[1AProcessed prompts:  78%|███████▊  | 399/512 [01:18<00:23,  4.74it/s, est. speed input: 949.46 toks/s, output: 3518.89 toks/s]
+[1AProcessed prompts:  78%|███████▊  | 400/512 [01:18<00:22,  4.95it/s, est. speed input: 949.09 toks/s, output: 3529.55 toks/s]
+[1AProcessed prompts:  78%|███████▊  | 401/512 [01:18<00:27,  4.08it/s, est. speed input: 948.35 toks/s, output: 3519.80 toks/s]
+[1AProcessed prompts:  79%|███████▊  | 402/512 [01:19<00:24,  4.53it/s, est. speed input: 948.49 toks/s, output: 3519.11 toks/s]
+[1AProcessed prompts:  79%|███████▊  | 403/512 [01:19<00:21,  5.10it/s, est. speed input: 949.14 toks/s, output: 3531.56 toks/s]
+[1AProcessed prompts:  79%|███████▉  | 404/512 [01:19<00:32,  3.28it/s, est. speed input: 946.61 toks/s, output: 3520.55 toks/s]
+[1AProcessed prompts:  79%|███████▉  | 407/512 [01:20<00:19,  5.52it/s, est. speed input: 949.94 toks/s, output: 3578.06 toks/s]
+[1AProcessed prompts:  80%|███████▉  | 408/512 [01:20<00:17,  6.06it/s, est. speed input: 950.80 toks/s, output: 3587.85 toks/s]
+[1AProcessed prompts:  80%|███████▉  | 409/512 [01:20<00:15,  6.62it/s, est. speed input: 958.64 toks/s, output: 3591.72 toks/s]
+[1AProcessed prompts:  80%|████████  | 410/512 [01:20<00:21,  4.66it/s, est. speed input: 954.81 toks/s, output: 3579.62 toks/s]
+[1AProcessed prompts:  80%|████████  | 411/512 [01:20<00:24,  4.12it/s, est. speed input: 952.70 toks/s, output: 3579.80 toks/s]
+[1AProcessed prompts:  80%|████████  | 412/512 [01:21<00:20,  4.90it/s, est. speed input: 953.64 toks/s, output: 3594.21 toks/s]
+[1AProcessed prompts:  81%|████████▏ | 416/512 [01:21<00:10,  9.10it/s, est. speed input: 973.72 toks/s, output: 3625.44 toks/s]
+[1AProcessed prompts:  82%|████████▏ | 418/512 [01:21<00:10,  9.33it/s, est. speed input: 983.20 toks/s, output: 3649.32 toks/s]
+[1AProcessed prompts:  82%|████████▏ | 420/512 [01:21<00:11,  7.79it/s, est. speed input: 987.93 toks/s, output: 3671.42 toks/s]
+[1AProcessed prompts:  83%|████████▎ | 424/512 [01:22<00:09,  9.40it/s, est. speed input: 990.36 toks/s, output: 3706.06 toks/s]
+[1AProcessed prompts:  83%|████████▎ | 426/512 [01:22<00:11,  7.30it/s, est. speed input: 989.32 toks/s, output: 3707.17 toks/s]
+[1AProcessed prompts:  83%|████████▎ | 427/512 [01:22<00:11,  7.40it/s, est. speed input: 990.46 toks/s, output: 3705.83 toks/s]
+[1AProcessed prompts:  84%|████████▍ | 429/512 [01:23<00:11,  7.22it/s, est. speed input: 990.42 toks/s, output: 3719.54 toks/s]
+[1AProcessed prompts:  84%|████████▍ | 430/512 [01:23<00:19,  4.20it/s, est. speed input: 983.79 toks/s, output: 3695.22 toks/s]
+[1AProcessed prompts:  84%|████████▍ | 431/512 [01:24<00:20,  3.86it/s, est. speed input: 980.78 toks/s, output: 3688.56 toks/s]
+[1AProcessed prompts:  84%|████████▍ | 432/512 [01:24<00:20,  3.93it/s, est. speed input: 979.66 toks/s, output: 3684.79 toks/s]
+[1AProcessed prompts:  85%|████████▍ | 434/512 [01:24<00:18,  4.32it/s, est. speed input: 978.23 toks/s, output: 3701.36 toks/s]
+[1AProcessed prompts:  85%|████████▌ | 436/512 [01:24<00:12,  5.85it/s, est. speed input: 985.73 toks/s, output: 3718.33 toks/s]
+[1AProcessed prompts:  85%|████████▌ | 437/512 [01:25<00:12,  5.77it/s, est. speed input: 985.99 toks/s, output: 3733.99 toks/s]
+[1AProcessed prompts:  86%|████████▌ | 438/512 [01:25<00:13,  5.62it/s, est. speed input: 985.38 toks/s, output: 3733.07 toks/s]
+[1AProcessed prompts:  86%|████████▋ | 442/512 [01:25<00:07,  9.30it/s, est. speed input: 990.43 toks/s, output: 3793.83 toks/s]
+[1AProcessed prompts:  87%|████████▋ | 444/512 [01:25<00:10,  6.63it/s, est. speed input: 988.01 toks/s, output: 3787.47 toks/s]
+[1AProcessed prompts:  87%|████████▋ | 445/512 [01:26<00:17,  3.83it/s, est. speed input: 987.27 toks/s, output: 3765.45 toks/s]
+[1AProcessed prompts:  87%|████████▋ | 447/512 [01:26<00:12,  5.09it/s, est. speed input: 990.32 toks/s, output: 3811.02 toks/s]
+[1AProcessed prompts:  88%|████████▊ | 448/512 [01:27<00:13,  4.67it/s, est. speed input: 988.25 toks/s, output: 3812.38 toks/s]
+[1AProcessed prompts:  88%|████████▊ | 449/512 [01:27<00:13,  4.67it/s, est. speed input: 987.23 toks/s, output: 3812.82 toks/s]
+[1AProcessed prompts:  88%|████████▊ | 451/512 [01:27<00:09,  6.33it/s, est. speed input: 1002.35 toks/s, output: 3833.31 toks/s]
+[1AProcessed prompts:  88%|████████▊ | 453/512 [01:27<00:08,  7.01it/s, est. speed input: 1006.70 toks/s, output: 3852.32 toks/s]
+[1AProcessed prompts:  89%|████████▊ | 454/512 [01:27<00:08,  6.88it/s, est. speed input: 1006.49 toks/s, output: 3854.41 toks/s]
+[1AProcessed prompts:  89%|████████▉ | 456/512 [01:28<00:08,  6.98it/s, est. speed input: 1006.62 toks/s, output: 3871.35 toks/s]
+[1AProcessed prompts:  89%|████████▉ | 457/512 [01:29<00:22,  2.40it/s, est. speed input: 992.58 toks/s, output: 3816.79 toks/s] 
+[1AProcessed prompts:  90%|████████▉ | 460/512 [01:30<00:14,  3.50it/s, est. speed input: 997.29 toks/s, output: 3852.81 toks/s]
+[1AProcessed prompts:  90%|█████████ | 462/512 [01:30<00:11,  4.46it/s, est. speed input: 999.11 toks/s, output: 3869.78 toks/s]
+[1AProcessed prompts:  91%|█████████ | 464/512 [01:30<00:08,  5.57it/s, est. speed input: 1002.81 toks/s, output: 3884.92 toks/s]
+[1AProcessed prompts:  91%|█████████ | 465/512 [01:30<00:11,  3.96it/s, est. speed input: 997.88 toks/s, output: 3870.64 toks/s] 
+[1AProcessed prompts:  91%|█████████ | 466/512 [01:31<00:14,  3.28it/s, est. speed input: 994.36 toks/s, output: 3859.54 toks/s]
+[1AProcessed prompts:  91%|█████████ | 467/512 [01:31<00:12,  3.69it/s, est. speed input: 994.74 toks/s, output: 3863.43 toks/s]
+[1AProcessed prompts:  91%|█████████▏| 468/512 [01:31<00:12,  3.51it/s, est. speed input: 993.22 toks/s, output: 3860.29 toks/s]
+[1AProcessed prompts:  92%|█████████▏| 469/512 [01:32<00:13,  3.29it/s, est. speed input: 991.72 toks/s, output: 3856.17 toks/s]
+[1AProcessed prompts:  92%|█████████▏| 470/512 [01:33<00:18,  2.26it/s, est. speed input: 985.37 toks/s, output: 3832.94 toks/s]
+[1AProcessed prompts:  92%|█████████▏| 472/512 [01:33<00:11,  3.52it/s, est. speed input: 986.30 toks/s, output: 3861.05 toks/s]
+[1AProcessed prompts:  93%|█████████▎| 474/512 [01:33<00:08,  4.52it/s, est. speed input: 986.50 toks/s, output: 3905.01 toks/s]
+[1AProcessed prompts:  93%|█████████▎| 475/512 [01:33<00:09,  3.82it/s, est. speed input: 984.53 toks/s, output: 3900.01 toks/s]
+[1AProcessed prompts:  93%|█████████▎| 476/512 [01:34<00:09,  3.90it/s, est. speed input: 983.48 toks/s, output: 3911.11 toks/s]
+[1AProcessed prompts:  93%|█████████▎| 477/512 [01:34<00:11,  3.09it/s, est. speed input: 980.33 toks/s, output: 3909.62 toks/s]
+[1AProcessed prompts:  93%|█████████▎| 478/512 [01:35<00:10,  3.10it/s, est. speed input: 978.48 toks/s, output: 3910.65 toks/s]
+[1AProcessed prompts:  94%|█████████▎| 479/512 [01:35<00:15,  2.08it/s, est. speed input: 972.47 toks/s, output: 3891.71 toks/s]
+[1AProcessed prompts:  94%|█████████▍| 480/512 [01:36<00:12,  2.47it/s, est. speed input: 971.21 toks/s, output: 3898.94 toks/s]
+[1AProcessed prompts:  94%|█████████▍| 481/512 [01:36<00:11,  2.68it/s, est. speed input: 969.40 toks/s, output: 3929.58 toks/s]
+[1AProcessed prompts:  95%|█████████▍| 485/512 [01:36<00:04,  5.44it/s, est. speed input: 977.77 toks/s, output: 4040.93 toks/s]
+[1AProcessed prompts:  95%|█████████▍| 486/512 [01:37<00:06,  4.32it/s, est. speed input: 974.71 toks/s, output: 4038.12 toks/s]
+[1AProcessed prompts:  95%|█████████▌| 488/512 [01:37<00:04,  5.26it/s, est. speed input: 981.53 toks/s, output: 4066.13 toks/s]
+[1AProcessed prompts:  96%|█████████▌| 490/512 [01:37<00:04,  4.75it/s, est. speed input: 979.45 toks/s, output: 4086.54 toks/s]
+[1AProcessed prompts:  96%|█████████▌| 491/512 [01:37<00:04,  5.21it/s, est. speed input: 980.52 toks/s, output: 4105.01 toks/s]
+[1AProcessed prompts:  96%|█████████▌| 492/512 [01:38<00:04,  4.46it/s, est. speed input: 978.20 toks/s, output: 4112.79 toks/s]
+[1AProcessed prompts:  96%|█████████▋| 494/512 [01:39<00:07,  2.45it/s, est. speed input: 971.71 toks/s, output: 4104.00 toks/s]
+[1AProcessed prompts:  97%|█████████▋| 495/512 [01:40<00:07,  2.20it/s, est. speed input: 971.52 toks/s, output: 4109.74 toks/s]
+[1AProcessed prompts:  97%|█████████▋| 496/512 [01:40<00:06,  2.63it/s, est. speed input: 974.77 toks/s, output: 4128.81 toks/s]
+[1AProcessed prompts:  97%|█████████▋| 497/512 [01:40<00:04,  3.07it/s, est. speed input: 979.53 toks/s, output: 4147.66 toks/s]
+[1AProcessed prompts:  97%|█████████▋| 498/512 [01:42<00:10,  1.37it/s, est. speed input: 968.86 toks/s, output: 4097.72 toks/s]
+[1AProcessed prompts:  97%|█████████▋| 499/512 [01:43<00:10,  1.29it/s, est. speed input: 961.43 toks/s, output: 4102.18 toks/s]
+[1AProcessed prompts:  98%|█████████▊| 500/512 [01:43<00:08,  1.46it/s, est. speed input: 958.15 toks/s, output: 4123.21 toks/s]
+[1AProcessed prompts:  98%|█████████▊| 501/512 [01:44<00:06,  1.74it/s, est. speed input: 957.22 toks/s, output: 4134.01 toks/s]
+[1AProcessed prompts:  98%|█████████▊| 502/512 [01:44<00:04,  2.13it/s, est. speed input: 957.20 toks/s, output: 4162.13 toks/s]
+[1AProcessed prompts:  98%|█████████▊| 503/512 [01:45<00:06,  1.50it/s, est. speed input: 948.11 toks/s, output: 4148.82 toks/s]
+[1AProcessed prompts:  99%|█████████▊| 505/512 [01:46<00:04,  1.53it/s, est. speed input: 943.11 toks/s, output: 4153.42 toks/s]
+[1AProcessed prompts:  99%|█████████▉| 506/512 [01:48<00:04,  1.25it/s, est. speed input: 933.88 toks/s, output: 4143.68 toks/s]
+[1AProcessed prompts:  99%|█████████▉| 507/512 [01:48<00:03,  1.60it/s, est. speed input: 934.23 toks/s, output: 4168.60 toks/s]
+[1AProcessed prompts:  99%|█████████▉| 508/512 [01:50<00:03,  1.03it/s, est. speed input: 919.05 toks/s, output: 4133.42 toks/s]
+[1AProcessed prompts:  99%|█████████▉| 509/512 [01:50<00:02,  1.24it/s, est. speed input: 921.59 toks/s, output: 4156.00 toks/s]
+[1AProcessed prompts: 100%|█████████▉| 510/512 [01:50<00:01,  1.43it/s, est. speed input: 922.19 toks/s, output: 4176.82 toks/s]
+[1AProcessed prompts: 100%|█████████▉| 511/512 [01:51<00:00,  1.33it/s, est. speed input: 921.49 toks/s, output: 4180.83 toks/s]
+[1AProcessed prompts: 100%|██████████| 512/512 [01:52<00:00,  1.18it/s, est. speed input: 913.81 toks/s, output: 4177.42 toks/s]
+[1AProcessed prompts: 100%|██████████| 512/512 [01:52<00:00,  4.54it/s, est. speed input: 913.81 toks/s, output: 4177.42 toks/s]
+INFO 05-27 07:34:21 [prefix_caching_block.py:479] Successfully reset prefix cache
+INFO 05-27 07:34:21 [prefix_caching_block.py:479] Successfully reset prefix cache
+INFO 05-27 07:34:24 [worker.py:149] Sleep mode freed 83.84 GiB memory, 4.16 GiB memory is still in use.
+INFO 05-27 07:34:24 [executor_base.py:210] It took 2.990735 seconds to fall asleep.
+`use_cache=True` is incompatible with gradient checkpointing. Setting `use_cache=False`.
+INFO 05-27 07:39:18 [executor_base.py:226] It took 0.097989 seconds to wake up tags ['weights'].
+CUDA Error: invalid argument at /workspace/csrc/cumem_allocator.cpp:66
+wandb: updating run metadata
+wandb: uploading summary, console lines 36-36
+wandb: 🚀 View run train-minority_answer_nancy_ablate-b200eff-sleep at: https://wandb.ai/224r-project/cs224r-minority-voting/runs/yqlmvnw0
+wandb: ⭐️ View project at: https://wandb.ai/224r-project/cs224r-minority-voting
+wandb: Synced 5 W&B file(s), 0 media file(s), 0 artifact file(s) and 0 other file(s)
+wandb: Find logs at: ./wandb/run-20260527_073127-yqlmvnw0/logs
+Traceback (most recent call last):
+  File "/pkg/modal/_runtime/container_io_manager.py", line 945, in handle_input_exception
+    yield
+  File "/pkg/modal/_container_entrypoint.py", line 189, in run_input_sync
+    values = io_context.call_function_sync()
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/pkg/modal/_runtime/container_io_manager.py", line 225, in call_function_sync
+    expected_value_or_values = self.finalized_function.callable(*args, **kwargs)
+                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/trainer.py", line 1593, in train_remote_b200
+    _train_remote_impl(
+  File "/root/trainer.py", line 1515, in _train_remote_impl
+    train(
+  File "/root/trainer.py", line 1326, in train
+    result = run_one_grpo_step(
+             ^^^^^^^^^^^^^^^^^^
+  File "/root/trainer.py", line 1015, in run_one_grpo_step
+    rollout_engine.wake_for_rollout()
+  File "/root/main/train/rollout.py", line 215, in wake_for_rollout
+    self._llm.wake_up()
+  File "/usr/local/lib/python3.11/site-packages/vllm/entrypoints/llm.py", line 1299, in wake_up
+    self.llm_engine.wake_up(tags)
+  File "/usr/local/lib/python3.11/site-packages/vllm/engine/llm_engine.py", line 1921, in wake_up
+    self.model_executor.wake_up(tags)
+  File "/usr/local/lib/python3.11/site-packages/vllm/executor/executor_base.py", line 224, in wake_up
+    self.collective_rpc("wake_up", kwargs=dict(tags=tags))
+  File "/usr/local/lib/python3.11/site-packages/vllm/executor/uniproc_executor.py", line 56, in collective_rpc
+    answer = run_method(self.driver_worker, method, args, kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/vllm/utils.py", line 2605, in run_method
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/vllm/worker/worker.py", line 156, in wake_up
+    allocator.wake_up(tags=tags)
+  File "/usr/local/lib/python3.11/site-packages/vllm/device_allocator/cumem.py", line 224, in wake_up
+    create_and_map(handle)
+  File "/usr/local/lib/python3.11/site-packages/vllm/device_allocator/cumem.py", line 77, in create_and_map
+    python_create_and_map(*allocation_handle)
+RuntimeError: CUDA Error: invalid argument at /workspace/csrc/cumem_allocator.cpp:66
+[rank0]:[W527 07:39:21.668749393 ProcessGroupNCCL.cpp:1476] Warning: WARNING: destroy_process_group() was not called before program exit, which can leak resources. For more info, please see https://pytorch.org/docs/stable/distributed.html#shutdown (function operator())
+terminate called after throwing an instance of 'c10::Error'
+  what():  Trying to free a pointer not allocated here
+Exception raised from raw_delete at /pytorch/torch/csrc/cuda/CUDAPluggableAllocator.cpp:149 (most recent call first):
+frame #0: c10::Error::Error(c10::SourceLocation, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >) + 0x98 (0x2b5b0e74e5e8 in /usr/local/lib/python3.11/site-packages/torch/lib/libc10.so)
+frame #1: c10::detail::torchCheckFail(char const*, char const*, unsigned int, char const*) + 0x6a (0x2b5b0e6e35b6 in /usr/local/lib/python3.11/site-packages/torch/lib/libc10.so)
+frame #2: torch::cuda::CUDAPluggableAllocator::CUDAPluggableAllocator::raw_delete(void*) + 0x227 (0x2b5b3389f487 in /usr/local/lib/python3.11/site-packages/torch/lib/libtorch_cuda.so)
+frame #3: <unknown function> + 0x20766 (0x2b5b0c35e766 in /usr/local/lib/python3.11/site-packages/torch/lib/libc10_cuda.so)
+frame #4: <unknown function> + 0x20e0b (0x2b5b0c35ee0b in /usr/local/lib/python3.11/site-packages/torch/lib/libc10_cuda.so)
+frame #5: <unknown function> + 0x38fff (0x2b5b0c376fff in /usr/local/lib/python3.11/site-packages/torch/lib/libc10_cuda.so)
+frame #6: c10::cuda::MemPool::~MemPool() + 0x1b9 (0x2b5b0c360999 in /usr/local/lib/python3.11/site-packages/torch/lib/libc10_cuda.so)
+frame #7: <unknown function> + 0xbff0ba (0x2b5b1b85a0ba in /usr/local/lib/python3.11/site-packages/torch/lib/libtorch_python.so)
+frame #8: <unknown function> + 0x3885b0 (0x2b5b1afe35b0 in /usr/local/lib/python3.11/site-packages/torch/lib/libtorch_python.so)
+frame #9: <unknown function> + 0x388bf1 (0x2b5b1afe3bf1 in /usr/local/lib/python3.11/site-packages/torch/lib/libtorch_python.so)
+<omitting python frames>
+frame #22: <unknown function> + 0x2724a (0x2b5b0354724a in /usr/lib/x86_64-linux-gnu/libc.so.6)
+frame #23: __libc_start_main + 0x85 (0x2b5b03547305 in /usr/lib/x86_64-linux-gnu/libc.so.6)
+
+Runner aborted (SIGABRT), exit code: 134
+╭─ Error ──────────────────────────────────────────────────────────────────────╮
+│ CUDA Error: invalid argument at /workspace/csrc/cumem_allocator.cpp:66       │
+╰──────────────────────────────────────────────────────────────────────────────╯

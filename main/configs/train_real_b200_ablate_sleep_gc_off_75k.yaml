@@ -1,0 +1,6 @@
+extends: train_real_b200.yaml
+
+# OOM probe: sleep + gc off + conservative token_budget (see B200_efficiency_ram_speed_model.md).
+train:
+  gradient_checkpointing: false
+  token_budget: 75000

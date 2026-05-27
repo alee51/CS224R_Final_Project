@@ -19,8 +19,9 @@ The companion script `scripts/setup_wandb_quickstart_view.py` creates this exact
 | 5 | **Completion length** | `train/mean_completion_tokens`, `train/p95_completion_tokens` | mean 700–950, p95 1700–2500 | p95 approaches 4096 |
 | 6 | **Finish reason** | `train/frac_finish_stop`, `..._length`, `..._other` | stop > 0.85 | length > 0.25 |
 | 7 | **VRAM peak** | `train/vram_peak_gb_step` | 115–130 GB | touches 140 |
-| 8 | **Time per step (stacked)** | `train/t_rollout_s` + `train/t_train_fwd_bwd_s` + `train/t_weight_sync_s` | total 165–230s, rollout dominant | sustained > 250s |
-| 9 | **Sample completions** | `sample/completion_0`, `_1`, `_2` (every 50 steps) | looks like real chain-of-thought math | repetition, empty, `\boxed{0}` spam |
+| 8 | **Total step time** | derived sum of all `train/t_*_s` phase timers (no double-count) | same scale as rollout+train historically (~165–230s) | sustained > 250s |
+| 9 | **Step time breakdown (stacked)** | rollout, score, advantage, vllm sleep/wake, train, optimizer, sync | rollout + train dominate | same as §8 |
+| 10 | **Sample completions** | `sample/completion_0`, `_1`, `_2` (every 50 steps) | looks like real chain-of-thought math | repetition, empty, `\boxed{0}` spam |
 
 ---
 
@@ -31,6 +32,7 @@ The companion script `scripts/setup_wandb_quickstart_view.py` creates this exact
 3. Ratio stable, clip frac low, grad norm not spiking? (3, 4)
 4. Completion length flat, finish_stop dominant? (5, 6)
 5. VRAM comfortable headroom? (7)
-6. One sample completion looks sane? (8)
+6. Step time flat or drifting? (8–9)
+7. One sample completion looks sane? (10)
 
 If any of those look wrong → open `wandb_dashboard_full.md` and find the diagnostic that drills into the issue.

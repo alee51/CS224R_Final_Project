@@ -1,0 +1,5 @@
+extends: train_real_b200.yaml
+
+# B200 efficiency smoke: fewer token-budget chunks (prod stays 105k until green).
+train:
+  token_budget: 130000

@@ -319,7 +319,7 @@ Locked 2026-05-27. `main/data/prompt_heuristics.py` is the current source-of-tru
 - Anchored at start of last sentence; word-boundary after; case-insensitive.
 - Will NOT fire on `"$\\,$ Prove …"`, `"(b) Prove …"`, or any last sentence that doesn't *begin* with the literal token `prove`.
 
-`**contains_show_that(problem) -> bool*`* — inner-arm keyword
+`**contains_show_that(problem) -> bool`** — inner-arm keyword
 
 - `re.search(r"\bshow\s+that\b", problem, re.IGNORECASE)`.
 - Anywhere in the full problem; word-boundaries on both sides; `\s+` between tokens (matches `show  that`, `show\nthat`); case-insensitive.
@@ -804,30 +804,319 @@ This substrate is imperfect by design — we accept the floor, log the limitatio
 
 **Context.** ~275 training steps in (nancy `8qesa78k` + anastasia `pcas3emd`); live `train/mean_reward` and pass@k histogram looked roughly constant. Raised concern about wiring bugs or skipping an LR sweep.
 
-**Method.** Offline fixed-slice rollout eval on Modal (H200): **same 128 prompts** every time (seed 42, 2×64 from `polaris_train.jsonl`, arm C, 8 rollouts/prompt, train grader). Compared **base** `Qwen3-1.7B-Base` vs `/vol/checkpoints/train_real/step_{49,99,149}.pt` (HF load → vLLM weight sync, one shared engine). Harness: `[main/probes/checkpoint_rollout_eval.py](../probes/checkpoint_rollout_eval.py)`; launch: `bash main/scripts/launch_checkpoint_eval.sh`. Modal app `ap-iV80927zwKrFQ4Yer60vZp`.
+**Method.** Offline fixed-slice rollout eval on Modal (B200, 4 GPUs in parallel): **same 2000 Polaris prompts** every time (seed 42 from `polaris_train.jsonl`, arm C `hybrid_answer_boxed`, 8 rollouts/prompt, train grader, `rollout_chunk_prompts=64`). Compared **base** `Qwen3-1.7B-Base` vs `/vol/checkpoints/train_real/step_{49,99,149}.pt` (HF load → vLLM weight sync). Harness: `[main/probes/checkpoint_rollout_eval.py](../probes/checkpoint_rollout_eval.py)`; config `main/configs/checkpoint_eval_2k_polaris_aime_b200.yaml`; launch `bash main/scripts/launch_checkpoint_eval.sh --config main/configs/checkpoint_eval_2k_polaris_aime_b200.yaml --detach`. Modal app `ap-pF7iDkRVy6L8QBqtBW8QOe`, run `20260527T060234Z`. Supersedes an earlier **128-prompt** H200 probe (`/vol/probes/checkpoint_eval/20260527T041910Z/`) — same harness, much larger n.
 
-**Results (128 prompts, identical slice):**
-
-
-| Checkpoint | mean_reward | pass@8   | frac 0/8 correct |
-| ---------- | ----------- | -------- | ---------------- |
-| Base       | 0.059       | 0.21     | 0.79             |
-| step 49    | 0.080       | 0.29     | 0.71             |
-| step 99    | 0.059       | 0.27     | 0.73             |
-| step 149   | 0.070       | **0.31** | **0.69**         |
+**Results (Polaris 2000 prompts, identical slice):**
 
 
-Δ step 149 vs base: pass@8 **+0.10**, frac₀ **−0.10**; mean_reward +0.012 (noisy on this n).
+| Checkpoint | mean_reward | pass@8    | frac 0/8 correct |
+| ---------- | ----------- | --------- | ---------------- |
+| Base       | 0.085       | 0.306     | 0.694            |
+| step 49    | 0.087       | 0.315     | 0.686            |
+| step 99    | 0.090       | **0.324** | **0.676**        |
+| step 149   | 0.090       | 0.323     | 0.677            |
+| step 239   | 0.088       | 0.314     | 0.686            |
+| step 339   | 0.091       | 0.320     | 0.681            |
+
+
+**OOD DAPO 2k** (same slice `dapo_n2000_seed43`, Anastasia H200, run `20260527T090530Z`; base + step 339 complete, step 99 in progress):
+
+
+| Checkpoint | pass@8 | frac 0/8 correct |
+| ---------- | ------ | ---------------- |
+| base       | 0.274  | 0.726            |
+| step 339   | 0.259  | 0.742            |
+
+
+Δ step 339 vs base on DAPO: pass@8 **−0.016** (slight OOD regression).
+
+Δ step 99 vs base (best pass@8 on this slice): pass@8 **+0.018**, frac₀ **−0.018**; mean_reward +0.005. Steps 149 / 239 / 339 stay in a **~0.31–0.32** pass@8 band (no clear gain past ~step 100). Later pair: Anastasia workspace, run `20260527T074137Z` — `[polaris_summary_20260527T074137Z.json](../data/probes/checkpoint_eval_2k_polaris_later/polaris_summary_20260527T074137Z.json)`.
 
 **Verdict.**
 
 - **Not a wiring failure** — stability metrics on the live run were healthy (`ratio_max` < 3, clipping < 0.1%, grad norms ~0.3–0.6).
-- **Training is moving the policy** on a fixed probe; flat in-loop curves are largely **batch noise** (random 64-prompt slice each step, σ ≈ 0.02 on reward) plus **sparse signal** (~68% prompts filtered per step).
-- **Not a substitute for held-out eval** — 128 training-distribution prompts; directional only. Scale up or run AIME/HMMT harness before paper claims.
+- **Training is moving the policy** on a fixed 2k training-distribution slice; gains are **smaller but same-signed** as the 128-probe (which overstated pass@8 Δ by ~~5×). Flat in-loop curves remain largely **batch noise** (random 64-prompt slice each step, σ ≈ 0.02 on reward) plus **sparse signal** (~~68–69% prompts all-wrong per checkpoint here).
+- **OOD (in-flight):** DAPO table above; step 99 + AIME still running (`ap-RFEQ8RyyLpxbAF1S75NbdQ`).
 
-**Artifacts.** Volume: `/vol/probes/checkpoint_eval/20260527T041910Z/results.json`. Local copy: `[main/data/probes/checkpoint_eval/results_20260527T041910Z.json](../data/probes/checkpoint_eval/results_20260527T041910Z.json)`.
+**Artifacts.** Volume: `/vol/probes/checkpoint_eval_2k_polaris_aime/20260527T060234Z/polaris_summary.json` (+ per-checkpoint partials under `partials/polaris/`). Local copy: `[main/data/probes/checkpoint_eval_2k_polaris_aime/polaris_summary_20260527T060234Z.json](../data/probes/checkpoint_eval_2k_polaris_aime/polaris_summary_20260527T060234Z.json)`. OOD partials: `[main/data/probes/checkpoint_eval_ood_aime_dapo_99_339/20260527T090530Z/partials/dapo/](../data/probes/checkpoint_eval_ood_aime_dapo_99_339/20260527T090530Z/partials/dapo/) (`base.json`, `step_339.json`).
 
-### Addendum (late night) — DAPO 2k eval intentionally paused
+### Addendum — OOD eval runs
 
-- We intentionally paused the detached DAPO 2k+B200 checkpoint-eval app (`ap-acyT5Dk5PzVLtlzdGDTm37`) to reduce active GPU usage while preserving focus on the remaining eval stream.
-- This was an operator resource-allocation decision (pause for now), not a new eval harness failure.
+- **DAPO 2k (nancy volume, paused)** — `ap-acyT5Dk5PzVLtlzdGDTm37`; operator resource decision; no partials saved.
+- **Polaris+AIME (nancy volume)** — AIME blocked on missing `/vol/data/eval/aime25.jsonl`.
+- **DAPO+AIME H200 (Anastasia)** — `ap-RFEQ8RyyLpxbAF1S75NbdQ`, config `checkpoint_eval_ood_aime_dapo_99_339_h200.yaml`; orchestrator CPU-only. DAPO: base + step 339 done; step 99 + AIME in progress.
+
+---
+
+## 2026-05-27 (Wednesday) — B200 sleep + `gc_off`: stop here (for now)
+
+**Context.** On B200, `minority_answer` step time is dominated by HF backward (~200s). The tempting bundle was `vllm_sleep=1` (evict vLLM KV during HF train) + `gradient_checkpointing=false` (store activations, reduce recompute) + tuned `token_budget`.
+
+**What we observed.**
+
+- Sleep works mechanically: vLLM logs show it frees **~82–85 GiB** during the train window.
+- However, `sleep + gc_off` smokes repeatedly hit **true CUDA OOMs at the device cap (~178.35 GiB)**, followed by allocator-abort fallout.
+- Modal GPU memory plots can still spike near the cap during **awake** phases because vLLM re-reserves its full KV pool on wake; wandb “VRAM” is PyTorch-only and does not include vLLM’s non-torch reservations.
+
+**Decision.** **Stop iterating** on sleep+gc_off unless a single follow-up smoke with **reduced vLLM KV reservation** (`rollout.gpu_memory_utilization <= 0.35`) goes green. Proceed with B200 runs using `vllm_sleep=0`, `gradient_checkpointing=true`, and optionally `token_budget=130k` for a modest win.
+
+Write-up: `docs/efficiency/B200_sleep_gc_off_give_up_2026-05-27.md`.
+
+## 2026-05-27 (Wednesday) — GRPO smoke: H200 vs B200 step-time A/B
+
+**Context.** Needed a clean GPU comparison before committing to B200 for production arms. Earlier wandb spot-checks against long H200 full runs (`8qesa78k`, `pcas3emd`) were misleading — those are not paired with the B200 smokes.
+
+**Runs (paired GRPO smoke only).** Same config (`batch_size=64`, `n_rollouts=8`, `token_budget=105k`, 10 steps); only `gpu_class` differs:
+
+
+| GPU  | wandb                                                                            | run name           |
+| ---- | -------------------------------------------------------------------------------- | ------------------ |
+| B200 | `[1hg8fs5u](https://wandb.ai/224r-project/cs224r-minority-voting/runs/1hg8fs5u)` | `train-grpo_nancy` |
+| H200 | `[5sekbfnq](https://wandb.ai/224r-project/cs224r-minority-voting/runs/5sekbfnq)` | `train-grpo_nancy` |
+
+
+**Metric.** `train/t_rollout_s` + `train/t_train_fwd_bwd_s` = instrumented wall-clock **per GRPO step** (not cumulative). Score/advantage/optimizer/sync add <1s combined.
+
+**Raw data.** All 10 steps × 2 runs exported to `[efficiency/grpo_smoke_h200_vs_b200_times.csv](./efficiency/grpo_smoke_h200_vs_b200_times.csv)` (pulled via `main/.venv/bin/python` + wandb API).
+
+**Per-step rollout + train (s):**
+
+
+| step | B200 | H200 |
+| ---- | ---- | ---- |
+| 0    | 137  | 190  |
+| 1    | 113  | 147  |
+| 2    | 134  | 202  |
+| 3    | 121  | 183  |
+| 4    | 86   | 163  |
+| 5    | 127  | 211  |
+| 6    | 132  | 201  |
+| 7    | 91   | 159  |
+| 8    | 100  | 205  |
+| 9    | 93   | 212  |
+
+
+**Medians (rollout + train):**
+
+
+| window                  | B200 | H200 | ratio |
+| ----------------------- | ---- | ---- | ----- |
+| steps 0–9               | 117s | 196s | 1.7×  |
+| steps 1–9 (drop cold 0) | 113s | 201s | 1.8×  |
+| steps 4–9 (steady)      | 97s  | 203s | 2.1×  |
+
+
+**Decomposition (median, steps 0–9):** rollout B200 **58s** vs H200 **89s**; train B200 **60s** vs H200 **105s**. `n_kept` similar (~136–208); H200 slowness is not explained by keeping more sequences alone.
+
+**Verdict.**
+
+- On this 10-step GRPO smoke, **B200 is ~2× faster per step** than H200 in steady state (~97s vs ~203s median, steps 4–9).
+- Train phase drives most of the gap; rollout is also faster on B200.
+- **Do not** use long H200 production step times (~180–200s) as the H200 baseline for GPU A/B — use this paired smoke pair or re-run a fresh B200/H200 smoke after stack changes.
+- **$/step at list rates** still slightly favors H200 on paper, but paired smokes show B200 often wins **both** wall-clock and $ when step time is ~~2× shorter — aligns with time-first preference (~~25% higher $/s acceptable).
+
+---
+
+## 2026-05-27 (Wednesday) — minority_answer B200 smoke: interim step-time (steps 0–2)
+
+**Context.** While the B200 **10-step checkpoint smoke** was still running, pulled early step-time from the first three logged steps to sanity-check the ~2× GRPO budget story (**minority smoke: ~2× step time** and **GRPO smoke: H200 vs B200** above). The B200 run below is **not** a production full train — it is the same smoke that later finished as **B200 training infra validated** (10 steps, `launch_mode=smoke`).
+
+**Runs (partial pull).**
+
+
+| GPU  | wandb                                                                            | notes                                                                    |
+| ---- | -------------------------------------------------------------------------------- | ------------------------------------------------------------------------ |
+| B200 | `[wdl3fczm](https://wandb.ai/224r-project/cs224r-minority-voting/runs/wdl3fczm)` | **10-step smoke** (ckpt-resume fresh phase); steps 0–2 only at pull time |
+| H200 | `[w9z6boek](https://wandb.ai/224r-project/cs224r-minority-voting/runs/w9z6boek)` | parallel H200 smoke (in flight at pull time)                             |
+
+
+Same train stack as GRPO smoke (`batch_size=64`, `n_rollouts=8`, `token_budget=105k`, allowlist clustering) but arm `minority_answer` → set-RL `keep_mask` keeps prompts with ≥2 answer clusters, not GRPO mixed-reward filter.
+
+**Steps 0–2 — rollout + train (s/step):**
+
+
+| step | B200 roll | B200 train | **B200 total** | H200 roll | H200 train | **H200 total** |
+| ---- | --------- | ---------- | -------------- | --------- | ---------- | -------------- |
+| 0    | 61        | 223        | **284**        | 86        | 306        | **392**        |
+| 1    | 55        | 207        | **261**        | 86        | 304        | **391**        |
+| 2    | 54        | 191        | **245**        | 92        | 303        | **395**        |
+
+
+**Shared shape (all three steps):** `n_kept_sequences = 512` (64×8, no prompts collapsed), `fraction_filtered = 0%`, `num_chunks = 5`. Train cost is dominated by training **every** rollout — not the ~~160 kept on GRPO (~~70% filtered).
+
+**Vs GRPO smoke (step 2, same day):**
+
+
+|                 | B200      | H200      |
+| --------------- | --------- | --------- |
+| minority_answer | 245s      | 395s      |
+| GRPO smoke      | 134s      | 202s      |
+| ratio           | **~1.8×** | **~2.0×** |
+
+
+Matches the earlier minority-smoke vs GRPO-full observation: rollout time is similar; the extra wall-clock is almost all **HF train** on 512 sequences.
+
+**Vs prior minority smoke on H200** (`[q6m0tmiu](https://wandb.ai/224r-project/cs224r-minority-voting/runs/q6m0tmiu)`, steps 0–2): 430 / 318 / 384s — current H200 leg (~392 / 391 / 395s) is the same ballpark, slightly more stable across steps 0–2.
+
+**GPU A/B on minority (steps 0–2):** B200 **~1.5× faster** than H200 (~~260–285s vs ~390–395s), same pattern as GRPO smoke — mostly **train** (B200 191–223s vs H200 303–306s), rollout also cheaper on B200 (~~54–61s vs 86–92s). B200 train time **trended down** 223 → 207 → 191s (three points only; may be warmup).
+
+**Rough $/step (step 2, Modal list rates):** B200 245s × $0.001736 ≈ **$0.43**; H200 395s × $0.001261 ≈ **$0.50** — at these early steps B200 wins both wall-clock and $ despite higher $/s.
+
+**Verdict / watch.**
+
+- Early vibe confirms budget: plan for **~4–6 min/step on H200**, **~4 min on B200** while `n_kept ≈ 512` and `fraction_filtered ≈ 0`.
+- Revisit $/epoch once `fraction_filtered` rises (policy collapses to one wrong answer per prompt → `n_kept` drops → train approaches GRPO timing).
+- Too few points to call steady state at pull time; **full 10-step fresh + resume** recorded in **B200 training infra validated** below.
+
+---
+
+## 2026-05-27 (Wednesday) — B200 training infra validated (smoke ladder green)
+
+**Context.** Optional B200 bring-up from 05-26 (`B200_migration_plan.md`, ~1 hr budget) became a full **opt-in GPU flag** path (`--gpu-class h200|b200`) so H200 stays the default fallback while B200 is tested. Goal: same collocated train+vLLM stack (FA2, `token_budget=105k`, set arms, checkpoint/resume, self-spawn) on Modal **B200 (~178 GB usable VRAM)** without changing training semantics.
+
+**Verdict (end of day).** Full B200 bring-up ladder is **green**: probe smokes (vLLM, FA2, weight sync) plus **GRPO** and **minority_answer** each passed **10-step fresh → checkpoint at step 9 → resume to step 10+** on `chicken602`. Safe to launch production training with `--gpu-class b200` when wall-clock matters.
+
+**Infra shipped (same day).**
+
+- `train_remote_h200` / `train_remote_b200` Modal entrypoints; `launch_train.sh --gpu-class`.
+- `train_real_b200.yaml` overlay (`extends: train_real.yaml`, `modal_price_per_sec: 0.001736`).
+- `load_cfg()` recursive `extends:` merge (fixed path: `extends: train_real.yaml`, not `configs/...`).
+- Probe launchers + smokes: vLLM generate, FlashAttention, HF→vLLM weight sync — each with `_h200` / `_b200` entrypoints.
+- `launch_smoke_ckpt_resume.sh` — 10-step fresh (ckpt at step 9) + resume to ≥step 10 for GRPO and `minority_answer`.
+- Image pin: `transformers<4.54.0` (unblocks `vllm==0.9.0` / `aimv2` AutoConfig clash).
+
+**B200 smoke gates (all passed).**
+
+
+| Gate                                     | Modal / wandb                                                                                                                 | Result                   |
+| ---------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- | ------------------------ |
+| vLLM generate                            | B200 probe smoke                                                                                                              | ✅                        |
+| FlashAttention + collocated HF           | B200 probe smoke                                                                                                              | ✅                        |
+| HF → vLLM weight sync                    | B200 probe smoke                                                                                                              | ✅                        |
+| GRPO 10-step fresh                       | `ap-FeIG4QuMsmkYjIXD3093op`, `[1hg8fs5u](https://wandb.ai/224r-project/cs224r-minority-voting/runs/1hg8fs5u)`                 | ✅ exit 0                 |
+| GRPO resume from `step_000009.pt`        | `ap-v3tF5WQ3iz1HUOr2UaqHdF`, `[jg92ywy3](https://wandb.ai/224r-project/cs224r-minority-voting/runs/jg92ywy3)`                 | ✅ exit 0 (~3 min)        |
+| GRPO 10-step fresh + resume (H200)       | `ap-x8GRQv1x` / `ap-ZM4xcvn22gvj3XyV8bqmRj`, `[5sekbfnq](https://wandb.ai/224r-project/cs224r-minority-voting/runs/5sekbfnq)` | ✅ (paired baseline)      |
+| **minority_answer 10-step fresh (B200)** | `ap-VlVMq3eC1g4TsmhDRRaLYU`, `[wdl3fczm](https://wandb.ai/224r-project/cs224r-minority-voting/runs/wdl3fczm)`                 | ✅ **finished**, 10 steps |
+| **minority_answer resume (B200)**         | `ap-pN5RJ8dlBOkL46brMo8OjR` (chicken602), W&B [`w9z6boek`](https://wandb.ai/224r-project/cs224r-minority-voting/runs/w9z6boek) resumed | ✅ exit 0 (~8.8 min); `_step=10` |
+
+
+**Resume gotcha (minority).** First resume attempt used Modal workspace **`alee72`** (profile `anastasia`) while `step_000009.pt` lives on **`chicken602`** — volumes are not shared, so that run could not load the fresh ckpt. Relaunch after `modal profile activate chicken602` succeeded.
+
+**minority_answer B200 — fresh (`wdl3fczm`).**
+
+- W&B: `state=finished`, tags `gpu_class=B200`, `launch_mode=smoke`, `total_steps=10`.
+- Shape: `n_kept_sequences=512`, `fraction_filtered=0`, `num_chunks=5` (expected for set-arm early training).
+- Timing (last step): `t_rollout_s≈58`, `t_train_fwd_bwd_s≈208` → **~266 s/step** (~4.4 min); see interim entry above for H200 A/B at steps 0–2.
+- VRAM peak ~148 GB / 178 GB device.
+- Wrote `/vol/checkpoints/train_minority_answer/step_000009.pt` on **chicken602** volume.
+
+**minority_answer B200 — resume (`ap-pN5RJ8dlBOkL46brMo8OjR`).**
+
+- Loaded `step_000009.pt`, ran one post-ckpt step, exited cleanly.
+- W&B resumed existing run `w9z6boek` (wandb id stored in checkpoint) through `_step=10`.
+
+**Decision — B200 is production-ready for training launches.**
+
+- Use `**bash main/scripts/launch_train.sh --mode full --gpu-class b200 --arm <grpo|minority_answer|...>`** (or explicit `train_real_b200.yaml`) when calendar time matters; keep `**--gpu-class h200**` as the safe default until an operator opts in.
+- Paired GRPO smokes: **~2× faster per step** on B200 vs H200 in steady state; minority smokes show the same GPU A/B pattern at ~1.5–1.8× with full `n_kept`.
+- **Not a wiring experiment** — same trainer, arms, clustering allowlist, and checkpoint format as H200; only SKU + yaml pricing overlay differ.
+
+**Still open (non-blocking).**
+
+- H200 minority 10-step fresh/resume smokes (if not already finished).
+- B200 **efficiency** matrix (`vllm_sleep`, `gc_off`, higher `token_budget`) — see `[probes/B200_efficiency_smoke_plan.md](./probes/B200_efficiency_smoke_plan.md)`; separate from bring-up gates.
+
+**Operator note.** Resume smokes must use the **same Modal workspace** as the fresh leg that wrote the checkpoint (`modal profile current` before `launch_smoke_ckpt_resume.sh --phase resume`).
+
+**Cross-refs.** Runbook: `[efficiency/B200_build_notes.md](./efficiency/B200_build_notes.md)`; audit: `[efficiency/B200_readiness_audit.md](./efficiency/B200_readiness_audit.md)`; GRPO A/B CSV: `[efficiency/grpo_smoke_h200_vs_b200_times.csv](./efficiency/grpo_smoke_h200_vs_b200_times.csv)`.
+
+---
+
+## 2026-05-27 (Wednesday) — pre–full-run audit triage (session)
+
+**Context.** Both arms (`grpo`, `minority_answer`) code-ready; B200 smokes green (~2× GRPO step time vs H200). Before launching full runs on B200, reconciled scattered audits ([Critical pass P0/P1](a427c82c-8155-4a9f-8514-e179befcb183) + [Pre-launch readiness](71068bb3-fac3-4c13-87e9-f502f284e1c2); no single checklist doc — also `issues.md`, `B200_readiness_audit.md`, `train_wandb_metrics_verdict.md`).
+
+**Launch gate (operator).** Per arm: `bash main/scripts/launch_train.sh --mode full --gpu-class b200 --arm <grpo|minority_answer>`; default config `train_real_b200.yaml`. Sanity on W&B: finite loss, sensible `fraction_filtered`, checkpoints written.
+
+**Decisions this session.**
+
+| Topic | Decision |
+| --- | --- |
+| **`n_kept` cap / subsample** | **No** — keep full set-arm `n_kept` (~512); accept ~2× step cost vs GRPO; do not change objective for schedule. |
+| **Checkpoint `weights_only=False` (critical-pass P0 #1)** | **Defer** — pickle/RCE risk only if ckpt file is untrusted; not a training-correctness issue; fix later with base64 RNG + `weights_only=True`. |
+| **Critical-pass P0 #2–3, P1 #5–6c** | Already landed (OOM log, Phase-2 rollout assert, `extends` cycles, `_extract_old_logprobs` tests). |
+| **Solo fixes queued (not started here)** | `hash()` → `hashlib` in clustering; `mean_unique_clusters_kept`; set-arm error copy; `n_rollouts==8` assert; `--gpu-class` vs yaml preflight. |
+| **Config validator (P1 #4)** | **Small preflight landed** — `preflight_train_launch.py` + [`launch_training.md`](./launch_training.md) for agent commands. |
+| **Weight-sync automated test (P1 #6a)** | **Modal smoke is the gate** (`launch_smoke_weight_sync.sh` passed on B200 bring-up); CPU unit test stays skip until someone runs spike. |
+| **Zero-advantage trainer (P1 #6b)** | **Done** — all-filtered batch **skips** step (`skipped_no_kept` on W&B); `test_trainer_zero_kept.py`. |
+
+**Closeout.** Verified in-loop weight sync on B200 via 5-step GRPO smoke W&B run [`fh63ww4z`](https://wandb.ai/224r-project/cs224r-minority-voting/runs/fh63ww4z): `train/weight_sync_s` present on steps 0–4 (nonzero ms-scale), no sync errors.
+
+**Still open (non-blocking).** Batched logprobs / B200 efficiency ablations (science-neutral speed, not correctness). B200 `minority_answer` resume smoke **done** — see **B200 training infra validated** entry above.
+
+---
+
+## 2026-05-27 (Wednesday) — `poly_epo_answer` full B200 launch (chicken602)
+
+**Context.** Stretch arm 4 shares the set-RL kernel with `minority_answer` (answer-hash clusters; `f(G) = mean(r)·distinct_clusters/4`). No new trainer code beyond existing `poly_epo_answer` dispatch — only config + launch.
+
+**Credit / workspace.** First submit briefly targeted **alee72** (`anastasia` profile); stopped **`ap-Iug2ChLptNCAYybkbrlLqQ`** (0 tasks, never trained). Relaunched on **chicken602** (Nancy credits).
+
+| Item | Value |
+|------|--------|
+| Arm | `poly_epo_answer` |
+| Modal workspace | **chicken602** |
+| Modal app | [`ap-rzTnv1IwgUhcbqeNas4lRY`](https://modal.com/apps/chicken602/main/ap-rzTnv1IwgUhcbqeNas4lRY) |
+| Config | `main/configs/train_real_b200_fresh_poly_epo.yaml` (`extends: train_real_b200.yaml`) |
+| Checkpoint dir | `/vol/checkpoints/train_poly_epo_answer_b200/` |
+| W&B group | `train-poly-epo-answer` (fresh run via `--fresh-wandb`) |
+
+**Launch (replay, chicken602):**
+
+```bash
+modal profile activate chicken602
+bash main/scripts/launch_train.sh --mode full --gpu-class b200 --arm poly_epo_answer \
+  --config main/configs/train_real_b200_fresh_poly_epo.yaml --no-resume --fresh-wandb
+```
+
+**Parallel production on alee72 (unchanged).** B200 GRPO `ap-VBmgTVFefkECyZa0r52RMb`, minority `ap-3Acz8FrtQY4D4ubqkzJ4jB` — see [`handoff/b200_production_launch_2026-05-27.md`](./handoff/b200_production_launch_2026-05-27.md).
+
+**Monitor:** `main/.venv/bin/modal app logs ap-rzTnv1IwgUhcbqeNas4lRY -f` (profile `chicken602`).
+
+---
+
+## 2026-05-27 (Wednesday) — Modal credit budget snapshot (B200 prod)
+
+W&B `_runtime × modal_price_per_sec` on active prod runs; **799 steps = 1 epoch**. Modal volumes are per-workspace (`chicken602` ≠ `alee72`).
+
+### `chicken602` (Nancy) — **$381 credits now**
+
+| Run | Step | Calibrated $/step | min/step |
+|-----|------|-------------------|----------|
+| B200 `poly_epo_answer` [`fdx95beu`](https://wandb.ai/224r-project/cs224r-minority-voting/runs/fdx95beu) | ~146 / 799 | **~$0.46** | **~4.2** |
+
+**Spent (May 25+ on this volume, W&B):** ~$201 (incl. H200 GRPO $40, ablations/smokes ~$55, poly ~$66). **H200 GRPO ckpts:** `checkpoints/train_real/` through `step_000239.pt`.
+
+**To finish:** ~$303 more → **1 epoch** poly · ~$674 more → **2 epochs**.
+
+**Surplus / shortfall (vs $381 now):** **~+$78** after 1 epoch poly · **~−$293 short** for 2 epochs.
+
+### `alee72` (Anastasia) — **~$650 starting credits**
+
+| Run | Step | Calibrated $/step | min/step |
+|-----|------|-------------------|----------|
+| B200 GRPO [`t11jct0t`](https://wandb.ai/224r-project/cs224r-minority-voting/runs/t11jct0t) | ~326 / 799 | **~$0.22** | **~2.1** |
+| B200 `minority_answer` [`o5ypkzja`](https://wandb.ai/224r-project/cs224r-minority-voting/runs/o5ypkzja) | ~148 / 799 | **~$0.43** | **~4.1** |
+| H200 GRPO [`pcas3emd`](https://wandb.ai/224r-project/cs224r-minority-voting/runs/pcas3emd) (crashed) | 537 | ~$0.25 | ~3.1–3.3 |
+
+**Spent (W&B on this volume):** ~$231 (H200 GRPO ~$93 + B200 GRPO/minority ~$69 each) + in-flight 4×B200 checkpoint eval (~$40–80, not in W&B). **Implied balance:** ~$340–420 left from $650.
+
+**To finish (GRPO + minority):** ~$383 more → **1 epoch** both · ~$900 more → **2 epochs** both.
+
+**Surplus / shortfall (implied ~$380 mid):** **~break-even to ~−$45 short** for 1 epoch · **~−$520 short** for 2 epochs.
+
+### Combined (both workspaces)
+
+**1 epoch all three B200 arms:** ~$686 more needed vs ~$761 credits (~$380 + $381) → **~+$75** team slack (tight; eval overhead can erase). **2 epochs all three:** ~$1,574 needed → **~−$813 short**.
+
+**Ref:** H200 GRPO was ~3.1–3.3 min/step; B200 GRPO ~2.1 min/step at ~$0.22/step. Set-arms ~4.1 min (~$0.43–0.46/step) dominate spend. Latest H200 ckpt on alee72: `step_000529.pt`.

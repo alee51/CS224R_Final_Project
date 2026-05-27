@@ -26,7 +26,12 @@ if str(_MAIN_ROOT) not in sys.path:
 
 from data.dataset import JsonlPromptDataset
 from train.loss import grpo_loss
-from train.ablation import ablation_label, logprob_chunk_size, vllm_sleep_enabled
+from train.ablation import (
+    ablation_label,
+    logprob_chunk_size,
+    logprob_seq_batch_size,
+    vllm_sleep_enabled,
+)
 from train.clustering import answer_hash_clusters, sympy_equiv, sympy_equiv_allowlist
 from train.objective import SET_ARMS, compute_advantages
 from train.prompts import format_problem
@@ -53,6 +58,7 @@ class StepResult:
     fraction_filtered: float
     mean_advantage: float
     n_kept_sequences: int
+    skipped: bool = False
     sync_stats: SyncStats | None = None
     phase_times_s: dict[str, float] = field(default_factory=dict)
     vram_peak_gb: dict[str, float] = field(default_factory=dict)
@@ -268,11 +274,18 @@ def apply_launch_overrides(raw: dict[str, Any]) -> dict[str, Any]:
                 "smoke_probes → train.rollouts_jsonl_path=%s",
                 train["rollouts_jsonl_path"],
             )
+    ckpt_override = os.environ.get("CS224R_CHECKPOINT_DIR", "").strip()
+    if ckpt_override:
+        train["checkpoint_dir"] = (
+            ckpt_override if ckpt_override.endswith("/") else f"{ckpt_override}/"
+        )
+        logger.info("CS224R_CHECKPOINT_DIR override → checkpoint_dir=%s", train["checkpoint_dir"])
     abl = ablation_label()
     if abl:
         out["ablation"] = abl
         out["vllm_sleep"] = os.environ.get("CS224R_VLLM_SLEEP", "0") == "1"
         out["logprob_chunk"] = logprob_chunk_size()
+        out["logprob_seq_batch"] = logprob_seq_batch_size()
         train["checkpoint_dir"] = f"/vol/checkpoints/train_real_ablate_{abl}/"
     out["train"] = train
     return out
@@ -408,10 +421,9 @@ def _train_step_microbatched(
         max_chunk_size = max(max_chunk_size, chunk_size)
 
         t_fwd0 = time.monotonic()
-        new_lps = [
-            _completion_logprobs_hf(hf_model, pid, cid, device)
-            for pid, cid in zip(chunk_prompts, chunk_completions)
-        ]
+        new_lps = _completion_logprobs_for_chunk(
+            hf_model, chunk_prompts, chunk_completions, device
+        )
         if torch.cuda.is_available():
             torch.cuda.synchronize()
         fwd_time += time.monotonic() - t_fwd0
@@ -673,6 +685,92 @@ def _completion_logprobs_hf(
     return torch.cat(token_lps)
 
 
+def _completion_logprobs_hf_batch(
+    model: Any,
+    prompt_ids_list: list[list[int]],
+    completion_ids_list: list[list[int]],
+    device: torch.device,
+    *,
+    logprob_chunk: int | None = None,
+) -> list[torch.Tensor]:
+    """Batched teacher-forcing logprobs; one forward for len(prompt_ids_list) sequences."""
+    n = len(prompt_ids_list)
+    if n == 0:
+        return []
+    if n == 1:
+        return [
+            _completion_logprobs_hf(
+                model,
+                prompt_ids_list[0],
+                completion_ids_list[0],
+                device,
+                logprob_chunk=logprob_chunk,
+            )
+        ]
+    chunk = logprob_chunk_size() if logprob_chunk is None else logprob_chunk
+    seqs = [p + c for p, c in zip(prompt_ids_list, completion_ids_list)]
+    lengths = [len(s) for s in seqs]
+    t_max = max(lengths)
+    b = len(seqs)
+    input_ids = torch.zeros((b, t_max), dtype=torch.long, device=device)
+    attn = torch.zeros((b, t_max), dtype=torch.long, device=device)
+    prompt_lens = [len(p) for p in prompt_ids_list]
+    for i, s in enumerate(seqs):
+        input_ids[i, : lengths[i]] = torch.tensor(s, dtype=torch.long, device=device)
+        attn[i, : lengths[i]] = 1
+    out = model(input_ids=input_ids, attention_mask=attn)
+    logits = out.logits
+    results: list[torch.Tensor] = []
+    for i in range(b):
+        start = prompt_lens[i] - 1
+        comp_ids = completion_ids_list[i]
+        if not comp_ids:
+            results.append(torch.zeros(0, device=device, dtype=torch.float32))
+            continue
+        if chunk <= 0:
+            log_probs = torch.log_softmax(logits[i], dim=-1)
+            token_lps = [
+                log_probs[start + j, tid] for j, tid in enumerate(comp_ids)
+            ]
+            results.append(torch.stack(token_lps))
+            continue
+        token_lps: list[torch.Tensor] = []
+        for j in range(0, len(comp_ids), chunk):
+            cids = comp_ids[j : j + chunk]
+            sl = logits[i, start + j : start + j + len(cids)]
+            targets = torch.tensor(cids, dtype=torch.long, device=device)
+            lp = torch.log_softmax(sl, dim=-1)
+            token_lps.append(lp.gather(1, targets.unsqueeze(1)).squeeze(1))
+        results.append(torch.cat(token_lps))
+    return results
+
+
+def _completion_logprobs_for_chunk(
+    model: Any,
+    chunk_prompts: list[list[int]],
+    chunk_completions: list[list[int]],
+    device: torch.device,
+) -> list[torch.Tensor]:
+    """Forward logprobs for one token-budget chunk (batched or sequential)."""
+    seq_batch = logprob_seq_batch_size()
+    if seq_batch <= 1:
+        return [
+            _completion_logprobs_hf(model, pid, cid, device)
+            for pid, cid in zip(chunk_prompts, chunk_completions)
+        ]
+    out: list[torch.Tensor] = []
+    for b0 in range(0, len(chunk_prompts), seq_batch):
+        out.extend(
+            _completion_logprobs_hf_batch(
+                model,
+                chunk_prompts[b0 : b0 + seq_batch],
+                chunk_completions[b0 : b0 + seq_batch],
+                device,
+            )
+        )
+    return out
+
+
 def build_hf(cfg: TrainCfg) -> tuple[Any, torch.optim.Optimizer]:
     from transformers import AutoModelForCausalLM
 
@@ -875,13 +973,38 @@ def run_one_grpo_step(
                 kept_adv.append(float(adv_out.advantages[p_idx, r_idx].item()))
 
         if not kept_rollouts:
-            raise RuntimeError(
-                "All GRPO groups had zero advantage (every prompt's rollouts agreed). "
-                "Raise batch_size / smoke_prompts so some groups have mixed rewards "
-                f"(this batch: {len(batch.prompts)} prompts x {n_rollouts} rollouts)."
+            frac_filt = float(adv_out.diagnostics.get("fraction_filtered", 1.0))
+            logger.warning(
+                "No kept rollouts after filtering (arm=%s); skipping train and "
+                "weight sync for this step (%s prompts x %s rollouts, "
+                "fraction_filtered=%.3f).",
+                cfg.arm,
+                len(batch.prompts),
+                n_rollouts,
+                frac_filt,
+            )
+            return StepResult(
+                loss=float("nan"),
+                mean_reward=float(rewards_t.mean().item()),
+                fraction_filtered=frac_filt,
+                mean_advantage=0.0,
+                n_kept_sequences=0,
+                skipped=True,
+                phase_times_s=phase_times,
+                vram_peak_gb=vram_peak,
+                diagnostics={**diagnostics, "skipped_no_kept": True},
+                train_wandb={**train_wandb, "train/skipped_no_kept": 1.0},
+                sample_completions=[
+                    rollouts[i].completion_text
+                    for i in range(min(3, len(rollouts)))
+                ],
             )
 
-        rollout_engine.sleep_for_train()
+        if vllm_sleep_enabled():
+            with _phase_timer("t_vllm_sleep", instrument, phase_times, vram_peak):
+                rollout_engine.sleep_for_train()
+        else:
+            rollout_engine.sleep_for_train()
 
         n_kept = len(kept_rollouts)
 
@@ -917,11 +1040,21 @@ def run_one_grpo_step(
     every_n = int(cfg.weight_sync.get("every_n_steps", 1))
     if every_n > 0 and (step + 1) % every_n == 0:
         with _phase_timer("t_weight_sync", instrument, phase_times, vram_peak):
-            rollout_engine.wake_weights_only()
+            if vllm_sleep_enabled():
+                with _phase_timer(
+                    "t_vllm_wake_weights", instrument, phase_times, vram_peak
+                ):
+                    rollout_engine.wake_weights_only()
+            else:
+                rollout_engine.wake_weights_only()
             sync_stats = rollout_engine.update_weights(hf_model)
         if instrument and sync_stats is not None:
             diagnostics["t_weight_sync_step_s"] = sync_stats.wall_clock_s
-    rollout_engine.wake_for_rollout()
+    if vllm_sleep_enabled():
+        with _phase_timer("t_vllm_wake_kv", instrument, phase_times, vram_peak):
+            rollout_engine.wake_for_rollout()
+    else:
+        rollout_engine.wake_for_rollout()
 
     if instrument:
         from train.weight_sync import sync_hf_to_vllm
@@ -1043,6 +1176,26 @@ def setup_wandb(
     return wandb.init(**init_kw)
 
 
+def _checkpoint_family_slug(cfg: TrainCfg) -> str:
+    """e.g. ``train_real`` from yaml ``/vol/checkpoints/train_real/``."""
+    return Path(str(cfg.train.get("checkpoint_dir", "/vol/checkpoints/train/"))).name
+
+
+def resolve_checkpoint_dir(cfg: TrainCfg, *, checkpoint_run_id: str = "") -> Path:
+    """Per-run dir: ``/vol/checkpoints/{family}_{run_id}/``.
+
+    ``run_id`` comes from launch (``CS224R_APP_NAME``). Without it, use yaml
+    ``checkpoint_dir`` as-is (legacy flat ``step_*.pt`` layout).
+    """
+    yaml_dir = Path(str(cfg.train.get("checkpoint_dir", "/vol/checkpoints/train/")))
+    run_id = (
+        checkpoint_run_id or os.environ.get("CS224R_CHECKPOINT_RUN_ID", "")
+    ).strip()
+    if run_id:
+        return Path(f"/vol/checkpoints/{_checkpoint_family_slug(cfg)}_{run_id}")
+    return yaml_dir
+
+
 def find_latest_checkpoint(ckpt_dir: Path) -> Path | None:
     if not ckpt_dir.is_dir():
         return None
@@ -1055,6 +1208,8 @@ def load_ckpt(
     hf_model: Any,
     opt: torch.optim.Optimizer,
     dataset: JsonlPromptDataset,
+    *,
+    restore_dataset: bool = True,
 ) -> dict[str, Any]:
     payload = torch.load(path, map_location="cpu", weights_only=False)
     hf_model.load_state_dict(payload["model"])
@@ -1069,7 +1224,7 @@ def load_ckpt(
     if "cuda" in rng and torch.cuda.is_available():
         for d, state in enumerate(rng["cuda"]):
             torch.cuda.set_rng_state(state, d)
-    if "dataset" in payload:
+    if restore_dataset and "dataset" in payload:
         dataset.load_state_dict(payload["dataset"])
     return payload
 
@@ -1134,6 +1289,7 @@ def _resume_enabled(cfg: TrainCfg) -> bool:
 def train(
     cfg: TrainCfg,
     *,
+    checkpoint_run_id: str = "",
     after_checkpoint: Any | None = None,
     leg_budget_s: float | None = None,
     on_leg_exhausted: Any | None = None,
@@ -1154,7 +1310,9 @@ def train(
     def _init_elapsed(label: str) -> None:
         logger.info("train init [%s] +%.1fs since start", label, time.monotonic() - init_t0)
 
-    ckpt_dir = Path(cfg.train.get("checkpoint_dir", "/vol/checkpoints/train/"))
+    ckpt_dir = resolve_checkpoint_dir(cfg, checkpoint_run_id=checkpoint_run_id)
+    logger.info("Checkpoint dir=%s", ckpt_dir)
+
     resume_path: Path | None = None
     if _resume_enabled(cfg):
         explicit = cfg.train.get("resume_from")
@@ -1244,12 +1402,15 @@ def train(
             import wandb
 
             log_dict: dict[str, Any] = {
-                "train/loss": result.loss,
                 "train/mean_reward": result.mean_reward,
                 "train/fraction_filtered": result.fraction_filtered,
-                "train/mean_advantage": result.mean_advantage,
                 "train/n_kept_sequences": result.n_kept_sequences,
             }
+            if result.skipped:
+                log_dict["train/skipped_no_kept"] = 1.0
+            else:
+                log_dict["train/loss"] = result.loss
+                log_dict["train/mean_advantage"] = result.mean_advantage
             log_dict.update(result.train_wandb)
             if result.sync_stats is not None:
                 log_dict["train/weight_sync_s"] = result.sync_stats.wall_clock_s
@@ -1345,6 +1506,7 @@ try:
         ablation: str = "",
         vllm_sleep: int = 0,
         logprob_chunk: int = 0,
+        logprob_seq_batch: int = 1,
         leg_number: int = 1,
         max_legs: int = 10,
         fresh_wandb: bool = False,
@@ -1352,6 +1514,7 @@ try:
         total_steps_override: int = 0,
         no_resume: bool = False,
         arm_override: str = "",
+        checkpoint_run_id: str = "",
     ) -> None:
         """Modal entrypoint.
 
@@ -1362,10 +1525,13 @@ try:
         per chained leg; `max_legs` is a runaway guard.
 
         Launch overrides (`launch_mode`, `total_steps_override`, `no_resume`,
-        `arm_override`) are Modal CLI args — host-shell exports are not forwarded.
+        `arm_override`, `checkpoint_run_id`) are Modal CLI args — host-shell
+        exports are not forwarded into the container.
         """
         from train.ablation import apply_ablation_env
 
+        if checkpoint_run_id:
+            os.environ["CS224R_CHECKPOINT_RUN_ID"] = checkpoint_run_id
         if arm_override:
             os.environ["CS224R_ARM"] = arm_override
         if launch_mode:
@@ -1379,6 +1545,7 @@ try:
             ablation=ablation,
             vllm_sleep=vllm_sleep,
             logprob_chunk=logprob_chunk,
+            logprob_seq_batch=logprob_seq_batch,
         )
         os.environ["CS224R_LEG_NUMBER"] = str(leg_number)
         os.environ["CS224R_MAX_LEGS"] = str(max_legs)
@@ -1413,13 +1580,16 @@ try:
                 ablation=ablation,
                 vllm_sleep=vllm_sleep,
                 logprob_chunk=logprob_chunk,
+                logprob_seq_batch=logprob_seq_batch,
                 leg_number=next_leg,
                 max_legs=max_legs,
                 arm_override=arm_override,
+                checkpoint_run_id=checkpoint_run_id,
             )
 
         train(
             load_cfg(config_path),
+            checkpoint_run_id=checkpoint_run_id,
             after_checkpoint=_commit_volume,
             leg_budget_s=leg_budget_s,
             on_leg_exhausted=_on_leg_exhausted,
@@ -1444,6 +1614,7 @@ try:
         ablation: str = "",
         vllm_sleep: int = 0,
         logprob_chunk: int = 0,
+        logprob_seq_batch: int = 1,
         leg_number: int = 1,
         max_legs: int = 10,
         fresh_wandb: bool = False,
@@ -1451,6 +1622,7 @@ try:
         total_steps_override: int = 0,
         no_resume: bool = False,
         arm_override: str = "",
+        checkpoint_run_id: str = "",
     ) -> None:
         _train_remote_impl(
             spawn_fn=train_remote_h200.spawn,
@@ -1458,6 +1630,7 @@ try:
             ablation=ablation,
             vllm_sleep=vllm_sleep,
             logprob_chunk=logprob_chunk,
+            logprob_seq_batch=logprob_seq_batch,
             leg_number=leg_number,
             max_legs=max_legs,
             fresh_wandb=fresh_wandb,
@@ -1465,6 +1638,7 @@ try:
             total_steps_override=total_steps_override,
             no_resume=no_resume,
             arm_override=arm_override,
+            checkpoint_run_id=checkpoint_run_id,
         )
 
     @app.function(
@@ -1485,6 +1659,7 @@ try:
         ablation: str = "",
         vllm_sleep: int = 0,
         logprob_chunk: int = 0,
+        logprob_seq_batch: int = 1,
         leg_number: int = 1,
         max_legs: int = 10,
         fresh_wandb: bool = False,
@@ -1492,6 +1667,7 @@ try:
         total_steps_override: int = 0,
         no_resume: bool = False,
         arm_override: str = "",
+        checkpoint_run_id: str = "",
     ) -> None:
         _train_remote_impl(
             spawn_fn=train_remote_b200.spawn,
@@ -1499,6 +1675,7 @@ try:
             ablation=ablation,
             vllm_sleep=vllm_sleep,
             logprob_chunk=logprob_chunk,
+            logprob_seq_batch=logprob_seq_batch,
             leg_number=leg_number,
             max_legs=max_legs,
             fresh_wandb=fresh_wandb,
@@ -1506,6 +1683,7 @@ try:
             total_steps_override=total_steps_override,
             no_resume=no_resume,
             arm_override=arm_override,
+            checkpoint_run_id=checkpoint_run_id,
         )
 
     # Backward-compatible alias: default target stays H200.

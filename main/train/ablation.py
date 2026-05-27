@@ -10,12 +10,14 @@ def apply_ablation_env(
     ablation: str = "",
     vllm_sleep: int = 0,
     logprob_chunk: int = 0,
+    logprob_seq_batch: int = 1,
 ) -> None:
     if ablation:
         os.environ["CS224R_ABLATION"] = ablation
         os.environ["CS224R_NO_RESUME"] = "1"
     os.environ["CS224R_VLLM_SLEEP"] = "1" if int(vllm_sleep) else "0"
     os.environ["CS224R_LOGPROB_CHUNK"] = str(int(logprob_chunk))
+    os.environ["CS224R_LOGPROB_SEQ_BATCH"] = str(max(1, int(logprob_seq_batch)))
 
 
 def ablation_label() -> str | None:
@@ -33,6 +35,15 @@ def logprob_chunk_size() -> int:
         return max(0, int(raw))
     except ValueError:
         return 0
+
+
+def logprob_seq_batch_size() -> int:
+    """Sequences per HF forward inside a token-budget chunk (1 = legacy loop)."""
+    raw = os.environ.get("CS224R_LOGPROB_SEQ_BATCH", "1").strip()
+    try:
+        return max(1, int(raw))
+    except ValueError:
+        return 1
 
 
 def prepare_pytorch_alloc_for_vllm_sleep() -> None:

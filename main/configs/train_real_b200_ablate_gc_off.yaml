@@ -1,0 +1,5 @@
+extends: train_real_b200.yaml
+
+# B200 efficiency smoke: faster backward (watch vram_peak_gb_step < ~175).
+train:
+  gradient_checkpointing: false

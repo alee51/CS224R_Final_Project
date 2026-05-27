@@ -1,10 +1,9 @@
 # Production training config (H200, train.batch_size=64 locked).
 # Shared train/rollout/loss blocks; per-arm overrides in arm_profiles.
 #
-# Launch (from repo root):
-#   bash main/scripts/launch_train.sh --mode smoke|full
-#   bash main/scripts/launch_train.sh --mode smoke --arm minority_answer
-#   bash main/scripts/launch_train.sh --mode full  --arm poly_epo_answer
+# Launch: see main/docs/launch_training.md (canonical for agents).
+#   bash main/scripts/launch_train.sh --mode full --gpu-class b200 --arm grpo
+#   bash main/scripts/launch_train.sh --mode full --gpu-class h200 --arm minority_answer
 #
 # Legacy per-arm yaml files are shims only (arm: <name> → merges this file).
 # Requires /vol/data/polaris_train.jsonl on main-artifacts.
@@ -33,14 +32,14 @@ train:
   batch_size: 64
   n_rollouts: 8
   microbatch: 64
-  token_budget: 105000
+  token_budget: 130000  # B200 minority smoke au96bwh1: ~161 GB peak, 4 chunks, ~8% faster vs 105k
   grad_accum: 1
   lr: 1.0e-6
   weight_decay: 0.0
   grad_clip: 1.0
   warmup_steps: 20
   gradient_checkpointing: true
-  checkpoint_every_steps: 10
+  checkpoint_every_steps: 20
   resume: auto
 
 rollout:
@@ -74,6 +73,8 @@ wandb:
 
 # Per-arm: checkpoint dir, wandb group, length_norm (set arms → batch_max enforced
 # in TrainCfg.from_dict). Only keys that differ from shared blocks above.
+# train.checkpoint_dir = family name (e.g. train_real). Launches write
+# /vol/checkpoints/{family}_{run_id}/step_*.pt (run_id = CS224R_APP_NAME).
 arm_profiles:
   grpo:
     train:

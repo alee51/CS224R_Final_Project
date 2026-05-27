@@ -207,15 +207,16 @@ class RolloutEngine:
         )
 
     def wake_for_rollout(self) -> None:
-        """Full wake before the next rollout step."""
+        """Restore KV cache before the next rollout (weights already woken for sync)."""
         if not (self._use_sleep and self._sleep_available):
             return
         self._release_cuda_before_vllm_wake()
         before = self._vram_mb()
-        self._llm.wake_up()
+        # Weights were mapped in wake_weights_only(); only restore KV (vLLM RLHF path).
+        self._llm.wake_up(tags=["kv_cache"])
         after = self._vram_mb()
         logger.info(
-            "vLLM wake_up(): %.0f MB → %.0f MB (+%.0f MB)",
+            "vLLM wake_up(tags=['kv_cache']): %.0f MB → %.0f MB (+%.0f MB)",
             before,
             after,
             after - before,

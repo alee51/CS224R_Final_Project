@@ -8,3 +8,5 @@ main/configs/.probe_b_runtime.yaml
 checkpoints/
 .claude/
 wandb/
+.modal_tmp/
+main/data/checkpoints_transfer/

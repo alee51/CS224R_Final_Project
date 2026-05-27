@@ -10,6 +10,7 @@ from train.trainer import (
     apply_launch_overrides,
     find_latest_checkpoint,
     load_ckpt,
+    resolve_checkpoint_dir,
     save_ckpt,
     train_cfg_from_dict,
 )
@@ -31,6 +32,41 @@ def test_find_latest_checkpoint(tmp_path: Path):
     (ckpt_dir / "step_000010.pt").write_bytes(b"y")
     assert find_latest_checkpoint(ckpt_dir) == ckpt_dir / "step_000010.pt"
     assert find_latest_checkpoint(tmp_path / "missing") is None
+
+
+def test_resolve_checkpoint_dir_run_scoped(monkeypatch):
+    monkeypatch.setenv("CS224R_NO_RESUME", "1")
+    cfg = train_cfg_from_dict(
+        {
+            "global_seed": 0,
+            "arm": "grpo",
+            "train": {"checkpoint_dir": "/vol/checkpoints/train_real/"},
+            "rollout": {"model": "test"},
+            "loss": {},
+            "wandb": {"entity": "e", "project": "p"},
+        }
+    )
+    path = resolve_checkpoint_dir(
+        cfg, checkpoint_run_id="cs224r-train-grpo-full-nancy-05-27-1200"
+    )
+    assert path == Path(
+        "/vol/checkpoints/train_real_cs224r-train-grpo-full-nancy-05-27-1200"
+    )
+
+
+def test_resolve_checkpoint_dir_legacy_yaml_dir(monkeypatch):
+    monkeypatch.setenv("CS224R_NO_RESUME", "1")
+    cfg = train_cfg_from_dict(
+        {
+            "global_seed": 0,
+            "arm": "grpo",
+            "train": {"checkpoint_dir": "/vol/checkpoints/train_real/"},
+            "rollout": {"model": "test"},
+            "loss": {},
+            "wandb": {"entity": "e", "project": "p"},
+        }
+    )
+    assert resolve_checkpoint_dir(cfg) == Path("/vol/checkpoints/train_real/")
 
 
 def test_dataset_state_roundtrip(tmp_path: Path):
