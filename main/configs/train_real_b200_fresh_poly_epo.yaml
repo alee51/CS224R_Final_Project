@@ -1,7 +1,0 @@
-extends: train_real_b200.yaml
-
-# Fresh B200 poly_epo_answer — isolated from any prior ckpts at /vol/checkpoints/train_poly_epo_answer/
-arm_profiles:
-  poly_epo_answer:
-    train:
-      checkpoint_dir: /vol/checkpoints/train_poly_epo_answer_b200/
