@@ -1,7 +1,7 @@
 # B200 migration plan — audit
 
 **Audited:** 2026-05-27  
-**Documents:** [`B200_migration_plan.md`](./B200_migration_plan.md), [`B200_migration_analysis_2026-05-26T034425Z_b01999f.md`](./B200_migration_analysis_2026-05-26T034425Z_b01999f.md), [`status_2026-05-27T0510Z.md`](./status_2026-05-27T0510Z.md)  
+**Documents:** [`B200_migration_plan.md`](./B200_migration_plan.md), [`B200_migration_analysis_2026-05-26T034425Z_b01999f.md`](./B200_migration_analysis_2026-05-26T034425Z_b01999f.md), [`status_2026-05-27T0510Z.md`](../../efficiency/status_2026-05-27T0510Z.md)  
 **Code verified:** `main/infra/modal_image.py`, `main/train/trainer.py`, `main/train/rollout.py`, `main/train/weight_sync.py`, `main/configs/train_real.yaml`, launch scripts, all live `gpu=` decorators.
 
 ---
@@ -41,14 +41,14 @@ The plan is directionally correct for a **time-first** poster spike: H200 baseli
 
 2. **Phase ordering tweak:** Run a **minimal vLLM generate** (hello or 1-prompt) immediately after image build **before** full `smoke_flash_attn` collocated stage. Collocated FA smoke already constructs `RolloutEngine` (vLLM) but buries vLLM failures under FA diagnostics. Analysis doc’s order (vLLM → sync → FA) is safer than plan Phase 2→3 if Phase 2 fails late in `collocated`.
 
-3. **Feasibility / calendar:** 1–2 focused days is **optimistic** if Phase 1 needs >2 image iterations (common for Blackwell wheels). Budget **2 days** wall + **+4–12 h** Modal B200 queue (per `b200_05_26_2133`, self-spawn legs). Phase 1 “3–8 h” dominates; parallel Phase 0 is fine.
+3. **Feasibility / calendar:** 1–2 focused days is **optimistic** if Phase 1 needs >2 image iterations (common for Blackwell wheels). Budget **2 days** wall + **+4–12 h** Modal B200 queue (per `b200_deep_dive_verdict_2026-05-26.md`, self-spawn legs). Phase 1 “3–8 h” dominates; parallel Phase 0 is fine.
 
 4. **Success criteria — soften or instrument:**
    - **Rollout ≤ 70 s:** timeline already showed H200 rollout only ~+15% vs H100 at `util=0.45`; 90→70 s (~22%) is plausible but not guaranteed. Keep as stretch; primary gate = **total step ≤ 300 s**.
    - **`n_kept_sequences > 0` most steps:** set arms can legitimately filter everything on some steps — risk false no-go. Gate on finite loss + no NaN + at least one step with `n_kept > 0` in the smoke.
    - **§1.3 full epoch ≤ 65 h:** requires ~292 s/step average; stricter than §1.2 median ≤ 300 s — call out as production stretch, not spike gate.
 
-5. **Economics consistency:** Plan uses H200→B200 **+38% $/s** (0.001261→0.001736) and break-even **~27.4%** faster — correct vs `b200_05_26_2133`. Status doc “~+25% $/s” is **stale**; fix to avoid operator confusion. Realistic **280 s/step** is ~**2% more $/epoch** than H200 at 380 s (per economics note) — plan acknowledges; spike go/no-go should be **wall-clock**, not $/step, for time-first.
+5. **Economics consistency:** Plan uses H200→B200 **+38% $/s** (0.001261→0.001736) and break-even **~27.4%** faster — correct vs `b200_deep_dive_verdict_2026-05-26.md`. Status doc “~+25% $/s” is **stale**; fix to avoid operator confusion. Realistic **280 s/step** is ~**2% more $/epoch** than H200 at 380 s (per economics note) — plan acknowledges; spike go/no-go should be **wall-clock**, not $/step, for time-first.
 
 6. **`build_hf` / FA:** Plan says “only image wheel changes” — **correct** (`trainer.py` already `attn_implementation="flash_attention_2"`). Analysis snapshot claim “FA not enabled” is **obsolete**. Blackwell work is **wheel/SM100**, not enabling FA in code.
 

@@ -6,8 +6,8 @@
 
 **Context docs (read first):**
 
-- [`status_2026-05-27T0510Z.md`](./status_2026-05-27T0510Z.md) — decision tree, 180 GB VRAM budget, phase-time model
-- [`b200_05_26_2133`](./b200_05_26_2133) — H200→B200 economics (~×1.38 $/s; ≥27.4% faster to break even on $/step)
+- [`status_2026-05-27T0510Z.md`](../../efficiency/status_2026-05-27T0510Z.md) — decision tree, 180 GB VRAM budget, phase-time model
+- [`b200_deep_dive_verdict_2026-05-26.md`](./b200_deep_dive_verdict_2026-05-26.md) — H200→B200 economics (~×1.38 $/s; ≥27.4% faster to break even on $/step)
 - [`B200_migration_analysis_2026-05-26T034425Z_b01999f.md`](./B200_migration_analysis_2026-05-26T034425Z_b01999f.md) — touchpoint inventory (some line refs stale; repo is on **H200** today)
 
 **Product decision (this plan):** **Time-first** poster timeline. Modal B200 at **~$0.001736/s** vs H200 **~$0.001261/s** (~**+38% $/s**) is acceptable if wall-clock per epoch drops enough. Target **~22–30 h saved per set-arm epoch** (380 s/step → **245–280 s/step** realistic). **Do not** bundle `n_kept` subsampling into this migration ([§8](#8-out-of-scope)).
@@ -113,7 +113,7 @@ Implement on branch `b200-bringup` (or similar). **Do not merge to main** until 
 | `main/configs/train_real.yaml` | Keep H200 as default on `main` until green; use `train_real_b200.yaml` on branch |
 | `main/train/trainer.py` `build_hf` | Already `flash_attention_2`; only image wheel changes |
 | `main/train/rollout.py` sleep paths | **Separate track** — prod `vllm_sleep=0`; cumem wake bug ([§6](#6-risks-and-mitigations)) |
-| `rollout.gpu_memory_utilization`, `token_budget`, `gradient_checkpointing` | Retune only **after** B200 stack green ([status doc](./status_2026-05-27T0510Z.md) §D) |
+| `rollout.gpu_memory_utilization`, `token_budget`, `gradient_checkpointing` | Retune only **after** B200 stack green ([status doc](../../efficiency/status_2026-05-27T0510Z.md) §D) |
 
 ---
 
@@ -212,7 +212,7 @@ bash main/scripts/launch_probe_step_b.sh   # with B200 yaml + gpu in probe
 | **Modal B200 queue** | Long pending before `train_remote` / each `spawn` leg | Schedule smokes off-peak; pad calendar; do not assume H200 queue times |
 | **$/step miss** | ~280 s/step (only ~26% faster) | **Time-first:** may still ship if epoch hours save poster; else stay H200 |
 | **VRAM 180 vs 192** | OOM at 178 GB with no margin | Size against **180 GB**; keep util **0.45** until readout |
-| **cumem / vLLM sleep wake** | Crash on `wake_up` after sleep | **Out of this plan** — keep `vllm_sleep=0` in prod smokes; sleep is follow-on ([status](./status_2026-05-27T0510Z.md) §C) |
+| **cumem / vLLM sleep wake** | Crash on `wake_up` after sleep | **Out of this plan** — keep `vllm_sleep=0` in prod smokes; sleep is follow-on ([status](../../efficiency/status_2026-05-27T0510Z.md) §C) |
 | **`expandable_segments` vs sleep** | Allocator conflict if sleep enabled | `prepare_pytorch_alloc_for_vllm_sleep()` strips expandable segments — only when testing sleep |
 | **transformers 5.x** | Qwen tokenizer breaks in vLLM | Keep `transformers>=4.55.2,<5.0.0` pin unless vLLM 0.9 requires bump + smoke |
 | **Image build time** | 30–60 min per iteration | Pin versions; use `--no-cache` only when needed |
@@ -229,7 +229,7 @@ From `main/configs/train_real.yaml` (production):
 - `train.batch_size: 64`, `n_rollouts: 8`
 - `weight_sync.every_n_steps: 1`
 
-**Post-green retune** (separate smokes, not this migration): gc off vs higher `token_budget`, util 0.55–0.65 — see [status decision tree](./status_2026-05-27T0510Z.md) §D.
+**Post-green retune** (separate smokes, not this migration): gc off vs higher `token_budget`, util 0.55–0.65 — see [status decision tree](../../efficiency/status_2026-05-27T0510Z.md) §D.
 
 ---
 
@@ -237,8 +237,8 @@ From `main/configs/train_real.yaml` (production):
 
 | Item | Notes |
 |------|--------|
-| **Subsample / cap `n_kept`** | Separate methods decision ([status §5](./status_2026-05-27T0510Z.md)); **not** part of B200 bring-up |
-| **Batched logprob forwards** | High ROI on any SKU; refactor `trainer.py` `_completion_logprobs_hf` — do after or parallel on H200 ([status §2](./status_2026-05-27T0510Z.md)) |
+| **Subsample / cap `n_kept`** | Separate methods decision ([status §5](../../efficiency/status_2026-05-27T0510Z.md)); **not** part of B200 bring-up |
+| **Batched logprob forwards** | High ROI on any SKU; refactor `trainer.py` `_completion_logprobs_hf` — do after or parallel on H200 ([status §2](../../efficiency/status_2026-05-27T0510Z.md)) |
 | **vLLM sleep in prod** | VRAM expander; wake/cumem bug open — track C in status doc |
 | **8-bit AdamW, fused AdamW, ckpt/25** | Efficiency §E/F; not SKU blockers |
 | **`B200+` / B300 / CUDA 13** | Avoid until needed |

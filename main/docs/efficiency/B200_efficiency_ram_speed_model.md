@@ -170,4 +170,4 @@ flowchart TB
 | `sfp0xwag` | **gc off** | OOM **178.3/178.4 GB** step0 |
 | `yqlmvnw0` | **sleep on**, gc on | sleep freed **83.84 GiB**; weights wake **0.098s**; **full wake cumem crash** |
 
-**Refs:** [B200_efficiency_smoke_plan.md](./B200_efficiency_smoke_plan.md), probe logs `main/docs/probes/artifacts/b200_eff_05-27-0025/`, [efficiency/status_2026-05-27T0510Z.md](../efficiency/status_2026-05-27T0510Z.md).
+**Refs:** [B200_efficiency_smoke_plan.md](../reference/efficiency/B200_efficiency_smoke_plan.md), probe logs `main/docs/probes/artifacts/b200_eff_05-27-0025/`, [efficiency/status_2026-05-27T0510Z.md](./status_2026-05-27T0510Z.md).
