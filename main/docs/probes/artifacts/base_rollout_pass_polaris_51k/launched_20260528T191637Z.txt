@@ -1,0 +1,57 @@
+Note that running a local entrypoint in detached mode only keeps the last triggered Modal function alive after the parent process has been killed or disconnected.
+✓ Initialized. View run at 
+https://modal.com/apps/alee72/main/ap-zt2C8pxFBA7bX8DyPQa3HW
+✓ Created objects.
+├── 🔨 Created mount 
+│   /Users/nancybao/Desktop/dev/cs224r_finalproject/main/probes/group_a_rollout_
+│   judge.py
+├── 🔨 Created mount /Users/nancybao/Desktop/dev/cs224r_finalproject/main
+├── 🔨 Created function run_phase1.
+├── 🔨 Created function run_pipeline.
+└── 🔨 Created function run_phase2.
+Spawned Phase 1 only: fc-01KSR0F1QXP4Z8QBJSB17487SG
+Track progress on Modal dashboard; wandb run appears after Phase 1 init.
+[modal-client] 2026-05-28T12:20:12-0700 Timed out waiting for final app logs.
+WARNING:modal-client:Timed out waiting for final app logs.
+✓ App completed. View run at 
+https://modal.com/apps/alee72/main/ap-zt2C8pxFBA7bX8DyPQa3HW
+shard 0 cs224r-base-rollout-51k-s0-anastasia-05-28-1216
+Note that running a local entrypoint in detached mode only keeps the last triggered Modal function alive after the parent process has been killed or disconnected.
+✓ Initialized. View run at 
+https://modal.com/apps/alee72/main/ap-gVaauxpSDB9w5LplZSi7h3
+✓ Created objects.
+├── 🔨 Created mount 
+│   /Users/nancybao/Desktop/dev/cs224r_finalproject/main/probes/group_a_rollout_
+│   judge.py
+├── 🔨 Created mount /Users/nancybao/Desktop/dev/cs224r_finalproject/main
+├── 🔨 Created function run_phase1.
+├── 🔨 Created function run_pipeline.
+└── 🔨 Created function run_phase2.
+Spawned Phase 1 only: fc-01KSR0KJ5JQDW91KWY5SMYZHDJ
+Track progress on Modal dashboard; wandb run appears after Phase 1 init.
+[modal-client] 2026-05-28T12:22:40-0700 Timed out waiting for final app logs.
+WARNING:modal-client:Timed out waiting for final app logs.
+✓ App completed. View run at 
+https://modal.com/apps/alee72/main/ap-gVaauxpSDB9w5LplZSi7h3
+shard 1 cs224r-base-rollout-51k-s1-anastasia-05-28-1216
+Note that running a local entrypoint in detached mode only keeps the last triggered Modal function alive after the parent process has been killed or disconnected.
+✓ Initialized. View run at 
+https://modal.com/apps/alee72/main/ap-cSrUP165fGNUaAb1NPMU6v
+✓ Created objects.
+├── 🔨 Created mount 
+│   /Users/nancybao/Desktop/dev/cs224r_finalproject/main/probes/group_a_rollout_
+│   judge.py
+├── 🔨 Created mount /Users/nancybao/Desktop/dev/cs224r_finalproject/main
+├── 🔨 Created function run_phase1.
+├── 🔨 Created function run_pipeline.
+└── 🔨 Created function run_phase2.
+Spawned Phase 1 only: fc-01KSR0R1R5B2VSJWPYYMC16NX4
+Track progress on Modal dashboard; wandb run appears after Phase 1 init.
+[modal-client] 2026-05-28T12:25:07-0700 Timed out waiting for final app logs.
+WARNING:modal-client:Timed out waiting for final app logs.
+✓ App completed. View run at 
+https://modal.com/apps/alee72/main/ap-cSrUP165fGNUaAb1NPMU6v
+shard 2 cs224r-base-rollout-51k-s2-anastasia-05-28-1216
+Note that running a local entrypoint in detached mode only keeps the last triggered Modal function alive after the parent process has been killed or disconnected.
+✓ Initialized. View run at 
+https://modal.com/apps/alee72/main/ap-XHB8pwVYShe8YGAj23qDRr

@@ -1,0 +1,8 @@
+extends: train_real_b200_lr3e-6_s200.yaml
+
+operator: chicken602
+
+arm_profiles:
+  grpo:
+    train:
+      checkpoint_dir: /vol/checkpoints/train_real_b200_lr3e6_s200/

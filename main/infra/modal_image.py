@@ -64,6 +64,7 @@ image = (
             "docs",
             "data/*.jsonl",
             "data/**/*.jsonl",
+            "!data/probes/**/manifest.jsonl",
             "*.md",
             "__pycache__",
             ".pytest_cache",

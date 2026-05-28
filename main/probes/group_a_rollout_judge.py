@@ -37,6 +37,7 @@ logging.basicConfig(level=logging.INFO)
 
 POLARIS_DATASET_ID = "POLARIS-Project/Polaris-Dataset-53K"
 POLARIS_CACHE_REL = "probes/05-24/group_a/polaris_cache.jsonl"
+_PHASE1_GPU = os.environ.get("CS224R_GPU_CLASS", "H100")
 
 
 def _phase2_step_offset(phase1_done: dict[str, Any]) -> int:
@@ -235,22 +236,119 @@ def _read_jsonl(path: Path) -> list[dict[str, Any]]:
     return rows
 
 
+def _normalize_manifest_row(row: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "problem_id": int(row["problem_id"]),
+        "problem": str(row["problem"]).strip(),
+        "gold": str(row.get("gold", row.get("answer", ""))).strip(),
+        "difficulty_band": str(
+            row.get("difficulty_band", row.get("difficulty", "unknown"))
+        ),
+        "hf_index": row.get("hf_index"),
+    }
+
+
+def _load_external_manifest(manifest_path: Path) -> list[dict[str, Any]]:
+    rows = [_normalize_manifest_row(r) for r in _read_jsonl(manifest_path)]
+    rows.sort(key=lambda r: r["problem_id"])
+    return rows
+
+
+def _manifest_by_id(manifest: list[dict[str, Any]]) -> dict[int, dict[str, Any]]:
+    return {int(m["problem_id"]): m for m in manifest}
+
+
+def _shard_params(cfg: dict[str, Any]) -> tuple[int, int]:
+    shard_cfg = cfg.get("shard") or {}
+    shard_index = int(os.environ.get("CS224R_SHARD_INDEX", shard_cfg.get("index", 0)))
+    shard_count = int(os.environ.get("CS224R_NUM_SHARDS", shard_cfg.get("count", 1)))
+    if shard_count < 1:
+        raise ValueError(f"shard count must be >= 1, got {shard_count}")
+    if not 0 <= shard_index < shard_count:
+        raise ValueError(
+            f"shard index {shard_index} out of range for count {shard_count}"
+        )
+    return shard_index, shard_count
+
+
+def _apply_shard(
+    manifest: list[dict[str, Any]], shard_index: int, shard_count: int
+) -> list[dict[str, Any]]:
+    if shard_count == 1:
+        return manifest
+    return [
+        m
+        for m in manifest
+        if int(m["problem_id"]) % shard_count == shard_index
+    ]
+
+
+def _resolve_phase1_artifacts(
+    cfg: dict[str, Any], vol_root: Path
+) -> tuple[Path, Path, Path, int, int, str]:
+    art = cfg["artifacts"]
+    shard_index, shard_count = _shard_params(cfg)
+    stamp = os.environ.get("CS224R_RUN_STAMP") or art.get("run_stamp")
+    if not stamp:
+        stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+    base_dir = vol_root / str(art.get("base_dir", Path(art["manifest_path"]).parent))
+    if art.get("rollouts_path") and art.get("phase1_done_path"):
+        manifest_path = vol_root / art["manifest_path"]
+        rollouts_path = vol_root / art["rollouts_path"]
+        phase1_done_path = vol_root / art["phase1_done_path"]
+    else:
+        shard_dir = (
+            base_dir
+            / stamp
+            / f"shard_{shard_index:02d}_of_{shard_count:02d}"
+        )
+        manifest_path = vol_root / art["manifest_path"]
+        rollouts_path = shard_dir / "rollouts.jsonl"
+        phase1_done_path = shard_dir / "phase1_done.json"
+    return (
+        manifest_path,
+        rollouts_path,
+        phase1_done_path,
+        shard_index,
+        shard_count,
+        stamp,
+    )
+
+
 def _init_wandb(
-    cfg: dict[str, Any], repro: dict[str, Any], prompt_variant: str
+    cfg: dict[str, Any],
+    repro: dict[str, Any],
+    prompt_variant: str,
+    *,
+    shard_index: int | None = None,
+    shard_count: int | None = None,
+    run_stamp: str | None = None,
 ) -> Any:
     import wandb
 
     operator = cfg["operator"]
     ts = datetime.now(timezone.utc).strftime("%m-%d-%H%M")
-    run_name = f"probe-prompt-{prompt_variant}_{operator}_{ts}"
+    if cfg.get("base_rollout_pass"):
+        shard_tag = ""
+        if shard_count and shard_count > 1 and shard_index is not None:
+            shard_tag = f"-s{shard_index}of{shard_count}"
+        run_name = f"base-rollout-51k{shard_tag}_{operator}_{ts}"
+    else:
+        run_name = f"probe-prompt-{prompt_variant}_{operator}_{ts}"
     tags = ["probe", operator, cfg["gpu_class"], repro["git_sha_short"], prompt_variant]
     if cfg.get("smoke"):
         tags.append("smoke")
+    if cfg.get("base_rollout_pass"):
+        tags.append("base_rollout_pass")
+
+    group = cfg["wandb"]["group"]
+    if cfg.get("base_rollout_pass") and run_stamp:
+        group = f"{group}-{run_stamp}"
 
     run = wandb.init(
         entity=cfg["wandb"]["entity"],
         project=cfg["wandb"]["project"],
-        group=cfg["wandb"]["group"],
+        group=group,
         name=run_name,
         config=cfg,
         tags=tags,
@@ -279,8 +377,8 @@ def _resume_wandb(cfg: dict[str, Any], wandb_run_id: str) -> Any:
 
 
 @app.function(
-    gpu="H100",
-    timeout=14400,
+    gpu=_PHASE1_GPU,
+    timeout=86400,
     image=image,
     secrets=[
         modal.Secret.from_name("HUGGINGFACE"),
@@ -302,13 +400,25 @@ def run_phase1(config: str) -> str:
     repro = _git_metadata()
     prompt_variant = cfg.get("prompt_variant", "dapo_answer_v1")
     reuse_manifest = bool(cfg.get("reuse_manifest", False))
+    external_manifest = bool(cfg.get("external_manifest", False))
     vol_root = Path(ARTIFACTS_MOUNT)
-    art = cfg["artifacts"]
-    manifest_path = vol_root / art["manifest_path"]
-    rollouts_path = vol_root / art["rollouts_path"]
-    phase1_done_path = vol_root / art["phase1_done_path"]
+    (
+        manifest_path,
+        rollouts_path,
+        phase1_done_path,
+        shard_index,
+        shard_count,
+        run_stamp,
+    ) = _resolve_phase1_artifacts(cfg, vol_root)
 
-    run = _init_wandb(cfg, repro, prompt_variant)
+    run = _init_wandb(
+        cfg,
+        repro,
+        prompt_variant,
+        shard_index=shard_index,
+        shard_count=shard_count,
+        run_stamp=run_stamp,
+    )
     wandb_run_id = run.id
 
     smoke = bool(cfg.get("smoke", False))
@@ -330,14 +440,25 @@ def run_phase1(config: str) -> str:
     if torch.cuda.is_available():
         torch.cuda.manual_seed_all(global_seed)
 
-    if reuse_manifest:
+    log_rollout_table = bool(cfg.get("log_rollout_table", True))
+    wandb_log_every_batches = int(cfg.get("wandb_log_every_batches", 1))
+
+    if reuse_manifest or external_manifest:
         if not manifest_path.is_file():
             raise FileNotFoundError(
                 f"reuse_manifest: missing manifest at {manifest_path}"
             )
-        manifest = _read_jsonl(manifest_path)
+        if external_manifest:
+            manifest = _load_external_manifest(manifest_path)
+        else:
+            manifest = [_normalize_manifest_row(r) for r in _read_jsonl(manifest_path)]
+        manifest = _apply_shard(manifest, shard_index, shard_count)
         logger.info(
-            "Reusing manifest (%s prompts) from %s", len(manifest), manifest_path
+            "Loaded manifest (%s prompts, shard %s/%s) from %s",
+            len(manifest),
+            shard_index,
+            shard_count,
+            manifest_path,
         )
     else:
         raw_rows = _load_or_build_polaris_cache(vol_root)
@@ -387,6 +508,7 @@ def run_phase1(config: str) -> str:
         "prompt_variant",
     ]
     table_rows: list[list[Any]] = []
+    manifest_by_id = _manifest_by_id(manifest)
 
     total_rollouts = len(manifest) * rollouts_per_prompt
     rollouts_done = 0
@@ -401,6 +523,7 @@ def run_phase1(config: str) -> str:
             seed = global_seed + pid * rollouts_per_prompt + rollout_idx
             requests.append((prompt, pid, rollout_idx, seed))
 
+    batches_done = 0
     for batch_start in range(0, len(requests), batch_size):
         batch = requests[batch_start : batch_start + batch_size]
         prompts = [p for p, _, _, _ in batch]
@@ -426,7 +549,7 @@ def run_phase1(config: str) -> str:
             prompt_tokens = len(out.prompt_token_ids)
             batch_output_tokens += length_tokens
 
-            entry = manifest[problem_id]
+            entry = manifest_by_id[problem_id]
             reward_fields = compute_reward(
                 completion, entry["gold"], prompt_variant=prompt_variant
             )
@@ -446,51 +569,59 @@ def run_phase1(config: str) -> str:
                 "finish_reason": finish_reason,
             }
             _append_jsonl(rollouts_path, record)
-            table_rows.append(
-                [
-                    problem_id,
-                    rollout_idx,
-                    entry["difficulty_band"],
-                    reward_fields["reward"],
-                    reward_fields["parse_ok"],
-                    reward_fields.get("parsed_answer"),
-                    reward_fields["parsed_is_int"],
-                    reward_fields["has_boxed"],
-                    reward_fields["has_answer_line"],
-                    reward_fields["strict_parse_ok"],
-                    length_tokens,
-                    prompt_tokens,
-                    finish_reason,
-                    prompt_variant,
-                ]
-            )
+            if log_rollout_table:
+                table_rows.append(
+                    [
+                        problem_id,
+                        rollout_idx,
+                        entry["difficulty_band"],
+                        reward_fields["reward"],
+                        reward_fields["parse_ok"],
+                        reward_fields.get("parsed_answer"),
+                        reward_fields["parsed_is_int"],
+                        reward_fields["has_boxed"],
+                        reward_fields["has_answer_line"],
+                        reward_fields["strict_parse_ok"],
+                        length_tokens,
+                        prompt_tokens,
+                        finish_reason,
+                        prompt_variant,
+                    ]
+                )
             rollouts_done += 1
 
         total_output_tokens += batch_output_tokens
+        batches_done += 1
         tokens_per_sec = (
             batch_output_tokens / batch_elapsed if batch_elapsed > 0 else 0.0
         )
-        wandb.log(
-            {
-                "vllm_tokens_per_sec": tokens_per_sec,
-                "wall_clock_s": batch_elapsed,
-                "vram_gb_used": _vram_gb_used(),
-            },
-            step=rollouts_done,
-        )
+        if batches_done % wandb_log_every_batches == 0:
+            wandb.log(
+                {
+                    "vllm_tokens_per_sec": tokens_per_sec,
+                    "wall_clock_s": batch_elapsed,
+                    "vram_gb_used": _vram_gb_used(),
+                    "shard_index": shard_index,
+                    "shard_count": shard_count,
+                },
+                step=rollouts_done,
+            )
         logger.info(
             "Batch rollouts %s/%s (%.1f tok/s)",
             rollouts_done,
             total_rollouts,
             tokens_per_sec,
         )
+        if batches_done % 20 == 0:
+            artifacts_volume.commit()
 
     wall_clock_total = time.monotonic() - run_t0
-    wandb.log(
-        {
-            "phase1_rollouts": wandb.Table(columns=table_columns, data=table_rows),
-        }
-    )
+    if log_rollout_table and table_rows:
+        wandb.log(
+            {
+                "phase1_rollouts": wandb.Table(columns=table_columns, data=table_rows),
+            }
+        )
 
     by_band_rollouts: dict[str, list[dict[str, Any]]] = defaultdict(list)
     per_prompt_rewards: dict[int, list[int]] = defaultdict(list)
@@ -502,7 +633,7 @@ def run_phase1(config: str) -> str:
             if not line.strip():
                 continue
             row = json.loads(line)
-            band = manifest[row["problem_id"]]["difficulty_band"]
+            band = manifest_by_id[row["problem_id"]]["difficulty_band"]
             by_band_rollouts[band].append(row)
             per_prompt_rewards[row["problem_id"]].append(int(row["reward"]))
             length_tokens_all.append(float(row["length_tokens"]))
@@ -556,6 +687,10 @@ def run_phase1(config: str) -> str:
         "n_rollouts": rollouts_done,
         "wandb_run_id": wandb_run_id,
         "completed_at": completed_at,
+        "shard_index": shard_index,
+        "shard_count": shard_count,
+        "run_stamp": run_stamp,
+        "rollouts_path": str(rollouts_path.relative_to(vol_root)),
     }
     with phase1_done_path.open("w") as f:
         json.dump(done_record, f)

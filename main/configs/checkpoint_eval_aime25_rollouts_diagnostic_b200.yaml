@@ -1,0 +1,52 @@
+# AIME25 only — save per-rollout completions for parse vs wrong-answer analysis.
+# Same checkpoints/seeds as checkpoint_eval_lr3e6_latest_aime_math500 (20260528T082033Z).
+
+operator: chicken602
+gpu_class: B200
+global_seed: 42
+modal_price_per_sec: 0.001736
+
+eval:
+  include_base: true
+  n_rollouts: 16
+  pass_k: 16
+  rollout_chunk_prompts: 32
+  save_rollouts: true
+  output_dir: /vol/probes/checkpoint_eval_aime25_rollouts_diagnostic_b200
+
+  checkpoint_variants:
+    - label: grpo_lr3e6_s59
+      path: /vol/checkpoints/train_real_b200_lr3e6_s200_cs224r-train-grpo-full-chicken602-05-27-2053/step_000059.pt
+    - label: minority_lr3e6_s54
+      path: /vol/checkpoints/train_minority_answer_b200_lr3e6_s200_cs224r-train-minority_answer-full-chicken602-05-27-2053/step_000054.pt
+    - label: poly_epo_lr3e6_s39
+      path: /vol/checkpoints/train_poly_epo_answer_b200_lr3e6_s200_cs224r-train-poly_epo_answer-full-chicken602-05-27-2053/step_000039.pt
+
+  datasets:
+    aime25:
+      kind: jsonl
+      path: /vol/data/eval/aime25.jsonl
+      n_prompts: 30
+      seed: 0
+      prompt_variant: hybrid_answer_boxed
+
+rollout:
+  model: Qwen/Qwen3-1.7B-Base
+  max_prompt_length: 1024
+  max_response_length: 4096
+  temperature: 1.0
+  top_p: 1.0
+  gpu_memory_utilization: 0.45
+  max_model_len: 5120
+  max_num_seqs: 128
+  enable_prefix_caching: true
+  logprobs: 1
+
+train:
+  lr: 3.0e-6
+  weight_decay: 0.0
+  gradient_checkpointing: false
+
+artifacts:
+  volume_name: main-artifacts
+  volume_mount: /vol

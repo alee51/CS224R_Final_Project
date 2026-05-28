@@ -4,8 +4,8 @@
   "prompt_variant": "hybrid_answer_boxed",
   "n_manifest_prompts": 800,
   "n_rollouts": 3840,
-  "expected_rollouts": null,
-  "rollouts_complete": true,
+  "expected_rollouts": 6400,
+  "rollouts_complete": false,
   "integer_gold_prompts": 452,
   "non_integer_gold_prompts": 348,
   "overall": {

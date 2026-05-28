@@ -1,0 +1,8 @@
+extends: train_real_b200_lr3e-6_s200.yaml
+
+operator: chicken602
+
+arm_profiles:
+  poly_epo_answer:
+    train:
+      checkpoint_dir: /vol/checkpoints/train_poly_epo_answer_b200_lr3e6_s200/

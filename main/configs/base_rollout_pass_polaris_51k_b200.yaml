@@ -1,0 +1,48 @@
+# Phase 1 (Path A+): base-model rollouts over full polaris_train.jsonl for pass-rate filter.
+# Launch all shards:
+#   bash main/scripts/launch_base_rollout_pass.sh --num-shards 8 --detach
+#
+# Merge when done:
+#   main/.venv/bin/python3 main/scripts/merge_base_rollout_shards.py \
+#     --stamp <CS224R_RUN_STAMP printed at launch>
+
+operator: anastasia
+gpu_class: B200
+global_seed: 42
+modal_price_per_sec: 0.001736
+
+base_rollout_pass: true
+prompt_variant: hybrid_answer_boxed
+reuse_manifest: true
+external_manifest: true
+phase1_only: true
+log_rollout_table: false
+wandb_log_every_batches: 25
+
+shard:
+  count: 8
+  # index: set via CS224R_SHARD_INDEX in launch script
+
+sampling:
+  rollouts_per_prompt: 8
+  temperature: 1.0
+
+phase1:
+  model: Qwen/Qwen3-1.7B-Base
+  max_prompt_length: 1024
+  max_response_length: 4096
+  gpu_memory_utilization: 0.45
+  max_model_len: 5120
+  max_num_seqs: 128
+  enable_prefix_caching: true
+
+artifacts:
+  volume_name: main-artifacts
+  volume_mount: /vol
+  manifest_path: data/polaris_train.jsonl
+  base_dir: probes/base_rollout_pass_polaris_51k
+
+wandb:
+  entity: 224r-project
+  project: cs224r-minority-voting
+  group: base-rollout-polaris-51k

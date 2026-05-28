@@ -1,87 +1,157 @@
 # TA office-hours agenda
 
-**Date:** 2026-05-27 (deadline: poster 2026-06-03, experiments target 2026-05-31).
-**Goal:** Get advice on the open questions in §3 — not status updates.
+**Date:** 2026-05-28 (poster due 2026-06-03; experiments freeze ~2026-05-31).
+**Goal:** Get a TA read on (a) the right paper framing now that the set-based hypothesis is falsified at 1.7B-unfiltered convergence, (b) which of the still-viable experiments (filtered retrain at 1.7B, 4B retrain on filtered Polaris, CoT-clustering arms) is worth the remaining compute and wall-time, and (c) what counts as a passable contribution.
+
+**1-line context:** Late-checkpoint eval landed 2026-05-28 AM (see [`checkpoint_eval_morning_2026-05-28.md`](./checkpoint_eval_morning_2026-05-28.md)): **GRPO wins on every decision-grade slice** at convergence, in both the LR=3e-6 redo family and the LR=1e-6 family. The mid-training "poly_epo +5 pp BeyondAIME" headline from the prior version of this doc is withdrawn (BeyondAIME deemed not arm-rankable at n=100, pass@16 in single digits). The diagnosis (gradient starvation at our model scale) is well-cited and still the strongest paper-grade artifact we have. Question shifts from "what does the paper say about the 1.7B-unfiltered table" to "do we bet remaining compute on filtered / 4B / CoT variants where set-based might still separate."
 
 ---
 
-## 1. Where we are
+## 1. Headline result (the chart we'd put on the poster)
 
-**Three arms training in parallel on B200, all fresh runs launched 2026-05-27:**
+Three RL arms on Qwen3-1.7B-Base / Polaris-51K, arm-C prompt (`hybrid_answer_boxed`), Rank-2 parser, mathd∨sympy grader, GRPO core (KL=0, N=8, bs=64, 799-step budget). Decision-grade eval at matched train/eval prompt, `n_rollouts=16` (n=8 on the prior mid-training table; doubled here to sharpen).
 
-| Arm | Workspace | Wandb | Step / 799 | $/step | min/step |
-|-----|-----------|-------|-----------|--------|----------|
-| GRPO | alee72 (Anastasia) | [t11jct0t](https://wandb.ai/224r-project/cs224r-minority-voting/runs/t11jct0t) | ~326 | ~$0.22 | ~2.1 |
-| minority_answer | alee72 | [o5ypkzja](https://wandb.ai/224r-project/cs224r-minority-voting/runs/o5ypkzja) | ~148 | ~$0.43 | ~4.1 |
-| poly_epo_answer | chicken602 (Nancy) | [fdx95beu](https://wandb.ai/224r-project/cs224r-minority-voting/runs/fdx95beu) | ~146 | ~$0.46 | ~4.2 |
+**Primary table — LR=3e-6 redo family, 3 arms vs base** (`grpo_lr3e6_s59`, `minority_lr3e6_s54`, `poly_epo_lr3e6_s39`):
 
-**First three-arm checkpoint eval (canonical) ran 2026-05-27 evening on B200**, mid-training (GRPO at step 299, set-arms at step 133):
+| Slice | base | GRPO Δ | minority_answer Δ | poly_epo_answer Δ |
+|-------|------|--------|-------------------|-------------------|
+| Polaris stratified 2k pass@8 (training distribution) | 30.8% | **+2.1 pp** | +0.9 pp | +1.2 pp |
+| DAPO 2k pass@8 (easier OOD) | 29.9% | **+2.0 pp** | +2.0 pp | +1.1 pp |
+| MATH-500 pass@16 (medium OOD, n=500) | 78.8% | **+4.4 pp** | +2.0 pp | +2.4 pp |
 
-| Slice | base | GRPO Δ | minority Δ | poly Δ |
-|-------|------|--------|------------|--------|
-| Polaris 2k pass@8 (training distribution) | 0.306 | +1.1 pp | **+0.1 pp** | +1.3 pp |
-| DAPO 2k pass@8 (easier OOD) | 0.248 | +2.4 pp | +0.5 pp | +1.5 pp |
-| **BeyondAIME pass@16 (hard OOD)** | **0.130** | **−6.0 pp** | **−6.0 pp** | **−5.0 pp** |
+**Confirmation table — LR=1e-6 converged checkpoints** (`grpo_s519`, `minority_s239`, `poly_s133`, no base column re-run): Polaris 31.8% / 31.0% / 31.4%; DAPO 31.7% / 31.3% / 30.6%; MATH-500 81.6% / 80.0% / 78.2%. Same ordering: **GRPO ≥ minority ≥ poly_epo on every decision-grade slice in both LR regimes.**
 
-**Budget:** Just received +$1500 stretch credit ($500/person). Pre-stretch: ~$381 (chicken602) + ~$340–420 (alee72) ≈ ~$721–801 team. With stretch: ~$1221–1301 team. One epoch of all three arms costs ~$686; two epochs ~$1574.
+**The load-bearing claim:** **GRPO wins on every decision-grade slice at convergence.** Set-based reweightings (minority_answer, poly_epo_answer) trail GRPO by 0.5–3.4 pp at the converged LR=1e-6 checkpoints and trail or tie GRPO at the LR=3e-6 redo checkpoints. The mid-training fair-prompt table that previously showed poly_epo winning 3/3 reflected incomplete training plus BeyondAIME pass@16 noise (n=100, SE ≈ 0.04 — the prior +5 pp headline did not survive at n_rollouts=16 across the rest of the panel). **The "set-based RL beats GRPO at 1.7B-unfiltered" hypothesis is falsified at our model scale and data regime.**
 
-**Blockers / risks:**
-- BeyondAIME used `dapo_answer_v1` prompt (≠ train prompt arm C) — confound for hard-OOD regression.
-- H200 GRPO line on alee72 crashed at step 537 (`pcas3emd`); fresh B200 lines are isolated.
-- minority arm is the headline hypothesis and is **flat** at step 133.
+**Methodology notes for honesty in the writeup:**
+- BeyondAIME (n=100, pass@16) is **dropped** from the decision-grade panel. After re-eval at n_rollouts=16 the prior +5 pp poly_epo lead did not hold; pass@16 in low single digits at n=100 is not arm-rankable. Treat the previous +5 pp number as withdrawn.
+- AIME-25 (n=30, pass@16) is shown only as sanity-check (single-digit pass@16 means ±3 pp ≈ 1 problem). Not used for ranking.
+- MATH-500 (n=500) substituted as the medium-OOD slice — cleaner statistics, less noise, broadly accepted in the literature.
+- LR=3e-6 redo GRPO at s59 ≈ LR=1e-6 GRPO at s519 (slightly better on Polaris/MATH-500). **A side finding** — GRPO compute efficiency, not the paper's hypothesis. Worth a §discussion paragraph.
 
-## 2. What we've learned (locked decisions, citable from paper)
+Full eval pull commands and per-band breakdowns: [`checkpoint_eval_morning_2026-05-28.md`](./checkpoint_eval_morning_2026-05-28.md). Prior delta summary kept for archive value: [`fair_prompt_eval_summary_2026-05-27.md`](../data/probes/checkpoint_eval_beyondaime_pass16_hybrid_arms_latest/fair_prompt_eval_summary_2026-05-27.md).
 
-- **Prompt:** arm C (`hybrid_answer_boxed`, `Answer: \boxed{N}`) — +28% mixed_reward density vs DAPO control. Source: [`probes/group_a_results.md`](./probes/group_a_results.md), [`probes/prompt_probe.md`](./probes/prompt_probe.md).
-- **Parser:** Rank-2 (hybrid regex → last `\boxed{}` → Minerva `Answer:` line) — `parse_ok` 55.9% → 87.6%.
-- **Reward grader:** mathd ∨ sympy from rLLM/DeepScaleR — see [`decisions.md`](./decisions.md) §2026-05-26.
-- **Train data:** Polaris 51,139 prompts (prompt-filter rejects proof endings + gold-leak). 1 pp behind DAPO pilot on n800, but mentor recommendation + difficulty bands. See [`probes/dapo_vs_polaris_rollout_comparison.md`](./probes/dapo_vs_polaris_rollout_comparison.md).
-- **Batch size:** bs=64 on single H200/B200 is the wall (bs=128 OOMs in `_completion_logprobs_hf`).
-- **Hardware:** B200 is ~2× faster than H200 on GRPO, ~1.5–1.8× on set arms (paired smoke). $/step often wins despite higher $/s. Source: [`timeline.md`](./timeline.md) §2026-05-27 GRPO smoke H200 vs B200.
-- **Efficiency dead-end:** `vllm_sleep=1 + gc_off` does not unlock bs=128; allocator OOMs at device cap. [`efficiency/B200_sleep_gc_off_give_up_2026-05-27.md`](./efficiency/B200_sleep_gc_off_give_up_2026-05-27.md).
+---
 
-## 3. Open questions (in priority order)
+## 2. The diagnosis (why the deltas are small)
 
-### Q1. The minority hypothesis looks unsupported. What's the paper story?
+**Signal starvation at our model scale.** On our 51K Polaris training set, base Qwen3-1.7B-Base passes at exactly 0/8 on **66%** of prompts and at 8/8 on a small fraction; only **34%** of prompts produce non-degenerate centered advantages. That's the regime where vanilla GRPO has near-zero gradient on most batches and where set-based reweightings have nothing to amplify.
 
-At step 133 (~1/6 epoch), minority_answer is +0.1 pp on Polaris and +0.5 pp on DAPO. PLAN's success criterion was "minority > GRPO on pass@4 and pass@16 on at least 2 of the held-out evals." We're not on track for that.
+- Empirically corroborated by our `random_fullgold_n800` probe (33% mixed-reward yield).
+- Matches the published unfiltered GRPO baseline (Nie et al. 2026, [arxiv:2605.07689](https://arxiv.org/abs/2605.07689): 0.69 degeneracy at GS=4 on GSM8K ≈ 31% productive groups).
+- Polaris-53K was calibrated by Deepseek-R1-distill-**Qwen-7B**; HKU NLP's own published recipe refilters 53K→~30K specifically for their 4B model via rollout-pass-rate filtering ([Polaris blog](https://hkunlp.github.io/blog/2025/Polaris/), [ChenxinAn-fdu/POLARIS](https://github.com/ChenxinAn-fdu/POLARIS)). We are running unfiltered 51K on a model **2.3× smaller** than the refiltered-recipe's target.
+- Live verification: a 200-step LR=3e-6 probe on all three arms (launched 2026-05-27 20:53 PDT) showed **`train/mean_advantage ≈ 0` across all three arms** at step ~25–60. Higher LR amplifies signal but does not create it.
 
-- (a) Is one epoch enough to falsify the hypothesis at this scale (1.7B), or do we need to keep training? The headline arms keep training, but slope is shallow on a flat curve.
-- (b) PLAN has a "consolation" pass criterion — *matches GRPO on pass@1 AND improves cluster diversity*. We haven't measured diversity yet (C4/C4b in §5 Training-time reporting is unimplemented). Should we pivot eval effort there instead of more pass@k?
-- (c) If we have to publish a negative result, what's the standard practice in this area for framing "well-motivated but not supported at this scale"?
+**Why this matters for our specific hypothesis.** Minority_answer and poly_epo_answer are set-based *reweightings* of the GRPO advantage. They have nothing to reweight when most groups in a batch have zero centered advantage. The 34% signal-density regime is where the published literature shows GRPO baselines struggle, and where set-based RL has no upstream signal to differentiate from GRPO. The converged-checkpoint result that GRPO *beats* (not just matches) the set-based arms suggests the failure may be slightly worse than "no signal" — set-based reweightings may be actively de-emphasizing the small amount of useful signal we do get.
 
-### Q2. BeyondAIME regression: real or eval-prompt artifact?
+Full synthesis with citations and verification flags: [`timeline.md`](./timeline.md) entry *structural diagnosis: model/data mismatch, signal-density benchmark, LR first principles* (2026-05-27 late).
 
-All three trained arms drop 5–6 pp vs base on pass@16. The eval used `dapo_answer_v1` while training was `hybrid_answer_boxed`. Trained models likely emit boxed answers; the eval parser may be biased toward `Answer:`-style.
+---
 
-- (a) Is re-running BeyondAIME with the matching `hybrid_answer_boxed` prompt the right next step before believing the regression?
-- (b) Even with prompt-fair eval, base > trained on hard OOD is publication-worthy if real — is there prior work we should cite for this pattern?
+## 3. The decision (paper framing first, experiments second)
 
-### Q3. With +$1500 stretch credit, what buys the most paper signal?
+### Framing options
 
-Roughly we can afford one of:
+**Framing X — "Set-based RL beats GRPO."** Headline = the separation number. Requires one of Paths A / C / D to land a positive result. Highest upside, highest risk of empty headline if no separation appears under any regime.
 
-- (i) **2 epochs of all three arms** (~$813 over current 1-epoch budget): tests whether the minority gap closes with more training.
-- (ii) **More evals at current ckpts**: BeyondAIME with hybrid prompt + AIME-26 + HMMT + diversity metrics on saved rollouts.
-- (iii) **A 4th arm** (minority_CoT — requires in-loop judge) — was deprioritized; ~$430/epoch + judge cost.
+**Framing Y — "Well-motivated hypothesis falsified at this scale; here's the failure mode."** Honest, on-time, $0 additional compute. Risk: reads as "did not engage with the diagnosed problem."
 
-Best use of credit?
+**Framing Z — "Measured the gradient-starvation failure mode at our model scale + tested whether the published fix opens room for set-based RL."** Contribution is the measurement + the controlled comparison, not the headline delta. Survives any of:
 
-### Q4. Scope cut for the poster
+- Set-based separates after filtering (or at 4B, or with CoT) → "Set-based RL needed the right regime to show its lift."
+- Set-based still ties or loses to GRPO after the fix → "Even with the published fix applied, set-based clustering does not separate — failure is structural at this model class, not signal density alone."
+- Filter / scale / CoT meaningfully changes the curves either way → method-paper-grade controlled comparison; the diagnosis chart carries it.
 
-Poster is 2026-06-03. Internal target was experiments done 2026-05-31. If we run out of time on (i)–(iii), what's the minimum we can defend?
+Under Framing Z, the 51K base rollout pass produces a *load-bearing* chart (the pass-rate distribution figure) regardless of what we do downstream. Under Framing X or Y the same pass is a $120–150 hedge.
 
-- (a) Three-arm Polaris + DAPO pass@8 at one ckpt — already in hand.
-- (b) Plus BeyondAIME with fair prompt.
-- (c) Plus one diversity panel.
+### Experimental paths — quick comparison
 
-Cut order if anything has to go?
+| Path | Cost | Wall | Fits poster window? | Best-case headline | P(separation) |
+|---|---|---|---|---|---|
+| **A** — Filter + retrain at 1.7B (poly_epo + GRPO) | $400–700 | 18–26 h | Yes, easily | "Set-based RL needs filtered regime to lift" | 20–30% |
+| **A+** — Phase 1 only (51K base rollout pass) | $120–150 | 5–8 h | Yes, today | Diagnosis chart (Framing Z load-bearing) | n/a |
+| **B** — No more training | $0 | 0 h | Trivially | Framing Y or Z | n/a |
+| **C** — Qwen3-4B retrain on filtered Polaris-17K | $900–1,100 | 36–48 h | Yes if launched by 2026-05-29 PM | "At Polaris-designed model scale, set-based separates" | 40–55% |
+| **D** — CoT-clustering arms at 1.7B (current data) | $900–1,300 | 3–4 days | Tight; needs judge sidecar bring-up to start 2026-05-29 AM | "CoT-clustering finds signal answer-clustering missed" | 30–45% |
 
-## 4. Out of scope for this meeting
+P(separation) numbers are honest priors, not measurements — bring them up at the meeting and ask the TA to reweight.
 
-- Implementation details (clustering, trainer loop, configs) — not blocked.
-- Probe re-runs — frozen, decisions locked.
+### Path details
+
+**Path A — Filter then retrain at 1.7B.** Reuses staged pipeline ([`plans/option_a_filter_retrain_2026-05-27.md`](./plans/option_a_filter_retrain_2026-05-27.md)). One base rollout pass over 51K + retrain on filtered ~17K (poly_epo + GRPO, optionally + minority). Filter script tested on n800 data and yielding the expected ~33% mixed-reward retention. **Key concern:** at 1.7B-unfiltered, set-based arms *trail* GRPO at convergence rather than tying; filtering raises mixed-reward density but doesn't obviously reverse a negative ranking. Filtering may help GRPO at least as much as poly_epo. P(separation) honest estimate ~20–30%.
+
+**Path A+ — Phase 1 only.** Same rollout pass, no commitment to retrain. Gives the pass-rate distribution figure for the paper and the filtered manifest for downstream use. Cheapest non-zero-information action available; should be the **default this afternoon regardless of framing** under any plan that mentions filtering. Decision on Phase 3 (retrain) happens once we see the distribution and have TA input.
+
+**Path B — No more training.** Take the falsified-hypothesis result as the result; lean on the diagnosis chart + Nie et al. + Polaris-recipe citations for the failure mode; spend the rest of the week on writing + optional diversity panel. Cheapest path to a publishable poster. **Risk:** TA / grader read as "did not engage with the diagnosed problem" — Framing Z partially mitigates by treating the diagnosis itself as the contribution.
+
+**Path C — Qwen3-4B retrain on filtered Polaris-17K.** Pivots to the model scale the Polaris recipe was actually designed for. Shares the Phase 1 filter step with Path A. **Upside:** 4B has higher base pass rates → more native mixed-reward groups → genuine signal density for set-based reweightings to amplify; the literature suggests this is the regime where Polaris-style RL was meant to work. P(separation) honest estimate ~40–55%. **Downside:** ~$1K spend; requires a 4B smoke on B200 first to verify memory / per-step time at our seq-length (~$20–50, 30 min); per-step training time ~2× the 1.7B set-arm. **Open question for the TA:** is shifting model scale ex-post (1.7B → 4B) acceptable given the PLAN named 1.7B?
+
+**Path D — CoT-clustering arms at 1.7B.** Tests whether clustering on CoT trajectories (rather than final-answer sets) finds signal that answer-clustering missed. Independent of the signal-density argument — this is the hypothesis test for *"the clustering mechanism, not the data regime, is the limit."* **Upside:** publishable either way (positive → new contribution; negative → reinforces the diagnosis). **Downside:** judge sidecar is unimplemented per PLAN §5; bring-up risk is real (1–2 days of engineering, gating the rest of the path). **Mitigation worth exploring:** offline CoT labeling on persisted rollouts (cluster post-hoc rather than in-loop) — sidesteps the sidecar entirely if rollouts can be re-emitted. Open question for the TA: does offline clustering meet the spirit of the CoT-clustering hypothesis, or does it have to be in-loop?
+
+### Specific questions for the TA (priority-ordered)
+
+1. **Framing.** Given the set-based hypothesis is falsified at 1.7B-unfiltered convergence, is **Framing Z** ("measured the failure mode + tested the fix") a defensible main contribution at the poster level? Or — if we want a positive separation result in the paper — should we commit to Framing X and bet the remaining ~5 days on **Path A** (filtered retrain at 1.7B), **Path C** (4B + filtered, Polaris-recipe-matched), or **Path D** (CoT-clustering)? Which of those three, in your read, has the highest probability of producing a separation worth defending?
+2. **Conceding on 1.7B-unfiltered.** Both set-based arms (minority_answer, poly_epo_answer) underperform GRPO at convergence on every decision-grade slice. Is it acceptable to (a) concede the 1.7B-unfiltered headline straight, then (b) frame at least one of Paths A / C / D as "testing whether the failure is signal-density or structural"? Or does the PLAN-named primary hypothesis (`minority_answer`) need an explicit "rejected" statement in the writeup before we move on?
+3. **What's a passable contribution if the headline doesn't separate?** Concretely: if Path A retrain produces poly_epo ≈ GRPO on filtered data, what does the paper need (beyond what we have) to be defensible at the poster level? Any specific RL / alignment papers as models for "well-motivated hypothesis, falsified at this scale, here's the failure mode"?
+4. **Diversity panel.** Worth the ~$50 + half-day plumbing to compute cluster diversity for minority_answer (PLAN consolation criterion: `matches GRPO on pass@1 AND improves cluster diversity`)? Or is `pass@k` consistency enough evidence for the poster?
+
+---
+
+## 4. What we want to walk out with
+
+- **Framing decision** (X / Y / Z). Highest-leverage TA input — determines the next 5 days of work.
+- **Path decision** (A / A+ / B / C / D, or combination) — conditional on framing. **A+ should likely happen this afternoon regardless;** the question is what (if anything) follows.
+- **Decision on whether 1.7B → 4B (Path C) is an acceptable ex-post scope shift,** given the PLAN named 1.7B.
+- **Decision on whether offline CoT labeling counts for Path D** (vs requiring an in-loop judge sidecar).
+- **Diversity panel: yes/no/conditional.**
+
+Pre-meeting status: late-ckpt eval has landed (see §1); LR=3e-6 probes effectively superseded by the redo runs that produced the morning eval. The previous "tonight plan" is largely executed. Open execution call for this afternoon: launch A+ Phase 1 (51K rollout pass) immediately, or wait for meeting input?
+
+---
+
+## 5. Out of scope for this meeting
+
+- Implementation details (clustering primitives, trainer loop, configs) — not blocked.
+- Probe re-runs — frozen.
 - Compute/efficiency tuning — at acceptable speed; sleep+gc_off explored and ruled out.
+
+---
+
+## 6. What we tried (paper-writeup history)
+
+This section exists so the TA can see the experiment was real and the failure mode wasn't from negligence on any single axis. It's also the source material for the Methods / Ablations sections of the paper.
+
+**Prompt format ablation (2026-05-25).** A/B/C ablation across three answer-extraction prompts (DAPO-style boxed, hybrid-prefix-boxed, etc). Arm C (`hybrid_answer_boxed`) won on `parse_ok` (56% → 88%). Locked as canonical. Timeline entry: *Afternoon — parser concern → diagnosis → A/B/C ablation*.
+
+**Parser rank (2026-05-25).** Rank-1 vs Rank-2 answer extraction. Rank-2 (last-boxed-then-last-numeric) raised `parse_ok` ~17 pp on hold-out, no regression on parser-easy prompts. Locked as canonical.
+
+**Grader choice (2026-05-26).** mathd-only vs mathd∨sympy. Sympy fallback recovers ~3% of true-positive numeric matches that mathd's symbol-table chokes on. Adopted mathd∨sympy (DeepScaleR / rLLM convention). Timeline entry: *Evening — train grader: mathd OR sympy*.
+
+**Training data: DAPO vs Polaris (2026-05-26).** DAPO-17k vs Polaris-53K head-to-head on a small training run. Polaris won on arm-C numbers; we then prompt-filtered 53K → 51,139 to drop multi-answer / non-final-answer prompts (full filter spec in `timeline.md` 2026-05-27 entry *Polaris prompt filter*). **Locked: Polaris-51K.**
+
+**Batch size sweep (2026-05-26).** bs=128 OOMs on B200 at our seq-length / N=8; bs=64 fits comfortably. Locked.
+
+**GPU class A/B (2026-05-26 → 2026-05-27).** H100 OOM on initial smoke; switched to H200; later B200 won on $/step (smoke ladder green). All production runs on B200.
+
+**FA2 enablement debug (2026-05-26 → 2026-05-27).** FA2 deferred initially due to forward-pass instability with our token_budget packing; re-enabled 2026-05-27 after the underlying issue was narrowed. No measured speedup at our seq-length so we did not chase further.
+
+**Three-arm full B200 training (2026-05-27).** GRPO, minority_answer, poly_epo_answer launched at LR=1e-6, total_steps=799. All three completed mid-training checkpoints (`grpo_s299/359`, `minority_s133/159`, `poly_epo_s133`). Canonical mid-training eval table in [`timeline.md`](./timeline.md) *B200 three-arm checkpoint eval (canonical)*; this is the table whose headline was later superseded by §1 above.
+
+**Canonical eval (2026-05-27).** Three eval slices (Polaris 2k, DAPO 2k, BeyondAIME pass@16, AIME-25 exploratory). Initial eval used `dapo_answer_v1` prompt across all slices → BeyondAIME showed −5 to −6 pp regression for all trained arms. Flagged as suspicious because the trained models were trained on `hybrid_answer_boxed`.
+
+**Fair-prompt rerun (2026-05-27 evening).** Re-ran BeyondAIME pass@16 and DAPO 2k at `hybrid_answer_boxed`. Resolved the BeyondAIME prompt-mismatch artifact, but the rerun itself was at n_rollouts=8 on BeyondAIME — which is what produced the now-withdrawn "+5 pp poly_epo" number that the morning re-eval (n_rollouts=16) failed to reproduce.
+
+**LR=3e-6 probe (2026-05-27 → 2026-05-28).** Three arms × 200 steps at 3× the canonical LR. Mid-probe (step ~25–60): `mean_advantage ≈ 0` on all three arms, no separation. Stopped 2026-05-28 AM; superseded by the LR=3e-6 redo runs that produced the morning canonical eval. Confirms LR is not the constraint at our model scale.
+
+**Late-checkpoint re-eval (landed 2026-05-28 AM).** Re-evaluated the final stopped LR=1e-6 ckpts (`grpo_s527`, `minority_s242`, `poly_s230`) plus the LR=3e-6 redo ckpts on the canonical 3-slice eval (Polaris 2k, DAPO 2k, MATH-500) at n_rollouts=16. **Key result:** GRPO wins on every decision-grade slice in both LR families at convergence; the prior mid-training "+5 pp poly_epo BeyondAIME" did not survive the higher-n_rollouts panel. Full numbers + pull commands in [`checkpoint_eval_morning_2026-05-28.md`](./checkpoint_eval_morning_2026-05-28.md). **This is what flipped the §1 headline.**
+
+**Things we considered and deprioritized originally (some now reconsidered):**
+
+- **Increase training-time N (8 → 16).** Square-root effect on degeneracy escape rate; 2× rollout cost halves effective step count under fixed budget. Net not worth it at training time. (Eval-time N was bumped 8→16 in the morning re-eval — that's a separate decision and the right call for ranking precision.)
+- **SFT cold start on Polaris solutions before RL.** No SFT pipeline exists; ≥2 days of bring-up; out of timeline.
+- **Switch base model (Qwen3-4B or instruct-tuned variant).** Originally deprioritized because of compute cost and the need to redo every probe. **Now reconsidered as Path C** — the falsification of the 1.7B-unfiltered hypothesis changed the cost-benefit; 4B is now the model scale at which the literature predicts set-based RL should work, and it shares filtering infrastructure with Path A.
+- **CoT-clustering arms.** Originally deferred to "after answer-clustering arms land." **Now reconsidered as Path D** — answer-clustering arms have landed and been falsified, which makes CoT-clustering the natural next hypothesis test rather than a follow-on.
+- **Diversity panel (PLAN consolation criterion).** Requires re-running rollouts with per-rollout persistence; the existing eval harness writes summaries only. ~$50 + half a day of plumbing. **Pending — would be `pass@k` consistency for poly_epo + cluster-diversity quantification for minority.** TA question 4 above.
 
 ---
 

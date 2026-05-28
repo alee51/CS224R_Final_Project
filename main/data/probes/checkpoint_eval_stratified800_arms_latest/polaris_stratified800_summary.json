@@ -1,0 +1,312 @@
+{
+  "results": [
+    {
+      "n_prompts": 800,
+      "n_rollouts": 8,
+      "pass_k": 8,
+      "mean_reward": 0.08578125,
+      "prompt_coverage": 0.01,
+      "mixed_reward_rate": 0.32375,
+      "pass_at_8_mean": 0.3275,
+      "pass_at_1_rollout": 0.08578125,
+      "frac_prompts_0_correct": 0.6725,
+      "frac_prompts_1_correct": 0.16125,
+      "frac_prompts_2_correct": 0.07375,
+      "frac_prompts_3_correct": 0.04125,
+      "frac_prompts_4_correct": 0.025,
+      "frac_prompts_5_correct": 0.01375,
+      "frac_prompts_6_correct": 0.00625,
+      "frac_prompts_7_correct": 0.0025,
+      "frac_prompts_8_correct": 0.00375,
+      "pass_at_1_mean": 0.08578125,
+      "pass_at_4_mean": 0.22776785714285697,
+      "by_band": {
+        "0/8": {
+          "n_prompts": 100,
+          "pass_at_8_mean": 0.29,
+          "mean_reward": 0.08125,
+          "frac_prompts_0_correct": 0.71
+        },
+        "1/8": {
+          "n_prompts": 100,
+          "pass_at_8_mean": 0.31,
+          "mean_reward": 0.06875,
+          "frac_prompts_0_correct": 0.69
+        },
+        "2/8": {
+          "n_prompts": 100,
+          "pass_at_8_mean": 0.27,
+          "mean_reward": 0.095,
+          "frac_prompts_0_correct": 0.73
+        },
+        "3/8": {
+          "n_prompts": 100,
+          "pass_at_8_mean": 0.33,
+          "mean_reward": 0.08625,
+          "frac_prompts_0_correct": 0.67
+        },
+        "4/8": {
+          "n_prompts": 100,
+          "pass_at_8_mean": 0.33,
+          "mean_reward": 0.085,
+          "frac_prompts_0_correct": 0.67
+        },
+        "5/8": {
+          "n_prompts": 100,
+          "pass_at_8_mean": 0.35,
+          "mean_reward": 0.075,
+          "frac_prompts_0_correct": 0.65
+        },
+        "6/8": {
+          "n_prompts": 100,
+          "pass_at_8_mean": 0.37,
+          "mean_reward": 0.10125,
+          "frac_prompts_0_correct": 0.63
+        },
+        "7/8": {
+          "n_prompts": 100,
+          "pass_at_8_mean": 0.37,
+          "mean_reward": 0.09375,
+          "frac_prompts_0_correct": 0.63
+        }
+      },
+      "label": "base",
+      "checkpoint": "base",
+      "wall_clock_s": 686.234541819,
+      "dataset": "polaris_stratified800",
+      "manifest_path": "/vol/probes/checkpoint_eval_2k/manifests/polaris_stratified800_n800_seed42.jsonl",
+      "prompt_variant": "hybrid_answer_boxed"
+    },
+    {
+      "n_prompts": 800,
+      "n_rollouts": 8,
+      "pass_k": 8,
+      "mean_reward": 0.08171875,
+      "prompt_coverage": 0.01,
+      "mixed_reward_rate": 0.3125,
+      "pass_at_8_mean": 0.31375,
+      "pass_at_1_rollout": 0.08171875,
+      "frac_prompts_0_correct": 0.68625,
+      "frac_prompts_1_correct": 0.14875,
+      "frac_prompts_2_correct": 0.08125,
+      "frac_prompts_3_correct": 0.04,
+      "frac_prompts_4_correct": 0.01625,
+      "frac_prompts_5_correct": 0.0125,
+      "frac_prompts_6_correct": 0.01125,
+      "frac_prompts_7_correct": 0.0025,
+      "frac_prompts_8_correct": 0.00125,
+      "pass_at_1_mean": 0.08171875,
+      "pass_at_4_mean": 0.2188749999999998,
+      "by_band": {
+        "0/8": {
+          "n_prompts": 100,
+          "pass_at_8_mean": 0.34,
+          "mean_reward": 0.085,
+          "frac_prompts_0_correct": 0.66
+        },
+        "1/8": {
+          "n_prompts": 100,
+          "pass_at_8_mean": 0.33,
+          "mean_reward": 0.065,
+          "frac_prompts_0_correct": 0.67
+        },
+        "2/8": {
+          "n_prompts": 100,
+          "pass_at_8_mean": 0.27,
+          "mean_reward": 0.0925,
+          "frac_prompts_0_correct": 0.73
+        },
+        "3/8": {
+          "n_prompts": 100,
+          "pass_at_8_mean": 0.28,
+          "mean_reward": 0.07375,
+          "frac_prompts_0_correct": 0.72
+        },
+        "4/8": {
+          "n_prompts": 100,
+          "pass_at_8_mean": 0.29,
+          "mean_reward": 0.08,
+          "frac_prompts_0_correct": 0.71
+        },
+        "5/8": {
+          "n_prompts": 100,
+          "pass_at_8_mean": 0.28,
+          "mean_reward": 0.07,
+          "frac_prompts_0_correct": 0.72
+        },
+        "6/8": {
+          "n_prompts": 100,
+          "pass_at_8_mean": 0.37,
+          "mean_reward": 0.09375,
+          "frac_prompts_0_correct": 0.63
+        },
+        "7/8": {
+          "n_prompts": 100,
+          "pass_at_8_mean": 0.35,
+          "mean_reward": 0.09375,
+          "frac_prompts_0_correct": 0.65
+        }
+      },
+      "label": "grpo_b200_s299",
+      "checkpoint": "/vol/checkpoints/train_real_b200/step_000299.pt",
+      "wall_clock_s": 931.9861232249999,
+      "dataset": "polaris_stratified800",
+      "manifest_path": "/vol/probes/checkpoint_eval_2k/manifests/polaris_stratified800_n800_seed42.jsonl",
+      "prompt_variant": "hybrid_answer_boxed"
+    },
+    {
+      "n_prompts": 800,
+      "n_rollouts": 8,
+      "pass_k": 8,
+      "mean_reward": 0.079375,
+      "prompt_coverage": 0.00875,
+      "mixed_reward_rate": 0.32125,
+      "pass_at_8_mean": 0.325,
+      "pass_at_1_rollout": 0.079375,
+      "frac_prompts_0_correct": 0.675,
+      "frac_prompts_1_correct": 0.16625,
+      "frac_prompts_2_correct": 0.0775,
+      "frac_prompts_3_correct": 0.0475,
+      "frac_prompts_4_correct": 0.01375,
+      "frac_prompts_5_correct": 0.01125,
+      "frac_prompts_6_correct": 0.005,
+      "frac_prompts_7_correct": 0.0,
+      "frac_prompts_8_correct": 0.00375,
+      "pass_at_1_mean": 0.079375,
+      "pass_at_4_mean": 0.22167857142857134,
+      "by_band": {
+        "0/8": {
+          "n_prompts": 100,
+          "pass_at_8_mean": 0.32,
+          "mean_reward": 0.065,
+          "frac_prompts_0_correct": 0.68
+        },
+        "1/8": {
+          "n_prompts": 100,
+          "pass_at_8_mean": 0.33,
+          "mean_reward": 0.07,
+          "frac_prompts_0_correct": 0.67
+        },
+        "2/8": {
+          "n_prompts": 100,
+          "pass_at_8_mean": 0.31,
+          "mean_reward": 0.09625,
+          "frac_prompts_0_correct": 0.69
+        },
+        "3/8": {
+          "n_prompts": 100,
+          "pass_at_8_mean": 0.29,
+          "mean_reward": 0.0725,
+          "frac_prompts_0_correct": 0.71
+        },
+        "4/8": {
+          "n_prompts": 100,
+          "pass_at_8_mean": 0.31,
+          "mean_reward": 0.0725,
+          "frac_prompts_0_correct": 0.69
+        },
+        "5/8": {
+          "n_prompts": 100,
+          "pass_at_8_mean": 0.29,
+          "mean_reward": 0.07375,
+          "frac_prompts_0_correct": 0.71
+        },
+        "6/8": {
+          "n_prompts": 100,
+          "pass_at_8_mean": 0.35,
+          "mean_reward": 0.09,
+          "frac_prompts_0_correct": 0.65
+        },
+        "7/8": {
+          "n_prompts": 100,
+          "pass_at_8_mean": 0.4,
+          "mean_reward": 0.095,
+          "frac_prompts_0_correct": 0.6
+        }
+      },
+      "label": "minority_b200_s133",
+      "checkpoint": "/vol/checkpoints/train_minority_answer_b200/step_000133.pt",
+      "wall_clock_s": 686.252436422,
+      "dataset": "polaris_stratified800",
+      "manifest_path": "/vol/probes/checkpoint_eval_2k/manifests/polaris_stratified800_n800_seed42.jsonl",
+      "prompt_variant": "hybrid_answer_boxed"
+    },
+    {
+      "n_prompts": 800,
+      "n_rollouts": 8,
+      "pass_k": 8,
+      "mean_reward": 0.08984375,
+      "prompt_coverage": 0.01,
+      "mixed_reward_rate": 0.32875,
+      "pass_at_8_mean": 0.33,
+      "pass_at_1_rollout": 0.08984375,
+      "frac_prompts_0_correct": 0.67,
+      "frac_prompts_1_correct": 0.14125,
+      "frac_prompts_2_correct": 0.09625,
+      "frac_prompts_3_correct": 0.035,
+      "frac_prompts_4_correct": 0.02625,
+      "frac_prompts_5_correct": 0.02,
+      "frac_prompts_6_correct": 0.005,
+      "frac_prompts_7_correct": 0.005,
+      "frac_prompts_8_correct": 0.00125,
+      "pass_at_1_mean": 0.08984375,
+      "pass_at_4_mean": 0.23587499999999983,
+      "by_band": {
+        "0/8": {
+          "n_prompts": 100,
+          "pass_at_8_mean": 0.31,
+          "mean_reward": 0.07625,
+          "frac_prompts_0_correct": 0.69
+        },
+        "1/8": {
+          "n_prompts": 100,
+          "pass_at_8_mean": 0.32,
+          "mean_reward": 0.07125,
+          "frac_prompts_0_correct": 0.68
+        },
+        "2/8": {
+          "n_prompts": 100,
+          "pass_at_8_mean": 0.35,
+          "mean_reward": 0.0925,
+          "frac_prompts_0_correct": 0.65
+        },
+        "3/8": {
+          "n_prompts": 100,
+          "pass_at_8_mean": 0.35,
+          "mean_reward": 0.0875,
+          "frac_prompts_0_correct": 0.65
+        },
+        "4/8": {
+          "n_prompts": 100,
+          "pass_at_8_mean": 0.32,
+          "mean_reward": 0.09,
+          "frac_prompts_0_correct": 0.68
+        },
+        "5/8": {
+          "n_prompts": 100,
+          "pass_at_8_mean": 0.29,
+          "mean_reward": 0.07625,
+          "frac_prompts_0_correct": 0.71
+        },
+        "6/8": {
+          "n_prompts": 100,
+          "pass_at_8_mean": 0.37,
+          "mean_reward": 0.125,
+          "frac_prompts_0_correct": 0.63
+        },
+        "7/8": {
+          "n_prompts": 100,
+          "pass_at_8_mean": 0.33,
+          "mean_reward": 0.1,
+          "frac_prompts_0_correct": 0.67
+        }
+      },
+      "label": "poly_epo_b200_s133",
+      "checkpoint": "/vol/checkpoints/train_poly_epo_answer_b200/step_000133.pt",
+      "wall_clock_s": 1184.80418875,
+      "dataset": "polaris_stratified800",
+      "manifest_path": "/vol/probes/checkpoint_eval_2k/manifests/polaris_stratified800_n800_seed42.jsonl",
+      "prompt_variant": "hybrid_answer_boxed"
+    }
+  ]
+}

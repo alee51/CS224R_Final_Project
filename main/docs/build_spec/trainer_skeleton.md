@@ -285,10 +285,9 @@ train:
   n_rollouts: 8                # locked
   microbatch: 4                # Group B sets via OOM sweep
   grad_accum: 4                # Group B sets
-  lr: 1.0e-6
+  lr: 1.0e-6                   # constant AdamW only — no lr scheduler / warmup in trainer.py
   weight_decay: 0.0
   grad_clip: 1.0
-  warmup_steps: 20
   checkpoint_every_steps: 50   # also bounded by 1hr wall-clock per STANDARDS
   checkpoint_dir: /vol/checkpoints/train_grpo_05-25/
 

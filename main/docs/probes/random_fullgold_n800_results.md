@@ -13,8 +13,8 @@ Uniform random sample from Polaris-53K with **relaxed cleaning** (non-empty prob
 |-------|-------|
 | Manifest prompts | 800 |
 | Rollouts graded | 3840 |
-| Expected rollouts | — |
-| Complete | yes |
+| Expected rollouts | 6400 |
+| Complete | **no (partial)** |
 | Integer-gold prompts (manifest) | 452 |
 | Non-integer-gold prompts (manifest) | 348 |
 
@@ -46,3 +46,5 @@ Uniform random sample from Polaris-53K with **relaxed cleaning** (non-empty prob
 |-----------|---------|----------|--------|--------------|----------|
 | Integer gold | 277 | 2216 | 9.30% | 35.38% | 86.10% |
 | Non-integer gold | 203 | 1624 | 9.54% | 30.05% | 86.45% |
+
+> **Note:** Rollouts were incomplete when this report was generated. Re-run after `modal volume get` sync for final numbers.

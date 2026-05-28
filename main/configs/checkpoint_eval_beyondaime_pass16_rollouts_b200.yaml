@@ -1,0 +1,62 @@
+# BeyondAIME pass@16 + save rollout jsonl for qualitative regression analysis.
+# Re-run (~$3–5, ~10 min) — prior run did not save completions.
+#
+#   main/.venv/bin/modal profile activate anastasia
+#   bash main/scripts/launch_checkpoint_eval.sh \
+#     --config main/configs/checkpoint_eval_beyondaime_pass16_rollouts_b200.yaml --detach
+#
+# Then:
+#   modal volume get main-artifacts probes/checkpoint_eval_beyondaime_pass16_arms_latest/<stamp>/rollouts \
+#     main/data/probes/checkpoint_eval_beyondaime_pass16_arms_latest/rollouts_<stamp>
+#   python main/scripts/analyze_beyondaime_rollouts.py --rollouts-dir main/data/probes/.../rollouts_<stamp>
+
+operator: anastasia
+gpu_class: B200
+global_seed: 42
+modal_price_per_sec: 0.001736
+
+eval:
+  include_base: true
+  n_rollouts: 16
+  pass_k: 16
+  rollout_chunk_prompts: 32
+  save_rollouts: true
+  output_dir: /vol/probes/checkpoint_eval_beyondaime_pass16_arms_latest
+
+  checkpoint_variants:
+    - label: grpo_b200_s359
+      path: /vol/checkpoints/train_real_b200/step_000359.pt
+    - label: minority_b200_s159
+      path: /vol/checkpoints/train_minority_answer_b200/step_000159.pt
+    - label: poly_epo_b200_s133
+      path: /vol/checkpoints/train_poly_epo_answer_b200/step_000133.pt
+
+  datasets:
+    beyondaime:
+      kind: hf
+      hf_dataset: ByteDance-Seed/BeyondAIME
+      hf_split: test
+      n_prompts: 100
+      seed: 42
+      prompt_variant: dapo_answer_v1
+
+rollout:
+  model: Qwen/Qwen3-1.7B-Base
+  max_prompt_length: 1024
+  max_response_length: 4096
+  temperature: 1.0
+  top_p: 1.0
+  gpu_memory_utilization: 0.45
+  max_model_len: 5120
+  max_num_seqs: 128
+  enable_prefix_caching: true
+  logprobs: 1
+
+train:
+  lr: 1.0e-6
+  weight_decay: 0.0
+  gradient_checkpointing: false
+
+artifacts:
+  volume_name: main-artifacts
+  volume_mount: /vol

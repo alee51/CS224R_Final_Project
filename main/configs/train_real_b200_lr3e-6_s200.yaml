@@ -1,0 +1,9 @@
+extends: train_real.yaml
+
+# B200 short run for lr=3e-6 arm comparison.
+gpu_class: B200
+modal_price_per_sec: 0.001736
+
+train:
+  total_steps: 200
+  lr: 3.0e-6

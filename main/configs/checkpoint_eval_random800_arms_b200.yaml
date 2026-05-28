@@ -1,0 +1,62 @@
+# Random 800 from full Polaris train (same manifest as random_fullgold_n800 probe).
+# Reuses existing base rollouts locally; Modal runs trained arms only.
+# Metrics include pass@8 stratified by difficulty_band.
+#
+# After Modal finishes, merge with base:
+#   python main/scripts/merge_random800_band_eval.py \
+#     --modal-summary /path/to/polaris_random800_summary.json \
+#     --base-summary main/data/probes/05-27/random_fullgold_n800/grading_summary.json
+#
+# Launch:
+#   bash main/scripts/launch_checkpoint_eval.sh \
+#     --config main/configs/checkpoint_eval_random800_arms_b200.yaml --detach
+
+operator: anastasia
+gpu_class: B200
+global_seed: 42
+modal_price_per_sec: 0.001736
+
+eval:
+  include_base: false
+  report_by_band: true
+  n_rollouts: 8
+  rollout_chunk_prompts: 64
+  output_dir: /vol/probes/checkpoint_eval_random800_arms_b200
+
+  checkpoint_variants:
+    - label: grpo_b200_s299
+      path: /vol/checkpoints/train_real_b200/step_000299.pt
+    - label: minority_b200_s133
+      path: /vol/checkpoints/train_minority_answer_b200/step_000133.pt
+    - label: poly_epo_b200_s133
+      path: /vol/checkpoints/train_poly_epo_answer_b200/step_000133.pt
+
+  datasets:
+    polaris_random800:
+      kind: jsonl
+      path: /root/main/data/probes/05-27/random_fullgold_n800/manifest.jsonl
+      use_all_rows: true
+      n_prompts: 800
+      seed: 42
+      prompt_variant: hybrid_answer_boxed
+
+rollout:
+  model: Qwen/Qwen3-1.7B-Base
+  max_prompt_length: 1024
+  max_response_length: 4096
+  temperature: 1.0
+  top_p: 1.0
+  gpu_memory_utilization: 0.45
+  max_model_len: 5120
+  max_num_seqs: 128
+  enable_prefix_caching: true
+  logprobs: 1
+
+train:
+  lr: 1.0e-6
+  weight_decay: 0.0
+  gradient_checkpointing: false
+
+artifacts:
+  volume_name: main-artifacts
+  volume_mount: /vol

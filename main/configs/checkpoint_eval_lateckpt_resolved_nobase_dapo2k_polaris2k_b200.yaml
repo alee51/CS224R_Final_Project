@@ -1,0 +1,62 @@
+# Resolved latest 1e-6 family on anastasia.
+# DAPO 2k + Polaris stratified2k in one app (datasets run sequentially),
+# with 3 checkpoints only (3 GPUs in parallel per dataset stage).
+
+operator: anastasia
+gpu_class: B200
+global_seed: 42
+modal_price_per_sec: 0.001736
+
+eval:
+  include_base: false
+  report_by_band: true
+  n_rollouts: 16
+  rollout_chunk_prompts: 32
+  output_dir: /vol/probes/checkpoint_eval_lateckpt_resolved_nobase_dapo2k_polaris2k_b200
+
+  checkpoint_variants:
+    - label: grpo_b200_s519
+      path: /vol/checkpoints/train_real_b200/step_000519.pt
+    - label: minority_b200_s239
+      path: /vol/checkpoints/train_minority_answer_b200/step_000239.pt
+    - label: poly_epo_b200_s133
+      path: /vol/checkpoints/train_poly_epo_answer_b200/step_000133.pt
+
+  datasets:
+    dapo:
+      kind: hf
+      hf_dataset: open-r1/DAPO-Math-17k-Processed
+      hf_config: en
+      hf_split: train
+      n_prompts: 2000
+      seed: 43
+      prompt_variant: hybrid_answer_boxed
+
+    polaris_stratified2k:
+      kind: jsonl
+      path: /root/main/data/probes/05-28/polaris_stratified2k/manifest.jsonl
+      use_all_rows: true
+      n_prompts: 2000
+      seed: 42
+      prompt_variant: hybrid_answer_boxed
+
+rollout:
+  model: Qwen/Qwen3-1.7B-Base
+  max_prompt_length: 1024
+  max_response_length: 4096
+  temperature: 1.0
+  top_p: 1.0
+  gpu_memory_utilization: 0.45
+  max_model_len: 5120
+  max_num_seqs: 128
+  enable_prefix_caching: true
+  logprobs: 1
+
+train:
+  lr: 1.0e-6
+  weight_decay: 0.0
+  gradient_checkpointing: false
+
+artifacts:
+  volume_name: main-artifacts
+  volume_mount: /vol

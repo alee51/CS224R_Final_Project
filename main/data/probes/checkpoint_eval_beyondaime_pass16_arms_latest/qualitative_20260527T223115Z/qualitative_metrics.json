@@ -1,0 +1,240 @@
+{
+  "arms": {
+    "grpo_b200_s359": {
+      "base_summary": {
+        "extract_path_counts": {
+          "answer_line": 780,
+          "boxed": 586,
+          "none": 234
+        },
+        "finish_reason_counts": {
+          "length": 16,
+          "stop": 1584
+        },
+        "n_rollout_rows": 1600,
+        "parse_ok_count": 1366,
+        "parse_ok_rate": 0.85375,
+        "reward_positive_count": 14,
+        "reward_positive_rate": 0.00875
+      },
+      "category_counts": {
+        "base_any_correct_trained_none": 0,
+        "base_pass16_trained_fail": 10,
+        "trained_only": 4
+      },
+      "category_problem_ids": {
+        "base_any_correct_trained_none": [],
+        "base_pass16_trained_fail": [
+          5,
+          6,
+          7,
+          9,
+          11,
+          12,
+          13,
+          20,
+          40,
+          71
+        ],
+        "trained_only": [
+          0,
+          2,
+          29,
+          34
+        ]
+      },
+      "directional_checks": {
+        "base_pass16_trained_fail_gt_trained_only": true,
+        "failures_show_reasoning_errors": true,
+        "parse_ok_similar": true
+      },
+      "failure_diagnostics": {
+        "share_parse_ok_nonempty_within_fails": 0.91875,
+        "trained_fail_rollouts_in_base_pass16_trained_fail": 160,
+        "trained_fail_with_parse_ok_and_nonempty_parsed_answer": 147
+      },
+      "problem_overlap": {
+        "base_problem_count": 100,
+        "intersection_problem_count": 100,
+        "trained_problem_count": 100
+      },
+      "trained_summary": {
+        "extract_path_counts": {
+          "answer_line": 732,
+          "boxed": 657,
+          "none": 211
+        },
+        "finish_reason_counts": {
+          "length": 30,
+          "stop": 1570
+        },
+        "n_rollout_rows": 1600,
+        "parse_ok_count": 1389,
+        "parse_ok_rate": 0.868125,
+        "reward_positive_count": 8,
+        "reward_positive_rate": 0.005
+      }
+    },
+    "minority_b200_s159": {
+      "base_summary": {
+        "extract_path_counts": {
+          "answer_line": 780,
+          "boxed": 586,
+          "none": 234
+        },
+        "finish_reason_counts": {
+          "length": 16,
+          "stop": 1584
+        },
+        "n_rollout_rows": 1600,
+        "parse_ok_count": 1366,
+        "parse_ok_rate": 0.85375,
+        "reward_positive_count": 14,
+        "reward_positive_rate": 0.00875
+      },
+      "category_counts": {
+        "base_any_correct_trained_none": 0,
+        "base_pass16_trained_fail": 12,
+        "trained_only": 6
+      },
+      "category_problem_ids": {
+        "base_any_correct_trained_none": [],
+        "base_pass16_trained_fail": [
+          5,
+          6,
+          7,
+          9,
+          11,
+          12,
+          13,
+          20,
+          40,
+          60,
+          65,
+          71
+        ],
+        "trained_only": [
+          1,
+          2,
+          15,
+          18,
+          49,
+          63
+        ]
+      },
+      "directional_checks": {
+        "base_pass16_trained_fail_gt_trained_only": true,
+        "failures_show_reasoning_errors": true,
+        "parse_ok_similar": true
+      },
+      "failure_diagnostics": {
+        "share_parse_ok_nonempty_within_fails": 0.8385416666666666,
+        "trained_fail_rollouts_in_base_pass16_trained_fail": 192,
+        "trained_fail_with_parse_ok_and_nonempty_parsed_answer": 161
+      },
+      "problem_overlap": {
+        "base_problem_count": 100,
+        "intersection_problem_count": 100,
+        "trained_problem_count": 100
+      },
+      "trained_summary": {
+        "extract_path_counts": {
+          "answer_line": 757,
+          "boxed": 610,
+          "none": 233
+        },
+        "finish_reason_counts": {
+          "length": 14,
+          "stop": 1586
+        },
+        "n_rollout_rows": 1600,
+        "parse_ok_count": 1367,
+        "parse_ok_rate": 0.854375,
+        "reward_positive_count": 8,
+        "reward_positive_rate": 0.005
+      }
+    },
+    "poly_epo_b200_s133": {
+      "base_summary": {
+        "extract_path_counts": {
+          "answer_line": 780,
+          "boxed": 586,
+          "none": 234
+        },
+        "finish_reason_counts": {
+          "length": 16,
+          "stop": 1584
+        },
+        "n_rollout_rows": 1600,
+        "parse_ok_count": 1366,
+        "parse_ok_rate": 0.85375,
+        "reward_positive_count": 14,
+        "reward_positive_rate": 0.00875
+      },
+      "category_counts": {
+        "base_any_correct_trained_none": 0,
+        "base_pass16_trained_fail": 11,
+        "trained_only": 6
+      },
+      "category_problem_ids": {
+        "base_any_correct_trained_none": [],
+        "base_pass16_trained_fail": [
+          5,
+          6,
+          7,
+          9,
+          11,
+          12,
+          13,
+          20,
+          40,
+          60,
+          65
+        ],
+        "trained_only": [
+          0,
+          2,
+          3,
+          34,
+          49,
+          63
+        ]
+      },
+      "directional_checks": {
+        "base_pass16_trained_fail_gt_trained_only": true,
+        "failures_show_reasoning_errors": true,
+        "parse_ok_similar": true
+      },
+      "failure_diagnostics": {
+        "share_parse_ok_nonempty_within_fails": 0.8863636363636364,
+        "trained_fail_rollouts_in_base_pass16_trained_fail": 176,
+        "trained_fail_with_parse_ok_and_nonempty_parsed_answer": 156
+      },
+      "problem_overlap": {
+        "base_problem_count": 100,
+        "intersection_problem_count": 100,
+        "trained_problem_count": 100
+      },
+      "trained_summary": {
+        "extract_path_counts": {
+          "answer_line": 798,
+          "boxed": 596,
+          "none": 206
+        },
+        "finish_reason_counts": {
+          "length": 16,
+          "stop": 1584
+        },
+        "n_rollout_rows": 1600,
+        "parse_ok_count": 1394,
+        "parse_ok_rate": 0.87125,
+        "reward_positive_count": 8,
+        "reward_positive_rate": 0.005
+      }
+    }
+  },
+  "artifact_version": "2026-05-27",
+  "base_label": "base",
+  "qualitative_dir": "main/data/probes/checkpoint_eval_beyondaime_pass16_arms_latest/qualitative_20260527T223115Z",
+  "rollouts_dir": "main/data/probes/checkpoint_eval_beyondaime_pass16_arms_latest/rollouts_20260527T223115Z"
+}

@@ -1211,9 +1211,9 @@ W&B `_runtime × modal_price_per_sec` on active prod runs; **799 steps = 1 epoch
 
 | Item | Status |
 | ---- | ------ |
-| **BeyondAIME with `hybrid_answer_boxed` (fair OOD vs train prompt)** | **Priority — blocking before believing regression in writeup.** Both BeyondAIME and DAPO 2k were run with `dapo_answer_v1` ≠ train prompt; BeyondAIME is the higher-stakes redo because base > trained sign flip there. |
-| **DAPO 2k with `hybrid_answer_boxed` (fair OOD)** | Queued alongside BeyondAIME rerun. May change GRPO's +2.4 pp (up or down); minority/poly Δ likely move within noise. |
-| BeyondAIME rollouts + `analyze_beyondaime_rollouts.py` (`parse_ok`, `extract_path`) | Queued — `checkpoint_eval_beyondaime_pass16_rollouts_b200.yaml`. Run this first; diagnoses how much of the regression is parse failure vs reasoning failure. |
+| **BeyondAIME with `hybrid_answer_boxed` (fair OOD vs train prompt)** | **Running** (launched 2026-05-27 19:38 PT): config `checkpoint_eval_beyondaime_pass16_hybrid_arms_latest_b200.yaml`, Modal `ap-yHQQhuvFOUmQ7nrJC0eGNY`. |
+| **DAPO 2k with `hybrid_answer_boxed` (fair OOD)** | **Running** (launched 2026-05-27 19:40 PT): config `checkpoint_eval_2k_dapo_hybrid_arms_latest_b200.yaml`, Modal `ap-5JsNBqCp1k6hqMS4RAenQy`. |
+| BeyondAIME rollouts + `analyze_beyondaime_rollouts.py` (`parse_ok`, `extract_path`) | **Done (recomputed + persisted)** — rollout dump `rollouts_20260527T223115Z/`; durable artifacts in `main/data/probes/checkpoint_eval_beyondaime_pass16_arms_latest/qualitative_20260527T223115Z/` (`qualitative_summary.md`, `qualitative_metrics.json`, per-arm logs). Recompute keeps the same conclusion: `parse_ok` stays close to base across arms, `base_pass16_trained_fail > trained_only`, and many fails are parsed-but-wrong (reasoning-quality errors). |
 | More training epochs | Deprioritized (budget; flat marginal returns) |
 
 ### Artifacts (local JSON = source of truth)
@@ -1232,4 +1232,163 @@ bash main/scripts/launch_checkpoint_eval.sh --config main/configs/checkpoint_eva
 bash main/scripts/launch_checkpoint_eval.sh --config main/configs/checkpoint_eval_beyondaime_pass16_arms_latest_b200.yaml --detach
 ```
 
+---
+
+## 2026-05-27 (Wednesday) — BeyondAIME rollout qualitative recompute (persisted)
+
+Re-ran `main/scripts/analyze_beyondaime_rollouts.py` on `main/data/probes/checkpoint_eval_beyondaime_pass16_arms_latest/rollouts_20260527T223115Z/` for:
+
+- `grpo_b200_s359`
+- `minority_b200_s159`
+- `poly_epo_b200_s133`
+
+Saved durable outputs under `main/data/probes/checkpoint_eval_beyondaime_pass16_arms_latest/qualitative_20260527T223115Z/`:
+
+- `qualitative_summary.md` (human-readable counts + checks)
+- `qualitative_metrics.json` (machine-readable metrics, overlap counts, PID sets)
+- `*_analysis.log` (raw analyzer stdout per arm)
+
+Result is directionally unchanged from prior notes: parsing quality is similar between base/trained, `base_pass16_trained_fail` exceeds `trained_only` in every arm, and failure tails remain dominated by parsed-but-wrong reasoning rather than parser collapse.
+
+## 2026-05-27 (Wednesday) — eval prompt-mismatch confound flagged; rerun spec
+
+**Issue.** The canonical three-arm eval above used **`dapo_answer_v1`** for both **BeyondAIME** and **DAPO 2k**, but all three arms were trained with **`hybrid_answer_boxed`** (arm C — `Answer: \boxed{N}`, 90% boxed compliance after training). Trained checkpoints have been pushed toward boxed-first output; grading them under a prompt that elicits `Answer:`-line format under-counts correct rollouts whenever the boxed fallback fails. This is the most likely contributor to the **−5–6 pp pass@16 sign-flip vs base on BeyondAIME** and partially confounds the **GRPO +2.4 pp** on DAPO 2k. **Polaris 2k is unaffected** — it already used `hybrid_answer_boxed` (matches train). Do not cite BeyondAIME / DAPO 2k regressions in the writeup until reruns land.
+
+**Rerun spec (priority order; ~$80–120 total).**
+
+1. **BeyondAIME pass@16 rollout dump — diagnostic first** (`checkpoint_eval_beyondaime_pass16_rollouts_b200.yaml`, was queued). **Completed; superseded by persisted recompute artifacts** in `main/data/probes/checkpoint_eval_beyondaime_pass16_arms_latest/qualitative_20260527T223115Z/`. Directional readout: (b) `parse_ok=true ∧ reward=0` dominates over parser-collapse-only failures.
+2. **BeyondAIME pass@16 with `hybrid_answer_boxed`** — new config `checkpoint_eval_beyondaime_pass16_hybrid_arms_latest_b200.yaml` (copy from `..._pass16_arms_latest_b200.yaml`, flip `prompt_variant`). Same 100-problem slice, seed 42, 16 rollouts/prompt, train grader. Same three checkpoints as canonical entry (`grpo_b200_s359`, `minority_b200_s159`, `poly_epo_b200_s133`). **Decision-grade for writeup**; ~$40–60 (4× B200, ~6 min).
+3. **DAPO 2k pass@8 with `hybrid_answer_boxed`** — new config `checkpoint_eval_2k_dapo_hybrid_arms_latest_b200.yaml`. Same 2000-problem slice, seed 43, 8 rollouts/prompt. **Same three checkpoints** as canonical (`grpo_b200_s299`, `minority_b200_s133`, `poly_epo_b200_s133`). ~$40–60.
+4. **Diversity panel (offline, ~$0)** — compute `unique_answer_clusters_correct` per prompt on the Polaris 2k saved rollouts (`/vol/probes/checkpoint_eval_2k_polaris_arms_latest/20260527T213611Z/`). Supports the PLAN consolation criterion (minority matches GRPO on pass@1 *and* improves diversity) without spending compute. Add to canonical eval entry as a new sub-section once computed.
+
+**Explicitly not doing (and why).** No 4th arm (`minority_CoT` / `poly_epo_CoT`) — the headline minority hypothesis is flat on the fair-prompt eval (Polaris 2k, +0.1 pp); the cluster substrate (answer-hash vs LLM-judge CoT) is not what's failing. The failure mode is **low signal density at 1.7B** (66% all-wrong prompts, few correct rollouts to cluster over). CoT arms require the unimplemented judge sidecar (~2× inference GPU) and would hit the same wall. No 2nd epoch on existing arms — slopes are shallow on flat curves; budget better spent on (1)–(3) above + diversity. No train-data switch to DAPO — mentor-blessed, sunk-cost loss, and arm C closed the gap to ~1 pp vs DAPO pilot on n800.
+
+**Status updates required after reruns.**
+
+- Update **canonical entry** above (§ `2026-05-27 (Wednesday) — B200 three-arm checkpoint eval (canonical)`) BeyondAIME and DAPO 2k tables in-place; add a `prompt: hybrid_answer_boxed` row alongside the existing `dapo_answer_v1` row (do not delete the old numbers — they're the apples-to-apples reference for the prompt-mismatch effect size).
+- Update **`ta_discussion.md` §1** "Where we are" table with fair-prompt BeyondAIME Δ.
+- If BeyondAIME regression survives the fair-prompt rerun: that's the headline negative result, frame in writeup as "base &gt; trained on hard OOD at 1.7B even under matched prompt" (see Q2(b) in `ta_discussion.md`).
+
+**Rerun status (landed 2026-05-28 ~03:30 UTC / 2026-05-27 ~20:30 PDT):**
+
+- BeyondAIME fair-prompt (`ap-yHQQhuvFOUmQ7nrJC0eGNY`, run 19:38–19:46 PDT) **finished**. `results.json` at `/vol/probes/checkpoint_eval_beyondaime_pass16_hybrid_arms_latest/20260528T023940Z/results.json` (alee72 / `main-artifacts` volume); mirror at `/tmp/beyondaime_hybrid_results.json`.
+- DAPO 2k fair-prompt (`ap-5JsNBqCp1k6hqMS4RAenQy`, run 19:40–20:29 PDT) **finished**. `results.json` at `/vol/probes/checkpoint_eval_2k_dapo_hybrid_arms_latest/20260528T024146Z/results.json`; mirror at `/tmp/dapo_hybrid_results.json`.
+
+**Fair-prompt deltas vs base (`hybrid_answer_boxed`, n_rollouts=16/8, train-grader):**
+
+| Slice | base | GRPO Δ | minority Δ | **poly_epo Δ** |
+|-------|------|--------|------------|-----------------|
+| BeyondAIME pass@16 (n=100, hard OOD) | 0.070 | +1.0 pp | +1.0 pp | **+5.0 pp** |
+| DAPO 2k pass@8 (n=2000, easier OOD) | 0.313 | −0.5 pp | −0.65 pp | **+0.8 pp** |
+| Polaris 2k pass@8 (n=2000, train-dist) ‡ | 0.306 | +1.1 pp | +0.1 pp | **+1.3 pp** |
+
+‡ Polaris 2k was already `hybrid_answer_boxed`; included for cross-slice synopsis. Full delta-summary: [`fair_prompt_eval_summary_2026-05-27.md`](../data/probes/checkpoint_eval_beyondaime_pass16_hybrid_arms_latest/fair_prompt_eval_summary_2026-05-27.md).
+
+**Headline.** The BeyondAIME −5 to −6 pp regression was **entirely a prompt artifact**. Under matched prompts, the trained arms are at-or-above base on hard OOD, and **`poly_epo_answer` is the best arm on all three slices**. The prompt-mismatch effect size was +7–10 pp on BeyondAIME (inflating base, deflating trained) and −1–3 pp on DAPO 2k (the opposite direction).
+
+**Significance.** No individual Δ is significant at >1σ given slice sizes (BeyondAIME n=100 gives SE≈0.04 on pass@16; DAPO 2k n=2000 gives SE≈0.015). The load-bearing claim is **across-slice consistency**: poly_epo best 3/3, minority worst 2/3. A diversity panel on saved Polaris 2k rollouts would add an orthogonal axis at $0.
+
+
 **Supersedes** the May 27 scattered eval narrative in this file (merged here). **Related:** [H200 GRPO-only Polaris learning curve](#2026-05-27-wednesday--grpo-checkpoint-slice-eval-h200-only-precursor) (multi-step GRPO, not three-arm).
+
+## 2026-05-27 (Wednesday late) — structural diagnosis: model/data mismatch, signal-density benchmark, LR first principles
+
+> **Why this entry exists.** All three arms underperformed on a fair-prompt evaluation (Polaris 2k: GRPO +1.1 pp, minority +0.1 pp, poly +1.3 pp at ~1/6–1/3 epoch; BeyondAIME pass@16 −5 to −6 pp across arms before the prompt-mismatch confound was found). The prompt-mismatch entry above explains BeyondAIME; it does **not** explain why minority/poly hypotheses are flat on the fair-prompt slice (Polaris 2k). This entry is the deeper diagnosis: an independent audit of the training setup, a benchmark of our signal density against published baselines, a first-principles ranking of remediation options, and an honest analysis of the LR=3e-6 hedge that is currently running on `chicken602`. Length is deliberate — the next 24 h decides whether we retrain or own the negative result for the poster.
+
+### 1. Independent audit (model / data / hyperparameter mismatch)
+
+Spawned a separate audit agent without sharing our hypothesis-favoring framing. Key findings (sources and verification flags inline):
+
+- **Polaris-Dataset-53K was calibrated by Deepseek-R1-distill-Qwen-7B**, not by a 1.7B model. The HKU NLP team's published recipe also **refilters 53K → ~30K specifically for their 4B model** by running rollout-pass-rate filtering and dropping always-solved + never-solved prompts before RL ([Polaris blog, HKU NLP](https://hkunlp.github.io/blog/2025/Polaris/); [ChenxinAn-fdu/POLARIS](https://github.com/ChenxinAn-fdu/POLARIS) — **verified by citation-check subagent**). We are running the unfiltered 51K on a model **2.3× smaller than the official refiltered recipe's target**, which is the canonical setup for the signal-starvation failure mode the Polaris team's own filtering step was designed to prevent. **Confidence: high** for the existence of the recipe; **confidence: medium** that the 4B → 1.7B gap is the single dominant cause (model-size scaling for refilter thresholds is not separately ablated in the public material).
+
+- **~~BeyondAIME regression is mostly real, not purely a prompt artifact.~~ RETRACTED 2026-05-27 ~21:30 PDT.** The fair-prompt rerun (above) shows the regression is **entirely a prompt artifact**: under matched `hybrid_answer_boxed`, BeyondAIME pass@16 goes from {GRPO −6, minority −6, poly_epo −5} to {+1, +1, **+5**} pp vs base. The qualitative-recompute "parse_ok roughly comparable" read was correct on its face but I over-weighted it: parse_ok-equal does not imply downstream-correct-equal when the prompt format influences which reasoning paths the model commits to. **Lesson:** trust matched-prompt eval before trusting parser-quality proxies for end-to-end correctness.
+
+- **Hyperparameters don't look broken per se.** N=8 rollouts/prompt, KL=0, LR=1e-6, batch_size=64 are all in the published-recipe range for GRPO on 1–4B models. The interaction that hurts us is **the combination of (unfiltered, mid-difficulty-for-7B) data × (small model) × (low N, fixed)**: the same recipe that worked at 4B produces a near-zero advantage signal at 1.7B because most groups land in {0/8, 8/8}.
+
+### 2. Signal-density benchmark — we are in-range with unfiltered baselines, but every successful published recipe filters
+
+Our `random_fullgold_n800` probe at base showed **34% mixed-reward density** (i.e., 34% of prompts have at least one correct and at least one incorrect rollout under N=8; 66% are degenerate). I went looking for a published target.
+
+- **arxiv:2605.07689** ("Gradient Starvation in Binary-Reward GRPO," Nie et al. — **verified to exist**) reports a degeneracy rate of **0.69 at group size 4** on GSM8K with vanilla GRPO. That is **~31% productive groups**, which is essentially our 34% number. So our setup is **not pathologically broken** — it matches the published unfiltered baseline almost exactly.
+- The same paper's headline result is that fixing the gradient-starvation degeneracy (their proposal: replace group-mean-centered advantage with `A = 2r − 1`) lifts GSM8K accuracy from **28.4% → 73.8%** at group size 4. This is consistent with our null result being a **signal-density problem, not an arm-hypothesis problem** — minority and poly_epo are set-based reweightings of an advantage that is mostly zero, so they have nothing to amplify or differentiate from GRPO.
+- The standard fixes in the literature are (a) **dynamic rollout filtering** (Polaris, DAPO dynamic sampling, [arxiv:2605.05112 "Rollout Pass-Rate Control"](https://arxiv.org/abs/2605.05112) — **verified**), (b) **prompt replay** of medium-pass-rate prompts ([arxiv:2603.21177 "Prompt Replay"](https://arxiv.org/abs/2603.21177) — **verified**), and (c) **fixed-reference advantage** (Nie et al.). We are using (none of the above).
+
+**Implication for the writeup.** The honest framing is **not** "our setup is uniquely broken." It is **"we matched the published unfiltered baseline at the model-size-extrapolated signal density, then skipped the filtering step that every successful published recipe at this regime applies."** That story is defensible; it also explains why the set-based-clustering arms can't beat GRPO at this scale.
+
+### 3. First-principles fix ordering (why filtering > more epochs > … > LR bump)
+
+Working from "what does the gradient actually see" rather than what's easiest to launch:
+
+1. **Filter the dataset to medium-pass-rate prompts (best).** Run one rollout pass over 51K with N=8 on the base model, drop 0/8 and 8/8 prompts, retrain on the surviving ~17K (back-of-envelope: 34% × 51K ≈ 17.4K). This is the **only** option that increases the fraction of training steps with non-zero advantage — it directly attacks the root cause. Cost: one rollout pass over 51K ≈ same as ~2 training steps of compute (rollout-dominated), plus a fresh ~17K × 1 epoch run. ETA ~$200–300 + ~12–18 h wall on B200. **Confidence this works at our scale: medium-high** (matches Polaris's own recipe; matches Nie et al.'s "fix the degeneracy" finding empirically).
+2. **More epochs on the same data (second-best, but limited by signal density).** Two epochs ≈ doubles the chance a flat-curve arm separates. But if 66% of gradient steps are zero, doubling steps still leaves you with most steps doing nothing. Helps the trained-model curve climb slightly but doesn't fix the structural mismatch. **Confidence: low-medium** that it moves minority/poly from "flat" to "above GRPO." Cost: ~$813 over current 1-epoch budget for all 3 arms.
+3. **Curriculum (sort by base pass-rate, train easy→hard).** Same total data, but the early signal density is higher. Standard pre-DAPO trick. **Confidence: medium**, but doesn't reach the upper ceiling of (1) because hard-prompt steps still have zero gradient.
+4. **Increase N (rollouts per prompt).** N=8 → N=16 halves the probability that a borderline-difficulty prompt lands at 0/N or N/N. But Bernoulli variance argument: doubling N only square-roots the chance of escaping degenerate groups for prompts where the model's true accuracy is far from 0.5. Costs 2× rollout time per step; on a fixed budget this means halving the number of update steps. **Confidence: low** that it dominates filtering.
+5. **SFT cold start on Polaris solutions before RL.** Lifts base accuracy distribution upward, shifts more prompts into the mixed-reward band naturally. This is what most strong published recipes do (DeepSeek-R1, Polaris). Out of scope for our timeline (no SFT pipeline; ≥2 days of bring-up).
+6. **Switch base model to a distilled / instruct variant** (e.g., Qwen3-1.7B-Instruct or a distillation of R1-distill-Qwen-7B). Same effect as SFT cold start. Also out of scope; would invalidate every prior probe.
+7. **Higher LR.** See §4 below — this is what's actually running right now on `chicken602`. It is a **hack, not a structural fix**.
+
+The Pareto-frontier choice in our time budget is **(1)** if we have the wall-clock and a willingness to spend ~$300, **(7)** as a cheap parallel hedge to see if there's any signal at all in the existing arms before committing to (1), and **own-the-null with the mismatch story** if both come back flat.
+
+### 4. Honest LR analysis (what raising 1e-6 → 3e-6 can and cannot do)
+
+The user pushed back, correctly, on the earlier audit's framing of LR=3e-6 as a "(B)-tier hedge fix." Reframing from first principles:
+
+- **What higher LR does:** for the same advantage signal, takes a larger step in policy-parameter space per update. Amplifies whatever gradient is present.
+- **What higher LR does NOT do:** create gradient where there is none. If 66% of prompts in a batch produce zero centered advantage, those steps contribute nothing regardless of LR. The 34% of productive prompts get larger updates, which **can** translate to (a) faster separation of arms if the arms differ structurally, or (b) instability / mode collapse if the arms over-commit to the noisy minority signal.
+- **Why it is still worth running:** the cost is small (~$60–80 for 200 steps × 3 arms on B200), the upside is "we see daylight between minority/poly and GRPO in the first 100 steps and gain a concrete training-curve figure for the poster," and the downside is bounded (we know the curve goes flat or diverges by step 200 — we don't waste 800 steps to find out).
+- **Why it is not the structural answer:** if it works, it works because the existing dataset has enough signal that we just weren't pushing hard enough on it. That's defensible but weak as a method contribution — the paper story degrades to "we tuned LR upward and the arms separated marginally," which doesn't add to the set-clustering hypothesis. If it doesn't work, we've ruled out "we just needed more aggression" and the only remaining honest path is filter-then-retrain or own-the-null.
+
+**Confidence that LR=3e-6 moves the needle on minority/poly vs GRPO separation: ~25%.** The mechanism by which set-based clustering should help is "when there are multiple correct answers, reward the rarer cluster more." If the rare-correct-cluster events are themselves rare (which is what signal starvation implies), no amount of LR amplification creates more of them.
+
+### 5. Live status — LR=3e-6 short runs on `chicken602` (launched 2026-05-27 20:53 PDT)
+
+User stopped the prior LR=1e-6 fresh runs at ~20:05–20:15 PDT (no measurable progress) and relaunched 3 arms at LR=3e-6 / total_steps=200 on `chicken602`. Apps and W&B runs:
+
+| Arm | App | W&B | Config |
+|-----|-----|-----|--------|
+| GRPO | `ap-7BigFBD8Qu5aZnjRCG8giF` | [ik4imyoq](https://wandb.ai/224r-project/cs224r-minority-voting/runs/ik4imyoq) | `train_real_b200_lr3e6_s200_grpo.yaml` |
+| minority_answer | `ap-y2xM0dwBR3Aj5QylTEnqEV` | [ib9n7akg](https://wandb.ai/224r-project/cs224r-minority-voting/runs/ib9n7akg) | `train_real_b200_lr3e6_s200_minority.yaml` |
+| poly_epo_answer | `ap-b6PRqstNcizgMUo0Bhc6xe` | [kau6lbl2](https://wandb.ai/224r-project/cs224r-minority-voting/runs/kau6lbl2) | `train_real_b200_lr3e6_s200_poly_epo.yaml` |
+
+All three are mid-rollout on first/second training step as of 21:07 PDT (~14 min in); no crashes, no NaN/inf in tailed logs. Checkpoint dirs are isolated from the prior B200 runs (`_lr3e6_s200/` suffix). **Stop condition to watch for:** reward going to zero, KL spike to >0.5, or any NaN — none observed yet. **Decision point:** after step ~50 (≈1 h wall) check whether minority/poly are tracking above GRPO; if not, by step 200 the result is a clean negative.
+
+### 6. Recommended next moves (for Nancy to pick when back)
+
+Two coherent paths, plus a hybrid:
+
+**Option A — Filter-then-retrain (recommended if you have ~$700 + ~3 days budget).**
+1. Run a 1-pass rollout over Polaris 51K with base model, N=8, no policy update, dump per-prompt pass rates. Script does not exist yet; **dry-run artifact to be staged in this branch** (see task #5).
+2. Drop prompts with pass_rate ∈ {0, 1}; keep the ~17K remainder. Save as `polaris_filtered_n17k.parquet`.
+3. Retrain all three arms 1 epoch on the filtered set at LR=1e-6 (or LR=2e-6 as a compromise — keep this conservative on smaller data).
+4. Re-evaluate at the same three checkpoints, same eval slices. **Defensible publication either way:** if arms separate, story is "the published recipe works once you apply the published filtering"; if flat, story is "even with proper signal density, set-based clustering doesn't beat GRPO at 1.7B."
+
+**Option B — Own the null result, no further retraining.**
+1. Wait for current LR=3e-6 probe to land (free information, cheap).
+2. Wait for fair-prompt BeyondAIME + DAPO 2k reruns to land.
+3. Spend remaining time on diversity panels (PLAN consolation criterion), an ablation figure showing flat minority/poly curves, and writing the mismatch story carefully (Polaris-7B calibration, our 1.7B, 34% signal density, why this kills set-based clustering specifically). **Risk:** TA/grader expects to see at least one positive lever pulled; pure null with no remediation attempt reads as "did not engage with the problem."
+
+**Option C (what's de facto happening) — LR=3e-6 probe in parallel with the prompt-fair reruns.**
+- By tomorrow morning (~2026-05-28 ~07:00 PDT), all three of {LR probe, BeyondAIME fair-prompt, DAPO 2k fair-prompt} should be in hand or near-complete. Decide then between A and B with full information.
+- Estimated cost of waiting until then: ~$60–80 (LR probe is the dominant spend; the two eval reruns are $40–60 each per the prior entry).
+
+**My recommendation, Nancy-back-from-meeting version:** Let C complete overnight. If LR probe shows zero arm-separation by step 200 *and* fair-prompt BeyondAIME still shows >3 pp regression for trained arms, commit to **B** (clean null, mismatch framing, diversity panel for set arms) — A's $700 / 3 days will not save the hypothesis at this scale and the poster timeline is the real binding constraint. If LR probe shows >1 pp minority-over-GRPO separation by step 200, **A** becomes a high-EV bet because the hypothesis has a pulse and the filtered-data run is the cleanest way to give it room to breathe.
+
+**UPDATE 2026-05-27 ~21:30 PDT — fair-prompt eval landed.** Both BeyondAIME and DAPO 2k fair-prompt reruns finished and are summarized in the rerun-status block of the prior entry. Across-slice picture: **`poly_epo_answer` wins all three eval slices** (+1.3 / +0.8 / +5.0 pp vs base on Polaris 2k / DAPO 2k / BeyondAIME), `minority_answer` is flat-to-negative (+0.1 / −0.65 / +1.0), GRPO is intermediate (+1.1 / −0.5 / +1.0). No individual Δ is >1σ but across-slice consistency for poly_epo is the headline.
+
+**This shifts the recommendation.** The hypothesis-positive signal exists for at least one set arm, just not the headline minority arm. Updated path:
+
+- **Best path now: hybrid of A and C.** Let the LR=3e-6 probe finish (free information by ~07:00 PDT 2026-05-28). If poly_epo separates further from GRPO at step 200, commit to Option A *focused on poly_epo only* — retrain just poly_epo + GRPO on filtered ~17K, skip minority unless time permits. That's ~$450 not $700, and keeps the falsifiable comparison (`poly_epo > GRPO under fair signal-density`) intact. Skip retraining minority: the across-slice evidence already says it doesn't pay off, and a longer run isn't going to flip a structurally-flat curve.
+- **Compute diversity panel tonight (offline, $0).** PLAN consolation criterion is `matches GRPO on pass@1 AND improves cluster diversity`. With minority near pass@1-parity on Polaris 2k, the diversity number determines whether minority is "consolation-passing" or "not supported." This is the cheapest decision-grade artifact remaining and should happen regardless.
+- **Writeup framing if Option A runs:** "We observed that set-based RL underperforms unfiltered baselines as expected per gradient-starvation literature, then re-ran on rollout-pass-rate-filtered data matching Polaris's own recipe; poly_epo_answer separates by X pp at matched compute." This is a *much* stronger story than the null framing.
+- **Writeup framing if Option B (no further training):** lead with the cross-slice fair-prompt table (poly_epo 3/3) + signal-density mismatch as the why-not-more story. Still defensible; less surprising.
+
+### 7. Verification flags (where I'm not confident)
+
+- **Polaris team's exact refilter cutoffs** are not directly read from the blog/repo by me — citation-check subagent confirmed existence of the recipe; I have not independently confirmed the 53K → ~30K number or that the cutoffs are pass-rate ∈ {0,1}-style rather than something subtler. **Action if it matters:** read the [Polaris blog](https://hkunlp.github.io/blog/2025/Polaris/) directly before drafting the writeup paragraph.
+- **The 4B → 1.7B scaling argument** is intuitive but I have no published ablation showing model-size sensitivity of the optimal refilter cutoff. Treating it as "directionally true" not "quantitatively pinned."
+- **Whether retraining on filtered data lifts arm separation specifically** (vs. just lifting all arms together) is the empirical question and the paper-worthy one. Nie et al.'s 28.4% → 73.8% lift is for the GSM8K + fixed-reference-advantage fix, not for the filter-then-vanilla-GRPO recipe; my "confidence: medium-high" is interpolated, not directly evidenced.
+- **The qualitative `parse_ok ≈ similar across base/trained` claim** is from the persisted `qualitative_summary.md` per the audit agent's read; I haven't re-derived the underlying numbers. Worth a 2-minute sanity check on the .md before citing in writeup.
+- **LR=3e-6 outcome at 200 steps** is the active experiment — if reward collapses or KL spikes early, the option ordering above changes (mode collapse pushes us back to LR=1e-6 + filter, ruling out the "just push harder" interpretation).
+- **Cost estimates for Option A** assume rollout-only first pass is ~2 training-step-equivalents; actual rollout-only pass without weight-sync overhead may be cheaper (closer to $100), but I'm rounding up to be safe.
+
+**Related:** [`probes/random_fullgold_n800_results.md`](./probes/random_fullgold_n800_results.md) (34% mixed-reward density measurement), [`ta_discussion.md` §Q1–Q4](./ta_discussion.md), [`handoff/b200_production_launch_2026-05-27.md`](./handoff/b200_production_launch_2026-05-27.md) (LR=1e-6 lineage that these LR=3e-6 runs are isolated from), [`plans/option_a_filter_retrain_2026-05-27.md`](./plans/option_a_filter_retrain_2026-05-27.md) (Option A pipeline + commands, dry-run staged), [`../data/probes/checkpoint_eval_beyondaime_pass16_hybrid_arms_latest/fair_prompt_eval_summary_2026-05-27.md`](../data/probes/checkpoint_eval_beyondaime_pass16_hybrid_arms_latest/fair_prompt_eval_summary_2026-05-27.md) (fair-prompt cross-slice summary).

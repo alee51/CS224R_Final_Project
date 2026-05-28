@@ -37,7 +37,6 @@ train:
   lr: 1.0e-6
   weight_decay: 0.0
   grad_clip: 1.0
-  warmup_steps: 20
   gradient_checkpointing: true
   checkpoint_every_steps: 20
   resume: auto

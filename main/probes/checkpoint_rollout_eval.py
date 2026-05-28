@@ -44,6 +44,7 @@ logging.basicConfig(level=logging.INFO)
 
 N_ROLLOUTS_DEFAULT = 8
 K_PASS = 8
+DIFFICULTY_BANDS = [f"{k}/8" for k in range(8)]
 
 app = modal.App(os.environ.get("CS224R_APP_NAME", "cs224r-checkpoint-eval"))
 
@@ -75,6 +76,30 @@ def _load_jsonl_rows(path: Path) -> list[dict[str, Any]]:
             if line.strip():
                 rows.append(json.loads(line))
     return rows
+
+
+def _load_jsonl_rows_with_retry(
+    path: Path, *, retries: int = 10, sleep_s: float = 1.0
+) -> list[dict[str, Any]]:
+    """Retry loading a jsonl path to tolerate short volume propagation lag."""
+    last_err: FileNotFoundError | None = None
+    for attempt in range(retries + 1):
+        try:
+            return _load_jsonl_rows(path)
+        except FileNotFoundError as exc:
+            last_err = exc
+            if attempt == retries:
+                break
+            logger.warning(
+                "manifest not visible yet (%s), retry %s/%s in %.1fs",
+                path,
+                attempt + 1,
+                retries,
+                sleep_s,
+            )
+            time.sleep(sleep_s)
+    assert last_err is not None
+    raise last_err
 
 
 def _load_hf_rows(spec: dict[str, Any]) -> list[dict[str, Any]]:
@@ -119,50 +144,115 @@ def _sample_rows(
     return [rows[i] for i in order[:n_prompts]]
 
 
-def _rows_to_slice(rows: list[dict[str, Any]]) -> tuple[list[str], list[str], list[int]]:
+def _rows_to_slice(
+    rows: list[dict[str, Any]],
+) -> tuple[list[str], list[str], list[int], dict[int, str]]:
     problems = [str(r["problem"]).strip() for r in rows]
     golds = [str(r.get("gold", r.get("answer", ""))).strip() for r in rows]
-    problem_ids = [
-        int(r["problem_id"]) if "problem_id" in r else i for i, r in enumerate(rows)
-    ]
-    return problems, golds, problem_ids
+    problem_ids: list[int] = []
+    for i, r in enumerate(rows):
+        raw_pid = r.get("problem_id", i)
+        try:
+            pid = int(raw_pid)
+        except (TypeError, ValueError):
+            # Some eval sets (e.g. math500 unique_id) use string IDs.
+            # Keep deterministic per-run indexing for seeding/aggregation.
+            pid = i
+        problem_ids.append(pid)
+    band_by_pid: dict[int, str] = {}
+    for i, r in enumerate(rows):
+        pid = problem_ids[i]
+        band = r.get("difficulty_band") or r.get("difficulty")
+        if band is not None:
+            band_by_pid[pid] = str(band)
+    return problems, golds, problem_ids, band_by_pid
 
 
 def _score_rollouts(
     rollouts_by_prompt: dict[int, list[dict[str, Any]]],
     *,
     n_rollouts: int,
+    pass_k: int | None = None,
 ) -> dict[str, Any]:
     n_prompts = len(rollouts_by_prompt)
+    k_eval = int(pass_k if pass_k is not None else min(n_rollouts, K_PASS))
+    if k_eval > n_rollouts:
+        raise ValueError(f"pass_k={k_eval} exceeds n_rollouts={n_rollouts}")
     rewards: list[float] = []
     correct_count_hist = [0] * (n_rollouts + 1)
-    pass8_vals: list[float] = []
+    passk_by_k: dict[int, list[float]] = defaultdict(list)
     n_mixed = 0
+    k_list = sorted({k for k in (1, 4, 8, 16, k_eval) if k <= n_rollouts})
 
     for p_idx in sorted(rollouts_by_prompt.keys()):
         rows = rollouts_by_prompt[p_idx]
         n_correct = sum(1 for r in rows if r["reward"] > 0)
-        k = min(n_correct, n_rollouts)
-        correct_count_hist[k] += 1
+        hist_k = min(n_correct, n_rollouts)
+        correct_count_hist[hist_k] += 1
         if 0 < n_correct < n_rollouts:
             n_mixed += 1
-        pass8_vals.append(_pass_at_k_unbiased(n_correct, n_rollouts, K_PASS))
+        for k in k_list:
+            passk_by_k[k].append(_pass_at_k_unbiased(n_correct, n_rollouts, k))
         for r in rows:
             rewards.append(float(r["reward"]))
 
     frac_hist = {
         f"frac_prompts_{i}_correct": c / n_prompts for i, c in enumerate(correct_count_hist)
     }
-    return {
+    pass_at_k_mean = (
+        sum(passk_by_k[k_eval]) / len(passk_by_k[k_eval]) if passk_by_k[k_eval] else 0.0
+    )
+    out: dict[str, Any] = {
         "n_prompts": n_prompts,
         "n_rollouts": n_rollouts,
+        "pass_k": k_eval,
         "mean_reward": sum(rewards) / len(rewards) if rewards else 0.0,
         "prompt_coverage": sum(1 for h in correct_count_hist[1:] if h) / n_prompts,
         "mixed_reward_rate": n_mixed / n_prompts if n_prompts else 0.0,
-        "pass_at_8_mean": sum(pass8_vals) / len(pass8_vals) if pass8_vals else 0.0,
+        f"pass_at_{k_eval}_mean": pass_at_k_mean,
         "pass_at_1_rollout": sum(rewards) / len(rewards) if rewards else 0.0,
         **frac_hist,
     }
+    for k in k_list:
+        vals = passk_by_k[k]
+        out[f"pass_at_{k}_mean"] = sum(vals) / len(vals) if vals else 0.0
+    if k_eval == K_PASS:
+        out["pass_at_8_mean"] = pass_at_k_mean
+    return out
+
+
+def _score_rollouts_by_band(
+    rollouts_by_prompt: dict[int, list[dict[str, Any]]],
+    problem_ids: list[int],
+    band_by_pid: dict[int, str],
+    *,
+    n_rollouts: int,
+    pass_k: int | None = None,
+) -> dict[str, Any]:
+    """Per difficulty_band pass@k (manifest field difficulty_band or difficulty)."""
+    if not band_by_pid:
+        return {}
+    k_eval = int(pass_k if pass_k is not None else min(n_rollouts, K_PASS))
+    by_band: dict[str, dict[int, list[dict[str, Any]]]] = defaultdict(dict)
+    for p_idx, rows in rollouts_by_prompt.items():
+        pid = problem_ids[p_idx]
+        band = band_by_pid.get(pid, "unknown")
+        by_band[band][p_idx] = rows
+
+    out: dict[str, Any] = {}
+    for band in DIFFICULTY_BANDS + ["unknown"]:
+        bucket = by_band.get(band)
+        if not bucket:
+            continue
+        scored = _score_rollouts(bucket, n_rollouts=n_rollouts, pass_k=pass_k)
+        out[band] = {
+            "n_prompts": scored["n_prompts"],
+            f"pass_at_{k_eval}_mean": scored[f"pass_at_{k_eval}_mean"],
+            "pass_at_8_mean": scored.get("pass_at_8_mean", scored[f"pass_at_{k_eval}_mean"]),
+            "mean_reward": scored["mean_reward"],
+            "frac_prompts_0_correct": scored.get("frac_prompts_0_correct", 0.0),
+        }
+    return out
 
 
 def _train_cfg(cfg_raw: dict[str, Any], n_rollouts: int) -> TrainCfg:
@@ -188,6 +278,7 @@ def _generate_chunked(
     global_seed: int,
     prompt_variant: str,
     chunk_prompts: int,
+    save_completions: bool = False,
 ) -> dict[int, list[dict[str, Any]]]:
     by_prompt: dict[int, list[dict[str, Any]]] = defaultdict(list)
     n = len(formatted)
@@ -215,16 +306,48 @@ def _generate_chunked(
                 chunk_golds[rr.prompt_idx],
                 prompt_variant=prompt_variant,
             )
-            by_prompt[p_idx].append(
-                {
-                    "rollout_idx": rr.rollout_idx,
-                    "reward": float(meta["reward"]),
-                    "parse_ok": bool(meta["parse_ok"]),
-                    "extract_path": meta.get("extract_path"),
-                    "finish_reason": rr.finish_reason,
-                }
-            )
+            row: dict[str, Any] = {
+                "rollout_idx": rr.rollout_idx,
+                "reward": float(meta["reward"]),
+                "parse_ok": bool(meta["parse_ok"]),
+                "parsed_answer": meta.get("parsed_answer"),
+                "extract_path": meta.get("extract_path"),
+                "finish_reason": rr.finish_reason,
+            }
+            if save_completions:
+                row["completion_text"] = rr.completion_text
+            by_prompt[p_idx].append(row)
     return by_prompt
+
+
+def _write_rollouts_jsonl(
+    path: Path,
+    *,
+    label: str,
+    problems: list[str],
+    golds: list[str],
+    problem_ids: list[int],
+    prompt_variant: str,
+    by_prompt: dict[int, list[dict[str, Any]]],
+) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("w") as f:
+        for p_idx in sorted(by_prompt.keys()):
+            for row in by_prompt[p_idx]:
+                f.write(
+                    json.dumps(
+                        {
+                            "label": label,
+                            "problem_id": problem_ids[p_idx],
+                            "problem": problems[p_idx],
+                            "gold": golds[p_idx],
+                            "prompt_variant": prompt_variant,
+                            **row,
+                        },
+                        ensure_ascii=False,
+                    )
+                    + "\n"
+                )
 
 
 def _generate_and_score(
@@ -241,6 +364,10 @@ def _generate_and_score(
     n_rollouts: int,
     data_path: Path,
     chunk_prompts: int,
+    pass_k: int | None = None,
+    save_rollouts_path: Path | None = None,
+    band_by_pid: dict[int, str] | None = None,
+    report_by_band: bool = True,
 ) -> dict[str, Any]:
     import torch
 
@@ -281,10 +408,31 @@ def _generate_and_score(
         global_seed=global_seed,
         prompt_variant=prompt_variant,
         chunk_prompts=chunk_prompts,
+        save_completions=save_rollouts_path is not None,
     )
     gen_s = time.monotonic() - t0
 
-    metrics = _score_rollouts(by_prompt, n_rollouts=n_rollouts)
+    if save_rollouts_path is not None:
+        _write_rollouts_jsonl(
+            save_rollouts_path,
+            label=label,
+            problems=problems,
+            golds=golds,
+            problem_ids=problem_ids,
+            prompt_variant=prompt_variant,
+            by_prompt=by_prompt,
+        )
+        logger.info("%s: wrote rollouts %s", label, save_rollouts_path)
+
+    metrics = _score_rollouts(by_prompt, n_rollouts=n_rollouts, pass_k=pass_k)
+    if report_by_band and band_by_pid:
+        metrics["by_band"] = _score_rollouts_by_band(
+            by_prompt,
+            problem_ids,
+            band_by_pid,
+            n_rollouts=n_rollouts,
+            pass_k=pass_k,
+        )
     metrics["label"] = label
     metrics["checkpoint"] = str(ckpt_path) if ckpt_path else "base"
     metrics["wall_clock_s"] = gen_s
@@ -296,39 +444,79 @@ def _load_eval_slice(
     *,
     global_seed: int,
     n_prompts: int,
-) -> tuple[list[str], list[str], list[int]]:
+) -> tuple[list[str], list[str], list[int], dict[int, str]]:
     rows = _load_jsonl_rows(data_path)
     picked = _sample_rows(rows, n_prompts=n_prompts, seed=global_seed)
-    return _rows_to_slice(picked)
+    problems, golds, problem_ids, band_by_pid = _rows_to_slice(picked)
+    return problems, golds, problem_ids, band_by_pid
+
+
+def _pass_at_k_metric(r: dict[str, Any]) -> tuple[int, float]:
+    k = int(r.get("pass_k", K_PASS))
+    key = f"pass_at_{k}_mean"
+    if key in r:
+        return k, float(r[key])
+    return K_PASS, float(r.get("pass_at_8_mean", 0.0))
 
 
 def _print_summary(results: list[dict[str, Any]], *, title: str) -> None:
     if not results:
         return
     base = results[0]
+    pass_k, _ = _pass_at_k_metric(base)
+    pass_col = f"pass@{pass_k}"
     print(f"\n=== {title} ===")
     print(
-        f"{'label':<12} {'mean_reward':>12} {'pass@8':>10} {'f0':>8} {'f1-3':>8} {'mixed':>8} {'cov':>8} {'sec':>8}"
+        f"{'label':<22} {'mean_reward':>12} {pass_col:>10} {'f0':>8} {'f1-3':>8} "
+        f"{'mixed':>8} {'cov':>8} {'sec':>8}"
     )
     for r in results:
+        _, pass_mean = _pass_at_k_metric(r)
         f13 = sum(r.get(f"frac_prompts_{k}_correct", 0.0) for k in range(1, 4))
         print(
-            f"{r['label']:<12} {r['mean_reward']:12.4f} {r['pass_at_8_mean']:10.4f} "
+            f"{r['label']:<22} {r['mean_reward']:12.4f} {pass_mean:10.4f} "
             f"{r.get('frac_prompts_0_correct', 0):8.3f} {f13:8.3f} "
             f"{r.get('mixed_reward_rate', 0):8.3f} {r.get('prompt_coverage', 0):8.3f} "
             f"{r.get('wall_clock_s', 0):8.0f}"
         )
-    print("\nDelta vs base (mean_reward / pass@8 / frac_0):")
+    print(f"\nDelta vs base (mean_reward / pass@{pass_k} / frac_0):")
+    _, base_pass = _pass_at_k_metric(base)
     for r in results[1:]:
         dr = r["mean_reward"] - base["mean_reward"]
-        dp = r["pass_at_8_mean"] - base["pass_at_8_mean"]
+        _, pass_mean = _pass_at_k_metric(r)
+        dp = pass_mean - base_pass
         df0 = r.get("frac_prompts_0_correct", 0) - base.get("frac_prompts_0_correct", 0)
-        print(f"  {r['label']}: reward {dr:+.4f}  pass@8 {dp:+.4f}  frac_0 {df0:+.3f}")
+        print(f"  {r['label']}: reward {dr:+.4f}  pass@{pass_k} {dp:+.4f}  frac_0 {df0:+.3f}")
 
 
 def _write_json(path: Path, payload: dict[str, Any]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(payload, indent=2))
+
+
+def _resolve_eval_variants(eval_cfg: dict[str, Any]) -> list[tuple[str, Path | None]]:
+    """(label, ckpt_path) pairs; path None means base model."""
+    variants: list[tuple[str, Path | None]] = []
+    if eval_cfg.get("include_base", True):
+        variants.append(("base", None))
+
+    if "checkpoint_variants" in eval_cfg:
+        for entry in eval_cfg["checkpoint_variants"]:
+            label = str(entry["label"])
+            path = Path(str(entry["path"]))
+            if not path.is_file():
+                raise FileNotFoundError(f"missing {path}")
+            variants.append((label, path))
+        return variants
+
+    ckpt_dir = Path(str(eval_cfg["checkpoint_dir"]))
+    steps = [int(s) for s in eval_cfg.get("checkpoint_steps", [49, 99, 149])]
+    for step in steps:
+        p = ckpt_dir / f"step_{step:06d}.pt"
+        if not p.is_file():
+            raise FileNotFoundError(f"missing {p}")
+        variants.append((f"step_{step}", p))
+    return variants
 
 
 def _safe_name(raw: str) -> str:
@@ -338,9 +526,17 @@ def _safe_name(raw: str) -> str:
 def _resolve_jsonl_path(path: Path) -> Path:
     if path.is_file():
         return path
-    bundled = Path("/root/main/data/eval") / path.name
-    if bundled.is_file():
-        return bundled
+    rel = path.as_posix().lstrip("/")
+    candidates = [
+        path,
+        _MAIN_ROOT / rel,
+        Path("/root/main") / rel,
+        Path(ARTIFACTS_MOUNT) / rel,
+        Path("/root/main/data/eval") / path.name,
+    ]
+    for candidate in candidates:
+        if candidate.is_file():
+            return candidate
     raise FileNotFoundError(path)
 
 
@@ -352,6 +548,8 @@ def _dataset_rows(spec: dict[str, Any]) -> list[dict[str, Any]]:
         rows = _load_hf_rows(spec)
     else:
         raise ValueError(f"unknown dataset kind: {kind!r}")
+    if spec.get("use_all_rows"):
+        return rows
     n_prompts = int(spec["n_prompts"])
     seed = int(spec.get("seed", 42))
     return _sample_rows(rows, n_prompts=n_prompts, seed=seed)
@@ -405,11 +603,13 @@ def eval_one_checkpoint(
         if not data_path.is_file():
             data_path = _MAIN_ROOT / "data/polaris_train.jsonl"
 
-    rows = _load_jsonl_rows(Path(manifest_path))
-    problems, golds, problem_ids = _rows_to_slice(rows)
+    rows = _load_jsonl_rows_with_retry(Path(manifest_path))
+    problems, golds, problem_ids, band_by_pid = _rows_to_slice(rows)
+    report_by_band = bool(eval_cfg.get("report_by_band", True))
     prompt_variant = str(ds_spec["prompt_variant"])
     global_seed = int(cfg_raw.get("global_seed", 42))
     n_rollouts = int(eval_cfg.get("n_rollouts", N_ROLLOUTS_DEFAULT))
+    pass_k = int(eval_cfg["pass_k"]) if "pass_k" in eval_cfg else None
     chunk_prompts = int(eval_cfg.get("rollout_chunk_prompts", 64))
     cfg = _train_cfg(cfg_raw, n_rollouts)
 
@@ -428,6 +628,14 @@ def eval_one_checkpoint(
         len(problems),
     )
     rollout_engine = RolloutEngine(cfg.rollout)
+    save_rollouts_path: Path | None = None
+    if eval_cfg.get("save_rollouts"):
+        run_dir = (
+            Path(str(eval_cfg.get("output_dir", f"{ARTIFACTS_MOUNT}/probes/checkpoint_eval_2k")))
+            / run_stamp
+            / "rollouts"
+        )
+        save_rollouts_path = run_dir / f"{_safe_name(label)}.jsonl"
     metrics = _generate_and_score(
         rollout_engine,
         label=label,
@@ -441,7 +649,13 @@ def eval_one_checkpoint(
         n_rollouts=n_rollouts,
         data_path=data_path,
         chunk_prompts=chunk_prompts,
+        pass_k=pass_k,
+        save_rollouts_path=save_rollouts_path,
+        band_by_pid=band_by_pid,
+        report_by_band=report_by_band,
     )
+    if save_rollouts_path is not None:
+        artifacts_volume.commit()
     metrics["dataset"] = dataset_key
     metrics["manifest_path"] = manifest_path
     metrics["prompt_variant"] = prompt_variant
@@ -464,15 +678,10 @@ def run_parallel_eval(config_path: str) -> str:
     with open(config_path) as f:
         cfg_raw = yaml.safe_load(f)
     eval_cfg = cfg_raw["eval"]
-    ckpt_dir = Path(str(eval_cfg["checkpoint_dir"]))
-    steps = [int(s) for s in eval_cfg.get("checkpoint_steps", [49, 99, 149])]
-
-    variants: list[tuple[str, str | None]] = [("base", None)]
-    for step in steps:
-        p = ckpt_dir / f"step_{step:06d}.pt"
-        if not p.is_file():
-            raise FileNotFoundError(f"missing {p}")
-        variants.append((f"step_{step}", str(p)))
+    variants = [
+        (label, str(path) if path is not None else None)
+        for label, path in _resolve_eval_variants(eval_cfg)
+    ]
 
     dataset_keys = list(eval_cfg["datasets"].keys())
     all_results: dict[str, list[dict[str, Any]]] = {}
@@ -529,35 +738,29 @@ def run_checkpoint_eval(cfg_raw: dict[str, Any]) -> dict[str, Any]:
     """Sequential all-checkpoints on one GPU (legacy / small runs)."""
     eval_cfg = cfg_raw["eval"]
     data_path = Path(str(eval_cfg["data_path"]))
-    ckpt_dir = Path(str(eval_cfg["checkpoint_dir"]))
     n_batches = int(eval_cfg.get("n_batches", 2))
     batch_size = int(eval_cfg.get("batch_size", 64))
     n_prompts = int(eval_cfg.get("n_prompts", n_batches * batch_size))
-    steps: list[int] = [int(s) for s in eval_cfg.get("checkpoint_steps", [49, 99, 149])]
 
     set_seeds(int(cfg_raw.get("global_seed", 42)))
     if "n_prompts" in eval_cfg and "data_path" in eval_cfg:
-        problems, golds, problem_ids = _load_eval_slice(
+        problems, golds, problem_ids, band_by_pid = _load_eval_slice(
             data_path,
             global_seed=int(cfg_raw.get("global_seed", 42)),
             n_prompts=n_prompts,
         )
     else:
-        problems, golds, problem_ids = _load_eval_slice(
+        problems, golds, problem_ids, band_by_pid = _load_eval_slice(
             data_path,
             global_seed=int(cfg_raw.get("global_seed", 42)),
             n_prompts=n_batches * batch_size,
         )
+    report_by_band = bool(eval_cfg.get("report_by_band", True))
 
-    variants: list[tuple[str, Path | None]] = [("base", None)]
-    for step in steps:
-        variants.append((f"step_{step}", ckpt_dir / f"step_{step:06d}.pt"))
-
-    missing = [str(p) for _, p in variants if p is not None and not p.is_file()]
-    if missing:
-        raise FileNotFoundError(f"missing checkpoints: {missing}")
+    variants = _resolve_eval_variants(eval_cfg)
 
     n_rollouts = int(eval_cfg.get("n_rollouts", N_ROLLOUTS_DEFAULT))
+    pass_k = int(eval_cfg["pass_k"]) if "pass_k" in eval_cfg else None
     prompt_variant = str(cfg_raw.get("prompt_variant", "hybrid_answer_boxed"))
     global_seed = int(cfg_raw.get("global_seed", 42))
     chunk_prompts = int(eval_cfg.get("rollout_chunk_prompts", 64))
@@ -582,6 +785,9 @@ def run_checkpoint_eval(cfg_raw: dict[str, Any]) -> dict[str, Any]:
                 n_rollouts=n_rollouts,
                 data_path=data_path,
                 chunk_prompts=chunk_prompts,
+                pass_k=pass_k,
+                band_by_pid=band_by_pid,
+                report_by_band=report_by_band,
             )
         )
 
