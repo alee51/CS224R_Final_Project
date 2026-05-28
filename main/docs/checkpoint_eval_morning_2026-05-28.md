@@ -11,6 +11,8 @@ All runs: `n_rollouts=16`, `prompt_variant=hybrid_answer_boxed`, B200.
 
 Volume paths: `main-artifacts/probes/<output_dir>/<stamp>/`.
 
+Checkpoints: **3e-6 redo** — `base`, `grpo_lr3e6_s59`, `minority_lr3e6_s54`, `poly_epo_lr3e6_s39`. **1e-6 resolved** — `grpo_b200_s519`, `minority_b200_s239`, `poly_epo_b200_s133` (no base run).
+
 ---
 
 ## Headline
@@ -21,96 +23,38 @@ Volume paths: `main-artifacts/probes/<output_dir>/<stamp>/`.
 
 ---
 
-## LR=3e-6 redo family (chicken602, vs base)
+## Results — Δ vs base (LR=3e-6 redo family)
 
-Checkpoints: `grpo_lr3e6_s59`, `minority_lr3e6_s54`, `poly_epo_lr3e6_s39`.
+Absolute scores in parentheses. DAPO and Polaris use **pass@8**; MATH-500 and AIME-25 use **pass@16**. Base column is always 0 (reference).
 
-### DAPO 2k — pass@8 (primary)
+| Dataset | Metric | base | grpo | minority | poly_epo |
+|---------|--------|------|------|----------|----------|
+| DAPO 2k | pass@8 | — (29.9%) | **+2.0pp** (31.9%) | +2.2pp (31.9%) | +1.1pp (31.0%) |
+| Polaris stratified 2k | pass@8 | — (30.8%) | **+2.1pp** (32.9%) | +0.8pp (31.7%) | +1.1pp (32.0%) |
+| MATH-500 | pass@16 | — (78.8%) | **+4.4pp** (83.2%) | +2.0pp (80.8%) | +2.4pp (81.2%) |
+| AIME-25 ⚠️ | pass@16 | — (13.3%) | −3.3pp (10.0%) | −6.6pp (6.7%) | −3.3pp (10.0%) |
 
-| Arm | pass@8 | Δ vs base | Δ vs GRPO |
-|-----|--------|-----------|-----------|
-| base | 29.9% | — | — |
-| **grpo** | **31.9%** | **+2.0pp** | — |
-| minority | 31.9% | +2.2pp | −0.1pp |
-| poly_epo | 31.0% | +1.1pp | −0.9pp |
+pass@1 on DAPO: base 6.7% → GRPO 7.8% (+1.1pp); minority/poly ~flat vs GRPO.
 
-pass@1: base 6.7% → GRPO 7.8% (+1.1pp). Minority/poly ~flat vs GRPO on pass@1.
-
-### Polaris stratified 2k — pass@8 (250 prompts per band 0/8…7/8)
-
-| Arm | pass@8 | Δ vs base | Δ vs GRPO |
-|-----|--------|-----------|-----------|
-| base | 30.8% | — | — |
-| **grpo** | **32.9%** | **+2.1pp** | — |
-| minority | 31.7% | +0.8pp | −1.3pp |
-| poly_epo | 32.0% | +1.1pp | −1.0pp |
-
-GRPO gains are largest on easier bands (6/8, 7/8): +2.8pp and +3.3pp pass@8 vs base on those bands.
-
-### MATH-500 (500 prompts) — pass@16
-
-| Arm | pass@16 | Δ vs base |
-|-----|---------|-----------|
-| base | 78.8% | — |
-| **grpo** | **83.2%** | **+4.4pp** |
-| minority | 80.8% | +2.0pp |
-| poly_epo | 81.2% | +2.4pp |
-
-### AIME-25 (30 prompts) — pass@16 — noisy
-
-| Arm | pass@16 |
-|-----|---------|
-| base | 13.3% |
-| grpo | 10.0% |
-| minority | 6.7% |
-| poly_epo | 10.0% |
-
-Do not treat ±3pp here as meaningful (≈3–4 problems with any success at pass@16).
+GRPO gains on Polaris are largest on easier bands (6/8, 7/8): +2.8pp and +3.3pp pass@8 vs base on those bands.
 
 ---
 
-## LR=1e-6 resolved family (anastasia, no base; compare to GRPO)
+## Results — Δ vs GRPO (reference: `grpo_lr3e6_s59`)
 
-Checkpoints: `grpo_b200_s519`, `minority_b200_s239`, `poly_epo_b200_s133`.
+Same slices and metrics as above. GRPO column is always 0 (reference). **1e-6 resolved** arms included for cross-LR comparison (no base in that family).
 
-### DAPO 2k — pass@8
+| Dataset | Metric | base | grpo (3e-6 s59) | minority (3e-6 s54) | poly_epo (3e-6 s39) | minority (1e-6 s239) | poly_epo (1e-6 s133) |
+|---------|--------|------|-----------------|---------------------|---------------------|----------------------|----------------------|
+| DAPO 2k | pass@8 | −2.0pp (29.9%) | — (31.9%) | −0.1pp (31.9%) | −0.9pp (31.0%) | −0.5pp (31.3%) | −1.2pp (30.6%) |
+| Polaris stratified 2k | pass@8 | −2.1pp (30.8%) | — (32.9%) | −1.3pp (31.7%) | −1.0pp (32.0%) | −0.8pp (31.0%) | −0.5pp (31.4%) |
+| MATH-500 | pass@16 | −4.4pp (78.8%) | — (83.2%) | −2.4pp (80.8%) | −2.0pp (81.2%) | −1.6pp (80.0%) | −3.4pp (78.2%) |
+| AIME-25 ⚠️ | pass@16 | +3.3pp (13.3%) | — (10.0%) | −3.3pp (6.7%) | 0.0pp (10.0%) | −6.7pp (3.3%) | 0.0pp (10.0%) |
 
-| Arm | pass@8 | Δ vs GRPO |
-|-----|--------|-----------|
-| **grpo** | **31.7%** | — |
-| minority | 31.3% | −0.5pp |
-| poly_epo | 30.6% | −1.2pp |
+### GRPO LR comparison (3e-6 s59 vs 1e-6 s519)
 
-### Polaris stratified 2k — pass@8
-
-| Arm | pass@8 | Δ vs GRPO |
-|-----|--------|-----------|
-| **grpo** | **31.8%** | — |
-| minority | 31.0% | −0.8pp |
-| poly_epo | 31.4% | −0.5pp |
-
-### MATH-500 — pass@16
-
-| Arm | pass@16 | Δ vs GRPO |
-|-----|---------|-----------|
-| **grpo** | **81.6%** | — |
-| minority | 80.0% | −1.6pp |
-| poly_epo | 78.2% | −3.4pp |
-
-### AIME-25 — pass@16
-
-| Arm | pass@16 |
-|-----|---------|
-| grpo | 10.0% |
-| minority | 3.3% |
-| poly_epo | 10.0% |
-
----
-
-## LR=3e-6 vs LR=1e-6 (GRPO only, apples-to-apples)
-
-| Slice | 1e-6 `grpo_b200_s519` | 3e-6 `grpo_lr3e6_s59` | Δ |
-|-------|----------------------|----------------------|-----|
+| Dataset | 1e-6 `grpo_b200_s519` | 3e-6 `grpo_lr3e6_s59` | Δ (3e-6 − 1e-6) |
+|---------|----------------------|----------------------|-----------------|
 | DAPO pass@8 | 31.7% | 31.9% | +0.2pp |
 | Polaris pass@8 | 31.8% | 32.9% | +1.1pp |
 | MATH-500 pass@16 | 81.6% | 83.2% | +1.6pp |
