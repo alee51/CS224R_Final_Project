@@ -72,7 +72,7 @@ Under Framing Z, the 51K base rollout pass produces a *load-bearing* chart (the 
 | **A+** — Phase 1 only (51K base rollout pass) | $120–150 | 5–8 h | Yes, today | Diagnosis chart (Framing Z load-bearing) | n/a |
 | **B** — No more training | $0 | 0 h | Trivially | Framing Y or Z | n/a |
 | **C** — Qwen3-4B + model-calibrated filter + retrain | $900–1,100 | 36–48 h | Yes if launched by 2026-05-29 PM | "At Polaris-designed model scale, set-based separates" | 40–55% |
-| **D** — CoT-clustering arms at 1.7B (current data) | $900–1,300 | 3–4 days | Tight; needs judge sidecar bring-up to start 2026-05-29 AM | "CoT-clustering finds signal answer-clustering missed" | 30–45% |
+| **D** — CoT-clustering arms at 1.7B (current data) (BAD -- unlikely to solve gradient starvation) | $900–1,300 | 3–4 days | Tight; needs judge sidecar bring-up to start 2026-05-29 AM | "CoT-clustering finds signal answer-clustering missed" | 30–45% |
 
 P(separation) numbers are honest priors, not measurements — bring them up at the meeting and ask the TA to reweight.
 

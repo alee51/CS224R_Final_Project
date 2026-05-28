@@ -1211,8 +1211,8 @@ W&B `_runtime × modal_price_per_sec` on active prod runs; **799 steps = 1 epoch
 
 | Item | Status |
 | ---- | ------ |
-| **BeyondAIME with `hybrid_answer_boxed` (fair OOD vs train prompt)** | **Running** (launched 2026-05-27 19:38 PT): config `checkpoint_eval_beyondaime_pass16_hybrid_arms_latest_b200.yaml`, Modal `ap-yHQQhuvFOUmQ7nrJC0eGNY`. |
-| **DAPO 2k with `hybrid_answer_boxed` (fair OOD)** | **Running** (launched 2026-05-27 19:40 PT): config `checkpoint_eval_2k_dapo_hybrid_arms_latest_b200.yaml`, Modal `ap-5JsNBqCp1k6hqMS4RAenQy`. |
+| **BeyondAIME with `hybrid_answer_boxed` (fair OOD vs train prompt)** | **Done** — `ap-yHQQhuvFOUmQ7nrJC0eGNY`, run `20260528T023940Z`; local [beyondaime_hybrid_summary_20260528T023940Z.json](../data/probes/checkpoint_eval_beyondaime_pass16_hybrid_arms_latest/beyondaime_hybrid_summary_20260528T023940Z.json). |
+| **DAPO 2k with `hybrid_answer_boxed` (fair OOD)** | **Done** — `ap-5JsNBqCp1k6hqMS4RAenQy`, run `20260528T024146Z`; local [dapo_hybrid_summary_20260528T024146Z.json](../data/probes/checkpoint_eval_2k_dapo_hybrid_arms_latest/dapo_hybrid_summary_20260528T024146Z.json). |
 | BeyondAIME rollouts + `analyze_beyondaime_rollouts.py` (`parse_ok`, `extract_path`) | **Done (recomputed + persisted)** — rollout dump `rollouts_20260527T223115Z/`; durable artifacts in `main/data/probes/checkpoint_eval_beyondaime_pass16_arms_latest/qualitative_20260527T223115Z/` (`qualitative_summary.md`, `qualitative_metrics.json`, per-arm logs). Recompute keeps the same conclusion: `parse_ok` stays close to base across arms, `base_pass16_trained_fail > trained_only`, and many fails are parsed-but-wrong (reasoning-quality errors). |
 | More training epochs | Deprioritized (budget; flat marginal returns) |
 
@@ -1392,3 +1392,56 @@ Two coherent paths, plus a hybrid:
 - **Cost estimates for Option A** assume rollout-only first pass is ~2 training-step-equivalents; actual rollout-only pass without weight-sync overhead may be cheaper (closer to $100), but I'm rounding up to be safe.
 
 **Related:** [`probes/random_fullgold_n800_results.md`](./probes/random_fullgold_n800_results.md) (34% mixed-reward density measurement), [`ta_discussion.md` §Q1–Q4](./ta_discussion.md), [`handoff/b200_production_launch_2026-05-27.md`](./handoff/b200_production_launch_2026-05-27.md) (LR=1e-6 lineage that these LR=3e-6 runs are isolated from), [`plans/option_a_filter_retrain_2026-05-27.md`](./plans/option_a_filter_retrain_2026-05-27.md) (Option A pipeline + commands, dry-run staged), [`../data/probes/checkpoint_eval_beyondaime_pass16_hybrid_arms_latest/fair_prompt_eval_summary_2026-05-27.md`](../data/probes/checkpoint_eval_beyondaime_pass16_hybrid_arms_latest/fair_prompt_eval_summary_2026-05-27.md) (fair-prompt cross-slice summary).
+
+---
+
+## 2026-05-28 (Thursday) — LR=3e-6 checkpoint eval (DAPO + Polaris stratified 2k) + AIME deep dive
+
+**Context.** Overnight follow-up to the May 27 LR=3e-6 probe: re-eval both checkpoint families on higher-signal slices (`n_rollouts=16`, `hybrid_answer_boxed`), replacing BeyondAIME with **Polaris stratified 2k** (250/band), **DAPO 2k**, **AIME-25**, and **MATH-500**. Writeup: [`probes/checkpoint_eval_morning_2026-05-28.md`](./probes/checkpoint_eval_morning_2026-05-28.md).
+
+### Runs landed
+
+| Family | Profile | App | Bundle stamp |
+|--------|---------|-----|--------------|
+| LR=3e-6 redo (base + 3 arms) | `chicken602` | `ap-kINjUu8IcD3ckvokrvSVQC` | `20260528T083158Z` |
+| LR=1e-6 resolved (3 arms, no base) | `anastasia` | `ap-IwCEmOJ2WhYI5RojYlItfV` | `20260528T083202Z` |
+| AIME + MATH-500 calibration | `chicken602` / `anastasia` | (earlier apps) | `20260528T082033Z` / `20260528T082039Z` |
+
+DAPO then Polaris ran **sequentially per GPU** (4 GPUs on `chicken602`, 3 on `anastasia`). Volume paths: `main-artifacts/probes/checkpoint_eval_lr3e6_latest_dapo2k_polaris2k_b200/` and `.../checkpoint_eval_lateckpt_resolved_nobase_dapo2k_polaris2k_b200/`.
+
+### Headline (decision-grade slices)
+
+**GRPO wins on every slice that matters at n=2000+.** LR=3e-6 `grpo_lr3e6_s59` beats base on DAPO 2k (+2.0 pp pass@8), Polaris stratified 2k (+2.1 pp), and MATH-500 (+4.4 pp pass@16). Minority/poly are close on DAPO but trail GRPO on Polaris. On 1e-6 resolved ckpts, GRPO still leads everywhere. 3e-6 GRPO vs 1e-6 GRPO: flat on DAPO (+0.2 pp), modest lift on Polaris (+1.1 pp) and MATH-500 (+1.6 pp).
+
+**Recommendation:** continue LR=3e-6 GRPO; do not pivot to minority/poly from these evals; future eval menu = Polaris stratified 2k + DAPO 2k + MATH-500 @ 16 rollouts.
+
+### AIME-25 — base vs GRPO/minority (qualitative deep dive)
+
+Overnight AIME summary showed base pass@16 **13.3%** vs GRPO **10.0%** vs minority **6.7%** (n=30, high variance). Initial read looked like a trained-arm regression on hard OOD.
+
+**Follow-up:** original run did not save per-rollout completions. Re-ran AIME-only with `save_rollouts: true` (`checkpoint_eval_aime25_rollouts_diagnostic_b200.yaml`, app `ap-n0MKKITYLsM3w3XqGrKJkB`, bundle `20260528T184145Z`). Analyzed via [`scripts/analyze_aime_rollouts.py`](../scripts/analyze_aime_rollouts.py); rollouts at [`data/probes/checkpoint_eval_aime25_rollouts_diagnostic_b200/20260528T184145Z/rollouts/`](../data/probes/checkpoint_eval_aime25_rollouts_diagnostic_b200/20260528T184145Z/rollouts/).
+
+**Conclusion: wrong math, not parsing.**
+
+| Arm | parse_ok (rollout-level) | reward rate |
+|-----|---------------------------|-------------|
+| base | 88.3% | 1.0% |
+| grpo_lr3e6_s59 | 87.3% | 0.6% |
+| minority_lr3e6_s54 | 88.5% | 0.6% |
+| poly_epo_lr3e6_s39 | 84.0% | 0.8% |
+
+All arms parse ~84–89% of completions; only ~1% are correct. Base "winning" AIME is **stochastic luck on 1–2 hard problems** (4/30 with pass@16>0 for base vs 2–3/30 for trained), not a grader/parser artifact.
+
+**Regressions where base pass@16=1.0 and trained=0.0** — breakdown on trained rollouts is overwhelmingly **parsed_but_wrong**, not parse_fail:
+
+| problem_id | gold | base | trained failure mode |
+|------------|------|------|----------------------|
+| 20 | 81 | `\boxed{81}` | GRPO `\boxed{24}`, minority `\boxed{729}`, poly `\boxed{0}` — wrong counting / template bleed |
+| 26 | 60 | `\boxed{60}` | GRPO `\boxed{15361}` (bogus m+n+p); minority often gibberish tail; poly wrong radical form |
+| 23 | 49 | `\boxed{49}` | poly only: `\boxed{6}` — flawed divisibility case analysis |
+
+Shared easy win: **problem 5** (gold 70) — all arms pass@16=1.0. GRPO hits `length` stop more often (16/480 vs 3/480 for base) — secondary, not the main story.
+
+**Implication for writeup.** AIME-25 is **sanity-only** (±3 pp per problem at n=30). Do not use it to rank arms. The BeyondAIME-style "base beats trained on hard OOD" narrative does **not** reproduce under matched prompt when you inspect rollouts: trained models emit **confident wrong boxed answers** (often DAPO-style prime-factor / m+n+p templates), consistent with training on easier Polaris/DAPO where GRPO actually wins.
+
+**Related:** [`probes/checkpoint_eval_morning_2026-05-28.md`](./probes/checkpoint_eval_morning_2026-05-28.md), [`configs/checkpoint_eval_aime25_rollouts_diagnostic_b200.yaml`](../configs/checkpoint_eval_aime25_rollouts_diagnostic_b200.yaml).

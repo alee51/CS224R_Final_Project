@@ -1,0 +1,156 @@
+Launching shard 0/8 app=cs224r-base-rollout-51k-s0-anastasia-05-28-1232
+Launching shard 1/8 app=cs224r-base-rollout-51k-s1-anastasia-05-28-1232
+Launching shard 2/8 app=cs224r-base-rollout-51k-s2-anastasia-05-28-1232
+Launching shard 3/8 app=cs224r-base-rollout-51k-s3-anastasia-05-28-1232
+Launching shard 4/8 app=cs224r-base-rollout-51k-s4-anastasia-05-28-1232
+Launching shard 5/8 app=cs224r-base-rollout-51k-s5-anastasia-05-28-1232
+Launching shard 6/8 app=cs224r-base-rollout-51k-s6-anastasia-05-28-1232
+Launching shard 7/8 app=cs224r-base-rollout-51k-s7-anastasia-05-28-1232
+Note that running a local entrypoint in detached mode only keeps the last triggered Modal function alive after the parent process has been killed or disconnected.
+✓ Initialized. View run at 
+https://modal.com/apps/alee72/main/ap-gicGm2x05M9ozDwZQaJdDY
+Note that running a local entrypoint in detached mode only keeps the last triggered Modal function alive after the parent process has been killed or disconnected.
+✓ Initialized. View run at 
+https://modal.com/apps/alee72/main/ap-qjGa2H9bNajkZ3IF70GaAU
+Note that running a local entrypoint in detached mode only keeps the last triggered Modal function alive after the parent process has been killed or disconnected.
+✓ Initialized. View run at 
+https://modal.com/apps/alee72/main/ap-fzFxGCXOn0xm8erkm6A0C8
+Note that running a local entrypoint in detached mode only keeps the last triggered Modal function alive after the parent process has been killed or disconnected.
+✓ Initialized. View run at 
+https://modal.com/apps/alee72/main/ap-d418GVDaJI96B2QrmwLL4F
+Note that running a local entrypoint in detached mode only keeps the last triggered Modal function alive after the parent process has been killed or disconnected.
+✓ Initialized. View run at 
+https://modal.com/apps/alee72/main/ap-B025C8tMHFXgTmb1S5h2wE
+Note that running a local entrypoint in detached mode only keeps the last triggered Modal function alive after the parent process has been killed or disconnected.
+✓ Initialized. View run at 
+https://modal.com/apps/alee72/main/ap-1DBHFhCMU49f6DRgQb6u18
+Note that running a local entrypoint in detached mode only keeps the last triggered Modal function alive after the parent process has been killed or disconnected.
+✓ Initialized. View run at 
+https://modal.com/apps/alee72/main/ap-ZrPHq9pYfUkUHqaH2zZMHV
+Note that running a local entrypoint in detached mode only keeps the last triggered Modal function alive after the parent process has been killed or disconnected.
+✓ Initialized. View run at 
+https://modal.com/apps/alee72/main/ap-DQZUbNJYNVeOwdtZ7T4oQ2
+✓ Created objects.
+├── 🔨 Created mount 
+│   /Users/nancybao/Desktop/dev/cs224r_finalproject/main/probes/group_a_rollout_
+│   judge.py
+├── 🔨 Created mount /Users/nancybao/Desktop/dev/cs224r_finalproject/main
+├── 🔨 Created function run_phase1.
+├── 🔨 Created function run_pipeline.
+└── 🔨 Created function run_phase2.
+Spawned Phase 1 only: fc-01KSR1AV5HKBJ6RMGVG5R0W6X1
+Track progress on Modal dashboard; wandb run appears after Phase 1 init.
+✓ Created objects.
+├── 🔨 Created mount 
+│   /Users/nancybao/Desktop/dev/cs224r_finalproject/main/probes/group_a_rollout_
+│   judge.py
+├── 🔨 Created mount /Users/nancybao/Desktop/dev/cs224r_finalproject/main
+├── 🔨 Created function run_phase1.
+├── 🔨 Created function run_pipeline.
+└── 🔨 Created function run_phase2.
+Spawned Phase 1 only: fc-01KSR1B1C09B1MTRWSKZG8NCSM
+Track progress on Modal dashboard; wandb run appears after Phase 1 init.
+INFO 05-28 19:35:21 [__init__.py:243] Automatically detected platform cuda.
+[modal-client] 2026-05-28T12:35:23-0700 Timed out waiting for final app logs.
+WARNING:modal-client:Timed out waiting for final app logs.
+✓ App completed. View run at 
+https://modal.com/apps/alee72/main/ap-gicGm2x05M9ozDwZQaJdDY
+shard 5 cs224r-base-rollout-51k-s5-anastasia-05-28-1232
+✓ Created objects.
+├── 🔨 Created mount 
+│   /Users/nancybao/Desktop/dev/cs224r_finalproject/main/probes/group_a_rollout_
+│   judge.py
+├── 🔨 Created mount /Users/nancybao/Desktop/dev/cs224r_finalproject/main
+├── 🔨 Created function run_phase1.
+├── 🔨 Created function run_pipeline.
+└── 🔨 Created function run_phase2.
+Spawned Phase 1 only: fc-01KSR1B5ZK22MQ9QFTSVAFZE51
+Track progress on Modal dashboard; wandb run appears after Phase 1 init.
+✓ Created objects.
+├── 🔨 Created mount 
+│   /Users/nancybao/Desktop/dev/cs224r_finalproject/main/probes/group_a_rollout_
+│   judge.py
+├── 🔨 Created mount /Users/nancybao/Desktop/dev/cs224r_finalproject/main
+├── 🔨 Created function run_phase1.
+├── 🔨 Created function run_pipeline.
+└── 🔨 Created function run_phase2.
+✓ Created objects.
+├── 🔨 Created mount 
+│   /Users/nancybao/Desktop/dev/cs224r_finalproject/main/probes/group_a_rollout_
+│   judge.py
+├── 🔨 Created mount /Users/nancybao/Desktop/dev/cs224r_finalproject/main
+├── 🔨 Created function run_phase1.
+├── 🔨 Created function run_pipeline.
+└── 🔨 Created function run_phase2.
+Spawned Phase 1 only: fc-01KSR1BAYXCNK7TY4JQTVDNBYX
+Track progress on Modal dashboard; wandb run appears after Phase 1 init.
+INFO 05-28 19:35:29 [__init__.py:243] Automatically detected platform cuda.
+[modal-client] 2026-05-28T12:35:30-0700 Timed out waiting for final app logs.
+WARNING:modal-client:Timed out waiting for final app logs.
+✓ App completed. View run at 
+https://modal.com/apps/alee72/main/ap-DQZUbNJYNVeOwdtZ7T4oQ2
+shard 6 cs224r-base-rollout-51k-s6-anastasia-05-28-1232
+✓ Created objects.
+├── 🔨 Created mount 
+│   /Users/nancybao/Desktop/dev/cs224r_finalproject/main/probes/group_a_rollout_
+│   judge.py
+├── 🔨 Created mount /Users/nancybao/Desktop/dev/cs224r_finalproject/main
+├── 🔨 Created function run_phase1.
+├── 🔨 Created function run_pipeline.
+└── 🔨 Created function run_phase2.
+Spawned Phase 1 only: fc-01KSR1BENW34EF8KV8MNR8D094
+Track progress on Modal dashboard; wandb run appears after Phase 1 init.
+✓ Created objects.
+├── 🔨 Created mount 
+│   /Users/nancybao/Desktop/dev/cs224r_finalproject/main/probes/group_a_rollout_
+│   judge.py
+├── 🔨 Created mount /Users/nancybao/Desktop/dev/cs224r_finalproject/main
+├── 🔨 Created function run_phase1.
+├── 🔨 Created function run_pipeline.
+└── 🔨 Created function run_phase2.
+✓ Created objects.
+├── 🔨 Created mount 
+│   /Users/nancybao/Desktop/dev/cs224r_finalproject/main/probes/group_a_rollout_
+│   judge.py
+├── 🔨 Created mount /Users/nancybao/Desktop/dev/cs224r_finalproject/main
+├── 🔨 Created function run_phase1.
+├── 🔨 Created function run_pipeline.
+└── 🔨 Created function run_phase2.
+Spawned Phase 1 only: fc-01KSR1BFFSEK42TT53Q21AQYYT
+Track progress on Modal dashboard; wandb run appears after Phase 1 init.
+Spawned Phase 1 only: fc-01KSR1BFPR8KQ7WQHV0FMG62XJ
+Track progress on Modal dashboard; wandb run appears after Phase 1 init.
+[modal-client] 2026-05-28T12:35:34-0700 Timed out waiting for final app logs.
+WARNING:modal-client:Timed out waiting for final app logs.
+✓ App completed. View run at 
+https://modal.com/apps/alee72/main/ap-1DBHFhCMU49f6DRgQb6u18
+shard 7 cs224r-base-rollout-51k-s7-anastasia-05-28-1232
+Spawned Phase 1 only: fc-01KSR1BG8SBSKPR81F864T22F2
+Track progress on Modal dashboard; wandb run appears after Phase 1 init.
+[modal-client] 2026-05-28T12:35:39-0700 Timed out waiting for final app logs.
+WARNING:modal-client:Timed out waiting for final app logs.
+✓ App completed. View run at 
+https://modal.com/apps/alee72/main/ap-fzFxGCXOn0xm8erkm6A0C8
+shard 2 cs224r-base-rollout-51k-s2-anastasia-05-28-1232
+[modal-client] 2026-05-28T12:35:43-0700 Timed out waiting for final app logs.
+WARNING:modal-client:Timed out waiting for final app logs.
+✓ App completed. View run at 
+https://modal.com/apps/alee72/main/ap-ZrPHq9pYfUkUHqaH2zZMHV
+shard 3 cs224r-base-rollout-51k-s3-anastasia-05-28-1232
+INFO 05-28 19:35:43 [__init__.py:243] Automatically detected platform cuda.
+INFO 05-28 19:35:43 [__init__.py:243] Automatically detected platform cuda.
+[modal-client] 2026-05-28T12:35:43-0700 Timed out waiting for final app logs.
+WARNING:modal-client:Timed out waiting for final app logs.
+✓ App completed. View run at 
+https://modal.com/apps/alee72/main/ap-d418GVDaJI96B2QrmwLL4F
+shard 0 cs224r-base-rollout-51k-s0-anastasia-05-28-1232
+[modal-client] 2026-05-28T12:35:44-0700 Timed out waiting for final app logs.
+WARNING:modal-client:Timed out waiting for final app logs.
+✓ App completed. View run at 
+https://modal.com/apps/alee72/main/ap-B025C8tMHFXgTmb1S5h2wE
+shard 1 cs224r-base-rollout-51k-s1-anastasia-05-28-1232
+[modal-client] 2026-05-28T12:35:44-0700 Timed out waiting for final app logs.
+WARNING:modal-client:Timed out waiting for final app logs.
+✓ App completed. View run at 
+https://modal.com/apps/alee72/main/ap-qjGa2H9bNajkZ3IF70GaAU
+shard 4 cs224r-base-rollout-51k-s4-anastasia-05-28-1232

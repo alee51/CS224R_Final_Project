@@ -62,14 +62,30 @@ echo "Volume output: probes/base_rollout_pass_polaris_51k/${RUN_STAMP}/shard_XX_
 echo "Merge after completion:"
 echo "  main/.venv/bin/python3 main/scripts/merge_base_rollout_shards.py --stamp ${RUN_STAMP}"
 
+PIDS=()
 for ((i = 0; i < NUM_SHARDS; i++)); do
-  export CS224R_SHARD_INDEX="$i"
-  export CS224R_APP_NAME="cs224r-base-rollout-51k-s${i}-${OP}-${TS}"
-  echo "Launching shard ${i}/${NUM_SHARDS} app=${CS224R_APP_NAME}"
-  main/.venv/bin/modal run $DETACH \
-    main/probes/group_a_rollout_judge.py::run_phase1_only \
-    --config "$CFG" >>"$LAUNCHED" 2>&1
-  echo "shard ${i} ${CS224R_APP_NAME}" >>"$LAUNCHED"
+  (
+    export CS224R_SHARD_INDEX="$i"
+    export CS224R_APP_NAME="cs224r-base-rollout-51k-s${i}-${OP}-${TS}"
+    echo "Launching shard ${i}/${NUM_SHARDS} app=${CS224R_APP_NAME}"
+    main/.venv/bin/modal run $DETACH \
+      main/probes/group_a_rollout_judge.py::run_phase1_only \
+      --config "$CFG"
+    echo "shard ${i} ${CS224R_APP_NAME}"
+  ) >>"$LAUNCHED" 2>&1 &
+  PIDS+=("$!")
 done
+
+FAILED=0
+for pid in "${PIDS[@]}"; do
+  if ! wait "$pid"; then
+    FAILED=$((FAILED + 1))
+  fi
+done
+
+if [[ "$FAILED" -gt 0 ]]; then
+  echo "ERROR: ${FAILED}/${NUM_SHARDS} shard launchers failed. See ${LAUNCHED}" >&2
+  exit 1
+fi
 
 echo "Launched ${NUM_SHARDS} shards. Manifest: ${LAUNCHED}"

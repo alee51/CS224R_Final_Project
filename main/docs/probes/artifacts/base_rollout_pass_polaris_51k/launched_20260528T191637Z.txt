@@ -55,3 +55,44 @@ shard 2 cs224r-base-rollout-51k-s2-anastasia-05-28-1216
 Note that running a local entrypoint in detached mode only keeps the last triggered Modal function alive after the parent process has been killed or disconnected.
 ✓ Initialized. View run at 
 https://modal.com/apps/alee72/main/ap-XHB8pwVYShe8YGAj23qDRr
+✓ Created objects.
+├── 🔨 Created mount 
+│   /Users/nancybao/Desktop/dev/cs224r_finalproject/main/probes/group_a_rollout_
+│   judge.py
+├── 🔨 Created mount /Users/nancybao/Desktop/dev/cs224r_finalproject/main
+├── 🔨 Created function run_phase1.
+├── 🔨 Created function run_pipeline.
+└── 🔨 Created function run_phase2.
+Spawned Phase 1 only: fc-01KSR0X1E5F4RJWJCK0990YG4D
+Track progress on Modal dashboard; wandb run appears after Phase 1 init.
+[modal-client] 2026-05-28T12:27:50-0700 Timed out waiting for final app logs.
+WARNING:modal-client:Timed out waiting for final app logs.
+✓ App completed. View run at 
+https://modal.com/apps/alee72/main/ap-XHB8pwVYShe8YGAj23qDRr
+shard 3 cs224r-base-rollout-51k-s3-anastasia-05-28-1216
+Note that running a local entrypoint in detached mode only keeps the last triggered Modal function alive after the parent process has been killed or disconnected.
+✓ Initialized. View run at 
+https://modal.com/apps/alee72/main/ap-DmJubTdjdIETbDrXTSVQ6V
+✓ Created objects.
+├── 🔨 Created mount 
+│   /Users/nancybao/Desktop/dev/cs224r_finalproject/main/probes/group_a_rollout_
+│   judge.py
+├── 🔨 Created mount /Users/nancybao/Desktop/dev/cs224r_finalproject/main
+├── 🔨 Created function run_phase1.
+├── 🔨 Created function run_pipeline.
+└── 🔨 Created function run_phase2.
+Spawned Phase 1 only: fc-01KSR1252DR70GGT2Y3MAP95QR
+Track progress on Modal dashboard; wandb run appears after Phase 1 init.
+INFO 05-28 19:30:36 [__init__.py:243] Automatically detected platform cuda.
+[modal-client] 2026-05-28T12:30:38-0700 Timed out waiting for final app logs.
+WARNING:modal-client:Timed out waiting for final app logs.
+✓ App completed. View run at 
+https://modal.com/apps/alee72/main/ap-DmJubTdjdIETbDrXTSVQ6V
+shard 4 cs224r-base-rollout-51k-s4-anastasia-05-28-1216
+Note that running a local entrypoint in detached mode only keeps the last triggered Modal function alive after the parent process has been killed or disconnected.
+✓ Initialized. View run at 
+https://modal.com/apps/alee72/main/ap-UpbpyuOEg69QSNaPyLRbTn
+╭─ Error ──────────────────────────────────────────────────────────────────────╮
+│ /Users/nancybao/Desktop/dev/cs224r_finalproject/main/probes/group_a_rollout_ │
+│ judge.py was modified during build process.                                  │
+╰──────────────────────────────────────────────────────────────────────────────╯

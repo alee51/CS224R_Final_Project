@@ -422,7 +422,6 @@ def run_phase1(config: str) -> str:
     wandb_run_id = run.id
 
     smoke = bool(cfg.get("smoke", False))
-    per_band = int(cfg["smoke_per_band"] if smoke else cfg["sampling"]["per_band"])
     rollouts_per_prompt = int(
         cfg["smoke_n_rollouts"] if smoke else cfg["sampling"]["rollouts_per_prompt"]
     )
@@ -461,6 +460,7 @@ def run_phase1(config: str) -> str:
             manifest_path,
         )
     else:
+        per_band = int(cfg["smoke_per_band"] if smoke else cfg["sampling"]["per_band"])
         raw_rows = _load_or_build_polaris_cache(vol_root)
         clean_rows = _clean_polaris_rows(raw_rows)
         band_counts: dict[str, int] = defaultdict(int)
