@@ -389,12 +389,22 @@ def _resume_wandb(cfg: dict[str, Any], wandb_run_id: str) -> Any:
         HF_CACHE_MOUNT: hf_cache_volume,
     },
 )
-def run_phase1(config: str) -> str:
+def run_phase1(
+    config: str,
+    shard_index_override: int | None = None,
+    run_stamp_override: str | None = None,
+) -> str:
     """Phase 1: Polaris sample, vLLM rollouts, volume artifacts, wandb logging."""
     from vllm import LLM, SamplingParams
 
     from train.prompts import format_problem
     from train.reward import compute_reward
+
+    # Modal does not propagate local shell env; pass shard/stamp as spawn args.
+    if shard_index_override is not None:
+        os.environ["CS224R_SHARD_INDEX"] = str(shard_index_override)
+    if run_stamp_override:
+        os.environ["CS224R_RUN_STAMP"] = str(run_stamp_override)
 
     cfg = _load_yaml(config)
     repro = _git_metadata()
@@ -612,7 +622,7 @@ def run_phase1(config: str) -> str:
             total_rollouts,
             tokens_per_sec,
         )
-        if batches_done % 20 == 0:
+        if batches_done == 1 or batches_done % 10 == 0:
             artifacts_volume.commit()
 
     wall_clock_total = time.monotonic() - run_t0
@@ -1033,11 +1043,74 @@ def run_phase2(config: str, wandb_run_id: str | None = None) -> str:
 
 
 @app.local_entrypoint()
-def run_phase1_only(config: str) -> None:
-    """Launch Phase 1 only; survives laptop disconnect via spawn."""
-    call = run_phase1.spawn(config=config)
+def run_phase1_only(
+    config: str,
+    shard_index: int = -1,
+    run_stamp: str = "",
+) -> None:
+    """Launch one Phase-1 shard (prefer launch_all_shards for multi-GPU)."""
+    if not run_stamp:
+        run_stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+    spawn_kwargs: dict[str, Any] = {
+        "config": config,
+        "run_stamp_override": run_stamp,
+    }
+    if shard_index >= 0:
+        spawn_kwargs["shard_index_override"] = shard_index
+    call = run_phase1.spawn(**spawn_kwargs)
     print(f"Spawned Phase 1 only: {call.object_id}")
+    print(f"  shard_index={shard_index} run_stamp={run_stamp}")
     print("Track progress on Modal dashboard; wandb run appears after Phase 1 init.")
+
+
+@app.local_entrypoint()
+def launch_all_shards(
+    config: str,
+    num_shards: int = 8,
+    run_stamp: str = "",
+) -> None:
+    """Spawn all Phase-1 shards from one entrypoint (safe with --detach).
+
+    Do not launch multiple `modal run --detach` processes in parallel — Modal
+    only keeps the last detached local entrypoint alive.
+    """
+    if not run_stamp:
+        run_stamp = os.environ.get("CS224R_RUN_STAMP") or datetime.now(
+            timezone.utc
+        ).strftime("%Y%m%dT%H%M%SZ")
+    handles = []
+    for shard_index in range(num_shards):
+        call = run_phase1.spawn(
+            config=config,
+            shard_index_override=shard_index,
+            run_stamp_override=run_stamp,
+        )
+        handles.append((shard_index, call.object_id))
+        print(f"Spawned shard {shard_index}/{num_shards}: {call.object_id}")
+    print(f"run_stamp={run_stamp}")
+    print(
+        f"Volume: probes/base_rollout_pass_polaris_51k/{run_stamp}/shard_XX_of_{num_shards:02d}/rollouts.jsonl"
+    )
+    print("After batch 1 (~128 rollouts + commit), rollouts.jsonl should appear per shard.")
+
+
+@app.local_entrypoint()
+def launch_shards(
+    config: str,
+    run_stamp: str,
+    shard_start: int,
+    shard_end: int,
+    num_shards: int = 8,
+) -> None:
+    """Spawn an inclusive shard index range (for recovering missing shards)."""
+    for shard_index in range(shard_start, shard_end + 1):
+        os.environ["CS224R_NUM_SHARDS"] = str(num_shards)
+        call = run_phase1.spawn(
+            config=config,
+            shard_index_override=shard_index,
+            run_stamp_override=run_stamp,
+        )
+        print(f"Spawned shard {shard_index}: {call.object_id}")
 
 
 @app.local_entrypoint()

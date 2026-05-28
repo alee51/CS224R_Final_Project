@@ -41,6 +41,7 @@ artifacts:
   volume_mount: /vol
   manifest_path: data/polaris_train.jsonl
   base_dir: probes/base_rollout_pass_polaris_51k
+  # run_stamp set by launch_base_rollout_pass.sh (--run-stamp); fallback in probe code
 
 wandb:
   entity: 224r-project

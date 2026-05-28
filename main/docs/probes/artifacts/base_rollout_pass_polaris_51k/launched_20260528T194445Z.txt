@@ -1,0 +1,32 @@
+Launching shard 0/8 app=cs224r-base-rollout-51k-s0-anastasia-05-28-1244
+Launching shard 1/8 app=cs224r-base-rollout-51k-s1-anastasia-05-28-1244
+Launching shard 2/8 app=cs224r-base-rollout-51k-s2-anastasia-05-28-1244
+Launching shard 3/8 app=cs224r-base-rollout-51k-s3-anastasia-05-28-1244
+Launching shard 4/8 app=cs224r-base-rollout-51k-s4-anastasia-05-28-1244
+Launching shard 5/8 app=cs224r-base-rollout-51k-s5-anastasia-05-28-1244
+Launching shard 6/8 app=cs224r-base-rollout-51k-s6-anastasia-05-28-1244
+Launching shard 7/8 app=cs224r-base-rollout-51k-s7-anastasia-05-28-1244
+Note that running a local entrypoint in detached mode only keeps the last triggered Modal function alive after the parent process has been killed or disconnected.
+✓ Initialized. View run at 
+https://modal.com/apps/alee72/main/ap-GOBr7vZWkuPTHiQeRJaoqm
+Note that running a local entrypoint in detached mode only keeps the last triggered Modal function alive after the parent process has been killed or disconnected.
+✓ Initialized. View run at 
+https://modal.com/apps/alee72/main/ap-1US7nU5t5VcdK4imqZlBY5
+Note that running a local entrypoint in detached mode only keeps the last triggered Modal function alive after the parent process has been killed or disconnected.
+✓ Initialized. View run at 
+https://modal.com/apps/alee72/main/ap-0VjbSp6ii93pZ91LnjfPLe
+Note that running a local entrypoint in detached mode only keeps the last triggered Modal function alive after the parent process has been killed or disconnected.
+✓ Initialized. View run at 
+https://modal.com/apps/alee72/main/ap-LiwOwHaT0bNvQn2oP6cftK
+Note that running a local entrypoint in detached mode only keeps the last triggered Modal function alive after the parent process has been killed or disconnected.
+✓ Initialized. View run at 
+https://modal.com/apps/alee72/main/ap-ZdSBdu8nBLfJ813inTVU5f
+Note that running a local entrypoint in detached mode only keeps the last triggered Modal function alive after the parent process has been killed or disconnected.
+✓ Initialized. View run at 
+https://modal.com/apps/alee72/main/ap-k9phFA1PJURpwGiU8esKSe
+Note that running a local entrypoint in detached mode only keeps the last triggered Modal function alive after the parent process has been killed or disconnected.
+✓ Initialized. View run at 
+https://modal.com/apps/alee72/main/ap-iz4RNKqcMRhosjIWMCPKrT
+Note that running a local entrypoint in detached mode only keeps the last triggered Modal function alive after the parent process has been killed or disconnected.
+✓ Initialized. View run at 
+https://modal.com/apps/alee72/main/ap-y9GiZqbDfMAKOPiYZouNxV

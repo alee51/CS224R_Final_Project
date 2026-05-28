@@ -1,0 +1,33 @@
+Run stamp: 20260528T194707Z
+Shards: 8 x B200 (operator=anastasia)
+Volume: probes/base_rollout_pass_polaris_51k/20260528T194707Z/shard_XX_of_08/
+Merge: main/.venv/bin/python3 main/scripts/merge_base_rollout_shards.py --stamp 20260528T194707Z
+Note that running a local entrypoint in detached mode only keeps the last triggered Modal function alive after the parent process has been killed or disconnected.
+✓ Initialized. View run at 
+https://modal.com/apps/alee72/main/ap-oXTbY4BXAytl5k6QASIMuf
+✓ Created objects.
+├── 🔨 Created mount 
+│   /Users/nancybao/Desktop/dev/cs224r_finalproject/main/probes/group_a_rollout_
+│   judge.py
+├── 🔨 Created mount /Users/nancybao/Desktop/dev/cs224r_finalproject/main
+├── 🔨 Created function run_phase1.
+├── 🔨 Created function run_pipeline.
+└── 🔨 Created function run_phase2.
+Spawned shard 0/8: fc-01KSR25PTC5QKC6XFXGJT6RRH2
+Spawned shard 1/8: fc-01KSR25PZEXRQYAE5QWW4RGPMY
+Spawned shard 2/8: fc-01KSR25QAB6VSHXFJHCMQHV9ZZ
+Spawned shard 3/8: fc-01KSR25QTXRXVSMQ2GH8Q6Y58W
+Spawned shard 4/8: fc-01KSR25QZT78RS0XY0BFHM58Y0
+Spawned shard 5/8: fc-01KSR25RRKNT9KS9SC1XZVZDT7
+Spawned shard 6/8: fc-01KSR25RZBSZ2DTCYE0EGR6GP5
+Spawned shard 7/8: fc-01KSR25S5H3G9H1E9M2YKMJ0K5
+run_stamp=20260528T194707Z
+Volume: 
+probes/base_rollout_pass_polaris_51k/20260528T194707Z/shard_XX_of_08/rollouts.js
+onl
+After batch 1 (~128 rollouts + commit), rollouts.jsonl should appear per shard.
+INFO 05-28 19:50:03 [__init__.py:243] Automatically detected platform cuda.
+[modal-client] 2026-05-28T12:50:06-0700 Timed out waiting for final app logs.
+WARNING:modal-client:Timed out waiting for final app logs.
+✓ App completed. View run at 
+https://modal.com/apps/alee72/main/ap-oXTbY4BXAytl5k6QASIMuf
