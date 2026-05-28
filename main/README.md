@@ -4,32 +4,39 @@ Code and docs for the post-milestone minority-voting training run. Run Modal job
 
 ## Where to find what
 
-| Doc | Path | Read when you need… |
-| --- | --- | --- |
-| **Launch training** | [`docs/launch_training.md`](docs/launch_training.md) | **How to launch smokes and full runs** — copy-paste commands for agents (`--gpu-class`, `--arm`, no bad config pairings). |
-| **Context** | [`docs/context.md`](docs/context.md) | Team facts, deadlines, budget, reading list. Start here for orientation. |
-| **Plan** | [`docs/PLAN.md`](docs/PLAN.md) | What we're building and why: dataset, training arms, eval, ops, cost sizing. Updated from probe readouts. |
-| **Standards** | [`docs/STANDARDS.md`](docs/STANDARDS.md) | Cross-cutting engineering rules: configs, seeds, wandb, Modal, artifacts. All code must follow this. |
-| **Probe plan** | [`docs/probes/05-24_probe_plan.md`](docs/probes/05-24_probe_plan.md) | Why we're running Group A/B probes and what decisions they unlock. |
-| **Probe impl** | [`docs/probes/group_a_impl.md`](docs/probes/group_a_impl.md) | Locked knobs, file list, artifact schemas, launch commands for Group A. |
-| **Probe workflow** | [`docs/probes/group_a_workflow.md`](docs/probes/group_a_workflow.md) | Phased build/audit checklist (A→D). For agents or structured implementation. |
+| Doc | Read when you need… |
+| --- | --- |
+| [`docs/context.md`](docs/context.md) | Orientation: team, budget, deadlines, reading list. **Start here.** |
+| [`docs/PLAN.md`](docs/PLAN.md) | Strategy: dataset, arms, eval, ops, cost sizing. |
+| [`docs/timeline.md`](docs/timeline.md) | Chronology: what we tried, in order. |
+| [`docs/decisions.md`](docs/decisions.md) | Indexed log of locked decisions. |
+| [`docs/STANDARDS.md`](docs/STANDARDS.md) | Engineering rules: seeds, wandb, Modal, artifacts. |
+| [`docs/launch_training.md`](docs/launch_training.md) | How to launch smokes / full runs. Pair with `docs/handoff/`. |
+| [`docs/handoff/`](docs/handoff/) | Active production configs + relaunch / resume commands. |
+| [`docs/monitoring/`](docs/monitoring/) | W&B dashboard quickstart + full diagnostics. |
+| [`docs/build_spec/`](docs/build_spec/) | Trainer arch + per-arm implementation specs (minority, poly-EPO, clustering). |
+| [`docs/efficiency/`](docs/efficiency/) | B200 tuning levers (token_budget, sleep, gc); operational notes. |
+| [`docs/probes/`](docs/probes/) | Frozen probe findings — prompt arm C, mathd∨sympy grader, Polaris-vs-DAPO. Cite from paper. |
+| [`docs/paper/`](docs/paper/) | Paper-bound `method.md` + `results/` (final numbers only). |
+| [`docs/ta_discussion.md`](docs/ta_discussion.md) | Office-hours agenda: status, learnings, open questions. |
+| [`docs/reference/`](docs/reference/) | Completed audits and superseded designs. Consult, don't edit. |
 
-**Rule of thumb:** `context` → orientation · `PLAN` → experiment design · `STANDARDS` → how to write code · `probes/*` → pre-training validation runs.
+**Rule of thumb:** `context` → orientation · `PLAN` → strategy · `timeline` → history · `STANDARDS` → engineering rules · `handoff` → launch ops · `paper/` → writeup.
 
 ### Code layout (high level)
 
 ```
 main/
-  train/          reward + prompts (shared with training later)
+  train/          GRPO trainer, objective, loss, reward, clustering
   judge/          Poly-EPO judge prompt + format helpers
   infra/          Modal image, volumes, hello verification
-  probes/         Modal entrypoints (e.g. group_a_rollout_judge.py)
-  configs/        yaml configs (source of truth for knobs)
+  probes/         Modal probe entrypoints (rollout eval, smokes)
+  configs/        yaml configs (source of truth for knobs); _archive/ for stale
   scripts/        launch wrappers
   tests/          local unit tests (no GPU)
 ```
 
-GPU deps (torch, vllm, etc.) are pinned in `infra/modal_image.py` and run on Modal H100 — not in local `requirements.txt`.
+GPU deps (torch, vllm, etc.) are pinned in `infra/modal_image.py` and run on Modal B200 (default) or H200 — not in local `requirements.txt`.
 
 ---
 
@@ -77,26 +84,12 @@ CS224R_APP_NAME=cs224r-hello-test modal run main/infra/hello_modal.py
 
 Expect: `/vol listing: (empty)` and `HF cache path: /root/.cache/huggingface`. First run builds the shared image (~few min); later runs are fast.
 
-### 5. Group A probe smoke (H100)
-
-Config defaults to smoke mode (`smoke: true` in `configs/probe_a_05-24.yaml`):
-
-```bash
-bash main/scripts/launch_probe_a.sh
-```
-
-Monitor on [Modal dashboard](https://modal.com) and [wandb](https://wandb.ai/224r-project/cs224r-minority-voting). After completion:
-
-```bash
-modal volume ls main-artifacts probes/05-24/group_a/
-```
-
-Full run: set `smoke: false` in the yaml, then launch again (~2 hr H100).
-
-### 6. Production training (B200)
+### 5. Production training (B200)
 
 See **[`docs/launch_training.md`](docs/launch_training.md)** for canonical commands. Example:
 
 ```bash
 bash main/scripts/launch_train.sh --mode full --gpu-class b200 --arm grpo
 ```
+
+Monitor on [Modal dashboard](https://modal.com) and [wandb](https://wandb.ai/224r-project/cs224r-minority-voting).

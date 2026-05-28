@@ -4,6 +4,8 @@ Chronological narrative of major work, decisions, and pivots on the main experim
 
 This doc records the **journey** — what we tried, what we learned, what we decided. For the static rules of the project, see `[STANDARDS.md](./STANDARDS.md)`; for the strategic plan, `[PLAN.md](./PLAN.md)`.
 
+**Checkpoint eval (canonical):** [B200 three-arm — Polaris 2k / DAPO 2k / BeyondAIME](#2026-05-27-wednesday--b200-three-arm-checkpoint-eval-canonical) (May 27, 2026). Local JSON under `main/data/probes/checkpoint_eval_*_arms_latest/`.
+
 ---
 
 ## 2026-05-24 (Sunday) — repo bootstrap
@@ -800,51 +802,26 @@ This substrate is imperfect by design — we accept the floor, log the limitatio
 
 ---
 
-## 2026-05-27 (Wednesday) — GRPO checkpoint slice eval: flat wandb ≠ flat learning
+## 2026-05-27 (Wednesday) — GRPO checkpoint slice eval (H200 only; precursor)
 
-**Context.** ~275 training steps in (nancy `8qesa78k` + anastasia `pcas3emd`); live `train/mean_reward` and pass@k histogram looked roughly constant. Raised concern about wiring bugs or skipping an LR sweep.
+**Superseded for three-arm numbers** by **[B200 three-arm checkpoint eval (canonical)](#2026-05-27-wednesday--b200-three-arm-checkpoint-eval-canonical)** below. Keep this entry for the **H200 GRPO-only** learning-curve question (“flat wandb ≠ flat learning?”).
 
-**Method.** Offline fixed-slice rollout eval on Modal (B200, 4 GPUs in parallel): **same 2000 Polaris prompts** every time (seed 42 from `polaris_train.jsonl`, arm C `hybrid_answer_boxed`, 8 rollouts/prompt, train grader, `rollout_chunk_prompts=64`). Compared **base** `Qwen3-1.7B-Base` vs `/vol/checkpoints/train_real/step_{49,99,149}.pt` (HF load → vLLM weight sync). Harness: `[main/probes/checkpoint_rollout_eval.py](../probes/checkpoint_rollout_eval.py)`; config `main/configs/checkpoint_eval_2k_polaris_aime_b200.yaml`; launch `bash main/scripts/launch_checkpoint_eval.sh --config main/configs/checkpoint_eval_2k_polaris_aime_b200.yaml --detach`. Modal app `ap-pF7iDkRVy6L8QBqtBW8QOe`, run `20260527T060234Z`. Supersedes an earlier **128-prompt** H200 probe (`/vol/probes/checkpoint_eval/20260527T041910Z/`) — same harness, much larger n.
+**Context.** ~275 H200 GRPO steps (`pcas3emd`); live W&B looked flat → fixed-slice Polaris 2k, **base vs multiple GRPO ckpts only** (not minority/poly).
 
-**Results (Polaris 2000 prompts, identical slice):**
+**Method.** `[checkpoint_rollout_eval.py](../probes/checkpoint_rollout_eval.py)`; config `checkpoint_eval_2k_polaris_aime_b200.yaml`; run `20260527T060234Z` (Modal `ap-pF7iDkRVy6L8QBqtBW8QOe`). Polaris 2000 prompts, seed 42, `hybrid_answer_boxed`, 8 rollouts/prompt, train grader.
 
+| Checkpoint (H200 GRPO) | pass@8 | frac 0/8 |
+| ---------------------- | ------ | -------- |
+| base | 0.306 | 0.694 |
+| step 49 | 0.315 | 0.686 |
+| **step 99** | **0.324** | **0.676** |
+| step 149 | 0.323 | 0.677 |
+| step 239 | 0.314 | 0.686 |
+| step 339 | 0.320 | 0.681 |
 
-| Checkpoint | mean_reward | pass@8    | frac 0/8 correct |
-| ---------- | ----------- | --------- | ---------------- |
-| Base       | 0.085       | 0.306     | 0.694            |
-| step 49    | 0.087       | 0.315     | 0.686            |
-| step 99    | 0.090       | **0.324** | **0.676**        |
-| step 149   | 0.090       | 0.323     | 0.677            |
-| step 239   | 0.088       | 0.314     | 0.686            |
-| step 339   | 0.091       | 0.320     | 0.681            |
+**H200 GRPO verdict:** Small on-distribution lift (best **+1.8 pp** at step 99), then plateau ~0.31–0.32 — not a wiring failure (`ratio_max` healthy). Artifacts: [polaris_summary_20260527T060234Z.json](../data/probes/checkpoint_eval_2k_polaris_aime/polaris_summary_20260527T060234Z.json), [polaris_summary_20260527T074137Z.json](../data/probes/checkpoint_eval_2k_polaris_later/polaris_summary_20260527T074137Z.json).
 
-
-**OOD DAPO 2k** (same slice `dapo_n2000_seed43`, Anastasia H200, run `20260527T090530Z`; base + step 339 complete, step 99 in progress):
-
-
-| Checkpoint | pass@8 | frac 0/8 correct |
-| ---------- | ------ | ---------------- |
-| base       | 0.274  | 0.726            |
-| step 339   | 0.259  | 0.742            |
-
-
-Δ step 339 vs base on DAPO: pass@8 **−0.016** (slight OOD regression).
-
-Δ step 99 vs base (best pass@8 on this slice): pass@8 **+0.018**, frac₀ **−0.018**; mean_reward +0.005. Steps 149 / 239 / 339 stay in a **~0.31–0.32** pass@8 band (no clear gain past ~step 100). Later pair: Anastasia workspace, run `20260527T074137Z` — `[polaris_summary_20260527T074137Z.json](../data/probes/checkpoint_eval_2k_polaris_later/polaris_summary_20260527T074137Z.json)`.
-
-**Verdict.**
-
-- **Not a wiring failure** — stability metrics on the live run were healthy (`ratio_max` < 3, clipping < 0.1%, grad norms ~0.3–0.6).
-- **Training is moving the policy** on a fixed 2k training-distribution slice; gains are **smaller but same-signed** as the 128-probe (which overstated pass@8 Δ by ~~5×). Flat in-loop curves remain largely **batch noise** (random 64-prompt slice each step, σ ≈ 0.02 on reward) plus **sparse signal** (~~68–69% prompts all-wrong per checkpoint here).
-- **OOD (in-flight):** DAPO table above; step 99 + AIME still running (`ap-RFEQ8RyyLpxbAF1S75NbdQ`).
-
-**Artifacts.** Volume: `/vol/probes/checkpoint_eval_2k_polaris_aime/20260527T060234Z/polaris_summary.json` (+ per-checkpoint partials under `partials/polaris/`). Local copy: `[main/data/probes/checkpoint_eval_2k_polaris_aime/polaris_summary_20260527T060234Z.json](../data/probes/checkpoint_eval_2k_polaris_aime/polaris_summary_20260527T060234Z.json)`. OOD partials: `[main/data/probes/checkpoint_eval_ood_aime_dapo_99_339/20260527T090530Z/partials/dapo/](../data/probes/checkpoint_eval_ood_aime_dapo_99_339/20260527T090530Z/partials/dapo/) (`base.json`, `step_339.json`).
-
-### Addendum — OOD eval runs
-
-- **DAPO 2k (nancy volume, paused)** — `ap-acyT5Dk5PzVLtlzdGDTm37`; operator resource decision; no partials saved.
-- **Polaris+AIME (nancy volume)** — AIME blocked on missing `/vol/data/eval/aime25.jsonl`.
-- **DAPO+AIME H200 (Anastasia)** — `ap-RFEQ8RyyLpxbAF1S75NbdQ`, config `checkpoint_eval_ood_aime_dapo_99_339_h200.yaml`; orchestrator CPU-only. DAPO: base + step 339 done; step 99 + AIME in progress.
+**H200 GRPO DAPO 2k only** (`dapo_n2000_seed43`, `20260527T090530Z`): base **0.274**, step 339 **0.259** (−1.6 pp OOD regression). Partials under [checkpoint_eval_ood_aime_dapo_99_339/](../data/probes/checkpoint_eval_ood_aime_dapo_99_339/20260527T090530Z/partials/dapo/).
 
 ---
 
@@ -1024,7 +1001,7 @@ Matches the earlier minority-smoke vs GRPO-full observation: rollout time is sim
 **Still open (non-blocking).**
 
 - H200 minority 10-step fresh/resume smokes (if not already finished).
-- B200 **efficiency** matrix (`vllm_sleep`, `gc_off`, higher `token_budget`) — see `[probes/B200_efficiency_smoke_plan.md](./probes/B200_efficiency_smoke_plan.md)`; separate from bring-up gates.
+- B200 **efficiency** matrix (`vllm_sleep`, `gc_off`, higher `token_budget`) — see [`reference/efficiency/B200_efficiency_smoke_plan.md`](./reference/efficiency/B200_efficiency_smoke_plan.md); separate from bring-up gates.
 
 **Operator note.** Resume smokes must use the **same Modal workspace** as the fresh leg that wrote the checkpoint (`modal profile current` before `launch_smoke_ckpt_resume.sh --phase resume`).
 
@@ -1120,3 +1097,139 @@ W&B `_runtime × modal_price_per_sec` on active prod runs; **799 steps = 1 epoch
 **1 epoch all three B200 arms:** ~$686 more needed vs ~$761 credits (~$380 + $381) → **~+$75** team slack (tight; eval overhead can erase). **2 epochs all three:** ~$1,574 needed → **~−$813 short**.
 
 **Ref:** H200 GRPO was ~3.1–3.3 min/step; B200 GRPO ~2.1 min/step at ~$0.22/step. Set-arms ~4.1 min (~$0.43–0.46/step) dominate spend. Latest H200 ckpt on alee72: `step_000529.pt`.
+
+---
+
+## 2026-05-27 (Wednesday) — B200 three-arm checkpoint eval (canonical)
+
+**Canonical entry** for **base vs trained** comparisons across **GRPO**, **minority_answer**, and **poly_epo_answer** on fixed eval slices (May 27, 2026). Use this section for writeups / agent context — not the scattered run logs elsewhere in this file.
+
+**Context.** Mid-training on B200 (~**step 299** GRPO, ~**step 133** minority/poly at Polaris/DAPO launch; BeyondAIME used **later** ckpts — see table). Live W&B looked flat; needed decision-grade **pass@k** on training distribution + OOD. Model: **Qwen3-1.7B-Base**; harness: [`checkpoint_rollout_eval.py`](../probes/checkpoint_rollout_eval.py) (HF load ckpt → vLLM weight sync → rollouts → train grader).
+
+**Training checkpoints evaluated**
+
+| Arm | Label | Checkpoint path (alee72 unless noted) | ~Training progress |
+| --- | --- | --- | --- |
+| — | `base` | `Qwen/Qwen3-1.7B-Base` (no ckpt) | — |
+| GRPO | `grpo_b200_s299` | `/vol/checkpoints/train_real_b200/step_000299.pt` | ~299 / 799 |
+| minority_answer | `minority_b200_s133` | `/vol/checkpoints/train_minority_answer_b200/step_000133.pt` | ~133 / 799 |
+| poly_epo_answer | `poly_epo_b200_s133` | `/vol/checkpoints/train_poly_epo_answer_b200/step_000133.pt` | ~133 / 799 (synced from chicken602) |
+| GRPO (BeyondAIME only) | `grpo_b200_s359` | `.../train_real_b200/step_000359.pt` | newer than Polaris/DAPO row |
+| minority (BeyondAIME only) | `minority_b200_s159` | `.../train_minority_answer_b200/step_000159.pt` | newer than Polaris/DAPO row |
+
+**Workspace.** GRPO + minority train on **alee72**; poly trains on **chicken602** (poly ckpt copied to alee72 for cross-arm eval).
+
+### Polaris 2k — training distribution
+
+- **Run:** `20260527T213611Z` · Modal `ap-E5xvFQaZCRV7vMn4b750DS` (~49 min)
+- **Config:** `checkpoint_eval_2k_polaris_arms_latest_b200.yaml`
+- **Slice:** 2000 prompts from `polaris_train.jsonl`, seed **42**
+- **Prompt:** `hybrid_answer_boxed` (arm C, matches train)
+- **Rollouts:** 8 / prompt · train grader (mathd ∨ sympy, Rank-2)
+
+| Variant | pass@8 | Δ vs base | frac 0/8 correct |
+| ------- | ------ | --------- | ---------------- |
+| **base** | **0.306** | — | 0.694 |
+| grpo_b200_s299 | 0.317 | +1.1 pp | 0.683 |
+| minority_b200_s133 | 0.307 | +0.1 pp | 0.693 |
+| poly_epo_b200_s133 | 0.319 | +1.3 pp | 0.682 |
+
+**Readout:** No collapse on train distribution. **Minority flat** (~noise). GRPO/poly **+1–1.3 pp** — same ballpark as H200 GRPO-only best (+1.8 pp at step 99 on same slice; see [precursor entry](#2026-05-27-wednesday--grpo-checkpoint-slice-eval-h200-only-precursor)).
+
+### DAPO 2k — easier OOD
+
+- **Run:** `20260527T203133Z` · Modal `ap-VsJNlyGdseXSWmByy8OiO1`
+- **Config:** `checkpoint_eval_ood_aime_dapo_arms_latest_b200.yaml`
+- **Slice:** 2000 prompts, seed **43**
+- **Prompt:** `dapo_answer_v1` (≠ train prompt)
+- **Rollouts:** 8 / prompt
+
+| Variant | pass@8 | Δ vs base | mean_reward |
+| ------- | ------ | --------- | ----------- |
+| **base** | **0.248** | — | 0.051 |
+| grpo_b200_s299 | **0.272** | **+2.4 pp** | 0.056 |
+| minority_b200_s133 | 0.252 | +0.5 pp | 0.052 |
+| poly_epo_b200_s133 | 0.263 | +1.5 pp | 0.055 |
+
+**Readout:** **GRPO** only arm with a clear (still small) OOD gain. Minority **flat**.
+
+> **Prompt confound (flag for redo):** Eval used `dapo_answer_v1`, but trained arms use `hybrid_answer_boxed` (arm C). Rank-2 parser still catches `\boxed{}` as a fallback so grading is fair, but rollout *generation behavior* under a non-train prompt is unknown — model has internalized the train template and may produce different reasoning/stop behavior here. Direction of bias is unclear: GRPO's +2.4 pp could be larger under fair prompt, or could shrink. Queued for rerun with `hybrid_answer_boxed`.
+
+### BeyondAIME — hard OOD
+
+- **Run:** `20260527T221956Z` · Modal `ap-Vl16FgmiDkRIgUxtv909Ce` (~6 min, 4× B200)
+- **Config:** `checkpoint_eval_beyondaime_pass16_arms_latest_b200.yaml`
+- **Slice:** 100 problems, seed **42**
+- **Prompt:** `dapo_answer_v1` (≠ train prompt)
+- **Rollouts:** 16 / prompt · pass@16 primary metric
+
+| Variant | pass@1 | pass@4 | pass@8 | pass@16 | Δ pass@16 |
+| ------- | ------ | ------ | ------ | ------- | --------- |
+| **base** | 0.009 | 0.035 | **0.068** | **0.130** | — |
+| grpo_b200_s359 | 0.005 | 0.020 | 0.038 | 0.070 | **−6.0 pp** |
+| minority_b200_s159 | 0.005 | 0.020 | 0.038 | 0.070 | **−6.0 pp** |
+| poly_epo_b200_s133 | 0.005 | 0.020 | 0.040 | 0.080 | **−5.0 pp** |
+
+(pass@4 / pass@8 recomputed from histograms in saved partials; harness now logs `pass_at_{1,4,8,16}_mean` on future runs.)
+
+**Readout:** **Base beats every trained arm at every k** — clearest negative result. All arms regress similarly (not minority-specific). Likely mix of **real hard-OOD gap** and **eval prompt ≠ train prompt**; rollout qualitative check queued.
+
+> **Prompt confound (flag for redo):** Same issue as DAPO 2k above — eval prompt `dapo_answer_v1` ≠ train prompt `hybrid_answer_boxed`. With base pass@16 only ~13%, even a small format-induced perturbation could explain the sign flip. **This is the most important eval to rerun with the matching prompt before believing the regression.** If trained arms still regress under fair prompt → real hard-OOD capability loss (paper-worthy). If they recover → it was the template.
+
+### AIME-25 — exploratory only
+
+- **Run:** `20260527T211739Z` · `checkpoint_eval_ood_aime_only_arms_latest_b200.yaml`
+- **Slice:** 30 problems · `dapo_answer_v1` · 8 rollouts
+
+| Variant | pass@8 | Δ vs base |
+| ------- | ------ | --------- |
+| base | 0.033 | — |
+| grpo_b200_s299 | 0.033 | 0.0 |
+| minority_b200_s133 | 0.067 | +3.3 pp (~1 problem) |
+| poly_epo_b200_s133 | 0.000 | −3.3 pp |
+
+**Not decision-grade** (n=30).
+
+### Cross-slice summary
+
+| Eval slice | minority Δ | GRPO Δ | poly Δ | Use in writeup |
+| ---------- | ---------- | ------ | ------ | -------------- |
+| **Polaris 2k** pass@8 | +0.1 pp | +1.1 pp | +1.3 pp | Primary (on-distribution) |
+| **DAPO 2k** pass@8 | +0.5 pp | **+2.4 pp** | +1.5 pp | Primary (easier OOD) |
+| **BeyondAIME** pass@16 | −6.0 pp | −6.0 pp | −5.0 pp | Primary (hard OOD; note prompt) |
+| AIME-25 pass@8 | +3.3 pp | 0 | −3.3 pp | Exploratory only |
+
+### Verdicts (project-level)
+
+1. **Training is not obviously broken** — Polaris pass@8 does not regress; optimization was stable in W&B (`ratio_max` &lt; 3, low clip, sane grad norms).
+2. **minority_answer hypothesis not supported** at these ckpts — flat on Polaris and DAPO; no win vs GRPO decision-grade.
+3. **GRPO** — small Polaris lift; best OOD signal on DAPO; **regresses vs base on BeyondAIME** (with newer ckpts).
+4. **poly_epo_answer** — similar to GRPO on Polaris/DAPO; slightly better on BeyondAIME pass@16 but still **far below base**.
+5. **Do not chase Poly-EPO Fig. 2 curves** on 1.7B / this stack — gains are ~1–2 pp, within eval noise; see PLAN success criteria / consolation diversity path.
+
+### Follow-ups
+
+| Item | Status |
+| ---- | ------ |
+| **BeyondAIME with `hybrid_answer_boxed` (fair OOD vs train prompt)** | **Priority — blocking before believing regression in writeup.** Both BeyondAIME and DAPO 2k were run with `dapo_answer_v1` ≠ train prompt; BeyondAIME is the higher-stakes redo because base > trained sign flip there. |
+| **DAPO 2k with `hybrid_answer_boxed` (fair OOD)** | Queued alongside BeyondAIME rerun. May change GRPO's +2.4 pp (up or down); minority/poly Δ likely move within noise. |
+| BeyondAIME rollouts + `analyze_beyondaime_rollouts.py` (`parse_ok`, `extract_path`) | Queued — `checkpoint_eval_beyondaime_pass16_rollouts_b200.yaml`. Run this first; diagnoses how much of the regression is parse failure vs reasoning failure. |
+| More training epochs | Deprioritized (budget; flat marginal returns) |
+
+### Artifacts (local JSON = source of truth)
+
+| Slice | Volume dir | Local summary |
+| ----- | ---------- | ------------- |
+| Polaris 2k | `/vol/probes/checkpoint_eval_2k_polaris_arms_latest/20260527T213611Z/` | [polaris_summary_20260527T213611Z.json](../data/probes/checkpoint_eval_2k_polaris_arms_latest/polaris_summary_20260527T213611Z.json) |
+| DAPO + AIME | `/vol/probes/checkpoint_eval_ood_aime_dapo_arms_latest/` (`20260527T203133Z`, `20260527T211739Z`) | partials under `partials/dapo/`, `results.json` |
+| BeyondAIME | `/vol/probes/checkpoint_eval_beyondaime_pass16_arms_latest/20260527T221956Z/` | [beyondaime_summary_20260527T221956Z.json](../data/probes/checkpoint_eval_beyondaime_pass16_arms_latest/beyondaime_summary_20260527T221956Z.json) |
+
+**Launch replay:**
+
+```bash
+bash main/scripts/launch_checkpoint_eval.sh --config main/configs/checkpoint_eval_2k_polaris_arms_latest_b200.yaml --detach
+bash main/scripts/launch_checkpoint_eval.sh --config main/configs/checkpoint_eval_ood_aime_dapo_arms_latest_b200.yaml --detach
+bash main/scripts/launch_checkpoint_eval.sh --config main/configs/checkpoint_eval_beyondaime_pass16_arms_latest_b200.yaml --detach
+```
+
+**Supersedes** the May 27 scattered eval narrative in this file (merged here). **Related:** [H200 GRPO-only Polaris learning curve](#2026-05-27-wednesday--grpo-checkpoint-slice-eval-h200-only-precursor) (multi-step GRPO, not three-arm).
