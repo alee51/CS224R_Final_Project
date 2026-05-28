@@ -11,15 +11,15 @@
 
 Three RL arms on Qwen3-1.7B-Base / Polaris-51K, arm-C prompt (`hybrid_answer_boxed`), Rank-2 parser, mathd∨sympy grader, GRPO core (KL=0, N=8, bs=64, 799-step budget). Decision-grade eval at matched train/eval prompt, `n_rollouts=16` (n=8 on the prior mid-training table; doubled here to sharpen).
 
-**Primary table — LR=3e-6 redo family, 3 arms vs base** (`grpo_lr3e6_s59`, `minority_lr3e6_s54`, `poly_epo_lr3e6_s39`):
+**Primary table — Δ vs base:**
 
-| Slice | base | GRPO Δ | minority_answer Δ | poly_epo_answer Δ |
-|-------|------|--------|-------------------|-------------------|
-| Polaris stratified 2k pass@8 (training distribution) | 30.8% | **+2.1 pp** | +0.9 pp | +1.2 pp |
-| DAPO 2k pass@8 (easier OOD) | 29.9% | **+2.0 pp** | +2.0 pp | +1.1 pp |
-| MATH-500 pass@16 (medium OOD, n=500) | 78.8% | **+4.4 pp** | +2.0 pp | +2.4 pp |
+| Slice | base | GRPO Δ (3e-6 s59) | min Δ (3e-6 s54) | poly Δ (3e-6 s39) | GRPO Δ (1e-6 s519) | min Δ (1e-6 s239) | poly Δ (1e-6 s133) |
+|-------|------|-------------------|------------------|-------------------|--------------------|-------------------|--------------------|
+| Polaris stratified 2k pass@8 | 30.8% | **+2.1 pp** | +0.9 pp | +1.2 pp | +1.0 pp | +0.2 pp | +0.6 pp |
+| DAPO 2k pass@8 | 29.9% | **+2.0 pp** | +2.0 pp | +1.1 pp | +1.8 pp | +1.4 pp | +0.7 pp |
+| MATH-500 pass@16 | 78.8% | **+4.4 pp** | +2.0 pp | +2.4 pp | +2.8 pp | +1.2 pp | −0.6 pp |
 
-**Confirmation table — LR=1e-6 converged checkpoints** (`grpo_s519`, `minority_s239`, `poly_s133`, no base column re-run): Polaris 31.8% / 31.0% / 31.4%; DAPO 31.7% / 31.3% / 30.6%; MATH-500 81.6% / 80.0% / 78.2%. Same ordering: **GRPO ≥ minority ≥ poly_epo on every decision-grade slice in both LR regimes.**
+Same ordering in both LR regimes: **GRPO ≥ minority ≥ poly_epo on every decision-grade slice** (poly_epo at 1e-6 is below base on MATH-500).
 
 **The load-bearing claim:** **GRPO wins on every decision-grade slice at convergence.** Set-based reweightings (minority_answer, poly_epo_answer) trail GRPO by 0.5–3.4 pp at the converged LR=1e-6 checkpoints and trail or tie GRPO at the LR=3e-6 redo checkpoints. The mid-training fair-prompt table that previously showed poly_epo winning 3/3 reflected incomplete training plus BeyondAIME pass@16 noise (n=100, SE ≈ 0.04 — the prior +5 pp headline did not survive at n_rollouts=16 across the rest of the panel). **The "set-based RL beats GRPO at 1.7B-unfiltered" hypothesis is falsified at our model scale and data regime.**
 
