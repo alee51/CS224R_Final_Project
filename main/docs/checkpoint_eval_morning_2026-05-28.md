@@ -23,20 +23,29 @@ Checkpoints: **3e-6 redo** — `base`, `grpo_lr3e6_s59`, `minority_lr3e6_s54`, `
 
 ---
 
-## Results — Δ vs base (LR=3e-6 redo family)
+## Results — Δ vs base (both LR regimes)
 
-Absolute scores in parentheses. DAPO and Polaris use **pass@8**; MATH-500 and AIME-25 use **pass@16**. Base column is always 0 (reference).
+Decision-grade slices only. DAPO and Polaris use **pass@8**; MATH-500 uses **pass@16**. Absolute scores in parentheses.
+
+| Dataset | Metric | base | GRPO (3e-6 s59) | min (3e-6 s54) | poly (3e-6 s39) | GRPO (1e-6 s519) | min (1e-6 s239) | poly (1e-6 s133) |
+|---------|--------|------|-----------------|----------------|-----------------|------------------|-----------------|------------------|
+| DAPO 2k | pass@8 | 29.9% | **+2.0pp** (31.9%) | +2.0pp (31.9%) | +1.1pp (31.0%) | +1.8pp (31.7%) | +1.4pp (31.3%) | +0.7pp (30.6%) |
+| Polaris stratified 2k | pass@8 | 30.8% | **+2.1pp** (32.9%) | +0.9pp (31.7%) | +1.2pp (32.0%) | +1.0pp (31.8%) | +0.2pp (31.0%) | +0.6pp (31.4%) |
+| MATH-500 | pass@16 | 78.8% | **+4.4pp** (83.2%) | +2.0pp (80.8%) | +2.4pp (81.2%) | +2.8pp (81.6%) | +1.2pp (80.0%) | −0.6pp (78.2%) |
+
+Same ordering in both LR regimes: **GRPO ≥ minority ≥ poly_epo** on every decision-grade slice (poly_epo at 1e-6 is below base on MATH-500).
+
+pass@1 on DAPO: base 6.7% → GRPO 3e-6 7.8% (+1.1pp); minority/poly ~flat vs GRPO.
+
+GRPO gains on Polaris are largest on easier bands (6/8, 7/8): +2.8pp and +3.3pp pass@8 vs base on those bands.
+
+### AIME-25 sanity (3e-6 only — not decision-grade)
 
 | Dataset | Metric | base | grpo | minority | poly_epo |
 |---------|--------|------|------|----------|----------|
-| DAPO 2k | pass@8 | — (29.9%) | **+2.0pp** (31.9%) | +2.2pp (31.9%) | +1.1pp (31.0%) |
-| Polaris stratified 2k | pass@8 | — (30.8%) | **+2.1pp** (32.9%) | +0.8pp (31.7%) | +1.1pp (32.0%) |
-| MATH-500 | pass@16 | — (78.8%) | **+4.4pp** (83.2%) | +2.0pp (80.8%) | +2.4pp (81.2%) |
-| AIME-25 ⚠️ | pass@16 | — (13.3%) | −3.3pp (10.0%) | −6.6pp (6.7%) | −3.3pp (10.0%) |
+| AIME-25 ⚠️ | pass@16 | 13.3% | −3.3pp (10.0%) | −6.6pp (6.7%) | −3.3pp (10.0%) |
 
-pass@1 on DAPO: base 6.7% → GRPO 7.8% (+1.1pp); minority/poly ~flat vs GRPO.
-
-GRPO gains on Polaris are largest on easier bands (6/8, 7/8): +2.8pp and +3.3pp pass@8 vs base on those bands.
+30 prompts; ±3pp ≈ one problem. Not used for arm ranking.
 
 ---
 
