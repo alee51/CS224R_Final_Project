@@ -5,6 +5,7 @@ Cross-cutting documentation that spans `main/` (custom trainer) and `main-verl/`
 | Doc | Contents |
 | --- | --- |
 | [`verl.md`](./verl.md) | VeRL overview: what it is, built-ins, slowdowns, custom wiring (judge), B200, multi-GPU knobs, Modal limits, migration sketch |
+| [`verl_migration_plan.md`](./verl_migration_plan.md) | Staged migration plan: gates, parity smoke, minority-objective port (Stage 3 deep-dive), Polaris-53K vs 51K decision, Modal credit allocation across 3 accounts |
 
 Related docs elsewhere in the repo:
 
