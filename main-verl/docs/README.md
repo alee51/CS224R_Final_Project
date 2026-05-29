@@ -7,7 +7,9 @@ VeRL planning, reference, and sprint coordination.
 | [`STATUS.md`](STATUS.md) | Stage checklist, poster framing rules, active path |
 | [`human-remaining-work.md`](human-remaining-work.md) | Due dates + deliverables by role |
 | [`verl_migration_plan.md`](./verl_migration_plan.md) | **Runbook:** stages, gates, objective port, credit allocation |
+| [`stage-01-agent-plan.md`](./stage-01-agent-plan.md) | **Stage 1:** executor/audit sections (image build + smoke) |
 | [`verl-reference.md`](./verl-reference.md) | **Reference:** fork stack, built-ins, judge wiring, B200/Modal knobs |
+| [`stage-01-agent-plan.md`](./stage-01-agent-plan.md) | **Agent dispatch:** Stage 1 executor + audit sections (orchestrator-ready) |
 
 Related elsewhere:
 

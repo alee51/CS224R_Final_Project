@@ -2,7 +2,7 @@
 
 **Updated:** 2026-05-29
 
-**Also read:** [`human-remaining-work.md`](human-remaining-work.md) · [`verl_migration_plan.md`](verl_migration_plan.md)
+**Also read:** [`human-remaining-work.md`](human-remaining-work.md) · [`verl_migration_plan.md`](verl_migration_plan.md) · [`stage-01-agent-plan.md`](stage-01-agent-plan.md)
 
 ## Deadlines
 

@@ -2,7 +2,7 @@
 
 **Status:** plan v3 (2026-05-29) — 1-epoch default, poster framing outcome-dependent. v2 (2026-05-28, post-OH).  
 **Epistemic note:** This is a *proposed* migration path from preliminary VeRL survey + TA direction. Stages, smoke gates, and kill criteria are how we learn what actually works — nothing below is guaranteed until the corresponding smoke passes.  
-**Companion docs:** [`verl-reference.md`](./verl-reference.md) (survey notes + knobs — hypotheses, not facts) · [`../../main/docs/verl_move_ta_meeting.md`](../../main/docs/verl_move_ta_meeting.md) (raw TA notes) · [`../../main/docs/ta_discussion.md`](../../main/docs/ta_discussion.md) (paper framing, Paths A/C/D) · [`../README.md`](../README.md) (codebase layout) · [`human-remaining-work.md`](./human-remaining-work.md) (due dates + deliverables)
+**Companion docs:** [`verl-reference.md`](./verl-reference.md) (survey notes + knobs — hypotheses, not facts) · [`stage-01-agent-plan.md`](./stage-01-agent-plan.md) (Stage 1 executor/audit sections) · [`../../main/docs/verl_move_ta_meeting.md`](../../main/docs/verl_move_ta_meeting.md) (raw TA notes) · [`../../main/docs/ta_discussion.md`](../../main/docs/ta_discussion.md) (paper framing, Paths A/C/D) · [`../README.md`](../README.md) (codebase layout) · [`human-remaining-work.md`](./human-remaining-work.md) (due dates + deliverables)
 
 ## 0. Framing
 
@@ -17,7 +17,7 @@ The science question is fixed: **does set-based RL with CoT-clustered cluster ID
 Estimates are in **B200-hours and agent-sessions**, not wall-days. A "session" = one focused agent-driven block (~1–3 hours of human attention). Bring-up through Stage 7 is **~12 hours of focused code time** (Fri); Stage 8 is up to **3 days** wall if started on schedule.
 
 **Integration principles (same as [`verl-reference.md`](./verl-reference.md)):**
-- **Fork VeRL first** (maxrl repo) — config + hooks over re-porting `main/train/*` plumbing.
+- **Fork VeRL first** (maxrl repo) — use the vendored `verl/` tree from [tajwarfahim/maxrl](https://github.com/tajwarfahim/maxrl) via clone + `pip install -e .` at image build; **not** upstream PyPI `verl`, and **not** necessarily a separate GitHub fork until we patch their `verl/` source (Stage 3+). See [`stage-01-agent-plan.md`](./stage-01-agent-plan.md).
 - **`main/` code** — algorithm/fixture reference for minority math and tests only; wire through VeRL extension points.
 - **`main/` numbers** — not parity targets or cost priors; re-measure $/step and curves on VeRL smokes.
 
@@ -46,7 +46,7 @@ Each stage has a smoke that must pass before the next. Kill criterion = fall bac
 
 | # | Stage | Smoke gate | Budget | Kill criterion |
 |---|---|---|---|---|
-| 1 | Modal image + maxrl repo + Ray bring-up | `hello_verl.py`: `pip install -e .` from maxrl clone; loads Qwen3-1.7B on B200, prints one rollout | ~1 B200-hr | >3 image rebuild cycles for pin churn (fork pins torch 2.6 / vllm 0.8.4 vs our B200 stack — may need overrides) |
+| 1 | Modal image + maxrl repo + Ray bring-up | **Image build:** clone maxrl @ SHA → B200 pins → `pip install -e .` → mount `main-verl/`. **Smoke** ([`stage-01-agent-plan.md`](./stage-01-agent-plan.md)): `hello_verl.py` — Ray `num_gpus=1`, `import verl`, Qwen3-1.7B-Base one rollout on B200 | ~1 B200-hr | >3 image rebuild cycles for pin churn |
 | 2 | GRPO bring-up smoke (1.7B, MathReward) | 50 steps; completes without OOM; reward/length metrics sane. **Not** numeric match to `main/`'s `grpo_s59` (different grader + stack) | ~3 B200-hr per attempt | Cannot complete 50 steps after 2 config fixes — escalate |
 | 3a | **`minority_cot` skeleton with mock cluster IDs** | Unit tests pass (math fixtures from `main/tests/test_objective_minority.py`); 50-step run logs `train/mean_advantage` differing from GRPO | ~2 B200-hr (judge mocked) | `adv_estimator` hook cannot register or lacks per-group tensors — redesign hook (see fork’s `core_algos.py` examples) or escalate |
 | 4 | Judge service on Modal | OpenAI-compatible `/v1/chat/completions` up; async client does 64-way semaphore fan-out; <1s/call median at batch | ~2 B200-hr (judge GPU) | Latency >2s/call at 64-way — re-size judge or restructure |
@@ -137,7 +137,7 @@ Three Modal accounts (**A** = fewest credits, **B**, **C** = most). Cap of **10 
 
 | Workload | Account | Why |
 |---|---|---|
-| Stages 1–3a smokes (≤4× B200) | **A** | Burn lowest-credit account on bring-up; bounded loss if something breaks. |
+| Stages 1–3a smokes (≤4× B200) | **A** (`chicken602` — see [`stage-01-agent-plan.md`](./stage-01-agent-plan.md)) | Burn lowest-credit account on bring-up; bounded loss if something breaks. |
 | Stage 4 judge service (long-lived 1× B200) | **A** or **B** | Low marginal cost; can colocate with smokes. |
 | Stages 5–7 (small production) | **B** | OK for hours-long runs. |
 | Stage 8 full retrain (3 arms × 1 epoch × 4B) | **C** primary | Most credits → biggest single run if needed. |
