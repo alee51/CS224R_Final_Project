@@ -1,12 +1,16 @@
 # Main experiment
 
-Code and docs for the post-milestone minority-voting training run. Run Modal jobs from the **repo root** (`cs224r_finalproject/`), not from this folder.
+**Frozen archive** for the custom 1.7B trainer (May 2026 runs, eval history, paper drafts). **New training:** [`main-verl/`](../main-verl/) — start at [`main-verl/docs/STATUS.md`](../main-verl/docs/STATUS.md).
+
+Run legacy Modal jobs from the **repo root** (`cs224r_finalproject/`), not from this folder.
 
 ## Where to find what
 
 | Doc | Read when you need… |
 | --- | --- |
-| [`docs/context.md`](docs/context.md) | Orientation: team, budget, deadlines, reading list. **Start here.** |
+| [`../main-verl/docs/STATUS.md`](../main-verl/docs/STATUS.md) | **Active sprint:** checklist + framing |
+| [`../main-verl/docs/human-remaining-work.md`](../main-verl/docs/human-remaining-work.md) | Due dates + deliverables by role |
+| [`docs/context.md`](docs/context.md) | Team, budget, ownership, reading list. |
 | [`docs/PLAN.md`](docs/PLAN.md) | Strategy: dataset, arms, eval, ops, cost sizing. |
 | [`docs/timeline.md`](docs/timeline.md) | Chronology: what we tried, in order. |
 | [`docs/decisions.md`](docs/decisions.md) | Indexed log of locked decisions. |

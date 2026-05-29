@@ -1,15 +1,15 @@
 # main-verl/
 
-Verl-based reimplementation of the set-RL arms. Sibling to `main/` (the original custom trainer), not a replacement: `main/` stays as the archive that the paper draws from (diagnosis chart, prompt/parser/grader ablations, late-checkpoint eval pull commands, `timeline.md` history). New work happens here.
+VeRL-based reimplementation of the set-RL arms (via the **[maxrl repo](https://github.com/tajwarfahim/maxrl)** fork — not upstream `pip install verl`, and **not** the MaxRL training algorithm). Sibling to `main/` (the original custom trainer), not a replacement: `main/` stays as the archive that the paper draws from (diagnosis chart, prompt/parser/grader ablations, late-checkpoint eval pull commands, `timeline.md` history). New work happens here.
 
-**Full VeRL planning guide:** [`docs/verl.md`](../docs/verl.md) (repo root).
+**Docs:** [`docs/STATUS.md`](docs/STATUS.md) · [`docs/human-remaining-work.md`](docs/human-remaining-work.md) · [`docs/verl_migration_plan.md`](docs/verl_migration_plan.md) (runbook) · [`docs/verl-reference.md`](docs/verl-reference.md) (reference)
 
 ## Why this exists
 
 Decided after the 2026-05-28 TA discussion ([`../main/docs/verl_move_ta_meeting.md`](../main/docs/verl_move_ta_meeting.md)):
 
-- **Coding-component bar.** TA: "to satisfy the coding component for the project you could implement set RL with minority voting objective on verl." Reimplementing on verl is what the project gets graded on.
-- **Drops the engineering we've been paying for.** Answer extraction (verl ships `MathReward`), batching across GPUs (bs=128 splits natively), FA2 plumbing, weight sync — all handled.
+- **Coding-component bar.** TA: "to satisfy the coding component for the project you could implement set RL with minority voting objective on verl." Reimplementing on the maxrl repo’s VeRL fork is what the project gets graded on.
+- **Drops the engineering we've been paying for.** Answer extraction, batching across GPUs (bs=128 splits natively), FA2 plumbing, weight sync — handled by the fork’s trainer loop.
 - **Unlocks the experiments we actually want to run.** 4B base (Path C from `ta_discussion.md`), CoT clustering (Path D), async LLM judge — all easier on verl than on our trainer.
 
 ## Layout
@@ -19,7 +19,7 @@ Decided after the 2026-05-28 TA discussion ([`../main/docs/verl_move_ta_meeting.
 | `configs/` | Verl/Hydra configs (training runs, eval runs, model + data overrides). One config per launch. |
 | `train/` | Custom objective code that plugs into verl: `minority_answer`, `poly_epo_answer`, CoT-clustering arm. Pure logic — verl owns the trainer loop. |
 | `judge/` | Modal-hosted LLM-judge service (OpenAI-compatible API) + thin client for async batched calls from the trainer. Pattern: host once, semaphore-fan-out 32–128 calls in parallel. |
-| `infra/` | Modal app + image definitions (verl + flash-attn + vllm pins), GPU class selection (B200 default; 4B fit check). |
+| `infra/` | Modal app + image: clone [tajwarfahim/maxrl](https://github.com/tajwarfahim/maxrl), `pip install -e .`, Ray + pin overrides for B200. |
 | `scripts/` | Launch wrappers (`launch_train.sh`, `launch_eval.sh`) — thin shells around `python -m verl.trainer.main_ppo` with our config paths. |
 | `probes/` | Smoke tests for the verl move: end-to-end 50-step run, judge bring-up, 4B fit check, weight-sync sanity. |
 | `tests/` | Unit tests for the custom objectives — minority-vote scoring, CoT-cluster assignment. Mirrors `main/tests/test_objective_minority.py`. |
@@ -28,18 +28,18 @@ Decided after the 2026-05-28 TA discussion ([`../main/docs/verl_move_ta_meeting.
 ## What stays in `main/`
 
 - `main/docs/` — paper writeup, TA discussions, plans, timeline, eval history
-- `docs/verl.md` — VeRL migration guide (repo root; spans both codebases)
+- `docs/` — migration runbook + VeRL reference
 - `main/data/preprocess_polaris.py`, `main/data/prompt_heuristics.py`, the labeled Polaris manifests — reused as-is.
 - The custom trainer (`main/train/`, `main/probes/`, `main/configs/`) — frozen, kept for paper provenance and any final ablation re-pulls.
 
 ## Status
 
-Skeleton only — directories created 2026-05-28, no code yet.
+Skeleton only — directories created 2026-05-28, no code yet. Sprint: [`docs/STATUS.md`](docs/STATUS.md), [`docs/human-remaining-work.md`](docs/human-remaining-work.md).
 
 ## Next steps (rough order)
 
-1. `infra/` — Modal image with verl + pins; `hello_verl.py` smoke.
-2. `configs/` — minimal GRPO config on Qwen3-1.7B-Base + Polaris-51K to confirm parity with the `main/` baseline before adding arms.
+1. `infra/` — Modal image with maxrl repo + Ray; `hello_verl.py` smoke.
+2. `configs/` — minimal **GRPO** config on Qwen3-1.7B-Base + Polaris (fork preprocess template); stable bring-up, not `main/` parity.
 3. `train/` — port `minority_answer` objective; unit test against fixtures from `main/tests/test_objective_minority.py`.
 4. `judge/` — Modal app exposing OpenAI-compatible `/v1/chat/completions`; async client with `asyncio.Semaphore`.
 5. `configs/` (4B) — Qwen3-4B-Base fit check, then filtered-manifest retrain (Path C).

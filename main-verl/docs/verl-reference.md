@@ -1,7 +1,17 @@
-# VeRL migration guide
+# VeRL reference
 
-**Status:** planning doc (2026-05-28)  
-**Context:** TA decision to reimplement set-RL arms on [VeRL](https://github.com/verl-project/verl). Custom trainer in `main/` stays frozen for paper provenance; new work lands in `main-verl/`.
+**Status:** reference doc (2026-05-28) — **preliminary survey notes, not validated in our stack**  
+**Context:** Working hypotheses from reading the pinned VeRL tree in [tajwarfahim/maxrl](https://github.com/tajwarfahim/maxrl), TA discussion, and upstream VeRL docs — before `main-verl/` bring-up. Treat claims below as *what we think is true* until a stage smoke proves otherwise. Custom trainer in `main/` stays frozen. **Proposed run order:** [`verl_migration_plan.md`](./verl_migration_plan.md).
+
+**Stack (important):**
+- We run **`python -m verl.trainer.main_ppo`** from the **`maxrl` repo** — a pinned, paper-era snapshot of VeRL vendored inside that repo.
+- We do **not** `pip install verl` from [verl-project/verl](https://github.com/verl-project/verl) directly; upstream is reference-only when the fork’s docs/code are unclear.
+- The maxRL repo also ships the **MaxRL training algorithm** (`algorithm.adv_estimator=maxrl`). **We are not using that method** — our baseline is **GRPO**; our science arms are **minority_cot** and **poly_epo_cot**. We use the repo for a cleaner fork + `@register_adv_est` / reward wiring examples (TA OH 2026-05-28).
+
+**Integration principles (read before porting anything):**
+1. **Fork VeRL first.** Use built-ins in the maxrl repo’s `verl/` tree (rollout, FSDP, weight sync, GRPO loss, built-in scorers, async reward managers, wandb, checkpointing) via config and thin hooks — do not re-implement trainer plumbing from `main/`.
+2. **`main/` code = algorithm reference, not drop-in modules.** Only port what VeRL has no equivalent for (minority / poly-EPO advantage math, CoT cluster assignment). Wire through VeRL's `adv_estimator`, reward, or logging extension points; expect reshape/adapters, not copy-paste.
+3. **`main/` numbers = historical context, not VeRL budgets or parity targets.** Step time, $/step, rollout%, reward curves, and microbatch ladders from the custom stack do not transfer cleanly (different grader, Ray overhead, multi-GPU layout). Re-measure on VeRL smokes; do not extrapolate or gate success on matching `grpo_s59` ±10%.
 
 ---
 
@@ -22,24 +32,19 @@ Reference workloads: DAPO math RL, Poly-EPO (Qwen3-4B on 4× H200).
 | Phase | Approach |
 | --- | --- |
 | **Pre–2026-05-28** | “VeRL-flavored” custom trainer in `main/train/` — read-and-lift from `verl/trainer/ppo/core_algos.py`, not an import |
-| **Post–2026-05-28** | Actual VeRL dependency in `main-verl/` — satisfies TA coding-component bar |
+| **Post–2026-05-28** | VeRL via **[tajwarfahim/maxrl](https://github.com/tajwarfahim/maxrl)** (`pip install -e .` in that repo) — satisfies TA coding-component bar. Not the upstream `verl` PyPI package. |
 
-Our custom stack (`main/train/trainer.py`): vLLM collocated rollout + HF backward + custom `objective.py` for minority voting. VeRL replaces that plumbing; we still own the minority-voting objective and judge integration.
+Our custom stack (`main/train/trainer.py`): vLLM collocated rollout + HF backward + custom `objective.py` for minority voting. **If bring-up succeeds**, VeRL should replace most of that plumbing; we would still own the minority-voting objective and judge integration.
 
 ---
 
-## 2. Why move (TA decision)
+## 2. Why VeRL (not `main/`)
 
-From [`main/docs/verl_move_ta_meeting.md`](../main/docs/verl_move_ta_meeting.md):
+**Policy:** TA direction at 2026-05-28 OH — reimplement on VeRL for the coding-component bar. **Engineering:** the knob mapping below compares *what we had* vs *what we plan to use from VeRL* — not a promise of 1:1 behavior. Smokes validate VeRL runs; they do not require reproducing `main/` metrics. **Runbook:** [`verl_migration_plan.md`](./verl_migration_plan.md). **Raw notes:** [`../../main/docs/verl_move_ta_meeting.md`](../../main/docs/verl_move_ta_meeting.md).
 
-- **Coding component:** “Implement set RL with minority voting objective on verl.”
-- **Sanity check:** Re-run GRPO + minority on VeRL to rule out custom-trainer bugs.
-- **Drop engineering tax:** Answer extraction, multi-GPU batching, FA2, weight sync — VeRL ships these.
-- **Unlock experiments:** Qwen3-4B (Path C), CoT clustering (Path D), bs=128 across GPUs.
+### Knob summary vs `main/` (target state — unproven)
 
-### TA-requested changes vs `main/`
-
-| Knob | `main/` today | VeRL direction |
+| Knob | `main/` today | VeRL direction (planned) |
 | --- | --- | --- |
 | Answer extraction | Rank-2 hybrid + mathd∨sympy | VeRL `MathReward` / `math_dapo` built-ins |
 | Batch size | 64 single GPU (128 OOMs) | Up to 128, VeRL splits across GPUs |
@@ -50,11 +55,13 @@ From [`main/docs/verl_move_ta_meeting.md`](../main/docs/verl_move_ta_meeting.md)
 
 ---
 
-## 3. What VeRL does well (use directly)
+## 3. What the fork *should* handle (from maxrl repo + survey — not yet verified on Modal)
 
-### 3.1 Train ↔ rollout pipeline
+### 3.1 Train ↔ rollout pipeline (prefer fork defaults)
 
-| We built in `main/` | VeRL ships |
+Do **not** re-port `main/train/{rollout,weight_sync,trainer,loss}.py`. Start from **`qwen3_experiments/run_qwen3_training.sh`** and **`examples/maxrl_data_preprocess/polaris.py`** in the maxrl repo; only override what smokes require.
+
+| We built in `main/` | Prefer VeRL built-in |
 | --- | --- |
 | vLLM collocated rollout | vLLM or SGLang rollout workers |
 | HF actor + weight sync | FSDP/FSDP2 actor with vLLM weight update |
@@ -62,17 +69,17 @@ From [`main/docs/verl_move_ta_meeting.md`](../main/docs/verl_move_ta_meeting.md)
 | Microbatch sizing / OOM guards | `micro_batch_size_per_gpu`, dynamic batching |
 | Multi-GPU prompt batch splitting | Ray resource pools |
 
-Our bs=128 OOM on single collocated H200/B200 is the main pain VeRL addresses via normal multi-GPU layouts (Poly-EPO: 128 prompts / batch 64 on 4× H200).
+Our bs=128 OOM on single collocated H200/B200 is the main pain we *hope* VeRL addresses via multi-GPU layouts (Poly-EPO recipe: 128 prompts / batch 64 on 4× H200 — reference only, not our measured result).
 
 ### 3.2 Algorithms (config, not code)
 
-- **GRPO:** `algorithm.adv_estimator: grpo`, `actor_rollout.ref.rollout.n: 8`
-- **PPO, DAPO, DrGRPO, RLOO, REINFORCE++** — recipes in [verl-recipe](https://github.com/verl-project/verl-recipe)
-- **DAPO extras:** `filter_groups` (reject all-0 / all-1 groups), overlong buffer penalty, dynamic resampling
+- **GRPO (our baseline):** `algorithm.adv_estimator: grpo`, `actor_rollout.ref.rollout.n: 8` — **not** `maxrl` (that is the paper’s different normalization; out of scope for our arms).
+- **Our custom arms:** register `minority_cot` / `poly_epo_cot` via `@register_adv_est` — follow the pattern in the fork’s `compute_maxrl_outcome_advantage` in `verl/trainer/ppo/core_algos.py` as a wiring example only.
+- **PPO, DAPO, DrGRPO, …** — may exist in the fork; [verl-recipe](https://github.com/verl-project/verl-recipe) is secondary reference if the fork lacks a recipe.
 
 ### 3.3 Math rewards / answer extraction
 
-VeRL routes by `data_source` in parquet ([`verl/utils/reward_score/`](../main/docs/probes/prompt_extraction_research.md)):
+The fork routes by `data_source` in parquet (`verl/utils/reward_score/`). For **`polaris`**, the maxrl repo defaults to **`math_verify`** (not our Rank-2 hybrid). TA direction aligns with built-in scoring + `\boxed{}` prompts — see `examples/maxrl_data_preprocess/polaris.py`.
 
 | `data_source` | Module | Extraction |
 | --- | --- | --- |
@@ -124,15 +131,13 @@ VeRL handles HF↔vLLM sync but doesn’t eliminate it. Our Group B finding stan
 
 ### 4.4 Reward / grader mismatch
 
-Our locked train grader: **Rank-2 hybrid → mathd∨sympy** (`main/train/reward.py`).
-
-VeRL default: **`math_dapo` string normalize** or **`math_reward` boxed extract**. Different parsers → different pass rates. Parity with `main/` B200 checkpoints requires a custom reward wrapper or accepting a new contract.
+Our train grader in `main/`: **Rank-2 hybrid → mathd∨sympy** (`main/train/reward.py`). TA direction: use VeRL **`math_dapo` / `MathReward`** — **do not** wrap `main/train/reward.py` for "parity" unless a smoke shows a blocking issue. Different parsers → different pass rates; that is expected across stacks. Compare arms *within* VeRL runs, not numerically to `main/` checkpoints.
 
 ### 4.5 Colocate vs standalone reward models
 
 **Colocate (default):** all rollouts finish, then reward model runs. Fine for rule-based math (µs–ms). Bad for 4B judge on same GPU pool.
 
-**Standalone pool:** `reward.reward_model.enable_resource_pool=True` — judge on separate GPUs, can stream with rollout. Right for CoT arms; **you allocate the GPUs**.
+**Standalone pool:** `reward.reward_model.enable_resource_pool=True` — judge on separate GPUs, may stream with rollout. *Likely* needed for CoT arms; **you still allocate the GPUs** and need to confirm it works with our judge call pattern.
 
 ### 4.6 Version coupling
 
@@ -148,7 +153,7 @@ VeRL knows GRPO group baselines. It does **not** know 70 size-4 subsets, minorit
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│  VeRL owns                                                  │
+│  VeRL likely owns (if integration works)                    │
 │  • Ray orchestration, multi-GPU batching                    │
 │  • vLLM rollout + FSDP actor + weight sync                  │
 │  • GRPO/PPO loss, clip, (optional) KL                       │
@@ -169,22 +174,22 @@ VeRL knows GRPO group baselines. It does **not** know 70 size-4 subsets, minorit
 │  • Polaris → parquet preprocess                             │
 │  • Modal + Ray bring-up                                     │
 │  • Eval harness checkpoint loading (FSDP ≠ step_*.pt)       │
-│  • (Optional) grader parity wrapper vs MathReward           │
+│  • Small loader shim for eval only — not a trainer re-port │
 └─────────────────────────────────────────────────────────────┘
 ```
 
 ### 5.1 Minority-voting advantage
 
-Port from `main/train/objective.py` (~200 lines, unit-tested in `main/tests/test_objective_minority.py`):
+**Reference** the math in `main/train/objective.py` (~200 lines); **implement** as a VeRL `adv_estimator` (or documented fallback hook). Unit tests in `main/tests/test_objective_minority.py` check *algorithm correctness on fixtures* — not that VeRL integrates the same way as our custom trainer.
 
 ```
-8 rollouts → rewards (VeRL or custom)
-           → cluster IDs (answer-hash OR judge CoT)
-           → minority marginal advantages  ← OUR CODE
+8 rollouts → rewards (VeRL built-in scorer — do not re-port reward.py)
+           → cluster IDs (judge CoT, or mock in 3a)
+           → minority marginal advantages  ← only custom code here
            → clipped surrogate loss (VeRL)
 ```
 
-Hook: custom `adv_estimator` or extend `core_algos` path.
+Hook: custom `adv_estimator` registered in Hydra — use the fork’s `@register_adv_est` pattern (see existing `maxrl` entry in `core_algos.py`) as a **wiring template**, not as the algorithm we train.
 
 Arms (in order): GRPO (zero custom) → `minority_answer` → `minority_cot` → `poly_epo_answer` (stretch).
 
@@ -194,13 +199,13 @@ A reward fn scores one `(prompt, completion, gold)`. Our judge scores **one prom
 
 | Layer | VeRL | Us |
 | --- | --- | --- |
-| Per-rollout correctness | `math_dapo` / custom | Maybe reuse |
-| CoT cluster assignment | Nothing | Port `group_a_rollout_judge.py` |
-| Minority advantage from clusters | Nothing | Port `objective.py` |
-| Judge hosting | GenRM router pattern only | Modal vLLM + `/v1/chat/completions` |
-| Batching | `limit` manager, async fn | Semaphore fan-out 32–128 HTTP calls |
+| Per-rollout correctness | `math_dapo` / built-in | Use VeRL default — no `main/train/reward.py` |
+| CoT cluster assignment | Nothing built-in | New code; prompt logic may reference `main/probes/group_a_rollout_judge.py` |
+| Minority advantage from clusters | Nothing built-in | New `adv_estimator`; math reference `main/train/objective.py` |
+| Judge hosting | GenRM / async reward infra | Prefer VeRL async reward path if it fits; else Modal HTTP |
+| Batching | `limit` manager, async fn | Prefer VeRL semaphore/rate-limit hooks before custom fan-out |
 
-TA note: “don’t know if VeRL will handle this part for us” → **No, not for CoT clustering.**
+TA note: “don’t know if VeRL will handle this part for us” → **Our survey says no for CoT clustering** — but we have not wired it yet; Stage 3a/4 smokes are the real test.
 
 ### 5.3 Judge on Modal — architecture options
 
@@ -212,7 +217,7 @@ VeRL has no Modal integration.
 | **B: Same container, 2 GPUs** | `gpu="B200:2"` — judge subprocess on GPU 1 | One job | We start judge before VeRL; VeRL doesn’t orchestrate |
 | **C: VeRL standalone reward pool** | `enable_resource_pool=True`, judge as GenRM | Native streaming | Still need to provision servers |
 
-Recommended for CoT: **Option A** — 4× B200 train + 1× B200 judge as detached Modal service.
+**Planned starting point** for CoT (may change after smokes): **Option A** — 4× B200 train + 1× B200 judge as detached Modal service.
 
 Async client pattern (from TA):
 
@@ -236,8 +241,8 @@ TA-requested metrics not built into VeRL:
 
 ### 5.5 Data + eval
 
-- **Data:** one Polaris→parquet script; reuse `main/data/polaris_train.jsonl`, preprocess pipeline.
-- **Eval:** `main/eval/passk.py` stays; VeRL checkpoints are FSDP format, not `step_*.pt`.
+- **Data:** reuse Polaris **manifest paths** from `main/data/`; convert to parquet using **`examples/maxrl_data_preprocess/polaris.py`** in the maxrl repo as the starting template.
+- **Eval:** keep `main/eval/passk.py` for scoring logic if useful; add FSDP checkpoint loader only — not a trainer re-port.
 
 ---
 
@@ -245,9 +250,9 @@ TA-requested metrics not built into VeRL:
 
 ### 6.1 Does it work?
 
-**Yes.** VeRL added an explicit [GB200/B200 example](https://github.com/verl-project/verl/commit/3f2fd075da015579639cd2f99aa1c2811c6f48d4). We already run B200 on Modal with custom stack (vLLM 0.9.0, cu128 torch, flash-attn 2.8.3 in `main/infra/modal_image.py`).
+**Probably, but we haven't run VeRL on B200 yet.** Upstream added a [GB200/B200 example](https://github.com/verl-project/verl/commit/3f2fd075da015579639cd2f99aa1c2811c6f48d4). We already run B200 on Modal with the *custom* stack (vLLM 0.9.0, cu128 torch, flash-attn 2.8.3 in `main/infra/modal_image.py`) — that does **not** prove VeRL + Ray + our pin set works on the same hardware.
 
-VeRL on B200 = different software pins + Ray, not a hardware blocker.
+VeRL on B200 *looks like* a software/pins + Ray bring-up problem, not a hardware blocker — Stage 1 is the check.
 
 ### 6.2 B200-specific VeRL settings
 
@@ -261,7 +266,7 @@ VeRL on B200 = different software pins + Ray, not a hardware blocker.
 
 ### 6.3 B200 vs custom trainer economics
 
-From [`main/docs/reference/efficiency/b200_deep_dive_verdict_2026-05-26.md`](../main/docs/reference/efficiency/b200_deep_dive_verdict_2026-05-26.md): B200 is ~1.38× $/s vs H200; break-even needs ≥27% wall-clock cut. Our per-seq logprob loop (`_completion_logprobs_hf`) limits raw speedup. VeRL’s batched FSDP path may improve the train phase vs our loop — another reason to migrate, independent of B200 SKU.
+From [`../../main/docs/reference/efficiency/b200_deep_dive_verdict_2026-05-26.md`](../../main/docs/reference/efficiency/b200_deep_dive_verdict_2026-05-26.md): B200 economics for the **custom** stack — **not** a VeRL step-cost prior. VeRL may change rollout/train split and $/step entirely; ignore these ratios until Stage 2+ reports VeRL-native timings.
 
 ---
 
@@ -298,7 +303,7 @@ Poly-EPO reference: **4× H200, bs=128, Qwen3-4B**, colocated global pool.
 
 ### 7.3 Does more GPUs speed things up?
 
-**Yes, but not linearly.**
+**We expect yes, but not linearly** — upstream recipes and `main/` profiling are intuition only; measure on VeRL before trusting any speedup table.
 
 Step shape (same as our Group B):
 
@@ -314,7 +319,7 @@ Step shape (same as our Group B):
 | Ray + NCCL overhead | −5–15% | Worse if misconfigured |
 | Weight sync actor↔vLLM | Still present | Handled, not eliminated |
 
-**Rough expectations:**
+**Rough expectations (guesswork until Stage 2/6 smokes):**
 
 | Config | Expected vs 1× B200 today |
 | --- | --- |
@@ -356,7 +361,7 @@ trainer.n_gpus_per_node: 4
 | Knob | Notes |
 | --- | --- |
 | `algorithm.adv_estimator: grpo` | Baseline |
-| `actor.use_kl_loss` / `algorithm.use_kl_in_reward` | Set KL=0 to match `main/` |
+| `actor.use_kl_loss` / `algorithm.use_kl_in_reward` | Set KL=0 if we want to mirror prior `main/` runs; otherwise accept VeRL defaults and document |
 | `algorithm.norm_adv_by_std_in_grpo` | True by default |
 | `algorithm.filter_groups` | DAPO dynamic sampling |
 | Custom adv estimator | Minority voting — we implement |
@@ -378,73 +383,27 @@ trainer.n_gpus_per_node: 4
 | Knob | Notes |
 | --- | --- |
 | `data_source` in parquet | Routes to built-in scorers |
-| `custom_reward_function.path` | Wrap mathd∨sympy for parity |
+| `custom_reward_function.path` | Only if built-in scorers fail a smoke — default to `math_dapo` / `MathReward` |
 | `reward.reward_manager` | `naive`, `batch`, `dapo`, `limit` |
 | `launch_reward_fn_async` | Overlap slow rewards with logprob |
 
 ---
 
-## 9. Migration sketch (`main-verl/`)
-
-Sibling to `main/` — see [`main-verl/README.md`](../main-verl/README.md).
-
-### 9.1 Repo layout
-
-| Dir | Purpose |
-| --- | --- |
-| `configs/` | Hydra yaml per launch |
-| `train/` | Custom objectives: minority_answer, poly_epo, CoT arm |
-| `judge/` | Modal judge service + async HTTP client |
-| `infra/` | Modal image (verl + pins), GPU class |
-| `scripts/` | Wrappers around `python -m verl.trainer.main_ppo` |
-| `probes/` | 50-step smoke, judge bring-up, 4B fit |
-| `tests/` | Port of `main/tests/test_objective_minority.py` |
-| `data/` | Manifest paths; preprocess reuses `main/data/` |
-
-### 9.2 Bring-up order
-
-1. **`infra/`** — Modal image with VeRL; `hello_verl.py` smoke on B200.
-2. **`configs/`** — GRPO on Qwen3-1.7B + Polaris; 50-step parity gate vs `main/` wandb (`mean_reward`, `prompt_coverage`).
-3. **`train/`** — Port `minority_answer`; unit tests against existing fixtures.
-4. **`judge/`** — Modal OpenAI-compatible API; async client with semaphore.
-5. **`configs/` (4B)** — Qwen3-4B fit check; filtered manifest (Path C).
-6. **`train/`** — CoT-clustering arm (Path D) once judge is up.
-
-### 9.3 What stays in `main/`
-
-- All paper docs, timeline, TA notes, eval results
-- Polaris preprocess + manifests
-- Custom trainer + B200 run artifacts (frozen)
-- Eval harness (adapt checkpoint loading for VeRL)
-
-### 9.4 Parity gate (critical)
-
-Before trusting VeRL science: 50-step GRPO smoke, compare to `main/` at same step. If reward/prompt pairing diverges, debug before porting arms.
-
-Reward contract choice:
-
-| Path | Pros | Cons |
-| --- | --- | --- |
-| VeRL `math_dapo` + DAPO prompt | TA-aligned, zero custom parser | Incomparable to `main/` checkpoints |
-| Custom fn wrapping Rank-2 + mathd∨sympy | Comparable to B200 runs | More code, defeats “use MathReward” |
-
----
-
-## 10. Practical recommendations (poster timeline)
+## 9. Proposed bring-up order (poster timeline — all contingent on smokes)
 
 | Stage | GPUs | Goal |
 | --- | --- | --- |
-| Parity smoke | 1× B200 | VeRL + Modal + Ray works; GRPO matches `main/` |
+| Parity smoke | 1× B200 | VeRL + Modal + Ray runs; GRPO stable (not numeric match to `main/`) |
 | Production 1.7B | 2–4× B200 | bs=128, ~2× faster epoch |
 | Path C (4B filtered) | 4× B200 | Poly-EPO-scale layout |
 | Path D (CoT judge) | 4× B200 train + 1× B200 judge | Second Modal function for judge |
 | 8× B200 | Only if 4B still OOMs | Overkill for 1.7B |
 
-**First milestone:** GRPO smoke @ 1.7B, 50 steps, same wandb metrics as `main/`. Then port `minority_answer`. Then choose 4B vs CoT based on remaining compute.
+**First milestone:** migration plan Stage 2 (GRPO bring-up smoke — stable run, not `main/` parity). Set arms: Stages 3–5. Layout: [`../README.md`](../README.md).
 
 ---
 
-## 11. Risk summary
+## 10. Risk summary
 
 | Pros | Cons |
 | --- | --- |
@@ -456,15 +415,12 @@ Reward contract choice:
 
 ---
 
-## 12. References
+## 11. References
 
-- VeRL repo: https://github.com/verl-project/verl
+- **Our VeRL source (primary):** https://github.com/tajwarfahim/maxrl — vendored `verl/` tree; Qwen3 + Polaris scripts
+- Upstream VeRL (secondary): https://github.com/verl-project/verl
 - VeRL docs: https://verl.readthedocs.io/
 - GRPO in VeRL: https://verl.readthedocs.io/en/latest/algo/grpo.html
-- Reward functions: https://verl.readthedocs.io/en/latest/preparation/reward_function.html
-- Reward Loop: https://verl.readthedocs.io/en/latest/advance/reward_loop.html
-- Multinode: https://verl.readthedocs.io/en/latest/start/multinode.html
-- B200/GB200 example commit: https://github.com/verl-project/verl/commit/3f2fd075da015579639cd2f99aa1c2811c6f48d4
+- MaxRL paper site (algorithm we are **not** running): https://zanette-labs.github.io/MaxRL/
 - Modal GPU guide: https://modal.com/docs/guide/gpu
 - Modal multi-node (beta): https://modal.com/docs/guide/multi-node-training
-- verl-recipe DAPO: https://github.com/verl-project/verl-recipe/tree/main/dapo
