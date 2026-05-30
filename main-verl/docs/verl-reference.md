@@ -46,7 +46,7 @@ Our custom stack (`main/train/trainer.py`): vLLM collocated rollout + HF backwar
 
 | Knob | `main/` today | VeRL direction (planned) |
 | --- | --- | --- |
-| Answer extraction | Rank-2 hybrid + mathd∨sympy | VeRL `MathReward` / `math_dapo` built-ins |
+| Answer extraction | Rank-2 hybrid + mathd∨sympy (`main/` only) | **VeRL MathReward** — `math.py` / upstream `math_reward.py` via patched router ([`reward-decision.md`](./reward-decision.md)) |
 | Batch size | 64 single GPU (128 OOMs) | Up to 128, VeRL splits across GPUs |
 | Clustering substrate | Answer-hash | **CoT clustering** via async LLM judge (answer clustering → reward hacking) |
 | Model | Qwen3-1.7B-Base | Qwen3-4B-Base if it fits |
@@ -79,15 +79,26 @@ Our bs=128 OOM on single collocated H200/B200 is the main pain we *hope* VeRL ad
 
 ### 3.3 Math rewards / answer extraction
 
-The fork routes by `data_source` in parquet (`verl/utils/reward_score/`). For **`polaris`**, the maxrl repo defaults to **`math_verify`** (not our Rank-2 hybrid). TA direction aligns with built-in scoring + `\boxed{}` prompts — see `examples/maxrl_data_preprocess/polaris.py`.
+**Locked decision:** [`reward-decision.md`](./reward-decision.md) — mentor direction is **upstream `math_reward.py`** (boxed prompt + last `\boxed{}` + Hendrycks `strip_string` + string `==`). **Not** `math_verify`, **not** `math_dapo`, **not** `main/train/reward.py`.
 
-| `data_source` | Module | Extraction |
+The fork ships the scorer as **`verl/utils/reward_score/math.py`** (same logic as upstream `math_reward.py`). At maxrl @ `7197bbb` unpatched, `polaris` wrongly routed to `math_verify`; we **patch the router at image build** ([`../infra/patches/maxrl_polaris_math_reward.patch`](../infra/patches/maxrl_polaris_math_reward.patch)).
+
+| `data_source` | Routed scorer (after patch) | Extraction + compare |
 | --- | --- | --- |
-| `math_dapo`, `aime*` | `math_dapo.py` | Last `Answer:` line + `normalize_final_answer` |
-| MATH datasets | `math_reward.py` | Last `\boxed{}` + Hendrycks normalization |
-| GSM8K | `gsm8k.py` | Last `####` number |
+| **`polaris`** (our default) | **`math.py`** | Last `\boxed{}` → `strip_string` → `==` |
+| **`math_reward`** (alias) | **`math.py`** | same |
+| `lighteval/MATH`, … | `math_verify.py` (fork default) | unchanged on fork — not our Polaris path |
+| `math_dapo`, … (unpatched fork) | `math_verify` | **Do not use** for our stack |
 
-Custom rewards: `custom_reward_function.path` + `.name` in Hydra config.
+**Prompt (we supply in parquet — VeRL does not auto-append):** maxrl `examples/maxrl_data_preprocess/polaris.py` suffix:
+
+```text
+Please reason step by step, and put your final answer within \boxed{}.
+```
+
+Implemented in `main-verl/data/preprocess_polaris_verl.py`.
+
+Custom rewards: `custom_reward_function.path` + `.name` in Hydra config — **not used** for Stage 2 smoke.
 
 ### 3.4 Reward Loop (v0.7+)
 
@@ -128,10 +139,11 @@ VeRL handles HF↔vLLM sync but doesn’t eliminate it. Our Group B finding stan
 | KL | KL=0 everywhere | `use_kl_loss: True` | Override explicitly |
 | Loss aggregation | REINFORCE-with-clip | `token-mean` (not paper’s `seq-mean-token-mean`) | Document choice |
 | Qwen3-1.7B-Base | Raw string prompts | `apply_chat_template` path | No HF chat template on Base — use plain-text prompts |
+| `PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True` | **Omit** in `main-verl/infra/modal_image.py` | Set in `main/infra/modal_image.py` (fragmentation cushion) | vLLM 0.9 `CuMemAllocator` asserts on startup when VeRL colocates FSDP actor + vLLM rollout (`stage-02-log` attempt 3). Stage 1 direct `LLM()` smoke did not hit this path. If fragmentation OOM later: drop micro-batch / `gpu_memory_utilization`; optional `max_split_size_mb:128` (vLLM-safe). |
 
 ### 4.4 Reward / grader mismatch
 
-Our train grader in `main/`: **Rank-2 hybrid → mathd∨sympy** (`main/train/reward.py`). TA direction: use VeRL **`math_dapo` / `MathReward`** — **do not** wrap `main/train/reward.py` for "parity" unless a smoke shows a blocking issue. Different parsers → different pass rates; that is expected across stacks. Compare arms *within* VeRL runs, not numerically to `main/` checkpoints.
+Our train grader in `main/`: **Rank-2 hybrid → mathd∨sympy** (`main/train/reward.py`). **VeRL stack:** patched **`math.py` / MathReward only** ([`reward-decision.md`](./reward-decision.md)) — do not wrap `main/train/reward.py` for parity. Different parsers → different pass rates; expected across stacks.
 
 ### 4.5 Colocate vs standalone reward models
 
@@ -157,7 +169,7 @@ VeRL knows GRPO group baselines. It does **not** know 70 size-4 subsets, minorit
 │  • Ray orchestration, multi-GPU batching                    │
 │  • vLLM rollout + FSDP actor + weight sync                  │
 │  • GRPO/PPO loss, clip, (optional) KL                       │
-│  • Rule-based math rewards (math_dapo, math_reward)         │
+│  • Rule-based math rewards (MathReward / math.py — patched router) │
 │  • Async/batch reward scoring infrastructure                │
 │  • GenRM HTTP router pattern                                │
 │  • DAPO filter_groups, overlong buffer                      │
@@ -199,7 +211,7 @@ A reward fn scores one `(prompt, completion, gold)`. Our judge scores **one prom
 
 | Layer | VeRL | Us |
 | --- | --- | --- |
-| Per-rollout correctness | `math_dapo` / built-in | Use VeRL default — no `main/train/reward.py` |
+| Per-rollout correctness | patched `math.py` (MathReward) | [`reward-decision.md`](./reward-decision.md) — no `main/train/reward.py` |
 | CoT cluster assignment | Nothing built-in | New code; prompt logic may reference `main/probes/group_a_rollout_judge.py` |
 | Minority advantage from clusters | Nothing built-in | New `adv_estimator`; math reference `main/train/objective.py` |
 | Judge hosting | GenRM / async reward infra | Prefer VeRL async reward path if it fits; else Modal HTTP |
@@ -261,6 +273,7 @@ VeRL on B200 *looks like* a software/pins + Ray bring-up problem, not a hardware
 | `actor_rollout_ref.rollout.enforce_eager=True` | Required on Blackwell |
 | `actor_rollout_ref.actor.fsdp_config.model_dtype=bfloat16` | FSDP defaults fp32 → FlashAttn breaks |
 | `ray_kwargs.ray_init.num_gpus=N` | Modal/Docker may not auto-detect GPUs |
+| No `PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True` | vLLM memory pool incompatible (Stage 2) — unlike `main/` image |
 | SGLang: `attention_backend=flashinfer` | FA3 unsupported on SM>90 |
 | CUDA 12.4+ / cuDNN 9.8+ | VeRL base images |
 
@@ -383,7 +396,7 @@ trainer.n_gpus_per_node: 4
 | Knob | Notes |
 | --- | --- |
 | `data_source` in parquet | Routes to built-in scorers |
-| `custom_reward_function.path` | Only if built-in scorers fail a smoke — default to `math_dapo` / `MathReward` |
+| `custom_reward_function.path` | Only if built-in MathReward path fails after patch verification — see [`reward-decision.md`](./reward-decision.md) |
 | `reward.reward_manager` | `naive`, `batch`, `dapo`, `limit` |
 | `launch_reward_fn_async` | Overlap slow rewards with logprob |
 

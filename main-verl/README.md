@@ -34,7 +34,14 @@ Decided after the 2026-05-28 TA discussion ([`../main/docs/verl_move_ta_meeting.
 
 ## Status
 
-Skeleton only — directories created 2026-05-28, no code yet. Sprint: [`docs/STATUS.md`](docs/STATUS.md), [`docs/human-remaining-work.md`](docs/human-remaining-work.md).
+Stage 1 bring-up complete (see [`docs/build/stage-01-log.md`](docs/build/stage-01-log.md)). Sprint: [`docs/STATUS.md`](docs/STATUS.md), [`docs/human-remaining-work.md`](docs/human-remaining-work.md).
+
+
+## Bring-up
+
+From repo root: `export CS224R_APP_NAME=cs224r-verl-stage01 && ./main-verl/scripts/launch_hello_verl.sh` (set `MODAL_PROFILE=chicken602` if that is not your default Modal profile).
+
+- GRPO smoke: `export CS224R_APP_NAME=cs224r-verl-stage02 && ./main-verl/scripts/launch_grpo_smoke.sh`
 
 ## Next steps (rough order)
 

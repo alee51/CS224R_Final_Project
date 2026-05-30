@@ -177,7 +177,7 @@ Build a Modal image that: clones maxrl at a pinned SHA, installs **B200 GPU pins
 
 4. **Env vars** (minimum):
    ```python
-   PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
+   PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True  <!-- main-verl: OMIT — vLLM CuMemAllocator conflict in VeRL rollout; see stage-02-log S2.5 -->
    PYTHONUNBUFFERED=1
    PYTHONPATH=/root/main-verl
    CS224R_MAIN_VERL_ROOT=/root/main-verl

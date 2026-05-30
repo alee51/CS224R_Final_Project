@@ -22,7 +22,7 @@ If training does not start Fri EOD, the Mon finish line still holds — less wal
 | Code + VeRL docs | [`../`](../) (this tree) |
 | Frozen 1.7B archive | [`../../main/`](../../main/) — no new training features |
 
-**Bring-up:** `main-verl/` skeleton only; Stage 1 not started. Stack: [tajwarfahim/maxrl](https://github.com/tajwarfahim/maxrl) (pinned VeRL fork — not upstream package; not MaxRL algorithm).
+**Bring-up:** Stage 1 complete. Stage 2 S2.5 **FAIL** at 26/50 (`max_prompt_length=1024` too small). See [`build/stage-02-log.md`](build/stage-02-log.md).
 
 **Training:** Qwen3-4B-Base · Polaris-51K filtered · CoT judge · `GRPO` / `minority_cot` / `poly_epo_cot` · **1 epoch** (2 only if time — see migration plan, once).
 
@@ -42,7 +42,7 @@ Background: 1.7B table ([`../../main/docs/checkpoint_eval_morning_2026-05-28.md`
 
 | # | Stage | Done? |
 |---|--------|-------|
-| 1 | Modal image + verl + Ray | ☐ |
+| 1 | Modal image + verl + Ray | ☑ |
 | 2 | GRPO bring-up smoke (1.7B) | ☐ |
 | 3a | `minority_cot` + mock clusters | ☐ |
 | 4 | Judge on Modal | ☐ |

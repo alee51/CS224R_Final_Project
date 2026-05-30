@@ -1,0 +1,95 @@
+# Stage 2 GRPO smoke — Qwen3-1.7B-Base + Polaris-51K + MathReward (50 steps, B200:4)
+#
+# Reward stack (LOCKED): docs/reward-decision.md — math.py / upstream math_reward.py via
+# patched router (polaris → math.compute_score). Prompt suffix from maxrl polaris preprocess.
+#
+# Composes from vendored maxrl `verl/trainer/config/ppo_trainer.yaml` via Hydra defaults.
+# Override pattern follows maxrl `qwen3_experiments/run_qwen3_training.sh` (CLI overrides
+# there → YAML overrides here; we use `algorithm.adv_estimator=grpo`, not maxrl).
+#
+# KL=0 (actor.use_kl_loss=false, algorithm.use_kl_in_reward=false):
+#   VeRL defaults can enable KL paths; we disable both for bring-up — fewer moving parts,
+#   GRPO-with-clip is well-understood. This is NOT a target for main/ parity (different
+#   grader + stack; migration plan §0).
+#
+# loss_agg_mode=token-mean:
+#   REINFORCE-with-clip aggregation (verl-reference §4.3). Alternative seq-mean-token-mean
+#   matches some paper formulations; token-mean is the verl default and our starting point.
+#
+# algorithm.adv_estimator=grpo (NOT maxrl):
+#   Baseline arm per migration plan §1. maxrl estimator is the paper method — out of scope.
+#
+# TODOs (tune during S2.5 smoke):
+#   <!-- TODO --> ppo_micro_batch_size_per_gpu — start 4, drop on OOM (4→2→1)
+#   <!-- TODO --> trainer.wandb_kwargs.entity — confirm 224r-project resolves on Modal
+#   <!-- TODO --> trainer.test_freq — bump if val eval at step 25 is too slow
+
+hydra:
+  searchpath:
+    - file:///root/maxrl/verl/trainer/config
+
+defaults:
+  - ppo_trainer
+  - _self_
+
+data:
+  train_files: /vol/data/main-verl/polaris_train.parquet
+  val_files: /vol/data/main-verl/polaris_val.parquet
+  train_batch_size: 128
+  max_prompt_length: 1024
+  max_response_length: 4096
+
+actor_rollout_ref:
+  model:
+    path: Qwen/Qwen3-1.7B-Base
+  actor:
+    fsdp_config:
+      model_dtype: bfloat16
+    ppo_mini_batch_size: 32
+    ppo_epochs: 1
+    use_kl_loss: false
+    loss_agg_mode: token-mean
+    ppo_micro_batch_size_per_gpu: 4  # <!-- TODO --> tune on first OOM (S2.5)
+  rollout:
+    name: vllm
+    n: 8
+    enforce_eager: true
+    gpu_memory_utilization: 0.45
+    log_prob_micro_batch_size_per_gpu: 4
+    tensor_model_parallel_size: 1
+  ref:
+    log_prob_micro_batch_size_per_gpu: 4
+    fsdp_config:
+      model_dtype: bfloat16
+
+algorithm:
+  adv_estimator: grpo
+  use_kl_in_reward: false
+  norm_adv_by_std_in_grpo: true
+
+reward_model:
+  enable: false
+
+trainer:
+  nnodes: 1
+  n_gpus_per_node: 4
+  total_training_steps: 50
+  test_freq: 25  # <!-- TODO --> bump if val eval is slow on first run
+  save_freq: 50
+  log_val_generations: 10
+  logger: [console, wandb]
+  project_name: cs224r-minority-voting
+  experiment_name: grpo_smoke_1p7b
+  default_local_dir: /vol/checkpoints/main-verl/grpo_smoke_1p7b
+
++trainer.wandb_kwargs:
+  entity: 224r-project  # <!-- TODO --> confirm entity resolves on Modal
+  tags: [verl, stage-02, grpo, smoke]
+
+
+ray_init:
+  ray_dir: /tmp/ray
+
++ray_kwargs:
+  ray_init:
+    num_gpus: 4

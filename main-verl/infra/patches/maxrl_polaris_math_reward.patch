@@ -1,0 +1,26 @@
+--- a/verl/utils/reward_score/__init__.py
++++ b/verl/utils/reward_score/__init__.py
+@@ -58,6 +58,11 @@ def default_compute_score(data_source, solution_str, ground_truth, extra_info=No
+         # from . import deepmath
+         # res = deepmath.compute_score(solution_str, ground_truth)
+ 
++    elif data_source == "math_reward":
++        from . import math
++
++        res = math.compute_score(solution_str, ground_truth)
++
+     elif data_source in ["lighteval/MATH", "DigitalLearningGmbH/MATH-lighteval"]:
+         # from . import math
+ 
+@@ -88,9 +93,9 @@ def default_compute_score(data_source, solution_str, ground_truth, extra_info=No
+ 
+         # res = math_dapo.compute_score(solution_str, ground_truth)
+ 
+-        from . import math_verify
++        from . import math
+ 
+-        res = math_verify.compute_score(solution_str, ground_truth)
++        res = math.compute_score(solution_str, ground_truth)
+ 
+         # from . import deepmath
+         # res = deepmath.compute_score(solution_str, ground_truth)
