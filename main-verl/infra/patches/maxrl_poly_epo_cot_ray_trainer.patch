@@ -1,0 +1,10 @@
+--- a/verl/trainer/ppo/ray_trainer.py
++++ b/verl/trainer/ppo/ray_trainer.py
+@@ -444,6 +444,7 @@
+             AdvantageEstimator.GRPO_WITH_FILTERED_SFT,
+             AdvantageEstimator.MAXRL,
+             AdvantageEstimator.MINORITY_COT,
++            AdvantageEstimator.POLY_EPO_COT,
+             AdvantageEstimator.PKPO,
+             AdvantageEstimator.MACLAURIN,
+             AdvantageEstimator.CROSS_FITTED_MACLAURIN,

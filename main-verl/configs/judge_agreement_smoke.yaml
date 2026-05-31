@@ -1,0 +1,29 @@
+# Stage 4 S4.5 — judge agreement spot-check (serial, temperature=0).
+#
+# Two identical cluster_batch_sync passes on synthetic tasks; gate on parse + assignment stability.
+# Deploy judge first: ./main-verl/scripts/launch_judge_service.sh
+# Run: ./main-verl/scripts/launch_judge_agreement.sh
+#
+# Override at launch (optional): JUDGE_BASE_URL=https://<profile>--v1-chat-completions.modal.run
+
+judge:
+  base_url: https://chicken602--v1-chat-completions.modal.run
+  # Stage 3b (2026-05-30): bumped from Qwen2.5-7B-Instruct → Qwen3-4B-Instruct-2507
+  # per poly_epo paper. This S4.5 revalidation gates Stage 3b launch on:
+  # parse_ok_both_rate ≥ 0.90 + assignment_agreement_rate ≥ 0.80 on the new judge.
+  model: Qwen/Qwen3-4B-Instruct-2507
+  concurrency: 1
+  max_tokens: 4096
+  temperature: 0.0
+  timeout_s: 120
+
+smoke:
+  n_tasks: 50
+  n_rollouts: 8
+  seed: 0
+  # addition | product — must match between agreement and latency smokes for apples-to-apples
+  task_template: addition
+
+gates:
+  parse_ok_both_rate_min: 0.90
+  assignment_agreement_rate_min: 0.80

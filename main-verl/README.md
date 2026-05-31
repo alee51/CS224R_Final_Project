@@ -39,9 +39,14 @@ Stage 1 bring-up complete (see [`docs/build/stage-01-log.md`](docs/build/stage-0
 
 ## Bring-up
 
-From repo root: `export CS224R_APP_NAME=cs224r-verl-stage01 && ./main-verl/scripts/launch_hello_verl.sh` (set `MODAL_PROFILE=chicken602` if that is not your default Modal profile).
+From repo root: `./main-verl/scripts/launch_hello_verl.sh` (sets `MODAL_PROFILE=chicken602` via `scripts/modal_bringup_env.sh`).
 
 - GRPO smoke: `export CS224R_APP_NAME=cs224r-verl-stage02 && ./main-verl/scripts/launch_grpo_smoke.sh`
+- minority_cot smoke (Stage 3a, mock clusters): `export CS224R_APP_NAME=cs224r-verl-stage03a && ./main-verl/scripts/launch_minority_cot_smoke.sh`
+- Judge service (Stage 4): `export CS224R_APP_NAME=cs224r-verl-stage04-judge && ./main-verl/scripts/launch_judge_service.sh`
+- Judge agreement smoke: `./main-verl/scripts/launch_judge_agreement.sh` (config: `configs/judge_agreement_smoke.yaml`)
+- Judge latency smoke: `./main-verl/scripts/launch_judge_latency.sh` (config: `configs/judge_latency_smoke.yaml`)
+- Serial parse diagnostic: `./main-verl/scripts/launch_judge_latency.sh judge_latency_smoke_serial`
 
 ## Next steps (rough order)
 

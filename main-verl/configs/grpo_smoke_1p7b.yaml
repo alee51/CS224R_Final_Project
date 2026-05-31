@@ -38,6 +38,12 @@ data:
   train_batch_size: 128
   max_prompt_length: 1024
   max_response_length: 4096
+  # Allow overlong prompts to truncate (verl default `error` raises NotImplementedError mid-run).
+  # `left` drops from the start, preserving the `\boxed{}` instruction suffix at the prompt tail —
+  # critical for MathReward parsing. Truncation rate is reported up front by
+  # data/preprocess_polaris_verl.py (`--prompt-stats`) and the smoke logs `response_length/max`
+  # as the response-side truncation proxy until Stage 7 finish_reason wiring lands.
+  truncation: left
 
 actor_rollout_ref:
   model:

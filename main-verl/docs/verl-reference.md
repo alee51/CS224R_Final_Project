@@ -388,6 +388,7 @@ trainer.n_gpus_per_node: 4
 | `actor_rollout_ref.model.path` | Qwen3-1.7B-Base or 4B-Base |
 | `actor_rollout_ref.rollout.name` | `vllm` or `sglang` |
 | `data.max_response_length` | 4096 |
+| `data.truncation` | `left` for Polaris (preserves `\boxed{}` suffix); default `error` raises mid-step on overflow. See Stage 2 attempt 7 in [`build/stage-02-log.md`](./build/stage-02-log.md). |
 | `enforce_eager` | True on B200 |
 | FSDP offload flags | If 4B VRAM tight |
 

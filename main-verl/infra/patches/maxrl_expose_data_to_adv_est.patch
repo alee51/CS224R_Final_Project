@@ -1,0 +1,13 @@
+--- a/verl/trainer/ppo/ray_trainer.py
++++ b/verl/trainer/ppo/ray_trainer.py
+@@ -361,6 +361,10 @@ def compute_advantage(
+         adv_kwargs = {
+             "token_level_rewards": data.batch["token_level_rewards"],
+             "response_mask": data.batch["response_mask"],
++            # Stage 3b: registered estimators that need rollout text (minority_cot judge,
++            # poly_epo_cot judge) read responses/raw_prompt via data; existing estimators
++            # accept **kwargs and ignore this key.
++            "data": data,
+             "config": config,
+         }
+         if "uid" in data.non_tensor_batch:  # optional

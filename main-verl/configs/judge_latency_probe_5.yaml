@@ -1,0 +1,21 @@
+# Tiny latency probe — 5 tasks, serial, sole purpose is to measure per-call wall
+# after enforce_eager=False. First call eats CUDA graph compile (~30-90s);
+# steady-state should be ~3s/call.
+judge:
+  base_url: https://chicken602--v1-chat-completions.modal.run
+  model: Qwen/Qwen3-4B-Instruct-2507
+  concurrency: 1
+  max_tokens: 4096
+  temperature: 0.0
+  timeout_s: 180
+
+smoke:
+  n_tasks: 5
+  n_rollouts: 8
+  seed: 0
+  task_template: addition
+
+gates:
+  # No quality gates here — S4.5 v2 already proved 100/100. This is wall-time only.
+  parse_ok_both_rate_min: null
+  assignment_agreement_rate_min: null

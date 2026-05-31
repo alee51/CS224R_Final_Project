@@ -1,0 +1,22 @@
+# Stage 4 diagnostic — same task set as judge_latency_smoke.yaml but serial (concurrency=1).
+#
+# Use to separate parse failures caused by load vs synthetic task difficulty.
+# Run: ./main-verl/scripts/launch_judge_latency.sh judge_latency_smoke_serial
+
+judge:
+  base_url: https://chicken602--v1-chat-completions.modal.run
+  model: Qwen/Qwen2.5-7B-Instruct
+  concurrency: 1
+  max_tokens: 4096
+  temperature: 0.0
+  timeout_s: 120
+
+smoke:
+  n_tasks: 64
+  n_rollouts: 8
+  seed: 42
+  task_template: product
+
+gates:
+  mean_wall_per_task_s_max: null
+  parse_ok_rate_min: 0.90

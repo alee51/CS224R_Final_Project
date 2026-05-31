@@ -5,6 +5,8 @@ GPU pins: vLLM 0.9.0 + cu128 torch index, transformers<4.54, flash-attn 2.8.3 (B
   — aligned with main/infra/modal_image.py; not maxRL README defaults (torch 2.6 / vLLM 0.8.4).
 Stage 2 (S2.3): editable install uses maxrl/setup.py deps; GPU wheels re-pinned after install.
 Stage 2 (S2.5b): patch maxrl router so `polaris` / `math_reward` → math.py (upstream math_reward.py).
+Stage 3a (S3a.2): patch adds MINORITY_COT enum + compute_minority_cot_outcome_advantage to core_algos.py.
+  <!-- TODO (S3a next rebuild): add .run_commands("cd /root/maxrl && patch -p1 < /root/main-verl/infra/patches/maxrl_minority_cot_adv_est.patch") AFTER the existing math_reward patch step. Do NOT merge into the same run_commands call — keep patches as separate layers for easier rollback. Sequence this with Stage 2 smoke completion before triggering a new image build. -->
 Runtime: ray installed explicitly for smoke; torch/vllm versions come from vLLM 0.9.0 pin.
 PYTORCH_CUDA_ALLOC_CONF: intentionally omits expandable_segments:True — vLLM 0.9 CuMemAllocator
   (VeRL colocated rollout) hard-fails if set; see verl-reference §4.3 / stage-02-log S2.5 attempt 3.
@@ -35,9 +37,37 @@ image = (
     .add_local_dir(
         str(_LOCAL_MAIN_VERL_DIR / "infra" / "patches"),
         remote_path="/root/main-verl/infra/patches",
+        copy=True,  # required by Modal >=1.x when build steps follow add_local_dir
     )
     .run_commands(
         "cd /root/maxrl && patch -p1 < /root/main-verl/infra/patches/maxrl_polaris_math_reward.patch",
+    )
+    .run_commands(
+        # Stage 3a (S3a.2): additive patch — registers AdvantageEstimator.MINORITY_COT and
+        # compute_minority_cot_outcome_advantage in core_algos.py. Does NOT modify GRPO path;
+        # only activates when algorithm.adv_estimator=minority_cot is set. Stage 2 GRPO results
+        # remain bit-identical; the new key is unreachable from the Stage 2 config.
+        "cd /root/maxrl && patch -p1 < /root/main-verl/infra/patches/maxrl_minority_cot_adv_est.patch",
+    )
+    .run_commands(
+        # Stage 3a (S3a.2 follow-up 2026-05-30): ray_trainer.py has a hardcoded allowlist of
+        # advantage estimators that disable the critic (lines 437–457 in pinned source). The
+        # @register_adv_est registry in core_algos.py is extensible, but RayPPOTrainer.__init__
+        # also gates on this separate list — unknown estimators fall to `else: raise
+        # NotImplementedError` (caught on Stage 3a smoke first launch). This patch adds
+        # MINORITY_COT to that allowlist. Same additive guarantee: Stage 2 GRPO path is
+        # untouched (GRPO is already in the list).
+        "cd /root/maxrl && patch -p1 < /root/main-verl/infra/patches/maxrl_minority_cot_ray_trainer.patch",
+    )
+    .run_commands(
+        # Stage 3b (2026-05-30): expose DataProto to registered adv_estimator hooks so the
+        # minority_cot/poly_epo_cot judge variants can read data.batch["responses"] +
+        # data.non_tensor_batch["raw_prompt"]. Adds one key ("data": data) to adv_kwargs
+        # in the compute_advantage dispatch else-branch (ray_trainer.py:361). Existing
+        # estimators that don't take **kwargs are not in that dispatch path; only the
+        # @register_adv_est-decorated hooks go through it, and our minority_cot hook
+        # accepts **kwargs. Backward-compatible additive change. Image rebuild count 5.
+        "cd /root/maxrl && patch -p1 < /root/main-verl/infra/patches/maxrl_expose_data_to_adv_est.patch",
     )
     .env(
         {

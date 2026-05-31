@@ -1,0 +1,19 @@
+# Stage 4 judge service — Modal deploy defaults (B200:1 vLLM).
+#
+# Deploy: ./main-verl/scripts/launch_judge_service.sh
+# Profile: chicken602 (via scripts/modal_bringup_env.sh)
+#
+# After deploy, endpoints follow Modal web-endpoint labels:
+#   health:           https://chicken602--health.modal.run
+#   chat completions: https://chicken602--v1-chat-completions.modal.run
+
+modal:
+  profile: chicken602
+  app_name: cs224r-verl-stage04-judge
+
+judge:
+  model: Qwen/Qwen2.5-7B-Instruct
+  gpu_memory_utilization: 0.85
+  max_model_len: 16384
+  max_tokens: 4096
+  temperature: 0.0

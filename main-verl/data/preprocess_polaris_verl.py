@@ -31,6 +31,10 @@ DATA_SOURCE = "polaris"
 INSTRUCTION_SUFFIX = (
     "\nPlease reason step by step, and put your final answer within \\boxed{}."
 )
+# Must stay in sync with grpo_smoke_1p7b.yaml `data.max_prompt_length` — drives the
+# overflow fraction reported by --prompt-stats so we know what `truncation: left` discards.
+DEFAULT_MAX_PROMPT_LENGTH = 1024
+TOKENIZER_MODEL = "Qwen/Qwen3-1.7B-Base"
 REMOTE_TRAIN = "data/main-verl/polaris_train.parquet"
 REMOTE_VAL = "data/main-verl/polaris_val.parquet"
 
@@ -126,6 +130,105 @@ def sanity_check(train_path: Path) -> None:
     assert (df["data_source"] == DATA_SOURCE).all()
 
 
+def _prompt_text(prompt_field) -> str:
+    if isinstance(prompt_field, (list, tuple)) and prompt_field:
+        return str(prompt_field[0].get("content", ""))
+    return str(prompt_field)
+
+
+def _percentiles(values: list[int], qs: tuple[float, ...]) -> dict[str, int]:
+    if not values:
+        return {f"p{int(q * 100)}": 0 for q in qs}
+    s = sorted(values)
+    out: dict[str, int] = {}
+    for q in qs:
+        idx = max(0, min(len(s) - 1, int(round(q * (len(s) - 1)))))
+        out[f"p{int(q * 100)}"] = s[idx]
+    return out
+
+
+def _try_load_qwen_tokenizer():
+    try:
+        from transformers import AutoTokenizer
+    except ImportError:
+        return None
+    try:
+        return AutoTokenizer.from_pretrained(TOKENIZER_MODEL, trust_remote_code=True)
+    except Exception as exc:  # noqa: BLE001 — network/cache miss is non-fatal here
+        print(f"[prompt-stats] tokenizer load failed ({exc}); falling back to char-only stats")
+        return None
+
+
+def prompt_length_stats(
+    train_path: Path,
+    val_path: Path,
+    *,
+    max_prompt_length: int,
+    use_tokenizer: bool,
+) -> dict:
+    """Length distribution + overflow fraction for prompts after MathReward suffix.
+
+    Always reports char lengths (no deps). If `use_tokenizer=True` and transformers
+    + the Qwen3 tokenizer are available, also reports token lengths against
+    `max_prompt_length` — that's the threshold verl's RLHFDataset compares with
+    `truncation: left` to drop left-side tokens.
+    """
+    tok = _try_load_qwen_tokenizer() if use_tokenizer else None
+
+    def _stats_for(df: pd.DataFrame) -> dict:
+        prompts = df["prompt"].map(_prompt_text).tolist()
+        char_lens = [len(p) for p in prompts]
+        out: dict = {
+            "rows": len(prompts),
+            "char": {
+                **_percentiles(char_lens, (0.5, 0.9, 0.95, 0.99, 1.0)),
+                "max": max(char_lens) if char_lens else 0,
+            },
+        }
+        if tok is not None:
+            token_lens = [len(tok.encode(p, add_special_tokens=False)) for p in prompts]
+            n_over = sum(1 for n in token_lens if n > max_prompt_length)
+            out["token"] = {
+                **_percentiles(token_lens, (0.5, 0.9, 0.95, 0.99, 1.0)),
+                "max": max(token_lens) if token_lens else 0,
+                "n_over_max": n_over,
+                "frac_over_max": n_over / len(token_lens) if token_lens else 0.0,
+                "max_prompt_length": max_prompt_length,
+                "tokenizer": TOKENIZER_MODEL,
+            }
+        return out
+
+    summary = {
+        "generated_at_utc": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "max_prompt_length": max_prompt_length,
+        "truncation_mode": "left",  # mirrors grpo_smoke_1p7b.yaml data.truncation
+        "train": _stats_for(pd.read_parquet(train_path)),
+        "val": _stats_for(pd.read_parquet(val_path)),
+    }
+    out_path = train_path.with_name("polaris_prompt_lengths.json")
+    out_path.write_text(json.dumps(summary, indent=2) + "\n", encoding="utf-8")
+    print(f"wrote {out_path}")
+    return summary
+
+
+def _print_prompt_summary(summary: dict) -> None:
+    for split in ("train", "val"):
+        s = summary[split]
+        char = s["char"]
+        line = (
+            f"[prompt-stats:{split}] rows={s['rows']} "
+            f"char p50={char['p50']} p95={char['p95']} p99={char['p99']} max={char['max']}"
+        )
+        if "token" in s:
+            t = s["token"]
+            line += (
+                f" | token p50={t['p50']} p95={t['p95']} p99={t['p99']} max={t['max']} "
+                f"over_max({t['max_prompt_length']})={t['n_over_max']} "
+                f"({t['frac_over_max']:.2%})"
+            )
+        print(line)
+
+
 def upload_parquets(train_path: Path, val_path: Path) -> None:
     if str(_MAIN_VERL_ROOT) not in sys.path:
         sys.path.insert(0, str(_MAIN_VERL_ROOT))
@@ -152,6 +255,22 @@ def main() -> None:
     )
     parser.add_argument("--upload", action="store_true", help="Upload parquets to Modal artifacts volume")
     parser.add_argument("--jsonl", type=Path, default=None, help="Override manifest path (default: paths.POLARIS_TRAIN_JSONL)")
+    parser.add_argument(
+        "--prompt-stats",
+        action="store_true",
+        help=(
+            "Compute prompt-length distribution and fraction of prompts that exceed "
+            "--max-prompt-length (drives verl `truncation: left` overflow rate). "
+            "Token stats require the Qwen3 tokenizer; falls back to char-only if "
+            "transformers / network are unavailable."
+        ),
+    )
+    parser.add_argument(
+        "--max-prompt-length",
+        type=int,
+        default=DEFAULT_MAX_PROMPT_LENGTH,
+        help="Threshold for prompt-stats overflow reporting (mirror grpo_smoke_1p7b.yaml).",
+    )
     args = parser.parse_args()
 
     train_path, val_path, counts = build_parquets(args.out_dir, jsonl_path=args.jsonl)
@@ -165,6 +284,15 @@ def main() -> None:
     print(f"[{ts}] rows total={counts['total']} train={counts['train']} val={counts['val']}")
     print(f"wrote {train_path}")
     print(f"wrote {val_path}")
+
+    if args.prompt_stats:
+        summary = prompt_length_stats(
+            train_path,
+            val_path,
+            max_prompt_length=args.max_prompt_length,
+            use_tokenizer=True,
+        )
+        _print_prompt_summary(summary)
 
     if args.upload:
         upload_parquets(train_path, val_path)

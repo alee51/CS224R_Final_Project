@@ -11,6 +11,8 @@ VeRL planning, reference, and sprint coordination.
 | [`verl-reference.md`](./verl-reference.md) | **Reference:** fork stack, built-ins, judge wiring, B200/Modal knobs |
 | [`reward-decision.md`](./reward-decision.md) | **LOCKED:** MathReward prompt + extract + compare (mentor direction) |
 | [`build/stage-02-agent-plan.md`](./build/stage-02-agent-plan.md) | **Stage 2:** GRPO smoke executor + audit sections |
+| [`build/stage-03a-agent-plan.md`](./build/stage-03a-agent-plan.md) | **Stage 3a:** minority_cot + mock clusters |
+| [`build/stage-04-agent-plan.md`](./build/stage-04-agent-plan.md) | **Stage 4:** judge service on Modal |
 
 Related elsewhere:
 

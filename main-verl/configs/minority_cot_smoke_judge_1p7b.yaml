@@ -1,0 +1,108 @@
+# Stage 3b smoke — minority_cot with REAL judge clusters, Qwen3-1.7B-Base, Polaris-51K.
+#
+# Cluster source: judge (chicken602 deploy of Qwen3-4B-Instruct-2507 @ 40K YaRN).
+# Reward stack (LOCKED): docs/reward-decision.md — MathReward via patched router.
+#
+# Diff vs minority_cot_smoke_1p7b.yaml (Stage 3a mock):
+#   algorithm.minority_cot.cluster_source: judge      (was: implicit mock)
+#   algorithm.minority_cot.tokenizer_path: Qwen/Qwen3-1.7B-Base  (NEW; decoder for rollouts)
+#   algorithm.minority_cot.judge_model:    Qwen/Qwen3-4B-Instruct-2507  (NEW)
+#   algorithm.minority_cot.judge_max_input_tokens: 36864  (NEW; 40960 - 4096 output reserve)
+#   data.return_raw_chat: true                        (REQUIRED — judge needs raw_prompt)
+#   trainer.experiment_name: minority_cot_smoke_judge_1p7b
+#   trainer.default_local_dir: .../minority_cot_smoke_judge_1p7b
+#   +trainer.wandb_kwargs.tags: [verl, stage-03b, minority_cot, smoke, real_judge]
+#     ^ note 'real_judge' tag swap (was 'mock_clusters'). Enables W&B post-hoc filtering.
+#
+# Env vars REQUIRED on the trainer side (set by probes/minority_cot_judge_smoke.py):
+#   JUDGE_BASE_URL: full chat-completions URL of the deployed judge (chicken602 deploy).
+#   JUDGE_AUTH_TOKEN: optional bearer token (None if judge is unauthenticated).
+#
+# Stage 3b prereqs:
+#   - Image rebuild 5 with maxrl_expose_data_to_adv_est.patch applied.
+#   - Judge redeployed on chicken602 with Qwen3-4B-Instruct-2507.
+#   - S4.5 re-validation PASS (≥90% parse + ≥80% agreement on new judge).
+
+hydra:
+  searchpath:
+    - file:///root/maxrl/verl/trainer/config
+
+defaults:
+  - ppo_trainer
+  - _self_
+
+data:
+  train_files: /vol/data/main-verl/polaris_train.parquet
+  val_files: /vol/data/main-verl/polaris_val.parquet
+  train_batch_size: 128
+  max_prompt_length: 1024
+  max_response_length: 4096
+  truncation: left
+  # Stage 3b note (2026-05-30): we DO NOT set return_raw_chat: true. Verl's
+  # rollout-n expansion doesn't interleave the raw_prompt non-tensor field to
+  # match batch size 32*8=256, causing AssertionError at step 1. Instead, the
+  # judge hook decodes data.batch["prompts"] using the trainer tokenizer
+  # (data.batch["prompts"] IS n-repeated correctly).
+
+actor_rollout_ref:
+  model:
+    path: Qwen/Qwen3-1.7B-Base
+  actor:
+    fsdp_config:
+      model_dtype: bfloat16
+    ppo_mini_batch_size: 32
+    ppo_epochs: 1
+    use_kl_loss: false
+    loss_agg_mode: token-mean
+    ppo_micro_batch_size_per_gpu: 4
+  rollout:
+    name: vllm
+    n: 8
+    enforce_eager: true
+    gpu_memory_utilization: 0.45
+    log_prob_micro_batch_size_per_gpu: 4
+    tensor_model_parallel_size: 1
+  ref:
+    log_prob_micro_batch_size_per_gpu: 4
+    fsdp_config:
+      model_dtype: bfloat16
+
+algorithm:
+  adv_estimator: minority_cot
+  use_kl_in_reward: false
+  norm_adv_by_std_in_grpo: true
+  minority_cot:
+    cluster_source: judge                          # mock | judge
+    # Stage 8: UPDATE tokenizer_path → Qwen/Qwen3-4B-Base when forking this yaml.
+    tokenizer_path: Qwen/Qwen3-1.7B-Base           # decoder for rollout token IDs
+    judge_model: Qwen/Qwen3-4B-Instruct-2507       # judge tokenizer + model id
+    judge_max_input_tokens: 36864                  # 40960 max_model_len - 4096 output reserve
+    global_seed: 0                                 # rng seed for rarest-cluster tiebreak
+    # n_clusters: unused for judge source; judge emits its own cluster IDs (typically 1..k_inferred).
+    # seed: unused for judge source; deterministic source is the judge model itself.
+
+reward_model:
+  enable: false
+
+trainer:
+  nnodes: 1
+  n_gpus_per_node: 4
+  total_training_steps: 10        # Stage 3b early-validation: 10-step smoke confirms judge wiring + diagnostics flow
+  test_freq: 25                   # skipped in 10 steps
+  save_freq: 10                   # one checkpoint at end
+  log_val_generations: 10
+  logger: [console, wandb]
+  project_name: cs224r-minority-voting
+  experiment_name: minority_cot_smoke_judge_1p7b
+  default_local_dir: /vol/checkpoints/main-verl/minority_cot_smoke_judge_1p7b
+
++trainer.wandb_kwargs:
+  entity: 224r-project
+  tags: [verl, stage-03b, minority_cot, smoke, real_judge]
+
+ray_init:
+  ray_dir: /tmp/ray
+
++ray_kwargs:
+  ray_init:
+    num_gpus: 4
