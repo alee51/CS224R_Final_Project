@@ -188,7 +188,7 @@ def assign_judge_clusters(
     overflow_skipped = 0
     for p in range(n_prompts):
         rollouts_p = [
-            decoder_tok.decode(ids, skip_special_tokens=True)
+            decoder_tok.decode(_strip_left_pad(ids, pad_id), skip_special_tokens=True)
             for ids in rollout_token_ids[p]
         ]
         if len(rollouts_p) != n_rollouts:

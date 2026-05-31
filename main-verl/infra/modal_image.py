@@ -80,6 +80,13 @@ image = (
         "cd /root/maxrl && patch -p1 < /root/main-verl/infra/patches/maxrl_poly_epo_cot_ray_trainer.patch",
     )
     .run_commands(
+        # Stage 7: forward per-step diagnostics (distinct_clusters, pass_at_8, prompts_unlocked,
+        # fraction_filtered, judge_parse_ok_rate) from the @register_adv_est hooks to W&B.
+        # Adds one line after compute_data_metrics() in the training loop: reads
+        # batch.meta_info["cs224r_metrics"] written by the minority_cot / poly_epo_cot hooks.
+        "cd /root/maxrl && patch -p1 < /root/main-verl/infra/patches/maxrl_cs224r_metrics_ray_trainer.patch",
+    )
+    .run_commands(
         # Stage 8: add permanent_ckpt_freq support to ray_trainer._save_checkpoint.
         # Saves every save_freq steps; keeps only the latest temp ckpt between
         # permanent_ckpt_freq boundaries (multiples of permanent_ckpt_freq are never deleted).

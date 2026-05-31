@@ -65,6 +65,13 @@
 +
 +        adv_out = _poly_epo_cot_advantages(rewards_grouped, asg.cluster_ids)
 +
++        # Stage 7: forward per-step diagnostics to W&B via batch.meta_info.
++        if (data := kwargs.get("data")) is not None:
++            from train.objective_minority import _build_step_metrics
++            data.meta_info["cs224r_metrics"] = _build_step_metrics(
++                rewards_grouped, problem_ids, adv_out.diagnostics, asg.diagnostics
++            )
++
 +        token_adv = _scatter_advantages_to_tokens(
 +            adv_out.advantages, index, response_mask
 +        )

@@ -39,6 +39,50 @@ import torch
 logger = logging.getLogger(__name__)
 
 # ---------------------------------------------------------------------------
+# Stage 7: per-step W&B metrics state
+# ---------------------------------------------------------------------------
+
+# Accumulates problem_ids of prompts where ≥1 rollout was correct across the run.
+# Lives in the driver process (compute_advantage runs on the head node), so it
+# persists across training steps and resets on container restart (one run = one container).
+_SOLVED_PROBLEM_IDS: set = set()
+
+
+def _build_step_metrics(
+    rewards_grouped: torch.Tensor,   # [n_prompts, n_rollouts]
+    problem_ids: list,
+    adv_diagnostics: dict,
+    cluster_diagnostics: dict,
+) -> dict:
+    """Metrics dict written to batch.meta_info['cs224r_metrics'] each step.
+
+    Read by the ray_trainer patch (maxrl_cs224r_metrics_ray_trainer.patch) and
+    merged into the W&B metrics dict alongside verl's native compute_data_metrics().
+    """
+    global _SOLVED_PROBLEM_IDS
+
+    any_correct = (rewards_grouped > 0).any(dim=1)          # [n_prompts] bool
+    pass_at_8 = any_correct.float().mean().item()
+
+    solved_this_step = [
+        pid for pid, ok in zip(problem_ids, any_correct.tolist()) if ok
+    ]
+    _SOLVED_PROBLEM_IDS.update(solved_this_step)
+
+    metrics: dict[str, Any] = {
+        "train/pass_at_8": pass_at_8,
+        "train/prompts_unlocked": len(_SOLVED_PROBLEM_IDS),
+        "train/fraction_filtered": adv_diagnostics.get("fraction_filtered", 0.0),
+    }
+    # Judge/cluster diagnostics — only present when cluster_source=judge.
+    for key in ("distinct_clusters_mean", "degenerate_rollouts",
+                "judge_parse_ok_rate", "judge_overflow_skipped"):
+        if key in cluster_diagnostics:
+            metrics[f"train/{key}"] = cluster_diagnostics[key]
+    return metrics
+
+
+# ---------------------------------------------------------------------------
 # Module-level constants (verbatim from main/train/objective.py)
 # ---------------------------------------------------------------------------
 

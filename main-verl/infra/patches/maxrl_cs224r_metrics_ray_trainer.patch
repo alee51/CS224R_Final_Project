@@ -1,0 +1,7 @@
+--- a/verl/trainer/ppo/ray_trainer.py
++++ b/verl/trainer/ppo/ray_trainer.py
+@@ -1933,6 +1933,7 @@
+                 # collect metrics
+                 metrics.update(compute_data_metrics(batch=batch, use_critic=self.use_critic))
++                metrics.update(batch.meta_info.pop("cs224r_metrics", {}))
+                 metrics.update(compute_timing_metrics(batch=batch, timing_raw=timing_raw))
