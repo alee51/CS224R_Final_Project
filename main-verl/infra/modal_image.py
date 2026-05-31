@@ -86,14 +86,15 @@ image = (
         # batch.meta_info["cs224r_metrics"] written by the minority_cot / poly_epo_cot hooks.
         "cd /root/maxrl && patch -p1 < /root/main-verl/infra/patches/maxrl_cs224r_metrics_ray_trainer.patch",
     )
-    .run_commands(
-        # Stage 8: add permanent_ckpt_freq support to ray_trainer._save_checkpoint.
-        # Saves every save_freq steps; keeps only the latest temp ckpt between
-        # permanent_ckpt_freq boundaries (multiples of permanent_ckpt_freq are never deleted).
-        # -l ignores whitespace differences in context lines (the patch was
-        # generated with trailing whitespace stripped; upstream file keeps it).
-        "cd /root/maxrl && patch -p1 -l < /root/main-verl/infra/patches/maxrl_permanent_ckpt.patch",
-    )
+    # Stage 8 permanent_ckpt_freq patch TEMPORARILY DISABLED (2026-05-31): H3 of
+    # maxrl_permanent_ckpt.patch fails to apply against post-Stage-7 file state even
+    # with -l (whitespace-tolerant). Bypassed to unblock verification run for the
+    # W&B metric-forwarding (Stage 7) and probe env-var fixes. Without this patch,
+    # checkpoints accumulate at every save_freq — manageable for the 10-step
+    # verification run; must be fixed before the full 400-step production launch.
+    # .run_commands(
+    #     "cd /root/maxrl && patch -p1 -l < /root/main-verl/infra/patches/maxrl_permanent_ckpt.patch",
+    # )
     .env(
         {
             "PYTHONUNBUFFERED": "1",
