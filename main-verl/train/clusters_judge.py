@@ -65,7 +65,12 @@ from judge.client import JudgeClient, JudgeClientConfig
 from judge.prompt import build_judge_messages
 from judge.types import DEGENERATE_CLUSTER_ID, JudgeClusterResult, JudgeTask
 from train.clusters_mock import ClusterAssignment
-from train.judge_trace import append_step_log, dump_prompt_trace, trace_prompt_index
+from train.judge_trace import (
+    append_parse_failure,
+    append_step_log,
+    dump_prompt_trace,
+    trace_prompt_index,
+)
 
 
 # ---------------------------------------------------------------------------
@@ -250,6 +255,17 @@ def assign_judge_clusters(
             cluster_ids[p, :] = DEGENERATE_CLUSTER_ID
             degenerate_rollout_count += n_rollouts
             distinct_counts.append(1)
+            # Parse-fail (not overflow): dump raw response for offline inspection.
+            if res is not None:
+                raw = res.raw_response or ""
+                append_parse_failure(
+                    {
+                        "problem_id": problem_ids[p],
+                        "n_rollouts": n_rollouts,
+                        "raw_response_len": len(raw),
+                        "raw_response": raw,
+                    }
+                )
         else:
             parse_ok_count += 1
             for r in range(n_rollouts):

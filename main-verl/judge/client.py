@@ -10,13 +10,16 @@ from dataclasses import dataclass
 import httpx
 
 from judge.parse import parse_judge_response
-from judge.prompt import build_judge_messages
+from judge.prompt import build_judge_messages, build_poly_epo_schema
 from judge.types import JudgeClusterResult, JudgeTask
 
 
 # Max concurrent HTTP requests (each may carry a multi-prompt vLLM batch).
 JUDGE_CONCURRENCY_CAP = 8
-DEFAULT_HTTP_BATCH_SIZE = 16
+# Production default: matches train_batch_size=128 split into 2 chunks (one per
+# judge container under max_containers=2). Probes/scripts that pass arm_config=None
+# previously fell through to 16, generating mis-sized POSTs in the service logs.
+DEFAULT_HTTP_BATCH_SIZE = 64
 
 
 @dataclass
@@ -165,6 +168,7 @@ class JudgeClient:
                 "messages": self._messages_for_task(task),
                 "temperature": self.config.temperature,
                 "max_tokens": self.config.max_tokens,
+                "guided_json": build_poly_epo_schema(len(task.rollouts)),
             }
             last_http_exc: httpx.HTTPError | None = None
             for attempt in range(self.MAX_RETRIES + 1):
@@ -202,6 +206,8 @@ class JudgeClient:
         if not tasks:
             return []
         async with sem:
+            # All tasks in a batch share one SamplingParams on the server side,
+            # so all rollout counts in the batch must match (true for N_ROLLOUTS=8).
             body = {
                 "model": self.config.model,
                 "requests": [
@@ -209,6 +215,7 @@ class JudgeClient:
                 ],
                 "temperature": self.config.temperature,
                 "max_tokens": self.config.max_tokens,
+                "guided_json": build_poly_epo_schema(len(tasks[0].rollouts)),
             }
             timeout = self._timeout_for_batch(len(tasks))
             last_http_exc: httpx.HTTPError | None = None

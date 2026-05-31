@@ -30,6 +30,8 @@ actor_rollout_ref:
     loss_agg_mode: token-mean
     use_torch_compile: false
     ppo_micro_batch_size_per_gpu: 4
+    optim:
+      lr: 1.0e-6
   rollout:
     name: vllm
     n: 8
@@ -64,10 +66,10 @@ trainer:
   total_training_steps: 400
   val_before_train: false
   val_on_last_step: true
-  test_freq: 999
-  save_freq: 15
-  permanent_ckpt_freq: 60
-  log_val_generations: 0
+  test_freq: 50
+  save_freq: 10
+  permanent_ckpt_freq: 50
+  log_val_generations: 4
   logger: [console, wandb]
   project_name: cs224r-minority-voting
   experiment_name: poly_epo_cot_train_4b_1epoch

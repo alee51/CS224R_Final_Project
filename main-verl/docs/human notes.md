@@ -5,8 +5,9 @@ modal workspaces: nancy is running code. nancy can run stuff on emma anastasia t
 each modal workspace has limit of 10 gpus. can be 10 b200. 
 nancy's modal profile is called chicken602. 
 
-current credits as of 5/29 12:37pm PT: 
+current credits as of 5/31 3:14am PT: 
 
-- nancy (chicken602): $655.89
+- nancy (chicken602): $313.23
 - emma: $1013.42
 - anastasia: $610.90
+- abao: $705.00

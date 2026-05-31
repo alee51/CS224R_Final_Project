@@ -69,10 +69,15 @@ class JudgeService:
 
     def _sampling_params(self, body: dict[str, Any]):
         from vllm import SamplingParams
+        from vllm.sampling_params import GuidedDecodingParams
 
         temperature = float(body.get("temperature", DEFAULT_TEMPERATURE))
         max_tokens = int(body.get("max_tokens", DEFAULT_MAX_TOKENS))
-        return SamplingParams(temperature=temperature, max_tokens=max_tokens)
+        kwargs: dict[str, Any] = {"temperature": temperature, "max_tokens": max_tokens}
+        guided_json = body.get("guided_json")
+        if guided_json is not None:
+            kwargs["guided_decoding"] = GuidedDecodingParams(json=guided_json)
+        return SamplingParams(**kwargs)
 
     def _prompt_from_messages(self, messages: list[dict[str, Any]]) -> str:
         return self.tokenizer.apply_chat_template(

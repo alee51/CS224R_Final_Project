@@ -51,6 +51,11 @@ def step_log_path() -> Path | None:
     return Path(raw) if raw else None
 
 
+def parse_fail_log_path() -> Path | None:
+    raw = os.environ.get("CS224R_JUDGE_PARSE_FAIL_LOG", "").strip()
+    return Path(raw) if raw else None
+
+
 def append_step_log(record: dict[str, Any]) -> Path | None:
     """Append one JSON line per ``assign_judge_clusters`` call (survives Ray log routing)."""
     path = step_log_path()
@@ -62,6 +67,20 @@ def append_step_log(record: dict[str, Any]) -> Path | None:
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("a", encoding="utf-8") as f:
         f.write(json.dumps(record, default=str) + "\n")
+    return path
+
+
+def append_parse_failure(record: dict[str, Any]) -> Path | None:
+    """Append one JSON line per parse-failed judge response for offline inspection."""
+    path = parse_fail_log_path()
+    if path is None:
+        return None
+    import time
+
+    record = {**record, "logged_at_unix": time.time(), "pid": os.getpid()}
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("a", encoding="utf-8") as f:
+        f.write(json.dumps(record, default=str, ensure_ascii=False) + "\n")
     return path
 
 

@@ -72,6 +72,8 @@ _RUNTIME_SECRET_DICT = {
     "JUDGE_AUTH_TOKEN": _JUDGE_AUTH_TOKEN,
     # Propagate config/steps via Secret so container sees them at function-call time.
     "CS224R_SMOKE_CONFIG": _EFFECTIVE_CONFIG_NAME,
+    # Always-on: capture raw judge responses on parse failure for offline inspection.
+    "CS224R_JUDGE_PARSE_FAIL_LOG": f"/vol/judge_parse_failures_{_TRACE_SLUG}.jsonl",
 }
 if _LOCAL_SMOKE_STEPS:
     _RUNTIME_SECRET_DICT["CS224R_SMOKE_STEPS"] = _LOCAL_SMOKE_STEPS

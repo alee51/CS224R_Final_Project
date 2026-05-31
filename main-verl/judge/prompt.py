@@ -38,3 +38,29 @@ def build_judge_messages(problem: str, rollouts: list[str]) -> tuple[str, str]:
         "{responses_block}", _build_responses_block(rollouts)
     )
     return system, user
+
+
+def build_poly_epo_schema(n_responses: int) -> dict:
+    """JSON schema for vLLM guided decoding — pins the Poly-EPO output shape.
+
+    Eliminates the three observed parse-failure modes:
+      (A) stray quote after ``cluster_id: 100``,
+      (B) unescaped LaTeX backslashes inside ``chain_of_thought`` strings,
+      (C) judge emitting ``{"error": "..."}`` instead of cluster keys.
+    """
+    response_schema = {
+        "type": "object",
+        "properties": {
+            "chain_of_thought": {"type": "string"},
+            "cluster_id": {"type": "integer", "minimum": 0},
+        },
+        "required": ["chain_of_thought", "cluster_id"],
+        "additionalProperties": False,
+    }
+    keys = [str(i) for i in range(1, n_responses + 1)]
+    return {
+        "type": "object",
+        "properties": {k: response_schema for k in keys},
+        "required": keys,
+        "additionalProperties": False,
+    }
