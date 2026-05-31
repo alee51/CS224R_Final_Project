@@ -1505,3 +1505,118 @@ Stage 8 patch adding `permanent_ckpt_freq` support to `ray_trainer._save_checkpo
 - Multi-account dispatch script
 - Stage 7 `finish_reason="length"` wiring (optional pre-launch per STATUS.md, but flagged for eval story)
 
+## 2026-05-31 (Sunday) — Stage 8 launched; GPU clock lottery on abao
+
+All three production runs launched at 04:09 PDT — `chicken602` (GRPO + judge), `emma` (`minority_cot` + judge replica), `abao` (`poly_epo_cot`). All three healthy on W&B; tags propagating via `WANDB_TAGS` env var. Created the "Stage 8 production (verl)" saved view (`main/scripts/setup_wandb_production_view.py`) filtering on tags `verl + production`.
+
+### `poly_epo` step wall ~1.8× the other two — diagnosed to host-side GPU clock cap, not code
+
+W&B `perf/time_per_step` showed `poly_epo_cot ≈ 360 s` vs `minority_cot ≈ 200 s` vs `grpo ≈ 155 s`. All three runs use identical model / batch / FSDP / rollout config and were launched in the same minute.
+
+**What it wasn't:**
+- Not a crash: `modal app logs` clean on all three; no tracebacks.
+- Not the judge: `clusters_judge` wall ≈ 43 s on poly_epo vs ≈ 40 s on minority_cot. Parse-OK 1.000 on both.
+- Not the algorithm: subagent diff'd `objective_minority.py` vs `objective_poly_epo.py` + both adv-est patches + both probes + both yamls. Implementation parity confirmed; if anything `poly_epo_cot`'s adv kernel is slightly cheaper (no `Counter` / no `rng.choice`).
+- Not NVLink: `nvidia-smi nvlink -s` inside both containers showed all 18 links at 53.125 GB/s = full 956 GB/s aggregate B200 spec. Identical on abao and emma.
+- Not a different GPU SKU: both probes request `gpu="B200:4"`; B200 ships SXM-only so 4× B200 is always on an HGX baseboard with NVSwitch.
+
+**Smoking gun (single nvidia-smi query inside each running container):**
+
+```bash
+modal container exec --no-pty <task-id> -- bash -c \
+  "nvidia-smi --query-gpu=index,clocks.sm,clocks.max.sm,power.draw,power.limit,temperature.gpu,clocks_throttle_reasons.active --format=csv"
+```
+
+| GPU | poly_epo (abao) `clocks.sm` | minority_cot (emma) `clocks.sm` |
+|-----|-----------------------------|----------------------------------|
+| 0   | 1965 MHz (max)              | 1927 MHz                          |
+| 1   | **1155 MHz**                | 1965 MHz                          |
+| 2   | **1155 MHz**                | 1882 MHz                          |
+| 3   | **1155 MHz**                | 1965 MHz                          |
+
+Three of `poly_epo`'s four B200s pinned at exactly **1155 MHz** (≈ the B200 base clock) vs `minority_cot`'s near-boost ≈ 1900–1965 MHz. `1155 / 1965 = 0.59` — matches the observed wall-time ratio. All GPUs at 99–100% util, so they're *doing* work, just at base clock.
+
+**Critical:** `clocks_throttle_reasons.active = 0x0` on every poly_epo GPU. No thermal flag (temp 38–44 °C), no power-brake flag (440–660 W of 1000 W limit), no SW slowdown. The clock is held down with **no documented NVIDIA-side throttle reason**, and three GPUs at the *exact same* 1155 MHz is not stochastic boost behavior — it's the fingerprint of an admin `nvidia-smi --lock-gpu-clocks` set on the underlying host (often done when rack PSU can't sustain 4× 1000 W and the operator clamps clocks instead of risking power events). Modal's NCCL healthcheck (per their gpu-health blog) catches link failures but does not catch admin clock locks. No first-party Modal report of this symptom found in docs / HN / GitHub issues — undocumented but real.
+
+### Re-diagnosis (later that day): not a `-lgc` lock — host-virtualization layer
+
+The "admin clock lock" framing above was a guess; deeper probing rules out every standard NVIDIA clock-cap mechanism and points instead to a **host/hypervisor-level cap invisible to the guest**.
+
+**Evidence that rules OUT all guest-visible clock caps:**
+
+```bash
+modal container exec --no-pty <task-id> -- bash -c \
+  "nvidia-smi -q -d TEMPERATURE,POWER,CLOCK -i 0,1,2,3"
+```
+
+On abao's slow GPUs (1, 2, 3 — pinned at 1155 MHz):
+
+| Field | Value | What a `-lgc`/`-ac`/`-pl` lock would show |
+|---|---|---|
+| `Applications Clocks: Graphics` | 1965 MHz | The locked value (would be 1155) |
+| `Default Applications Clocks: Graphics` | 1965 MHz | The locked default |
+| `Max Clocks: SM` | 1965 MHz | The `-lgc` ceiling (would be 1155) |
+| `Max Customer Boost Clocks: Graphics` | 1965 MHz | Lower if customer boost capped |
+| `Current Power Limit` | 1000 W | Lower if `-pl` set |
+| `Performance State` | P0 | P2/P3 if PerfState locked |
+| `Persistence Mode` | Enabled | — |
+| `GSP Firmware Version` | 580.95.05 | Same as healthy hosts |
+| `Clocks Event Reasons: HW Slowdown / SW Thermal / Sync Boost` | Not Active | Any would set throttle bits |
+| `GPU Current Temp` | 31–33 °C | Cool |
+| `Memory Current Temp` | 33–36 °C | Cool |
+
+(The `Shutdown T.Limit Temp: -5 C`, `Slowdown T.Limit Temp: -3 C`, `Max Operating T.Limit Temp: 0 C` fields look alarming but are **driver display placeholders on Blackwell** — emma's fully-healthy GPUs report the identical `-5/-3/0` values. Not real thermal violations.)
+
+So: no `-lgc` lock, no `-ac` lock, no `-pl` cap, no thermal violation, no recognized throttle, persistence on, P0, firmware matches. The cap is **not enforced anywhere the guest can observe.**
+
+**Evidence that the algorithm is NOT the cause** (rules out the earlier "rank-0 imbalance / DVFS-from-low-util" hypothesis):
+
+| Run | Setup | actor `update_policy` s/round (verl progress bar, n≈30 samples) |
+|---|---|---|
+| anastasia GRPO | no judge | **1.17** (range 1.14–1.37) |
+| emma minority_cot | judge + CoT + set-based marginal adv kernel + rank-0 judge HTTP block ~43s/step | **1.17** (range 1.11–1.20) |
+| abao poly_epo_cot | **same** judge + CoT + set-based marginal adv kernel + rank-0 judge HTTP block ~43s/step | **1.80** (range 1.71–1.91) |
+
+emma's `minority_cot` runs the *same critical-path code* as abao's `poly_epo_cot` (same set-based marginal advantage kernel `set_based_marginal_advantages`, same `assign_judge_clusters` HTTP path, same FSDP config, same vLLM rollout config, same yamls modulo `adv_estimator` name + presence of `global_seed`). It runs at GRPO speed. The slowdown is therefore **entirely the host**, not the arm. Update_policy is pure FSDP forward/backward/optimizer with no judge or rank-0 host work, and the 1.80/1.17 = 1.54× ratio is consistent with 3-of-4 GPUs clamped at 1155 MHz while the slowest GPU sets the step time.
+
+**The actual fingerprint — PCIe topology:**
+
+```bash
+modal container exec --no-pty <task-id> -- bash -c "nvidia-smi -q | grep '^GPU 0000'"
+```
+
+| Container | PCIe Bus IDs | Layout |
+|---|---|---|
+| anastasia (healthy) | `00000000:03:00.0`, `:73:00.0`, `:93:00.0`, `:E3:00.0` | Single domain `0000:`, widely-spaced bus numbers, function `00.0` — **bare-metal HGX SXM baseboard**, one PCIe root complex per GPU |
+| emma (healthy) | `00000000:03:00.0`, `:63:00.0`, `:73:00.0`, `:83:00.0` | Same — bare-metal HGX |
+| **abao (slow)** | `00000002:00:01.0`, `00000002:00:02.0`, `00000002:00:04.0`, `00000003:00:03.0` | **Two PCIe domains** (`0002:` + `0003:`), all on bus `00`, sequential device numbers `:01/:02/:03/:04` — signature of **GPUs presented through IOMMU passthrough / virtualization layer**, not bare-metal HGX |
+
+Modal's B200 fleet is heterogeneous: most nodes are bare-metal HGX, some fraction are virtualized passthrough. The latter enforces a clock cap on 3 of 4 GPUs at the host nvidia driver / GSP firmware / hypervisor layer (any of these would be invisible to the guest in the same way). GPU 0 stays at boost in all three theories because it's the bootstrap/primary device at the lowest PCIe address — host policies typically leave the primary uncapped to keep latency-sensitive driver init paths fast.
+
+We can't fix this from inside the container. Only mitigation is host re-lottery (kill + relaunch).
+
+### How to diagnose this if it recurs
+
+**Minimal probe (one CSV line tells you everything):**
+
+```bash
+modal container exec --no-pty <task-id> -- bash -c \
+  "nvidia-smi --query-gpu=clocks.sm,clocks.max.sm,clocks_throttle_reasons.active --format=csv"
+```
+
+Compare across the two containers' identical workloads. Red flag = current SM clock < ~80% of max with `throttle_reasons.active = 0x0`. If a throttle bit *is* set (thermal `0x4/0x8`, power `0x40`, SW `0x100`), it's a recognized condition — usually self-resolving or fixable. If `0x0` and clock is low, it's a host-virtualization cap; only fix is kill + relaunch onto a different host.
+
+Full diagnostic chain that ruled out everything else:
+1. `modal app logs <app-id>` → confirm no traceback / crash.
+2. Compare `clusters_judge wall_s` between arms → rule out judge.
+3. Diff per-arm `objective_*.py` / patches / yamls / probes → rule out impl.
+4. Cross-arm `update_policy s/round` from the verl progress bar → rule out algorithm/sequence-length effects. If two arms with identical code paths (e.g. minority_cot + poly_epo_cot, both judge+CoT) diverge in update_policy time, the slowdown is host, not arm.
+5. `nvidia-smi nvlink -s` → rule out degraded NVSwitch.
+6. `nvidia-smi --query-gpu=clocks.sm,clocks.max.sm,power.draw,power.limit,temperature.gpu,clocks_throttle_reasons.active --format=csv` → low clock + `0x0` throttle is the first signal.
+7. `nvidia-smi -q -d TEMPERATURE,POWER,CLOCK` → confirms no guest-visible cap (Max Clocks SM, Applications Clocks, Default Applications Clocks all at boost default; Current Power Limit at default; no thermal violation).
+8. `nvidia-smi -q | grep '^GPU 0000'` → PCIe bus IDs. Bare-metal HGX = single domain `0000:` with widely-spaced bus numbers. Virtualized passthrough = multiple domains (`0002:`, `0003:`) with sequential `:01/:02/:03/:04` device numbers on bus `00`. This is the *actual* fingerprint of the bad host class.
+
+### Mitigation: kill after next checkpoint + relaunch (host re-lottery)
+
+`save_freq: 10`, verl `resume_mode: auto` (default in `ppo_trainer.yaml`, not overridden) → just re-running the same probe re-reads `latest_checkpointed_iteration.txt` and continues. `modal app stop` does NOT trigger `modal.Retries`. Sequence: wait for `global_step_10/` on the volume → confirm `latest_checkpointed_iteration.txt` contents → `modal app stop <app-id>` → relaunch with same `JUDGE_BASE_URL` + `WANDB_TAGS`. Cost: ~5–10 steps of lost progress + ~10 min restart vs ~2× wall going forward if the new host has uncapped clocks. Verify the new container's `clocks.sm` *before* trusting the relaunch.
+
