@@ -43,6 +43,8 @@ _JUDGE_BASE_URL = os.environ.get("JUDGE_BASE_URL", "")
 _JUDGE_AUTH_TOKEN = os.environ.get("JUDGE_AUTH_TOKEN", "")
 _LOCAL_CONFIG_NAME = os.environ.get("CS224R_SMOKE_CONFIG", "").strip()
 _LOCAL_SMOKE_STEPS = os.environ.get("CS224R_SMOKE_STEPS", "").strip()
+_LOCAL_SAVE_FREQ = os.environ.get("CS224R_SMOKE_SAVE_FREQ", "").strip()
+_LOCAL_PERMANENT_CKPT_FREQ = os.environ.get("CS224R_SMOKE_PERMANENT_CKPT_FREQ", "").strip()
 _TRACE_ENABLE = os.environ.get("CS224R_TRACE_ENABLE", "").strip().lower() in (
     "1", "true", "yes", "on",
 )
@@ -73,6 +75,10 @@ _RUNTIME_SECRET_DICT = {
 }
 if _LOCAL_SMOKE_STEPS:
     _RUNTIME_SECRET_DICT["CS224R_SMOKE_STEPS"] = _LOCAL_SMOKE_STEPS
+if _LOCAL_SAVE_FREQ:
+    _RUNTIME_SECRET_DICT["CS224R_SMOKE_SAVE_FREQ"] = _LOCAL_SAVE_FREQ
+if _LOCAL_PERMANENT_CKPT_FREQ:
+    _RUNTIME_SECRET_DICT["CS224R_SMOKE_PERMANENT_CKPT_FREQ"] = _LOCAL_PERMANENT_CKPT_FREQ
 if _WANDB_TAGS:
     _RUNTIME_SECRET_DICT["WANDB_TAGS"] = _WANDB_TAGS
 if _TRACE_ENABLE:
@@ -95,6 +101,11 @@ _JUDGE_RUNTIME_SECRET = modal.Secret.from_dict(_RUNTIME_SECRET_DICT)
     image=image,
     gpu="B200:4",
     timeout=3 * 3600,
+    # Preempt/infra-blip survival: Modal reschedules on worker death; verl's
+    # resume_mode=auto (default) reads the latest ckpt from the persistent volume
+    # (default_local_dir on cs224r-artifacts) and resumes from there. Combined
+    # those give end-to-end preempt resume with at most save_freq steps of lost work.
+    retries=modal.Retries(max_retries=3, backoff_coefficient=2.0, initial_delay=60.0),
     secrets=[
         modal.Secret.from_name("HUGGINGFACE"),
         modal.Secret.from_name("WANDB_API_KEY"),
@@ -145,6 +156,8 @@ def minority_cot_judge_smoke_4b() -> None:
     # module-level reads on the container happen too early to see Secret values).
     config_name = os.environ.get("CS224R_SMOKE_CONFIG", "").strip() or _DEFAULT_CONFIG_NAME
     smoke_steps = os.environ.get("CS224R_SMOKE_STEPS", "").strip()
+    smoke_save_freq = os.environ.get("CS224R_SMOKE_SAVE_FREQ", "").strip()
+    smoke_permanent_ckpt_freq = os.environ.get("CS224R_SMOKE_PERMANENT_CKPT_FREQ", "").strip()
     checkpoint_dir = _CHECKPOINT_BY_CONFIG.get(
         config_name, f"/vol/checkpoints/main-verl/{config_name}"
     )
@@ -160,7 +173,15 @@ def minority_cot_judge_smoke_4b() -> None:
     ]
     if smoke_steps:
         cmd.append(f"trainer.total_training_steps={smoke_steps}")
-    print(f"launch: config={config_name} steps={smoke_steps or '(yaml default)'}")
+    if smoke_save_freq:
+        cmd.append(f"trainer.save_freq={smoke_save_freq}")
+    if smoke_permanent_ckpt_freq:
+        cmd.append(f"trainer.permanent_ckpt_freq={smoke_permanent_ckpt_freq}")
+    print(
+        f"launch: config={config_name} steps={smoke_steps or '(yaml default)'} "
+        f"save_freq={smoke_save_freq or '(yaml default)'} "
+        f"permanent_ckpt_freq={smoke_permanent_ckpt_freq or '(yaml default)'}"
+    )
     subprocess.run(cmd, check=True)
 
     ckpt = Path(checkpoint_dir)
