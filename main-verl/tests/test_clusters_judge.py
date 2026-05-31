@@ -26,6 +26,7 @@ pytestmark = pytest.mark.skipif(
 
 from judge.types import DEGENERATE_CLUSTER_ID, JudgeClusterResult, JudgeTask
 from train.clusters_judge import assign_judge_clusters
+from train.judge_trace import trace_prompt_index
 from train.clusters_mock import ClusterAssignment
 
 
@@ -263,3 +264,11 @@ def test_clusters_judge_strips_left_pad_from_prompt_token_ids():
     )
     assert fake.calls[0].problem == prompt_text
     assert out.diagnostics["judge_parse_ok_rate"] == 1.0
+
+
+def test_trace_prompt_index_env(monkeypatch):
+    monkeypatch.delenv("CS224R_JUDGE_TRACE", raising=False)
+    assert trace_prompt_index() is None
+    monkeypatch.setenv("CS224R_JUDGE_TRACE", "1")
+    monkeypatch.setenv("CS224R_JUDGE_TRACE_PROMPT_IDX", "3")
+    assert trace_prompt_index() == 3

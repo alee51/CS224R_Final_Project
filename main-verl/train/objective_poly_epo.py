@@ -73,7 +73,9 @@ def assign_clusters_for_poly_epo_cot_hook(
     data: Any,
 ) -> Any:
     """Route between mock and judge cluster sources for poly_epo_cot."""
-    pe = getattr(getattr(config, "algorithm", None), "poly_epo_cot", None) if config else None
+    from train.objective_minority import arm_block_from_adv_config
+
+    pe = arm_block_from_adv_config(config, "poly_epo_cot")
     return assign_clusters_from_arm_config(
         problem_ids=problem_ids,
         n_rollouts=n_rollouts,

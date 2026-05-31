@@ -36,6 +36,10 @@ def load_smoke_config(config_name: str) -> dict[str, Any]:
         judge["concurrency"] = int(conc)
     if max_tokens := os.environ.get("JUDGE_MAX_TOKENS"):
         judge["max_tokens"] = int(max_tokens)
+    if batch_size := os.environ.get("JUDGE_HTTP_BATCH_SIZE"):
+        judge["http_batch_size"] = int(batch_size)
+    if batch_timeout := os.environ.get("JUDGE_BATCH_TIMEOUT_S"):
+        judge["batch_timeout_s"] = float(batch_timeout)
     return cfg
 
 
@@ -83,6 +87,8 @@ def judge_client_from_config(cfg: dict[str, Any]) -> JudgeClient:
             timeout_s=float(judge.get("timeout_s", 120)),
             temperature=float(judge.get("temperature", 0.0)),
             max_tokens=int(judge.get("max_tokens", 4096)),
+            http_batch_size=int(judge.get("http_batch_size", 16)),
+            batch_timeout_s=float(judge.get("batch_timeout_s", 600.0)),
         )
     )
 

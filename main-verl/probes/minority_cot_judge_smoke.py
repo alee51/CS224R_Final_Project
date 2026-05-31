@@ -30,7 +30,7 @@ if str(_MAIN_VERL_ROOT) not in sys.path:
 
 import modal
 
-from infra.modal_image import app_name, image
+from infra.modal_image import app_name, image as _base_image
 from infra.modal_volume import (
     ARTIFACTS_MOUNT,
     ARTIFACTS_VOLUME_NAME,
@@ -49,6 +49,14 @@ _JUDGE_AUTH_TOKEN = os.environ.get("JUDGE_AUTH_TOKEN", "")
 _JUDGE_HEALTH_URL = os.environ.get("JUDGE_HEALTH_URL", "")
 
 app = modal.App(app_name())
+
+image = _base_image.add_local_dir(
+    str(_MAIN_VERL_ROOT / "train"),
+    remote_path="/root/main-verl/train",
+).add_local_dir(
+    str(_MAIN_VERL_ROOT / "judge"),
+    remote_path="/root/main-verl/judge",
+)
 
 artifacts_volume = modal.Volume.from_name(ARTIFACTS_VOLUME_NAME, create_if_missing=True)
 hf_cache_volume = modal.Volume.from_name(HF_CACHE_VOLUME_NAME, create_if_missing=True)

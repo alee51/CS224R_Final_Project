@@ -1,0 +1,86 @@
+# Stage 8 production — minority_cot 4B with judge, Polaris-51K filtered, 1 epoch (~400 steps).
+# Judge: 2 containers, batch 64 / concurrency 2 (one POST per container).
+# Trace OFF by default; probe injects CS224R_JUDGE_TRACE=1 when CS224R_TRACE_ENABLE=1.
+
+hydra:
+  searchpath:
+    - file:///root/maxrl/verl/trainer/config
+
+defaults:
+  - ppo_trainer
+  - _self_
+
+data:
+  train_files: /vol/data/main-verl/polaris_train.parquet
+  val_files: /vol/data/main-verl/polaris_val.parquet
+  train_batch_size: 128
+  max_prompt_length: 1024
+  max_response_length: 4096
+  truncation: left
+
+actor_rollout_ref:
+  model:
+    path: Qwen/Qwen3-4B-Base
+  actor:
+    fsdp_config:
+      model_dtype: bfloat16
+    ppo_mini_batch_size: 32
+    ppo_epochs: 1
+    use_kl_loss: false
+    loss_agg_mode: token-mean
+    use_torch_compile: false
+    ppo_micro_batch_size_per_gpu: 4
+  rollout:
+    name: vllm
+    n: 8
+    enforce_eager: true
+    gpu_memory_utilization: 0.85
+    log_prob_micro_batch_size_per_gpu: 4
+    tensor_model_parallel_size: 1
+  ref:
+    log_prob_micro_batch_size_per_gpu: 4
+    fsdp_config:
+      model_dtype: bfloat16
+
+algorithm:
+  adv_estimator: minority_cot
+  use_kl_in_reward: false
+  norm_adv_by_std_in_grpo: true
+  minority_cot:
+    cluster_source: judge
+    tokenizer_path: Qwen/Qwen3-4B-Base
+    judge_model: Qwen/Qwen3-4B-Instruct-2507
+    judge_max_input_tokens: 36864
+    judge_http_batch_size: 64
+    judge_batch_timeout_s: 600
+    judge_concurrency: 2
+    global_seed: 0
+
+reward_model:
+  enable: false
+
+trainer:
+  nnodes: 1
+  n_gpus_per_node: 4
+  total_training_steps: 400
+  val_before_train: false
+  val_on_last_step: true
+  test_freq: 999
+  save_freq: 15
+  permanent_ckpt_freq: 60
+  log_val_generations: 0
+  logger: [console, wandb]
+  project_name: cs224r-minority-voting
+  experiment_name: minority_cot_train_4b_1epoch
+  default_local_dir: /vol/checkpoints/main-verl/minority_cot_train_4b_1epoch
+
++trainer.wandb_kwargs:
+  entity: 224r-project
+  tags: [verl, stage-08, minority_cot, 4b, 1epoch, production, real_judge]
+
+ray_init:
+  ray_dir: /tmp/ray
+
++ray_kwargs:
+  ray_init:
+    num_gpus: 4

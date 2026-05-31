@@ -94,6 +94,7 @@ trainer:
   nnodes: 1
   n_gpus_per_node: 4
   total_training_steps: 10  # Stage 3a early-validation: 10-step smoke to confirm hook fires + advantage distribution differs from GRPO; 50-step locked-in run runs at Stage 8.
+  val_before_train: false
   test_freq: 25             # skipped in 10 steps; val signal isn't what's being validated here
   save_freq: 10             # one checkpoint at end (otherwise none, given save_freq>total_steps)
   log_val_generations: 10

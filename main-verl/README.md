@@ -43,6 +43,8 @@ From repo root: `./main-verl/scripts/launch_hello_verl.sh` (sets `MODAL_PROFILE=
 
 - GRPO smoke: `export CS224R_APP_NAME=cs224r-verl-stage02 && ./main-verl/scripts/launch_grpo_smoke.sh`
 - minority_cot smoke (Stage 3a, mock clusters): `export CS224R_APP_NAME=cs224r-verl-stage03a && ./main-verl/scripts/launch_minority_cot_smoke.sh`
+- poly_epo_cot smoke (Stage 5, mock clusters): `export CS224R_APP_NAME=cs224r-verl-stage05 && ./main-verl/scripts/launch_poly_epo_cot_smoke.sh`
+- Judge trace smoke (1 step, verbose judge I/O for prompt 0): `./main-verl/scripts/launch_minority_cot_judge_trace.sh`
 - Judge service (Stage 4): `export CS224R_APP_NAME=cs224r-verl-stage04-judge && ./main-verl/scripts/launch_judge_service.sh`
 - Judge agreement smoke: `./main-verl/scripts/launch_judge_agreement.sh` (config: `configs/judge_agreement_smoke.yaml`)
 - Judge latency smoke: `./main-verl/scripts/launch_judge_latency.sh` (config: `configs/judge_latency_smoke.yaml`)

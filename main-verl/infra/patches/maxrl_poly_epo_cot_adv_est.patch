@@ -1,4 +1,3 @@
-patching file verl/trainer/ppo/core_algos.py
 --- a/verl/trainer/ppo/core_algos.py
 +++ b/verl/trainer/ppo/core_algos.py
 @@ -127,6 +127,7 @@
@@ -9,17 +8,10 @@ patching file verl/trainer/ppo/core_algos.py
      PKPO = "pkpo"
      MACLAURIN = "maclaurin"
      MACLAURIN_BASELINE = "maclaurin_baseline"
-@@ -512,6 +513,66 @@
+@@ -517,6 +518,64 @@
          )
  
-         # Broadcast [n_prompts, n_rollouts] -> [batch, response_length].
-+        token_adv = _scatter_advantages_to_tokens(
-+            adv_out.advantages, index, response_mask
-+        )
-+
-+    return token_adv, token_adv
-+
-+
+     return token_adv, token_adv
 +
 +@register_adv_est(AdvantageEstimator.POLY_EPO_COT)
 +def compute_poly_epo_cot_outcome_advantage(
@@ -73,6 +65,11 @@ patching file verl/trainer/ppo/core_algos.py
 +
 +        adv_out = _poly_epo_cot_advantages(rewards_grouped, asg.cluster_ids)
 +
-         token_adv = _scatter_advantages_to_tokens(
-             adv_out.advantages, index, response_mask
-         )
++        token_adv = _scatter_advantages_to_tokens(
++            adv_out.advantages, index, response_mask
++        )
++
++    return token_adv, token_adv
+ @register_adv_est(AdvantageEstimator.GRPO_WITH_FILTERED_SFT)
+ def compute_grpo_with_filtered_sft_outcome_advantage(
+     token_level_rewards: torch.Tensor,

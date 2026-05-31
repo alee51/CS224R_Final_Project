@@ -1,0 +1,87 @@
+# One REAL training step (minority_cot + judge) with artifacts for inspection.
+# Same code path as production; writes to /vol/ (Modal artifacts volume):
+#   judge_train_step_log.jsonl  — batch diagnostics every assign_judge_clusters call
+#   judge_trace_training_prompt0.json — full I/O for prompt index 0 in that batch
+#
+# Launch: ./main-verl/scripts/launch_minority_cot_judge_trace.sh
+
+hydra:
+  searchpath:
+    - file:///root/maxrl/verl/trainer/config
+
+defaults:
+  - ppo_trainer
+  - _self_
+
+data:
+  train_files: /vol/data/main-verl/polaris_train.parquet
+  val_files: /vol/data/main-verl/polaris_val.parquet
+  train_batch_size: 128
+  max_prompt_length: 1024
+  max_response_length: 4096
+  truncation: left
+
+actor_rollout_ref:
+  model:
+    path: Qwen/Qwen3-1.7B-Base
+  actor:
+    fsdp_config:
+      model_dtype: bfloat16
+    ppo_mini_batch_size: 32
+    ppo_epochs: 1
+    use_kl_loss: false
+    loss_agg_mode: token-mean
+    ppo_micro_batch_size_per_gpu: 4
+  rollout:
+    name: vllm
+    n: 8
+    enforce_eager: true
+    gpu_memory_utilization: 0.45
+    log_prob_micro_batch_size_per_gpu: 4
+    tensor_model_parallel_size: 1
+  ref:
+    log_prob_micro_batch_size_per_gpu: 4
+    fsdp_config:
+      model_dtype: bfloat16
+
+algorithm:
+  adv_estimator: minority_cot
+  use_kl_in_reward: false
+  norm_adv_by_std_in_grpo: true
+  minority_cot:
+    cluster_source: judge
+    tokenizer_path: Qwen/Qwen3-1.7B-Base
+    judge_model: Qwen/Qwen3-4B-Instruct-2507
+    judge_max_input_tokens: 36864
+    global_seed: 0
+
+reward_model:
+  enable: false
+
+trainer:
+  nnodes: 1
+  n_gpus_per_node: 4
+  total_training_steps: 1
+  val_before_train: false
+  val_on_last_step: false
+  test_freq: 999
+  save_freq: 1
+  log_val_generations: 0
+  logger: [console]
+  project_name: cs224r-minority-voting
+  experiment_name: minority_cot_judge_trace_1p7b_v3
+  default_local_dir: /vol/checkpoints/main-verl/minority_cot_judge_trace_1p7b_v3
+  resume_mode: disable
+
+ray_init:
+  ray_dir: /tmp/ray
+
++ray_kwargs:
+  ray_init:
+    num_gpus: 4
+    runtime_env:
+      env_vars:
+        CS224R_JUDGE_TRACE: "1"
+        CS224R_JUDGE_TRACE_PROMPT_IDX: "0"
+        CS224R_JUDGE_TRACE_PATH: "/vol/judge_trace_training_prompt0.json"
+        CS224R_JUDGE_STEP_LOG: "/vol/judge_train_step_log.jsonl"

@@ -69,6 +69,22 @@ image = (
         # accepts **kwargs. Backward-compatible additive change. Image rebuild count 5.
         "cd /root/maxrl && patch -p1 < /root/main-verl/infra/patches/maxrl_expose_data_to_adv_est.patch",
     )
+    .run_commands(
+        # Stage 5 (S5.1): register AdvantageEstimator.POLY_EPO_COT +
+        # compute_poly_epo_cot_outcome_advantage. Additive — Stage 2 GRPO and
+        # Stage 3a/3b minority_cot paths untouched unless adv_estimator switched.
+        "cd /root/maxrl && patch -p1 < /root/main-verl/infra/patches/maxrl_poly_epo_cot_adv_est.patch",
+    )
+    .run_commands(
+        # Stage 5 (S5.1): ray_trainer critic-disabled allowlist — mirrors S3a ray_trainer patch.
+        "cd /root/maxrl && patch -p1 < /root/main-verl/infra/patches/maxrl_poly_epo_cot_ray_trainer.patch",
+    )
+    .run_commands(
+        # Stage 8: add permanent_ckpt_freq support to ray_trainer._save_checkpoint.
+        # Saves every save_freq steps; keeps only the latest temp ckpt between
+        # permanent_ckpt_freq boundaries (multiples of permanent_ckpt_freq are never deleted).
+        "cd /root/maxrl && patch -p1 < /root/main-verl/infra/patches/maxrl_permanent_ckpt.patch",
+    )
     .env(
         {
             "PYTHONUNBUFFERED": "1",

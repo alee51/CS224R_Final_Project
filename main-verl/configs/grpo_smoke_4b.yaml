@@ -1,0 +1,80 @@
+# Stage 6 fit check — GRPO on Qwen3-4B-Base, Polaris-51K, B200:4
+#
+# Purpose: OOM ladder + 50-step smoke before Stage 8. Locked train_batch_size=128.
+# Memory knobs: ladder attempt 1b — 1.7B parity (micro=4, gpu_mem=0.45).
+# Prior attempt 1 (micro=2, gpu_mem=0.40) passed 10 steps without OOM.
+# Use 10 steps for ratchet probes; bump to 50 at winning settings for $/step gate.
+#
+# Reward stack (LOCKED): docs/reward-decision.md — MathReward via patched router.
+
+hydra:
+  searchpath:
+    - file:///root/maxrl/verl/trainer/config
+
+defaults:
+  - ppo_trainer
+  - _self_
+
+data:
+  train_files: /vol/data/main-verl/polaris_train.parquet
+  val_files: /vol/data/main-verl/polaris_val.parquet
+  train_batch_size: 128
+  max_prompt_length: 1024
+  max_response_length: 4096
+  truncation: left
+
+actor_rollout_ref:
+  model:
+    path: Qwen/Qwen3-4B-Base
+  actor:
+    fsdp_config:
+      model_dtype: bfloat16
+    ppo_mini_batch_size: 32
+    ppo_epochs: 1
+    use_kl_loss: false
+    loss_agg_mode: token-mean
+    ppo_micro_batch_size_per_gpu: 4
+  rollout:
+    name: vllm
+    n: 8
+    enforce_eager: true
+    gpu_memory_utilization: 0.45
+    log_prob_micro_batch_size_per_gpu: 4
+    tensor_model_parallel_size: 1
+  ref:
+    log_prob_micro_batch_size_per_gpu: 4
+    fsdp_config:
+      model_dtype: bfloat16
+
+algorithm:
+  adv_estimator: grpo
+  use_kl_in_reward: false
+  norm_adv_by_std_in_grpo: true
+
+reward_model:
+  enable: false
+
+trainer:
+  nnodes: 1
+  n_gpus_per_node: 4
+  total_training_steps: 10
+  val_before_train: false
+  val_on_last_step: false
+  test_freq: 999  # no mid-run val on smokes (val pass = extra rollout batch; not needed for fit)
+  save_freq: 10
+  log_val_generations: 0
+  logger: [console, wandb]
+  project_name: cs224r-minority-voting
+  experiment_name: grpo_smoke_4b_ladder1b
+  default_local_dir: /vol/checkpoints/main-verl/grpo_smoke_4b
+
++trainer.wandb_kwargs:
+  entity: 224r-project
+  tags: [verl, stage-06, grpo, smoke, 4b]
+
+ray_init:
+  ray_dir: /tmp/ray
+
++ray_kwargs:
+  ray_init:
+    num_gpus: 4

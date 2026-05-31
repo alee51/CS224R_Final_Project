@@ -1,0 +1,113 @@
+# Stage 5 smoke — poly_epo_cot advantage estimator, Qwen3-1.7B-Base, Polaris-51K
+#
+# Reward stack (LOCKED, unchanged from Stage 2): docs/reward-decision.md —
+# MathReward (math.py) via patched router (polaris → math.compute_score).
+# Prompt suffix from maxrl polaris preprocess.  No custom_reward_function.path.
+#
+# algorithm.adv_estimator: poly_epo_cot
+#   Invokes compute_poly_epo_cot_outcome_advantage registered via
+#   @register_adv_est(AdvantageEstimator.POLY_EPO_COT) in the patched
+#   verl/trainer/ppo/core_algos.py (infra/patches/maxrl_poly_epo_cot_adv_est.patch).
+#   This is NOT adv_estimator: maxrl (paper method, out of scope per migration plan §10).
+#   This is NOT adv_estimator: grpo (Stage 2 baseline) or minority_cot (Stage 3a/3b).
+#
+# algorithm.poly_epo_cot.cluster_source / n_clusters / seed
+#   Mock-only knobs for the Stage 5 gate (cluster_source: mock).  Poly-EPO subset
+#   scoring is deterministic — there is NO global_seed knob (unlike minority_cot).
+#   Judge path reuses Stage 3b env vars (JUDGE_BASE_URL, etc.) if cluster_source is
+#   ever set to judge — not required for the stage gate.
+#
+# KL=0 + loss_agg_mode=token-mean: carried forward from Stage 2 (migration plan §1).
+#   norm_adv_by_std_in_grpo: true is harmless for poly_epo_cot (consumed only by GRPO path).
+#
+# Parquet paths: reused from Stage 2, already uploaded to /vol/data/main-verl/.
+#   Do NOT re-upload; schema unchanged.
+#
+# B200 micro-batch ladder: carried verbatim from Stage 2 final config (S2.6 handoff).
+#   ppo_micro_batch_size_per_gpu=4, gpu_memory_utilization=0.45, max_prompt_length=1024,
+#   data.truncation=left — do not re-tune here.
+#
+# W&B tag rule: verl (REQUIRED for all main-verl runs) + stage-05 + poly_epo_cot
+#   + smoke + mock_clusters.  The mock_clusters tag is critical: judge runs will use
+#   real_judge instead, enabling W&B post-hoc filtering.
+#
+# TODOs:
+#   <!-- TODO --> algorithm.poly_epo_cot.n_clusters — confirm 4 once
+#     train/distinct_clusters distribution at step 25 looks healthy.  Bump to 8 if median < 2.
+
+hydra:
+  searchpath:
+    - file:///root/maxrl/verl/trainer/config
+
+defaults:
+  - ppo_trainer
+  - _self_
+
+data:
+  train_files: /vol/data/main-verl/polaris_train.parquet
+  val_files: /vol/data/main-verl/polaris_val.parquet
+  train_batch_size: 128
+  max_prompt_length: 1024
+  max_response_length: 4096
+  # left-truncation preserves the \boxed{} instruction suffix at prompt tail —
+  # critical for MathReward parsing.  Inherited from Stage 2 attempt 7 fix.
+  truncation: left
+
+actor_rollout_ref:
+  model:
+    path: Qwen/Qwen3-1.7B-Base
+  actor:
+    fsdp_config:
+      model_dtype: bfloat16
+    ppo_mini_batch_size: 32
+    ppo_epochs: 1
+    use_kl_loss: false
+    loss_agg_mode: token-mean
+    ppo_micro_batch_size_per_gpu: 4
+  rollout:
+    name: vllm
+    n: 8  # N_ROLLOUTS=8 required by set-based marginal kernel
+    enforce_eager: true
+    gpu_memory_utilization: 0.45
+    log_prob_micro_batch_size_per_gpu: 4
+    tensor_model_parallel_size: 1
+  ref:
+    log_prob_micro_batch_size_per_gpu: 4
+    fsdp_config:
+      model_dtype: bfloat16
+
+algorithm:
+  adv_estimator: poly_epo_cot     # was: minority_cot in Stage 3a mock config. NOT maxrl.
+  use_kl_in_reward: false          # carry forward from Stage 2
+  norm_adv_by_std_in_grpo: true    # carry forward (harmless for poly_epo_cot path)
+  poly_epo_cot:                    # mock-only sub-block for stage gate:
+    cluster_source: mock           # deterministic hash clusters; judge optional later
+    n_clusters: 4                  # mock cluster count; upper end of Stage 4 forced-k range
+    seed: 0                        # mock hash seed; reproducibility gate for unit tests
+
+reward_model:
+  enable: false
+
+trainer:
+  nnodes: 1
+  n_gpus_per_node: 4
+  total_training_steps: 10  # Stage 5 early-validation: match Stage 3a minority_cot mock smoke (10 steps); 50-step locked at Stage 8.
+  val_before_train: false
+  test_freq: 25             # skipped in 10 steps
+  save_freq: 10             # one checkpoint at global_step_10 (parity with minority_cot_smoke_1p7b)
+  log_val_generations: 10
+  logger: [console, wandb]
+  project_name: cs224r-minority-voting
+  experiment_name: poly_epo_cot_smoke_1p7b
+  default_local_dir: /vol/checkpoints/main-verl/poly_epo_cot_smoke_1p7b
+
++trainer.wandb_kwargs:
+  entity: 224r-project
+  tags: [verl, stage-05, poly_epo_cot, smoke, mock_clusters]
+
+ray_init:
+  ray_dir: /tmp/ray
+
++ray_kwargs:
+  ray_init:
+    num_gpus: 4

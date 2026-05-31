@@ -151,6 +151,26 @@ def test_subset_constants():
     assert SUBSET_SIZE == 4
 
 
+def test_arm_block_from_algorithm_only_config():
+    """VeRL passes config=self.config.algorithm into adv hooks (not full trainer cfg)."""
+    from types import SimpleNamespace
+
+    from train.objective_minority import arm_block_from_adv_config
+
+    algo = SimpleNamespace(
+        minority_cot=SimpleNamespace(cluster_source="judge", global_seed=7),
+    )
+    mc = arm_block_from_adv_config(algo, "minority_cot")
+    assert mc is not None
+    assert str(mc.cluster_source) == "judge"
+    assert int(mc.global_seed) == 7
+
+    full = SimpleNamespace(algorithm=algo)
+    mc_nested = arm_block_from_adv_config(full, "minority_cot")
+    assert mc_nested is not None
+    assert str(mc_nested.cluster_source) == "judge"
+
+
 # ---------------------------------------------------------------------------
 # New test: mock-cluster reproducibility (S3a.1 surface)
 # ---------------------------------------------------------------------------

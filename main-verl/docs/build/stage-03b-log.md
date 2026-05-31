@@ -130,9 +130,34 @@ Range 1.04–1.33, mean ~1.14. Matches Stage 2 GRPO (1.07–1.20) and Stage 3a m
 
 Checkpoint persisted: `/vol/checkpoints/main-verl/minority_cot_smoke_judge_1p7b/global_step_10/{actor/, latest_checkpointed_iteration.txt, wandb_id.txt}`.
 
+## Config routing bug + training trace validation (2026-05-31)
+
+**Problem:** `ray_trainer` passes `config=self.config.algorithm` into registered adv hooks, but `assign_clusters_for_minority_cot_hook` read `config.algorithm.minority_cot` — always `None` → silent fallback to **mock** clusters. Hydra logs showed `cluster_source: judge`; training did not call the judge.
+
+**Symptoms:** `timing_s/adv ~0.08s`, no `[clusters_judge]` lines, no `/vol/judge_*` artifacts. Affected prior **10-step smoke v3** (plumbing-only PASS) and trace runs v1/v2.
+
+**Fix:** `train/objective_minority.py` — `arm_block_from_adv_config()` resolves `minority_cot` / `poly_epo_cot` from algorithm-only or full config; `[cluster_route]` log on every assignment. Trace probe overlays `train/` + `judge/` at deploy time (no image rebuild for routing fix).
+
+| Run | App ID | Verdict |
+|-----|--------|---------|
+| 1-step training trace **v3** (post-fix) | `ap-GhgpjghNEwbrZkS3DsVDO3` | **PASS** — real judge in training path |
+
+**v3 trace evidence (prompt index 0, batch 128):**
+
+- `[cluster_route] source=judge` · `[clusters_judge] n_tasks=128 parse_ok_rate=0.977 distinct_clusters_mean=2.625 wall_s=441.7`
+- `timing_s/adv: 444.8` (vs ~0.08s mock)
+- Artifacts on `main-artifacts`: `judge_train_step_log.jsonl`, `judge_trace_training_prompt0.json` (63KB)
+- **Problem text:** real Polaris hyperbola item (LaTeX + instruction), not ndarray repr
+- **Judge JSON:** 8 rollouts, `parse_ok=True`, per-rollout macro/micro CoT summaries; raw `cluster_id` 100 → mapped to degenerate `-1` per `POLY_EPO_DEGENERATE_RAW`; one rollout `cluster_id=5` survives
+- **Batch:** `degenerate_rollouts=659/1024` — high collapse rate on step 1 (many rollouts share the “100” bucket); still non-trivial batch diversity (`distinct_clusters_mean=2.6`). Quality review for Stage 8: acceptable plumbing; cluster semantics need monitoring on longer runs
+
+**Audit note:** Reclassify **10-step smoke v3** (pre-fix) as **PASS WITH NOTES** — trainer stable, judge-in-training **not** proven until this trace.
+
+---
+
 ## TODOs / known follow-ups (deferred — not blockers for Stage 8)
 
-- [ ] Cluster diagnostic logging — `ClusterAssignment.diagnostics` (parse rate, overflow count, distinct clusters mean) is computed but discarded by the hook. Add a `print(asg.diagnostics)` line at the end of `assign_clusters_for_minority_cot_hook` for the next smoke. Code change is live-reloadable (mounted, not baked); no image rebuild needed.
+- [x] Cluster diagnostic logging — `[clusters_judge]` + `JUDGE_STEP_RECORD` via trace smoke v3 (2026-05-31)
 - [ ] Stage 5 (`poly_epo_cot`) — scaffolding already pre-staged in `train/objective_poly_epo.py` + 2 unmerged patches. Uses the same cluster_source pattern; should be a quick follow-up.
 - [ ] Stage 6 (4B fit check) — verify Qwen3-4B trainer fits on B200×4 (rollout micro-batch tuning).
 - [ ] Stage 7 — explicit `finish_reason="length"` wiring (hard Stage 8 prereq).

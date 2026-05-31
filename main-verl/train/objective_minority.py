@@ -365,6 +365,23 @@ def _group_rollouts_for_judge(
     return rollouts_by_prompt, [pi or [] for pi in prompts_by_prompt], problem_ids
 
 
+def arm_block_from_adv_config(config: Any, block_name: str) -> Any:
+    """Resolve ``algorithm.<block_name>`` from the config VeRL passes to adv hooks.
+
+    ``ray_trainer`` calls ``compute_advantage(..., config=self.config.algorithm)`` —
+    the hook receives the **algorithm** subtree, not the full trainer config. Older
+    code used ``config.algorithm.minority_cot``, which is always ``None`` here and
+    silently forced ``cluster_source=mock`` even when Hydra set ``judge``.
+    """
+    if config is None:
+        return None
+    direct = getattr(config, block_name, None)
+    if direct is not None:
+        return direct
+    nested = getattr(getattr(config, "algorithm", None), block_name, None)
+    return nested
+
+
 def assign_clusters_from_arm_config(
     *,
     problem_ids: list[Any],
@@ -383,6 +400,12 @@ def assign_clusters_from_arm_config(
     cluster_source = "mock"
     if arm_config is not None:
         cluster_source = str(getattr(arm_config, "cluster_source", "mock"))
+
+    print(
+        f"[cluster_route] arm={arm_name} source={cluster_source} "
+        f"arm_config_set={arm_config is not None} data_set={data is not None}",
+        flush=True,
+    )
 
     if cluster_source == "mock":
         from train.clusters_mock import assign_mock_clusters
@@ -423,7 +446,10 @@ def assign_clusters_from_arm_config(
                 "data to judge."
             )
 
-        judge_client = build_judge_client_from_env(judge_model=judge_model)
+        judge_client = build_judge_client_from_env(
+            judge_model=judge_model,
+            arm_config=arm_config,
+        )
         return assign_judge_clusters(
             problem_ids=problem_ids,
             n_rollouts=n_rollouts,
@@ -463,7 +489,7 @@ def assign_clusters_for_minority_cot_hook(
       from the ray_trainer dispatch — see ``maxrl_expose_data_to_adv_est.patch``)
       and a JUDGE_BASE_URL env var.
     """
-    mc = getattr(getattr(config, "algorithm", None), "minority_cot", None) if config else None
+    mc = arm_block_from_adv_config(config, "minority_cot")
     return assign_clusters_from_arm_config(
         problem_ids=problem_ids,
         n_rollouts=n_rollouts,

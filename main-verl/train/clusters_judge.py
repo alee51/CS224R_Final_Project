@@ -65,6 +65,7 @@ from judge.client import JudgeClient, JudgeClientConfig
 from judge.prompt import build_judge_messages
 from judge.types import DEGENERATE_CLUSTER_ID, JudgeClusterResult, JudgeTask
 from train.clusters_mock import ClusterAssignment
+from train.judge_trace import append_step_log, dump_prompt_trace, trace_prompt_index
 
 
 # ---------------------------------------------------------------------------
@@ -179,8 +180,11 @@ def assign_judge_clusters(
     else:
         prompt_texts = list(raw_prompts)  # type: ignore[arg-type]
 
+    trace_idx = trace_prompt_index()
+
     # Step 1: decode rollouts to text, build JudgeTask per prompt, mark overflows.
     tasks: list[JudgeTask | None] = []
+    trace_capture: dict[str, Any] | None = None
     overflow_skipped = 0
     for p in range(n_prompts):
         rollouts_p = [
@@ -203,6 +207,17 @@ def assign_judge_clusters(
             tasks.append(None)
         else:
             tasks.append(JudgeTask(problem=prompt_texts[p], rollouts=rollouts_p))
+
+        if trace_idx is not None and p == trace_idx:
+            trace_capture = {
+                "problem_id": problem_ids[p],
+                "prompt_text": prompt_texts[p],
+                "rollouts": rollouts_p,
+                "system": system,
+                "user": user,
+                "envelope_token_ct": envelope_token_ct,
+                "overflow": envelope_token_ct > judge_max_input_tokens,
+            }
 
     # Step 2: async batch the in-budget tasks to the judge.
     in_budget = [t for t in tasks if t is not None]
@@ -244,6 +259,22 @@ def assign_judge_clusters(
                     degenerate_rollout_count += 1
             distinct_counts.append(len(set(cluster_ids[p].tolist())))
 
+    if trace_capture is not None and trace_idx is not None:
+        dump_prompt_trace(
+            prompt_index=trace_idx,
+            n_prompts=n_prompts,
+            problem_id=trace_capture["problem_id"],
+            prompt_text=trace_capture["prompt_text"],
+            rollouts=trace_capture["rollouts"],
+            system=trace_capture["system"],
+            user=trace_capture["user"],
+            envelope_token_ct=trace_capture["envelope_token_ct"],
+            judge_max_input_tokens=judge_max_input_tokens,
+            overflow=trace_capture["overflow"],
+            result=results[trace_idx],
+            cluster_ids_row=cluster_ids[trace_idx],
+        )
+
     in_budget_count = sum(1 for t in tasks if t is not None)
     diagnostics = {
         "distinct_clusters_mean": (
@@ -267,6 +298,16 @@ def assign_judge_clusters(
         f"wall_s={diagnostics['judge_wall_s']:.1f}",
         flush=True,
     )
+    log_path = append_step_log(
+        {
+            "n_prompts": n_prompts,
+            "n_rollouts": n_rollouts,
+            **diagnostics,
+            "trace_prompt_index": trace_idx,
+        }
+    )
+    if log_path is not None:
+        print(f"JUDGE_STEP_LOG_APPEND={log_path}", flush=True)
     return ClusterAssignment(cluster_ids=cluster_ids, diagnostics=diagnostics)
 
 
@@ -275,28 +316,55 @@ def assign_judge_clusters(
 # ---------------------------------------------------------------------------
 
 _cached_judge_client: JudgeClient | None = None
-_cached_judge_model: str | None = None
+_cached_judge_client_key: tuple[Any, ...] | None = None
+
+
+def _arm_int(arm_config: Any, key: str, default: int) -> int:
+    if arm_config is None:
+        return default
+    val = getattr(arm_config, key, default)
+    return int(val) if val is not None else default
+
+
+def _arm_float(arm_config: Any, key: str, default: float) -> float:
+    if arm_config is None:
+        return default
+    val = getattr(arm_config, key, default)
+    return float(val) if val is not None else default
 
 
 def build_judge_client_from_env(
     *,
     judge_model: str,
+    arm_config: Any = None,
     concurrency: int | None = None,
 ) -> JudgeClient:
-    """Construct JudgeClient from JUDGE_BASE_URL env + minority_cot config.
+    """Construct JudgeClient from JUDGE_BASE_URL env + optional Hydra arm block.
 
-    Concurrency is always clamped to JUDGE_CONCURRENCY_CAP=8 inside JudgeClient
-    (per Stage 4 S4.6 finding); ``concurrency`` here lets a caller request a
-    lower value without bypassing the cap.
-
-    Reuses one client per process (Modal containers are long-lived) to avoid
-    reconstructing httpx pools on every training step.
+    ``JUDGE_BASE_URL`` / ``JUDGE_AUTH_TOKEN`` remain env-only (deploy secrets).
+    Batch sizing lives in yaml (``algorithm.*.judge_http_batch_size``, etc.) with
+    optional env override for ad-hoc probes.
     """
-    global _cached_judge_client, _cached_judge_model
+    global _cached_judge_client, _cached_judge_client_key
 
-    from judge.client import JUDGE_CONCURRENCY_CAP
+    from judge.client import JUDGE_CONCURRENCY_CAP, DEFAULT_HTTP_BATCH_SIZE
 
-    if _cached_judge_client is not None and _cached_judge_model == judge_model:
+    http_batch_size = _arm_int(arm_config, "judge_http_batch_size", DEFAULT_HTTP_BATCH_SIZE)
+    if env_batch := os.environ.get("JUDGE_HTTP_BATCH_SIZE"):
+        http_batch_size = int(env_batch)
+
+    batch_timeout_s = _arm_float(arm_config, "judge_batch_timeout_s", 600.0)
+    if env_timeout := os.environ.get("JUDGE_BATCH_TIMEOUT_S"):
+        batch_timeout_s = float(env_timeout)
+
+    cfg_concurrency = _arm_int(arm_config, "judge_concurrency", JUDGE_CONCURRENCY_CAP)
+    final_concurrency = min(
+        concurrency or cfg_concurrency,
+        JUDGE_CONCURRENCY_CAP,
+    )
+
+    cache_key = (judge_model, http_batch_size, batch_timeout_s, final_concurrency)
+    if _cached_judge_client is not None and _cached_judge_client_key == cache_key:
         return _cached_judge_client
 
     base_url = os.environ.get("JUDGE_BASE_URL", "")
@@ -305,14 +373,15 @@ def build_judge_client_from_env(
             "JUDGE_BASE_URL env var is required for cluster_source=judge. "
             "Set it to the deployed judge chat-completions URL (Stage 4 deploy)."
         )
-    final_concurrency = min(concurrency or JUDGE_CONCURRENCY_CAP, JUDGE_CONCURRENCY_CAP)
     _cached_judge_client = JudgeClient(
         JudgeClientConfig(
             base_url=base_url,
             auth_token=os.environ.get("JUDGE_AUTH_TOKEN"),
             model=judge_model,
             concurrency=final_concurrency,
+            http_batch_size=max(1, http_batch_size),
+            batch_timeout_s=batch_timeout_s,
         )
     )
-    _cached_judge_model = judge_model
+    _cached_judge_client_key = cache_key
     return _cached_judge_client
