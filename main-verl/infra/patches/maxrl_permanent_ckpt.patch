@@ -1,31 +1,38 @@
 --- a/verl/trainer/ppo/ray_trainer.py
 +++ b/verl/trainer/ppo/ray_trainer.py
-@@ -22,4 +22,5 @@
+@@ -20,6 +20,7 @@
+ 
+ import json
  import os
 +import shutil
  import uuid
  from collections import defaultdict
  from copy import deepcopy
-@@ -465,6 +466,7 @@ class RayPPOTrainer:
-         self._validate_config()
+@@ -470,6 +471,7 @@
          self._create_dataloader(train_dataset, val_dataset, collate_fn, train_sampler)
  
          self.wandb_id = None
 +        self._last_temp_ckpt_step = None
  
      def _validate_config(self):
-@@ -1428,31 +1430,50 @@ class RayPPOTrainer:
+         config = self.config
+@@ -1429,27 +1431,33 @@
+ 
      def _save_checkpoint(self):
          actor_remote_path = (
-             None
-             if self.config.trainer.default_hdfs_dir is None
+-            None 
+-            if self.config.trainer.default_hdfs_dir is None 
++            None
++            if self.config.trainer.default_hdfs_dir is None
              else os.path.join(self.config.trainer.default_hdfs_dir, f"global_step_{self.global_steps}", "actor")
          )
  
          if self.use_critic:
              critic_remote_path = (
-                 None
-                 if self.config.trainer.default_hdfs_dir is None
+-                None 
+-                if self.config.trainer.default_hdfs_dir is None 
++                None
++                if self.config.trainer.default_hdfs_dir is None
                  else os.path.join(self.config.trainer.default_hdfs_dir, f"global_step_{self.global_steps}", "critic")
              )
  
@@ -53,8 +60,7 @@
  
          self._save_checkpoint_helper(
              default_local_dir=self.config.trainer.default_local_dir,
-             actor_remote_path=actor_remote_path,
-             critic_remote_path=critic_remote_path,
+@@ -1458,6 +1466,19 @@
              max_actor_ckpt_to_keep=max_actor_ckpt_to_keep,
              max_critic_ckpt_to_keep=max_critic_ckpt_to_keep,
          )
@@ -71,3 +77,6 @@
 +                self._last_temp_ckpt_step = None
 +            if not is_permanent:
 +                self._last_temp_ckpt_step = self.global_steps
+ 
+     def _load_dataloader(
+         self,
