@@ -1445,3 +1445,63 @@ Shared easy win: **problem 5** (gold 70) — all arms pass@16=1.0. GRPO hits `le
 **Implication for writeup.** AIME-25 is **sanity-only** (±3 pp per problem at n=30). Do not use it to rank arms. The BeyondAIME-style "base beats trained on hard OOD" narrative does **not** reproduce under matched prompt when you inspect rollouts: trained models emit **confident wrong boxed answers** (often DAPO-style prime-factor / m+n+p templates), consistent with training on easier Polaris/DAPO where GRPO actually wins.
 
 **Related:** [`probes/checkpoint_eval_morning_2026-05-28.md`](./probes/checkpoint_eval_morning_2026-05-28.md), [`configs/checkpoint_eval_aime25_rollouts_diagnostic_b200.yaml`](../configs/checkpoint_eval_aime25_rollouts_diagnostic_b200.yaml).
+
+## 2026-05-31 (Saturday → Sunday) — Stage 6/7 main-verl bring-up: judge batching, W&B metrics, broken permanent_ckpt patch
+
+### Judge throughput: 95s → 45s per step (2.1×)
+
+Stage 6 was deliberately bypassed (4B already fits at bs=128); focus shifted to judge call latency.
+
+- **Single-container batched judge** (ladder1d, 16 prompts/POST × 8 concurrent): 95s wall_s on 128 prompts/step. Step 1 = 291s (with trace overhead).
+- **2-container batched judge** (ladder1e, `max_containers=2` on `judge/server.py`, same client knobs): 69s wall_s. Step 1 = 246s.
+- **2-container + bigger batches** (`minority_cot_train_4b_1epoch.yaml`, `judge_http_batch_size=64, judge_concurrency=2, JUDGE_MAX_BATCH_SIZE=128`): **45s wall_s**. Step 1 = 208s, `timing_s/adv=51s` (down from 88s).
+- Key insight: when 1 container saw 8 POSTs of 16 they were serialized through FastAPI; with `requests[]` batching the in-flight batch is what vLLM continuously batches. Increasing per-POST size unlocks denser KV-cache packing per container.
+
+**Production sizing (`*_train_4b_1epoch.yaml`):** Polaris-51K filtered, 400 steps/epoch/arm. Estimated wall: GRPO ~18hr, CoT arms ~21hr each. Parallel across 2 accounts (chicken602 = GRPO + shared judge 6 GPU; second account = both CoT arms 8 GPU) ~$1,760 at $6.25/B200-hr. Judge collisions are ~8% of calls (estimated ~3% net step slowdown when CoT arms share).
+
+### W&B metric forwarding (Stage 7) — patch added, image baked
+
+`maxrl_cs224r_metrics_ray_trainer.patch` forwards `batch.meta_info["cs224r_metrics"]` into the metrics dict. Minority/poly_epo hooks populate it via `_build_step_metrics` in `train/objective_minority.py`:
+- `train/pass_at_8`, `train/prompts_unlocked`, `train/fraction_filtered` (all arms)
+- `train/distinct_clusters_mean`, `train/degenerate_rollouts`, `train/judge_parse_ok_rate`, `train/judge_overflow_skipped` (judge-only)
+
+Also fixed `clusters_judge.py` to `_strip_left_pad(ids, pad_id)` before decode, so the judge sees actual rollout text not pad tokens.
+
+Initial patch had wrong line numbers (computed against original maxrl, not post-prior-patches state) and wrong hunk counts — fixed in commits `4dae097`, `c30045b`. Image rebuilds now apply it cleanly.
+
+### W&B tag propagation bug
+
+`+trainer.wandb_kwargs.tags` in yaml never reached W&B — every prior run had `tags=[]`. Workaround: pass `WANDB_TAGS=tag1,tag2,...` via Modal Secret (wandb reads it at `wandb.init()`). Probe (`probes/minority_cot_judge_smoke_4b.py`) now wires this through.
+
+### Probe bug: module-level env reads vs Modal Secret injection order
+
+`CONFIG_NAME = os.environ.get("CS224R_SMOKE_CONFIG", DEFAULT)` was at module load. On the Modal container, module load happens BEFORE Modal Secrets are injected, so the env var (passed through `modal run` shell env) was empty and the probe always loaded the DEFAULT yaml — silently shipping the wrong config. Same bug would have affected `CS224R_SMOKE_STEPS`. Fix: move the reads inside the function body, AND pass both keys through the Modal Secret dict so they're guaranteed present at function-call time. WANDB_TAGS worked accidentally because wandb itself reads it at `init()` time (post-injection).
+
+### BROKEN: `maxrl_permanent_ckpt.patch` (other agent's patch)
+
+Stage 8 patch adding `permanent_ckpt_freq` support to `ray_trainer._save_checkpoint`. Multiple bugs:
+
+1. **Blank context lines missing leading space** → unified-diff parser miscounts hunks (`patch: malformed patch at line 9`). Fixed by writing single-space prefix.
+2. **Hunk counts** off in H1 (claimed 6/7, actual 4/5) and H3 (claimed 29/48, actual 31/50).
+3. **Line numbers** computed against original maxrl, not post-prior-patches state — needs +4 shift before line 1424 (empirical from H2's `offset 4`).
+4. **Context lines lack trailing whitespace** that exists in actual maxrl source (`None ` vs `None`) — added `-l` flag to the patch step in `modal_image.py`.
+
+**Even with all four fixes applied, H3 still fails at line 1430.** The `-l` flag should have handled the trailing-whitespace issue but didn't, suggesting a deeper content mismatch (possibly the patch was generated against a different commit / pre-applied state than what we have).
+
+**Recommended fix:** regenerate the patch from scratch by applying the desired `_save_checkpoint` rewrite against a freshly-patched maxrl tree (i.e., maxrl@pinned + all prior 6 patches applied), then `diff` to produce a clean patch. Alternatively, rewrite the `_save_checkpoint` change as inline `sed`/Python in `modal_image.py` and drop the patch entirely.
+
+**Workaround for now:** comment out the `permanent_ckpt` patch step in `modal_image.py` to unblock the verification run. Lose ckpt-keeping logic (every ckpt persists, no temp-pruning) but get back to validating Stage 7 W&B metrics. Not yet executed.
+
+### Production-launch readiness
+
+**Ready (committed `4665573`, `c30045b`, `4dae097`):**
+- 3 production yamls (`{grpo,minority_cot,poly_epo_cot}_train_4b_1epoch.yaml`) at gpu_mem 0.85, save_freq 15, permanent_ckpt_freq 60 (yamls expect the broken patch to be live)
+- Judge config (batch 64, conc 2, 2 containers, MAX_BATCH_SIZE 128)
+- W&B metrics patch + decode fix
+- Probe fix for env var propagation
+
+**Not ready:**
+- `permanent_ckpt` patch (broken — see above)
+- Multi-account dispatch script
+- Stage 7 `finish_reason="length"` wiring (optional pre-launch per STATUS.md, but flagged for eval story)
+
