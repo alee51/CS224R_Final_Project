@@ -90,7 +90,9 @@ image = (
         # Stage 8: add permanent_ckpt_freq support to ray_trainer._save_checkpoint.
         # Saves every save_freq steps; keeps only the latest temp ckpt between
         # permanent_ckpt_freq boundaries (multiples of permanent_ckpt_freq are never deleted).
-        "cd /root/maxrl && patch -p1 < /root/main-verl/infra/patches/maxrl_permanent_ckpt.patch",
+        # -l ignores whitespace differences in context lines (the patch was
+        # generated with trailing whitespace stripped; upstream file keeps it).
+        "cd /root/maxrl && patch -p1 -l < /root/main-verl/infra/patches/maxrl_permanent_ckpt.patch",
     )
     .env(
         {
