@@ -1,6 +1,9 @@
 """Polaris filtered manifest → verl parquet (MathReward stack — see docs/reward-decision.md).
 
-Split: val = 5120 rows (seed 42); train = remainder of polaris_train.jsonl (51,139 total).
+Train = ALL polaris_train.jsonl (51,139 rows, no carve-out).
+Val   = 1024 rows sampled from the same source (seed 42) — overlap with train allowed;
+        this is an in-distribution sanity signal, not a held-out generalization measure.
+        AIME-25 is the held-out OOD val set (see preprocess_aime_verl.py).
 
 Source: main/data/polaris_train.jsonl via paths.POLARIS_TRAIN_JSONL — no re-filter / HF re-pull.
 Prompt: maxrl examples/maxrl_data_preprocess/polaris.py suffix (\\boxed{} contract).
@@ -23,7 +26,7 @@ import pandas as pd
 _MAIN_VERL_ROOT = Path(__file__).resolve().parents[1]
 _REPO_ROOT = _MAIN_VERL_ROOT.parent
 
-VAL_SIZE = 5120
+VAL_SIZE = 1024
 VAL_SEED = 42
 DATA_SOURCE = "polaris"
 # Verbatim from maxrl examples/maxrl_data_preprocess/polaris.py (MathReward prompt contract)
@@ -80,13 +83,18 @@ def _to_verl_row(record: dict) -> dict:
 
 
 def _split_indices(n: int, val_size: int, seed: int) -> tuple[set[int], set[int]]:
-    if val_size >= n:
-        raise ValueError(f"val_size {val_size} must be < n {n}")
+    """Train = ALL rows; val = `val_size` seeded sample (overlap allowed).
+
+    Val is an in-distribution sanity signal, not a held-out generalization measure —
+    we don't carve val rows out of train. AIME-25 is the held-out OOD set.
+    """
+    if val_size > n:
+        raise ValueError(f"val_size {val_size} must be <= n {n}")
     indices = list(range(n))
     rng = random.Random(seed)
     rng.shuffle(indices)
     val_idx = set(indices[:val_size])
-    train_idx = set(indices[val_size:])
+    train_idx = set(range(n))
     return train_idx, val_idx
 
 

@@ -12,7 +12,9 @@ defaults:
 
 data:
   train_files: /vol/data/main-verl/polaris_train.parquet
-  val_files: /vol/data/main-verl/polaris_val.parquet
+  val_files:
+    - /vol/data/main-verl/polaris_val.parquet
+    - /vol/data/main-verl/aime_val.parquet
   train_batch_size: 128
   max_prompt_length: 1024
   max_response_length: 4096
@@ -78,8 +80,8 @@ trainer:
   log_val_generations: 4
   logger: [console, wandb]
   project_name: cs224r-minority-voting
-  experiment_name: poly_epo_cot_train_4b_1epoch
-  default_local_dir: /vol/checkpoints/main-verl/poly_epo_cot_train_4b_1epoch
+  experiment_name: poly_epo_cot_train_4b_1epoch_v2
+  default_local_dir: /vol/checkpoints/main-verl/poly_epo_cot_train_4b_1epoch_v2
 
 +trainer.wandb_kwargs:
   entity: 224r-project
