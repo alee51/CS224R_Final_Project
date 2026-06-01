@@ -81,8 +81,8 @@ trainer:
   log_val_generations: 4
   logger: [console, wandb]
   project_name: cs224r-minority-voting
-  experiment_name: minority_cot_train_4b_1epoch_v2
-  default_local_dir: /vol/checkpoints/main-verl/minority_cot_train_4b_1epoch_v2
+  experiment_name: minority_cot_train_4b_1epoch_v3
+  default_local_dir: /vol/checkpoints/main-verl/minority_cot_train_4b_1epoch_v3
 
 +trainer.wandb_kwargs:
   entity: 224r-project
