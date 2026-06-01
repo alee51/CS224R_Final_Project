@@ -76,8 +76,7 @@ def _to_verl_row(record: dict) -> dict:
         "data_source": DATA_SOURCE,
         "reward_model": {"ground_truth": record["gold"], "style": "rule"},
         "extra_info": {
-            "problem_id": record["problem_id"],
-            "difficulty_band": record["difficulty_band"],
+            "problem_id": str(record["problem_id"]),
         },
     }
 

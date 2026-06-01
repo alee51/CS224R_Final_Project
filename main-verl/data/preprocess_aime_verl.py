@@ -55,9 +55,7 @@ def _to_verl_row(record: dict) -> dict:
         "data_source": DATA_SOURCE,
         "reward_model": {"ground_truth": record["answer"], "style": "rule"},
         "extra_info": {
-            "problem_id": record["prompt_id"],
-            "split": record.get("split", "aime25"),
-            "source_hf": record.get("source_hf", "MathArena/aime_2025"),
+            "problem_id": str(record["prompt_id"]),
         },
     }
 
