@@ -35,7 +35,7 @@ actor_rollout_ref:
     use_torch_compile: false
     ppo_micro_batch_size_per_gpu: 4
     optim:
-      lr: 1.0e-6
+      lr: 3.0e-6
   rollout:
     name: vllm
     n: 8
@@ -71,8 +71,8 @@ trainer:
   log_val_generations: 4
   logger: [console, wandb]
   project_name: cs224r-minority-voting
-  experiment_name: grpo_train_4b_1epoch_v2
-  default_local_dir: /vol/checkpoints/main-verl/grpo_train_4b_1epoch_v2
+  experiment_name: grpo_train_4b_1epoch_lr3e6
+  default_local_dir: /vol/checkpoints/main-verl/grpo_train_4b_1epoch_lr3e6
 
 +trainer.wandb_kwargs:
   entity: 224r-project

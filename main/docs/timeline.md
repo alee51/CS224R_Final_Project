@@ -1988,3 +1988,138 @@ Diagnostic-table update: `Reward strict-string vs sympy` moves to
 **OPEN — mathd∨sympy gives ≈+3 pp lift on canonical prompt; consider
 switching before relaunch**.
 
+---
+
+## 2026-05-31 — Parked speedup option: sequence packing on actor + log-prob
+
+**Status: NOT TAKEN for the relaunch.** Recording the option so it's
+ready if a future run needs it.
+
+### Context
+
+poly_epo step time on `B200:4` is ~240s, broken down (`timing_s/*`):
+
+- `gen` 55s (eager-locked on Blackwell — `enforce_eager: true` is
+  required, see `main-verl/docs/verl-reference.md` §6.2)
+- `update_actor` 75s
+- `adv` 42s (dominated by judge calls — left alone for cost reasons)
+- `old_log_prob` 22s
+- weight sync / val / save: ~46s residual
+
+`update_actor` and the two log-prob passes run at
+`ppo_micro_batch_size_per_gpu: 4` with `max_response_length: 4096`. Under
+the current static-batch path, every forward pads to the longest
+sequence in the micro-batch, so a large fraction of FLOPs are padding
+when response lengths are uneven.
+
+### Proposed change
+
+Enable verl's dynamic batching on actor + both log-prob passes (rollout
+config unchanged — rollout doesn't use this knob):
+
+```yaml
+actor_rollout_ref.actor.use_dynamic_bsz: true
+actor_rollout_ref.actor.ppo_max_token_len_per_gpu: 16384   # 4× cap, safer first try
+actor_rollout_ref.ref.log_prob_use_dynamic_bsz: true
+actor_rollout_ref.ref.log_prob_max_token_len_per_gpu: 16384
+actor_rollout_ref.rollout.log_prob_use_dynamic_bsz: true
+actor_rollout_ref.rollout.log_prob_max_token_len_per_gpu: 16384
+```
+
+`ppo_micro_batch_size_per_gpu: 4` becomes a no-op when
+`use_dynamic_bsz: true` — leave it set, it's just ignored.
+
+### Expected speedup
+
+At `ppo_max_token_len_per_gpu: 16384`:
+- `update_actor` 75s → ~55s
+- `old_log_prob` 22s → ~16s
+- Step total: 240s → ~215s (~10% faster)
+
+At `ppo_max_token_len_per_gpu: 24576` (6× cap, more aggressive):
+- `update_actor` 75s → ~45s
+- `old_log_prob` 22s → ~14s
+- Step total: 240s → ~200s (~17% faster)
+
+### Why we're not taking it now
+
+The risk is a real one, specific to our `loss_agg_mode:
+seq-mean-token-sum-norm`. Sequence packing only changes which samples
+share a forward pass; it does NOT change sample composition, optimizer
+step count, advantage computation, or the rollout itself. But the loss
+math is only partition-invariant under `token-mean`. Under `seq-mean`
+the framework has to reweight each micro-batch's gradient by its
+sequence count (not just sum-then-divide-by-N_microbatches), and
+verl's `seq-mean` packing path is less battle-tested than its
+`token-mean` path — historically bug-prone in this exact reweighting.
+
+If the reweighting is off, the effective per-sequence loss weighting
+shifts in a length-distribution-dependent way — equivalent to a small
+hidden LR drift. We already pinned LR=1e-6 as too low in the Stage 8
+diagnostic; we don't want a second LR perturbation on top, mid-relaunch.
+
+### Verification recipe if we do enable it
+
+5–10 step smoke at matched seed against the static-batch baseline,
+compare:
+
+- `actor/grad_norm`
+- `actor/ppo_kl`
+- `actor/entropy_loss`
+- `actor/pg_loss`
+- mean response length
+
+Pass if all match within ~1–2%. Drift >5% on `grad_norm` or `ppo_kl`
+indicates verl's seq-mean packing path is mishandling reweighting —
+fall back to static and don't ship.
+
+### Related knobs
+
+- `gpu_memory_utilization: 0.85 → 0.90` is a zero-math-risk win worth
+  ~5s/step from larger vLLM KV cache; can ship independently of
+  packing.
+- B200 `enforce_eager` is locked on for the rollout engine; do not
+  propose flipping it.
+- Judge container scale-out (containers 2→4) would save ~17s/step on
+  `adv` but is too expensive for the current budget.
+
+
+## 2026-06-01 00:30 PT — Stage 8 v2 lr3e6 relaunch (3rd relaunch attempt of v2)
+
+After 3 false starts on the v2 relaunch tonight (host topology, data parquet missing on stonedpinecones, extra_info schema mismatch on aime val), the three runs got past trainer init and logged a few steps before the team pulled them down for a hyperparameter change.
+
+**Observed magnitudes from the brief v2 runs:**
+
+| arm | grad_norm | adv/max | pg_loss | ppo_kl |
+|---|---|---|---|---|
+| GRPO (anastasia, 2 steps) | 0.26 | 0.875 | 1e-5 | 4e-5 |
+| poly_epo (stonedpinecones, 1 step) | 0.0026 | 0.116 | 4e-4 | 1.5e-5 |
+| minority (emma, 9 steps in v1 schema before kill) | 0.011 | 0.50 | 2e-3 | -5e-5 |
+
+Poly-EPO v2 grad_norm is ~2.6x smaller than v1's `edna0184` (0.0068). Most-likely cause: cluster-100 fix removed the spurious diversity-reward inflation from degenerate clusters. The shrinkage is the right direction algorithmically, but combined with LR=1e-6 it puts us near the Adam ε-floor (per-param |g| ≈ 4.7e-8 vs ε=1e-8; denominator ratio ≈ 0.82, so eps shaves ~20% off the step).
+
+**Decision: bump LR 1e-6 → 3e-6 symmetrically across all 3 arms.**
+
+Reasoning:
+- v1 poly_epo at grad_norm 0.0068 demonstrably learned (pass@8 0.36 → 0.41, entropy 0.85 → 0.55, bin[0,0] 0.64 → 0.59 over 145 steps). The signal at v1's magnitude WAS sufficient.
+- v2 set arms at grad_norm 0.0026 (2.6x smaller, post cluster-100 fix) need either patience or LR compensation. We don't have patience (budget tight).
+- Asymmetric LR (only set arms bumped) was rejected as hard-to-defend in writeup.
+- Std-norm deviation for set arms was rejected: paper explicitly criticizes it in §7 as "a significant deviation from our general set RL recipe", and v1 evidence shows set arms learn without it.
+- 3e-6 (not 2e-6) chosen to give set arms maximum signal headroom. GRPO at 0.26 grad_norm + 3e-6 LR is the main risk — DAPO asymmetric clipping (low=0.20, high=0.28) provides safety margin; if GRPO destabilizes we have time to revert since it trains faster.
+
+**New ckpt dirs:** `*_lr3e6` suffix on experiment_name + default_local_dir for all three. Prevents resume from any in-flight v2/v3 checkpoint.
+
+**Launch tags:** `verl,production,{arm},4b,stage-08,lr3e6,judge-fewshot-fix,aime-val,schema-fix`. WandB filter: `lr3e6 AND production`.
+
+**Mapping (unchanged):**
+- GRPO → anastasia (LR=3e-6)
+- minority → emma (LR=3e-6, judge URL `https://stonedpinecones--v1-chat-completions.modal.run`)
+- poly_epo → stonedpinecones (LR=3e-6, intra-account judge)
+- judge → stonedpinecones (deployed, B200×2)
+
+**Watch (per v1 post-mortem at timeline.md:1638–1664):**
+- `critic/rewards/mean` slope (not grad_norm, not ppo_kl)
+- `actor/entropy` direction (should fall like v1 did: 0.85 → 0.55)
+- For minority: `bin[0.0,0.0]` should FALL (cluster-100 fix kicking in; v1 had it rising)
+- For GRPO: watch `actor/pg_clipfrac` for clip storms from the 3x LR bump
+- If after ~30 steps the trends are wrong, intervene with LR cut or arm-specific tuning
