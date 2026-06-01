@@ -1,7 +1,6 @@
 """Polaris filtered manifest → verl parquet (MathReward stack — see docs/reward-decision.md).
 
-Split: val = 256 rows (seed 42); train = remainder of polaris_train.jsonl (51,139 total).
-<!-- TODO: confirm 256 is the right val size for trainer.test_freq=25 -->
+Split: val = 5120 rows (seed 42); train = remainder of polaris_train.jsonl (51,139 total).
 
 Source: main/data/polaris_train.jsonl via paths.POLARIS_TRAIN_JSONL — no re-filter / HF re-pull.
 Prompt: maxrl examples/maxrl_data_preprocess/polaris.py suffix (\\boxed{} contract).
@@ -24,7 +23,7 @@ import pandas as pd
 _MAIN_VERL_ROOT = Path(__file__).resolve().parents[1]
 _REPO_ROOT = _MAIN_VERL_ROOT.parent
 
-VAL_SIZE = 256
+VAL_SIZE = 5120
 VAL_SEED = 42
 DATA_SOURCE = "polaris"
 # Verbatim from maxrl examples/maxrl_data_preprocess/polaris.py (MathReward prompt contract)
