@@ -1620,3 +1620,371 @@ Full diagnostic chain that ruled out everything else:
 
 `save_freq: 10`, verl `resume_mode: auto` (default in `ppo_trainer.yaml`, not overridden) → just re-running the same probe re-reads `latest_checkpointed_iteration.txt` and continues. `modal app stop` does NOT trigger `modal.Retries`. Sequence: wait for `global_step_10/` on the volume → confirm `latest_checkpointed_iteration.txt` contents → `modal app stop <app-id>` → relaunch with same `JUDGE_BASE_URL` + `WANDB_TAGS`. Cost: ~5–10 steps of lost progress + ~10 min restart vs ~2× wall going forward if the new host has uncapped clocks. Verify the new container's `clocks.sm` *before* trusting the relaunch.
 
+---
+
+## 2026-05-31 (Sunday, late) — Stage 8 diagnostic: poly_epo is slow, minority is regressing, cluster-100 bug fixed
+
+### TL;DR (final picture after iterating with Ifdita on Slack)
+
+- **Poly-EPO is learning, just ~3× slower than GRPO at the same nominal hyperparams.** Reward slope +0.015%/step vs GRPO's +0.047%/step; entropy 0.85 → 0.55 over 145 steps; pass@8 0.36 → 0.41; degenerate-rollouts count dropping over time (535 → 473) — all signs of real, slow learning, not a stall. Ifdita confirms her POLARIS Poly-EPO is also slower than her GRPO at this step count and that high early degenerate-rate is expected.
+- **Minority-CoT is actively regressing.** Reward slope **−0.016%/step**, entropy not dropping (0.89 → 0.81), `bin[0.0,0.0]` rising — the policy is getting *worse* at math. Distinct mechanism from poly_epo's slowness; see "minority regression" below.
+- **Std-norm theory retracted.** Ifdita confirmed she runs `norm_adv_by_std_in_grpo: false` for both arms, so adding std-norm would *diverge* from her setup, not replicate it. Our set arms already match her on this axis (custom estimators ignore the flag, net behavior = false). Big gradients are *not* the goal.
+- **Cluster-100 inclusion was a real bug, now fixed.** Paper App. A.1: "we remove any cluster assignment to cluster 100 from being in the set in the numerator." Our `_poly_epo_subset_score` and `_minority_subset_score` were counting `-1` (our internal mapping of paper's `100`) as a real distinct cluster. Fixed in `objective_minority.py` and `objective_poly_epo.py`; unit tests added.
+
+### W&B trajectory comparison (smoothed, 15-step buckets)
+
+Pulled via `wandb.Api()` against runs `edna0184` (poly_epo, 145 steps), `4n1z6bdl` (minority, crashed at step 46), `bf9j82gh` (GRPO, crashed at step 63).
+
+| metric | **GRPO** | **poly_epo** | **minority** |
+|---|---|---|---|
+| reward linear slope | **+0.000469/step** (+0.047%) | **+0.000149/step** (+0.015%) | **−0.000161/step** (−0.016%, regressing) |
+| reward range (start → late) | 0.109 → 0.143 | 0.115 → 0.132 (peak 0.135 @ step 105) | 0.105 → 0.100 |
+| entropy (early → late) | 0.84 → 0.60 | 0.85 → 0.55 | 0.89 → 0.81 (stuck) |
+| pass@8 trajectory | n/a (rises via rewards) | 0.36 → 0.41 | 0.38 → 0.36 |
+| `bin[0.0,0.0]` (all-wrong prompts) | 0.62 → 0.56 | 0.64 → 0.59 | 0.62 → 0.64 (*rising*) |
+| `bin(0.5,1.0]` (mostly-right) | 0.04 → 0.08 (doubling) | 0.04 → 0.06 | 0.04 → 0.03 (falling) |
+| `degenerate_rollouts/1024` | n/a | 535 → 473 (~−12%) | 539 → 519 (~−4%) |
+| `actor/grad_norm` (std-normed adv vs raw) | 0.20 | 0.0068 | 0.0181 |
+| `critic/advantages/max` | 2.47 (std-normed) | 0.12 (r̄·k/4 ∈ [0, 0.25]) | 0.41 (rarest-cluster mean ∈ [0, 1]) |
+| `actor/ppo_kl` median | 2e-5 | 2e-5 | 5e-5 |
+
+Note: `actor/ppo_kl` is the same (~2e-5) for *all three arms including learning-GRPO*, so it's a misleading "is it learning" indicator (it's per-mini-batch approx-KL inside one update, not policy drift). Use `critic/rewards/mean` slope + `actor/entropy` trend.
+
+### Why minority is regressing (separable from poly_epo's slowness)
+
+`_minority_subset_score` (`main-verl/train/objective_minority.py`) picks the rarest cluster in a 4-rollout subset and returns *that cluster's mean reward*. Pre-fix, if `-1` (degenerate, the paper's `cluster_id: 100` for code/gibberish/non-math) happened to be the rarest in a subset — and Qwen-3-4B-Base writes Python *often* early, so degenerate rollouts are ~50% of rollouts on day zero — and a degenerate rollout happened to box the correct numeric answer (rare but not impossible if the Python output is right), the subset score becomes 1.0 and the marginal for that degenerate rollout is positive. **The algorithm rewards code-writing.** That positive feedback on degeneracy accumulates and the model regresses on math.
+
+Poly-EPO's diversity term doesn't have this pathology — `len(set(clusters)) * r̄ / 4` only ever rewards *more diversity*, not specifically the degenerate cluster. Hence poly_epo learns (slowly) while minority regresses.
+
+### Cluster-100 fix (landed)
+
+Per paper Appendix A.1: "when computing the diversity of any set using Eq. (11), we remove any cluster assignment to cluster 100 from being in the set in the numerator."
+
+- `main-verl/train/objective_poly_epo.py:_poly_epo_subset_score` — now excludes `DEGENERATE_CLUSTER_ID` (= -1) from the unique-cluster count: `r̄ · |{c in subset : c != -1}| / SUBSET_SIZE`.
+- `main-verl/train/objective_minority.py:_minority_subset_score` — now excludes `-1` from the rarest-cluster selection entirely. If every rollout in the subset is degenerate, returns 0.
+- `main-verl/judge/types.py` already defines `DEGENERATE_CLUSTER_ID = -1` and maps raw `100` → `-1` in `parse.py`; both objective files now import this constant.
+- 2 new unit tests in `tests/test_objective_poly_epo.py` and `tests/test_objective_minority.py` cover the degenerate-cluster cases (including the minority "reward-the-code" failure mode). All 15 tests pass.
+
+### Open policy question — minority-CoT degenerate handling (decide before re-launching minority)
+
+**The question**: should the minority-CoT subset score ignore degenerate rollouts (cluster_id=100, internally `-1`) when picking the rarest cluster AND when computing reward, or only one of those, or neither?
+
+**Why this matters**: `_minority_subset_score` picks the rarest cluster in a 4-rollout subset and returns *that cluster's mean reward*. If `-1` is rare and a degenerate rollout happens to box the right answer (e.g., model wrote Python that printed the right boxed value), pre-fix code returns 1.0 → marginal advantage rewards the code-writer. This is unique to minority's "amplify the rare cluster" mechanism; poly-EPO's diversity term doesn't have this pathology.
+
+**The paper doesn't address this** — minority-CoT is our own algorithm, not from the Poly-EPO paper. Paper's cluster-100 prescription is only about poly-EPO's diversity numerator. So minority is a judgment call.
+
+**Options (with example: clusters=[-1, 0, 0, 0], rewards=[1, 0, 0, 0])**:
+
+| option | "can `-1` be the rarest?" | "do `-1` rollouts contribute to reward?" | score |
+|---|---|---|---|
+| **A. Pre-fix (status quo)** | yes | yes (if `-1` is selected) | 1.0 — reinforces code-writer |
+| **B. Exclude from both** (what I tentatively implemented, then reverted) | no | no | 0.0 — cluster 0 selected, all zeros |
+| **C. Exclude from selection, keep in reward** | no | yes — if a degenerate rollout happens to share the rarest real cluster | n/a here (no overlap); generally near-B |
+| **D. Force-zero reward for `-1` regardless** | yes (any) | force 0 | 0.0 |
+
+**Resolution status (2026-05-31, pre-relaunch review)**: STILL OPEN. Current code at `main-verl/train/objective_minority.py:509-528` is **Option A** — `-1` is treated as a regular cluster ID, can be picked as rarest, degenerate rollouts contribute reward. The function's docstring explicitly flags this as an open policy decision.
+
+**Recommended (not yet landed): Option B.** Reasoning:
+
+1. *Symmetric with poly-EPO.* That arm excludes `-1` from the diversity numerator per paper §A.1. Minority excluding `-1` from "rarest valid reasoning cluster" is the philosophical mirror — same `DEGENERATE_CLUSTER_ID` semantics, same exclusion policy.
+2. *Removes the only exploit vector.* Today a model that emits Python that happens to print a correct boxed answer gets *amplified* by the minority kernel (rare-degenerate → rarest selected → reward propagates). B kills this.
+3. *`-1` is definitionally "couldn't be clustered as a reasoning trace"* (Ifdita: code/gibberish/non-math). Selecting it as "rarest valid reasoning" is a category error.
+4. *D is strictly worse than B* when `-1` ties with a real rarest cluster — D randomly destroys real signal half the time; B always uses it.
+
+**Implementation sketch (if B is chosen):**
+- `_minority_subset_score`: filter `-1` before `Counter`; return `0.0` if no real clusters remain.
+- `set_based_marginal_advantages.keep_mask`: extend to also drop prompts where, after excluding `-1`, all rollouts share one real cluster.
+- Test cases: `[-1,-1,-1,-1]` → 0.0; `[-1,0,0,0]` → mean of cluster 0; `[-1,-1,0,1]` → rarest among real {0,1} tiebreak.
+
+**Why not landing for this relaunch:** flipping minority A → B is a real training-behavior change (unlike the rest of the relaunch list, which is observability + paper-faithful knob alignment). Existing minority data is under Option A; switching now mixes regimes. Decision still deferred to Nancy — pending Ifdita's view if she replies, otherwise a judgment call.
+
+### Outstanding question for Ifdita (Slack-ready)
+
+> At step ~50–100 of your Poly-EPO POLARIS run, do you remember:
+> 1. `actor/grad_norm` — ballpark 0.01, 0.1, or 1?
+> 2. `critic/advantages/max` — order 0.1 or order 1?
+> 3. `critic/rewards/mean` slope — from step 0 to step 100, did it rise by ~5%, ~25%, or more?
+>
+> Ours: grad_norm ≈ 0.007, adv/max ≈ 0.12, rewards/mean +12% over 140 steps. GRPO at same settings: grad_norm 0.20, adv/max 2.5, rewards +28% over 60 steps. Want to confirm the set arms are just naturally slower at LR=1e-6.
+
+Three worlds depending on her answer:
+1. **Her set arms also have tiny grad_norm and slow reward slope** → we're on the same trajectory; just need more steps. Total_training_steps may need to extend beyond 400.
+2. **Her set arms have tiny grad_norm but faster reward slope** → cluster-100 fix should help close the gap; re-launch and check.
+3. **Her set arms have noticeably larger grad_norm** → something in advantage normalization or loss aggregation differs; dig further.
+
+### Tweak list before re-launch
+
+1. **Cluster-100 exclusion (DONE, this commit).** Expected effect: faster slope on poly_epo (less noise in diversity term); stops minority from regressing (no more "reward the code-writer" pathology). Magnitude unknown — re-launch to measure.
+2. **Re-launch minority first.** It's the only arm where current trajectory is going the wrong way; fix is most likely to bite there. Watch for `bin[0.0, 0.0]` to start *falling* (vs current rising) within 30 steps.
+3. **Keep `norm_adv_by_std_in_grpo: true` on GRPO** (matches verl default; GRPO is working). For the set arms it's a no-op anyway.
+4. **Defer DAPO clip-higher** (ε_high=0.28) — `pg_clipfrac=0.0006`, irrelevant until/unless gradients get a lot bigger.
+5. **Don't add std-normalization to set arms** — Ifdita's setup runs without it.
+6. **Don't change reward** — mentor confirmed `math.py` (strict Hendrycks) is the intended scorer.
+
+### Ruled out
+
+| candidate | verdict | evidence |
+|---|---|---|
+| Reward strict-string vs sympy | not the issue | Mentor confirmed `math.py` (strict Hendrycks) is intentional. GRPO uses same reward and learns; per-arm gap can't be reward. |
+| LR=1e-6 too low | not the issue | Mentor used 1e-6 without problem. Pre-milestone 3e-6 signal weak. |
+| Std-norm missing on set arms | not the issue | Ifdita's setup also runs without std-norm. |
+| Base model | ruled out | Paper Table 1 uses Qwen-3-4B-Base, same as us. |
+| vLLM sampling | ruled out | T=1.0, top_p=1, top_k=-1 matches paper. |
+| `max_response_length` | ruled out | 4096 matches; mean ~1100, clip 5%. |
+| Judge degenerate-rate | ruled out by mentor | Ifdita: "in the beginning degenerate rollouts will be high due to code/non-english generations, but it will decrease over time." Confirmed in our data: 535 → 473 over 145 steps. |
+| Judge parse rate | ruled out | `judge_parse_ok_rate = 0.999`. |
+| `loss_agg_mode: token-mean` | **OPEN — flagged 2026-05-31** | Verl configs use `token-mean` (masked_mean over all batch tokens); pre-milestone `main/train/loss.py` used `length_norm: batch_max` (Dr.GRPO `T_max`). Different per-sequence weighting. The "matches paper" framing was based on the pre-milestone port, which is just citing Nancy's prior interpretation — the paper's `T_i` definition has not been independently re-verified. Don't change without reading the Poly-EPO paper directly. See [`main-verl/docs/build/relaunch_changes.md` §10](../../main-verl/docs/build/relaunch_changes.md). |
+| Custom Poly-EPO subset math | ruled out (modulo the cluster-100 fix now landed) | `r̄ · k/4` and 35-subset marginal match pre-milestone `main/train/objective.py`. |
+
+---
+
+## 2026-05-31 (Sunday, later) — Step-0 gap vs paper; reopen reward strictness
+
+### Picture after pulling the paper
+
+Overlaid `bin[0.0, 0.0]` (= 1 − non-zero pass rate) on Poly-EPO paper Fig. 2 right at our actual step counts:
+
+| step | paper Poly-EPO non-zero | ours Poly-EPO non-zero |
+|---|---|---|
+| 0 | ~43% | ~36% |
+| ~100 | ~52% | ~40% |
+| 145 | ~55% | ~41% |
+| 200 (paper peak region) | ~57% | — |
+| 800 (paper endpoint) | ~55% | — |
+
+**Roughly half the gap is already present at step 0** — same Qwen3-4B-Base, ~7pp behind before a gradient step has been applied. The other half opens over 145 steps at ~1.5× slower slope. Algorithm changes (the relaunch list in `main-verl/docs/build/relaunch_changes.md`) only address the slope half. The step-0 half lives in rollout + grading, not in the trainer.
+
+### Grad-norm sanity (the "is it even learning" question)
+
+`grad_norm ≈ 0.007` on Poly-EPO looked alarming. Worked through it:
+- Set-RL marginal advantage is bounded above by `r̄ × k/n ≈ 0.13 × 0.5 ≈ 0.07` early in training. Our `critic/advantages/max = 0.12` is at the algorithm's theoretical ceiling. Not a bug.
+- Adam normalizes the update by `m̂ / √v̂` ≈ sign(grad), so per-parameter step ≈ LR regardless of grad magnitude. The model is moving by ~1e-6 / parameter / step either way; over 397 steps that's ~4e-4 cumulative weight drift — enough to shift policy by a few pp, which is exactly what we observe.
+- The real risk with tiny grads is **SNR**, not magnitude: when grads are tiny *and* noisy, `√v̂` (which sees noise²) doesn't shrink while `m̂` does, so Adam's effective step collapses below LR. We're not in that regime yet (loss is monotonically improving), but it's the failure mode to watch.
+
+Net: tiny gradients are **intrinsic to poly-EPO at this reward level** and not, by themselves, evidence of a misconfiguration. Ifdita's runs almost certainly have grad_norm in the same 0.005–0.02 ballpark.
+
+### Reopening reward strictness (was "ruled out" — now open)
+
+The earlier "reward isn't the gap" verdict rested on "Ifdita said use `math.py` strict." But:
+- Our own reward-decision smoke shows `\boxed{\frac{1}{2}}` vs gold `0.5` → 0.0 under `math.py` strict, 1.0 under `math_verify`. Plausibly a ~5–10% slice of correct-but-unrewarded rollouts on Polaris.
+- Most published math-RL setups in 2025–26 (DeepScaleR, rLLM, DAPO, Open-Reasoner-Zero) use `mathd ∨ sympy` or `math_verify`. Strict Hendrycks `==` for training reward is unusually conservative.
+- Pre-milestone analysis already showed `mathd ∨ sympy` lifts pass@1 ~4–6pp over strict on the same n800 rollouts (see 2026-05-26 evening entry — "Train grader: mathd OR sympy").
+- Mentor's "use strict" advice may have been a post-hoc recipe, not what her paper runs actually used. **Follow-up Slack to her: did the paper training reward include the SymPy fallback?**
+
+### Proposed probe: 4-grader offline rescore (no new Modal cost)
+
+Existing artifact: `probes/05-25/prompt_c/phase1_rollouts.jsonl` (800 prompts × 8 rollouts, raw-ish Qwen, arm C prompt). Already on Modal volume.
+
+Rescore the saved completions with four graders side-by-side:
+1. `math.py` strict (current locked baseline)
+2. `mathd ∨ sympy` (DeepScaleR / rLLM — already in `main/train/math_grade_deepscaler.py`)
+3. `math_verify` (HuggingFace SymPy — already in `.venv`)
+4. Rank-2 hybrid extract + grader-of-choice (already in `main/train/reward.py`)
+
+Report per grader: pass@1, pass@8, non-zero pass rate, lift over strict. Hand-check 50 disagreements (grader-X correct, strict wrong) — is grader-X actually right or sneaking false positives?
+
+**Caveat:** arm-C rollouts use the hybrid `Answer: \boxed{}` prompt, not the verl-locked plain `\boxed{}` prompt. So this answers "does lenient grading help on arm-C completions" — directionally informative but not the canonical step-0 number for the verl stack. If lift ≥3pp here, spend ~$15 on fresh raw-Qwen rollouts under the verl-locked prompt for an apples-to-apples re-run.
+
+**Decision tree:**
+- **Lift ≥5pp** → reward is the gap; switch verl reward to `mathd ∨ sympy` (or `math_verify`) before relaunching; ping Ifdita for confirmation.
+- **Lift 2–5pp** → low-cost correctness fix worth landing, but won't close the 14pp endpoint gap; relaunch anyway.
+- **Lift <2pp** → reward isn't it; the 7pp step-0 deficit lives in prompt format or generation, separate probe needed.
+
+### Status
+
+- Probe not yet implemented; this entry documents the plan.
+- Existing scripts to extend: `main/scripts/rescore_rollouts_rank2.py`, `main/scripts/rescore_mathd_sympy.py`.
+- Moves `Reward strict-string vs sympy` from "ruled out" to **open** in the diagnostic table.
+
+### Result — reward strictness is NOT the gap (re-closed)
+
+Implemented as `main/scripts/rescore_four_graders.py`; ran on
+`probes/05-25/prompt_c/phase1_rollouts.jsonl` (800 prompts × 8 rollouts,
+arm-C `hybrid_answer_boxed`). Manifest gold lookups via
+`probes/05-25/group_a_n800/manifest.jsonl` (same 800-problem manifest).
+
+| grader | pass@1 | pass@8 (non-zero rate) | lift vs strict |
+|---|---|---|---|
+| G1 legacy strict (Rank-2 + normalize ==) | 8.45% | **33.12%** | +0.00 pp |
+| G2 mathd OR sympy (Rank-2 extract) | 8.50% | 33.25% | +0.13 pp |
+| G3 math_verify (Rank-2 extract) | 8.89% | 34.38% | +1.25 pp |
+| G4 math_verify on raw `\boxed{}` (no fallback) | 9.52% | 35.38% | +2.25 pp |
+
+Legacy strict pass@8 = 33.12% reproduces the May 25 prompt-C number
+exactly — harness is sound.
+
+**Hand-check of G3 disagreements (15 of 28 samples reviewed):**
+- ~6/15 are **legit rescues** — degree symbols (`90°` vs `90`), text
+  suffixes (`1011 people at positions...` vs `1011`), zero-padded gold
+  (`01` vs `1`), `= 4` inside an equation.
+- ~9/15 are **false positives** — `2,-2` vs gold `2`; `4√3` vs gold `4`;
+  `24π` vs gold `24`; `2n` (with variable) vs gold `2`; `4s−4` vs gold `4`;
+  `1 + 1/n` vs gold `1`. math_verify approximates or extracts substrings
+  too loosely on multi-answer / parametric responses.
+
+Net real lift after false-positive correction ≈ **+0.5 pp**, well below
+the 2pp threshold. mathd∨sympy is even smaller (+0.13 pp nominal,
+3 total rescues across 6400 rollouts). G4's extra +1 pp over G3 is almost
+entirely more false positives — skipping Rank-2 discipline grabs anything
+in the last `\boxed{}` and grades it leniently.
+
+**Decision gate result: lift <2pp → reward strictness is NOT the gap.**
+Ifdita's "use strict math.py" was correct. Do not change verl reward
+before relaunching. The 7pp step-0 deficit vs paper Fig. 2 lives in
+prompt format, generation, or dataset sampling — not grading.
+
+**Remaining suspects for the step-0 gap:**
+1. Prompt template — verl uses plain `\boxed{}`-only; paper template
+   may have differed (no published prompt for paper's POLARIS runs).
+2. Tokenization / chat template — Qwen3 base vs chat template subtleties
+   at the boundary between system prompt and user turn.
+3. Dataset sampling — our filter drops prove/gold-leak (~23.4% of
+   Polaris-53k); if paper kept those rows, "non-zero rate" includes
+   easier gold-in-prompt cases.
+
+Caveat already noted in the plan: this rescore is on arm-C prompt
+completions, not the verl-locked plain `\boxed{}` prompt. A fresh
+raw-Qwen rollout pass under the verl prompt would be the apples-to-apples
+step-0 number — but with grader-strictness ruled out as the lever,
+that probe is no longer worth ~$15. Skipped.
+
+Diagnostic-table update: moves `Reward strict-string vs sympy` back to
+**ruled out** with stronger evidence (offline 4-grader rescore + hand-check,
+not just verbal mentor recall).
+
+### Reversal — both decisions wrong; we ran the canonical probe anyway
+
+Spent ~$5 on chicken602 B200 to generate raw Qwen3-4B-Base rollouts under
+the actual verl-locked prompt (`\nPlease reason step by step, and put your
+final answer within \boxed{}.` — verbatim from
+`main-verl/data/preprocess_polaris_verl.py:INSTRUCTION_SUFFIX`). Wired
+this in as new prompt variant `verl_polaris_maxrl` in
+`main/train/prompts.py`. Probe config: `configs/probe_verl_prompt_4b_n800.yaml`.
+Reused the random_fullgold n=800 manifest from 05-27.
+
+Modal app `ap-2GuVS6L5ORetb9oYZMIwYs`, wandb `w57tqx8a`. ~25 min wall.
+
+**Result — both prior conclusions overturned:**
+
+| grader | pass@1 | pass@8 (non-zero) | lift vs strict |
+|---|---|---|---|
+| G1 legacy strict | **15.66%** | **44.25%** | +0.00 pp |
+| G2 mathd ∨ sympy | 16.56% | **47.62%** | **+3.38 pp** |
+| G3 math_verify (Rank-2 extract) | 14.03% | 38.62% | **−5.63 pp** |
+| G4 math_verify on raw `\boxed{}` | 15.72% | 41.00% | −3.25 pp |
+
+### Finding 1: the 7pp step-0 gap was the prompt template, not the grader
+
+Strict pass@8 under verl prompt = **44.25%**, essentially identical to
+paper Fig. 2 right step-0 ≈ 43%. The 33% number we'd been comparing was
+from arm-C (`hybrid_answer_boxed`) rollouts — a different (and worse)
+prompt than what verl training actually uses. **Under the canonical
+training prompt, our step-0 reproduces paper.** The earlier "step-0
+deficit" framing was an artifact of using arm-C as the baseline.
+
+Mechanical interpretation: the verl maxrl suffix
+(`\nPlease reason step by step, and put your final answer within \boxed{}`)
+elicits more disciplined boxing and longer step-by-step reasoning from
+Qwen-3-4B-Base than arm-C's prefix-style template, doubling pass@1
+(8.45% → 15.66%) and lifting pass@8 by 11 pp.
+
+### Finding 2: mathd∨sympy is a real ≈+3 pp lever (vs the 0.13 pp I claimed)
+
+Earlier rescore on arm-C said G2 lift was negligible (+0.13 pp, only 3
+rescues total). That was because arm-C completions concentrate on short
+integer boxes where Hendrycks strict and mathd∨sympy agree.
+
+Under the verl prompt, Qwen-3-4B-Base produces a much wider answer
+distribution — multiple choice (`\textbf{(D)}`), word answers (`Water`,
+`Ranch`, `positive`), latex equations (`S_1 \geq \frac{2}{3} S_2`),
+fractions written as `\dfrac` vs `\frac` — exactly the territory where
+strict-equality misses correct answers and SymPy/mathd normalization
+catches them.
+
+**Confusion matrix (n=6400 rollouts):**
+
+| (G1, G2, G3) | count | meaning |
+|---|---|---|
+| (1, 1, 1) | 742 | all three pass |
+| (1, 1, 0) | 202 | strict+G2, math_verify chokes |
+| (0, 1, 1) | 50 | G2 and math_verify catch what strict misses |
+| (0, 0, 1) | 84 | math_verify only (often FPs) |
+| (0, 1, 0) | 66 | mathd∨sympy only |
+| (1, 0, 0) | 36 | strict only — G2 regression |
+| (1, 0, 1) | 22 | strict + math_verify, G2 regression |
+| (0, 0, 0) | 5198 | all fail |
+
+G2 vs G1: 116 rescues, 58 regressions, **net +58 rollouts (+0.91 pp pass@1)**;
+at pass@8 (per-prompt max), net +27 prompts unlocked (+3.38 pp).
+
+**Hand-check of 25 G2 rescues (verl prompt): 24/25 legit.**
+- Case sensitivity: `Water` ↔ `water`, `Ranch` ↔ `ranch`, `Positive` ↔ `positive`
+- Multiple choice: `\boxed{D}` ↔ gold `\textbf{(D)}`, `\boxed{E}` ↔ `(E)\9`
+- LaTeX equivalences: `\dfrac{100}{3}` ↔ `\frac{100}{3}`
+- Symbolic identity: `S_1 \geq \frac{2}{3} S_2` ↔ same
+- Whitespace: `17` ↔ `17\,`
+- Single FP: pid=33 (function-form answer, structurally different)
+
+**Hand-check of G2 regressions:** equation-form answers like `f(n) = 0`
+(with space) where strict's `normalize_final_answer` strips spaces and
+matches but mathd/sympy fail to parse the equation form cleanly. Most
+regressions are real (strict was correctly matching).
+
+Real net lift after FP correction ≈ **+2.5 to +3 pp** on non-zero rate.
+
+### Finding 3: math_verify is worse than strict under verl prompt
+
+G3 went −5.63 pp. Cause: math_verify chokes on **word answers** (`google
+pixel 6`, `No`, `ranch`) — it tries to symbolically parse them, fails,
+returns 0. Strict just compares strings, gets the match.
+
+Also G3 (Rank-2 extract + math_verify) regresses on plain integer cases
+where the parsed string is `1` and gold is `1`, but math_verify's `parse()`
+returns an empty list or unparseable result. Strict
+`normalize_final_answer == normalize_final_answer` handles these trivially.
+
+**Don't use math_verify** for our training reward. Wrong tool for the
+Polaris answer-type distribution (lots of words, equations, multiple choice).
+
+### Updated picture
+
+- **Step-0 baseline gap: closed.** We match paper at step 0 under the
+  actual training prompt.
+- **The remaining gap is SLOPE only.** Paper goes 43% → 55% over 145
+  steps (+12 pp); we go 36% → 41% on poly_epo (+5 pp), 38% → 44% on GRPO
+  (+6 pp). Slope ≈ half of paper's. That's the real story.
+- **mathd∨sympy is worth landing as the training reward.** +3 pp non-zero
+  rate from step 0 means more prompts contribute gradient — directly
+  unlocks faster slope. Hand-check confirms ~96% of rescues are
+  legitimately correct answers that strict is wrongly punishing.
+
+### Recommendation (revised) — before relaunching
+
+1. **Switch verl training reward from strict `math.py` to mathd∨sympy
+   equivalent.** Three implementation paths:
+   - Use upstream verl's `math_dapo.py` reward (mathd extraction + SymPy
+     fallback) — closest to DeepScaleR/rLLM rule.
+   - Patch maxrl `math.py` to add a SymPy fallback when string equality
+     fails (smallest blast radius; matches `grade_parsed_answer` in
+     `main/train/reward.py`).
+   - Wire `main/train/reward.py:compute_reward` in as a verl
+     `custom_reward_function` (loses fork-locked benefits but trivially
+     correct).
+2. **Ping Ifdita to confirm her training reward stack** — paper text
+   doesn't say. If she also used Hendrycks strict, we'll be a slight
+   overcorrection from paper; if she used mathd∨sympy or math_verify
+   (more common in 2025–26 math-RL papers), we're now matched.
+3. **The 10-item relaunch list still ships** — those are correctness
+   debt independent of this finding.
+
+Artifacts:
+- `main/configs/probe_verl_prompt_4b_n800.yaml`
+- `main/data/probes/05-31/verl_prompt_4b_n800/{phase1_rollouts.jsonl, four_grader_rescore.json}`
+- `main/docs/probes/four_grader_rescore_verl_prompt.md`
+- W&B run `w57tqx8a` (group `probe-verl-prompt-4b-n800-05-31`)
+- New prompt variant `verl_polaris_maxrl` in `main/train/prompts.py`
+
+Diagnostic-table update: `Reward strict-string vs sympy` moves to
+**OPEN — mathd∨sympy gives ≈+3 pp lift on canonical prompt; consider
+switching before relaunch**.
+

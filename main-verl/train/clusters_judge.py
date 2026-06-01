@@ -55,6 +55,7 @@ from __future__ import annotations
 
 import asyncio
 import os
+import re
 import time
 from functools import lru_cache
 from typing import Any
@@ -71,6 +72,10 @@ from train.judge_trace import (
     dump_prompt_trace,
     trace_prompt_index,
 )
+# Pre-relaunch #2c: single source of truth for `\boxed{...}` extraction —
+# shared with the GRPO path in objective_minority._build_grpo_step_metrics
+# so set-arm and GRPO JSONL rows carry symmetric ``parsed_answer`` fields.
+from train.objective_minority import _extract_boxed_answer
 
 
 # ---------------------------------------------------------------------------
@@ -191,6 +196,8 @@ def assign_judge_clusters(
     tasks: list[JudgeTask | None] = []
     trace_capture: dict[str, Any] | None = None
     overflow_skipped = 0
+    # Per-rollout boxed-answer strings, parallel to cluster_ids — used by #2 JSONL.
+    parsed_answers: list[list[str]] = []
     for p in range(n_prompts):
         rollouts_p = [
             decoder_tok.decode(_strip_left_pad(ids, pad_id), skip_special_tokens=True)
@@ -200,6 +207,7 @@ def assign_judge_clusters(
             raise ValueError(
                 f"prompt {p}: expected {n_rollouts} rollouts, got {len(rollouts_p)}"
             )
+        parsed_answers.append([_extract_boxed_answer(t) for t in rollouts_p])
 
         # Overflow check: tokenize the full judge prompt envelope.
         system, user = build_judge_messages(prompt_texts[p], rollouts_p)
@@ -303,6 +311,12 @@ def assign_judge_clusters(
         "judge_overflow_skipped": overflow_skipped,
         "judge_wall_s": wall_s,
         "judge_n_tasks": in_budget_count,
+        # Per-rollout payloads consumed by #2 (JSONL writer in objective_minority).
+        # Non-scalar — `_build_step_metrics` MUST pop these before forwarding to W&B
+        # via batch.meta_info["cs224r_metrics"]; the maxrl fork commit 096fae1
+        # forwarder turns every value in that dict into a W&B scalar.
+        "cluster_ids": cluster_ids,                 # torch.LongTensor [n_prompts, n_rollouts]
+        "parsed_answers": parsed_answers,           # list[n_prompts][n_rollouts] str
     }
     print(
         "[clusters_judge] "
@@ -314,14 +328,15 @@ def assign_judge_clusters(
         f"wall_s={diagnostics['judge_wall_s']:.1f}",
         flush=True,
     )
-    log_path = append_step_log(
-        {
-            "n_prompts": n_prompts,
-            "n_rollouts": n_rollouts,
-            **diagnostics,
-            "trace_prompt_index": trace_idx,
-        }
-    )
+    # Step-log JSONL is for offline judge debugging — keep it small by dropping
+    # the per-rollout payloads (those are written by the #2 JSONL writer instead).
+    step_log_record = {
+        "n_prompts": n_prompts,
+        "n_rollouts": n_rollouts,
+        **{k: v for k, v in diagnostics.items() if k not in ("cluster_ids", "parsed_answers")},
+        "trace_prompt_index": trace_idx,
+    }
+    log_path = append_step_log(step_log_record)
     if log_path is not None:
         print(f"JUDGE_STEP_LOG_APPEND={log_path}", flush=True)
     return ClusterAssignment(cluster_ids=cluster_ids, diagnostics=diagnostics)

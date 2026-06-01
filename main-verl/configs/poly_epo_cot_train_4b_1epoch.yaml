@@ -24,10 +24,13 @@ actor_rollout_ref:
   actor:
     fsdp_config:
       model_dtype: bfloat16
-    ppo_mini_batch_size: 32
+    ppo_mini_batch_size: 64
     ppo_epochs: 1
     use_kl_loss: false
-    loss_agg_mode: token-mean
+    loss_agg_mode: seq-mean-token-sum-norm
+    clip_ratio_low: 0.20
+    clip_ratio_high: 0.28
+    entropy_coeff: 0.0
     use_torch_compile: false
     ppo_micro_batch_size_per_gpu: 4
     optim:
@@ -35,6 +38,9 @@ actor_rollout_ref:
   rollout:
     name: vllm
     n: 8
+    temperature: 1.0
+    top_p: 1.0
+    top_k: -1
     enforce_eager: true
     gpu_memory_utilization: 0.85
     log_prob_micro_batch_size_per_gpu: 4
@@ -47,7 +53,7 @@ actor_rollout_ref:
 algorithm:
   adv_estimator: poly_epo_cot
   use_kl_in_reward: false
-  norm_adv_by_std_in_grpo: true
+  norm_adv_by_std_in_grpo: false
   poly_epo_cot:
     cluster_source: judge
     tokenizer_path: Qwen/Qwen3-4B-Base

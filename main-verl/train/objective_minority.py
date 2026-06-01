@@ -4,8 +4,9 @@ Math ported verbatim from ``main/train/objective.py`` (the only allowed read fro
 main/).  Only the ``minority_cot`` arm is included here; GRPO is verl's built-in
 (``AdvantageEstimator.GRPO``), and ``poly_epo_cot`` is Stage 5 scope.
 
-Public surface consumed by the verl hook in
-``infra/patches/maxrl_minority_cot_adv_est.patch``:
+Public surface consumed by the verl hook on the maxrl fork (fork commit
+``e047d0e cs224r: add MINORITY_COT advantage estimator to core_algos`` on
+branch ``cs224r-patches``):
 
 * ``_minority_advantages(rewards, clusters, *, global_seed, problem_ids)``
 * ``_group_rewards_by_index(token_level_rewards, response_mask, index, n_rollouts)``
@@ -28,15 +29,66 @@ from __future__ import annotations
 
 import hashlib
 import itertools
+import json
 import logging
+import os
 from collections import Counter
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import Any, Callable
 
 import numpy as np
 import torch
 
+from judge.types import DEGENERATE_CLUSTER_ID
+
 logger = logging.getLogger(__name__)
+
+
+# ---------------------------------------------------------------------------
+# Pre-relaunch #2c: shared `\boxed{...}` extractor
+# ---------------------------------------------------------------------------
+#
+# The Hendrycks-style reward fn at ``verl/utils/reward_score/math.py``
+# (``compute_score``) only returns a scalar 0/1 — it parses ``\boxed{...}``
+# internally via ``last_boxed_only_string``/``remove_boxed`` but does not
+# expose the parsed answer. Threading a side-channel through verl's reward
+# manager + DataProto would touch ``naive.py`` / ``batch.py`` and the reward
+# dispatch shim. Cheaper to mirror the parse trainer-side and call it from
+# both the set-arm path (``clusters_judge.assign_judge_clusters``, which
+# already decodes responses) and the GRPO path (``_build_grpo_step_metrics``,
+# which decodes via a tokenizer stashed on ``data.meta_info``).
+#
+# Used by both arms via the per-rollout JSONL writer in ``_build_step_metrics``
+# so the schema's ``parsed_answer`` column is populated symmetrically.
+def _extract_boxed_answer(text: str) -> str:
+    """Return the contents of the last ``\\boxed{...}`` in ``text``, or empty string.
+
+    Matches ``last_boxed_only_string`` / ``remove_boxed`` in
+    ``verl/utils/reward_score/math.py`` semantically but uses a balanced-brace
+    scan so nested braces in the answer (``\\frac{1}{2}``, etc.) round-trip.
+    We do NOT normalize / strip — offline analysis decides equivalence.
+    """
+    if not text:
+        return ""
+    idx = text.rfind("\\boxed{")
+    if idx < 0:
+        return ""
+    start = idx + len("\\boxed{")
+    depth = 1
+    i = start
+    n = len(text)
+    while i < n and depth > 0:
+        ch = text[i]
+        if ch == "{":
+            depth += 1
+        elif ch == "}":
+            depth -= 1
+            if depth == 0:
+                return text[start:i]
+        i += 1
+    # Unbalanced — best-effort: return the tail.
+    return text[start:]
 
 # ---------------------------------------------------------------------------
 # Stage 7: per-step W&B metrics state
@@ -48,16 +100,167 @@ logger = logging.getLogger(__name__)
 _SOLVED_PROBLEM_IDS: set = set()
 
 
+# ---------------------------------------------------------------------------
+# Pre-relaunch #2: per-rollout JSONL detail logging
+# ---------------------------------------------------------------------------
+#
+# Sink: Modal volume ``main-artifacts`` (constants in ``infra/modal_volume.py``)
+# mounted at ``/vol`` inside the training container. We do **not** import
+# infra/modal_volume here — `objective_minority.py` is imported by unit tests
+# that have no Modal dependency. Instead, we read the root from the env var
+# ``CS224R_PER_ROLLOUT_ROOT`` (set by the Modal probe), with a fallback default
+# of ``/vol/per_rollout`` that matches the production mount path.
+#
+# Layout: ``<root>/<run_id>/step_<global_step>.jsonl``. ``run_id`` comes from
+# ``WANDB_RUN_ID`` (verl/wandb sets this) or ``CS224R_RUN_ID`` for unit/probe
+# overrides; falls back to ``unknown_run``. One row per
+# ``(prompt × rollout_idx)`` per step — append-only, survives resume.
+#
+# If the root path is not writable (e.g. unit tests, smokes without volume),
+# the writer is a no-op and emits a single warning per process.
+_PER_ROLLOUT_WARNED: set = set()
+
+
+def _per_rollout_root() -> Path:
+    return Path(os.environ.get("CS224R_PER_ROLLOUT_ROOT", "/vol/per_rollout"))
+
+
+def _per_rollout_run_id() -> str:
+    return (
+        os.environ.get("CS224R_RUN_ID")
+        or os.environ.get("WANDB_RUN_ID")
+        or "unknown_run"
+    )
+
+
+def _per_rollout_path(global_step: int) -> Path:
+    return _per_rollout_root() / _per_rollout_run_id() / f"step_{global_step}.jsonl"
+
+
+def _write_per_rollout_rows(rows: list[dict[str, Any]], global_step: int) -> Path | None:
+    """Append one JSONL row per ``(prompt × rollout)`` to the step-partitioned file.
+
+    Returns the path written, or None if the sink was unavailable (logged once).
+    """
+    if not rows:
+        return None
+    path = _per_rollout_path(global_step)
+    try:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        with path.open("a", encoding="utf-8") as f:
+            for row in rows:
+                f.write(json.dumps(row, default=str, ensure_ascii=False) + "\n")
+        return path
+    except OSError as exc:
+        if str(path.parent) not in _PER_ROLLOUT_WARNED:
+            _PER_ROLLOUT_WARNED.add(str(path.parent))
+            logger.warning(
+                "per-rollout JSONL sink unavailable at %s (%s); skipping further writes.",
+                path,
+                exc,
+            )
+        return None
+
+
+def _finish_reasons_for_rollouts(
+    data: Any,
+    index_np: np.ndarray,
+    problem_ids: list,
+    n_rollouts: int,
+) -> list[list[str | None]] | None:
+    """Group ``data.non_tensor_batch['finish_reasons']`` by prompt.
+
+    Returns shape ``[n_prompts][n_rollouts]`` of finish-reason strings, or None
+    if the field is not present (older fork, mock smoke).
+    """
+    if data is None:
+        return None
+    fr = data.non_tensor_batch.get("finish_reasons") if hasattr(data, "non_tensor_batch") else None
+    if fr is None:
+        return None
+    # Mirror the grouping in _group_rewards_by_index so rows align to (prompt, rollout_idx).
+    seen: dict[Any, int] = {}
+    for uid in index_np:
+        key = uid.item() if hasattr(uid, "item") else uid
+        if key not in seen:
+            seen[key] = len(seen)
+    grouped: list[list[str | None]] = [[] for _ in range(len(seen))]
+    for i, uid in enumerate(index_np):
+        key = uid.item() if hasattr(uid, "item") else uid
+        grouped[seen[key]].append(fr[i] if i < len(fr) else None)
+    return grouped
+
+
+def _response_lengths_for_rollouts(
+    data: Any,
+    index_np: np.ndarray,
+    n_rollouts: int,
+) -> list[list[int]] | None:
+    """Per-rollout response length (count of unmasked response tokens), grouped by prompt."""
+    if data is None or not hasattr(data, "batch"):
+        return None
+    rm = data.batch.get("response_mask") if "response_mask" in data.batch.keys() else None
+    if rm is None:
+        return None
+    lengths = rm.sum(dim=-1).long().cpu().tolist()  # [batch]
+    seen: dict[Any, int] = {}
+    for uid in index_np:
+        key = uid.item() if hasattr(uid, "item") else uid
+        if key not in seen:
+            seen[key] = len(seen)
+    grouped: list[list[int]] = [[] for _ in range(len(seen))]
+    for i, uid in enumerate(index_np):
+        key = uid.item() if hasattr(uid, "item") else uid
+        grouped[seen[key]].append(int(lengths[i]))
+    return grouped
+
+
+def _finish_reason_counts(finish_reasons_flat: list[str | None] | None) -> dict[str, int]:
+    """Per-step aggregate counts for #3 ``train/finish_*`` W&B metrics.
+
+    Categories:
+      - ``length`` — vLLM ``finish_reason == "length"`` (response cap hit).
+      - ``eos``    — ``"stop"`` or ``"eos"``.
+      - ``stop``   — any other non-empty reason (vLLM ``"abort"``, custom stop strings, etc.).
+    """
+    out = {"length": 0, "eos": 0, "stop": 0}
+    if not finish_reasons_flat:
+        return out
+    for fr in finish_reasons_flat:
+        if fr is None:
+            continue
+        s = str(fr).lower()
+        if s == "length":
+            out["length"] += 1
+        elif s in ("stop", "eos"):
+            out["eos"] += 1
+        else:
+            out["stop"] += 1
+    return out
+
+
 def _build_step_metrics(
     rewards_grouped: torch.Tensor,   # [n_prompts, n_rollouts]
     problem_ids: list,
     adv_diagnostics: dict,
     cluster_diagnostics: dict,
+    data: Any = None,
 ) -> dict:
     """Metrics dict written to batch.meta_info['cs224r_metrics'] each step.
 
-    Read by the ray_trainer patch (maxrl_cs224r_metrics_ray_trainer.patch) and
-    merged into the W&B metrics dict alongside verl's native compute_data_metrics().
+    Read by the ray_trainer hook on the maxrl fork (fork commit ``096fae1
+    cs224r: forward cs224r_metrics from adv hooks to W&B``) and merged into
+    the W&B metrics dict alongside verl's native ``compute_data_metrics()``.
+
+    Pre-relaunch #2: when ``data`` is provided, also writes one JSONL row per
+    ``(prompt × rollout)`` to the Modal volume. Per-rollout payloads
+    (``cluster_ids``, ``parsed_answers``) come in via ``cluster_diagnostics``
+    from ``clusters_judge.assign_judge_clusters`` — they are popped before
+    return so the forwarder doesn't try to log tensors/lists to W&B.
+
+    Pre-relaunch #3: when ``finish_reasons`` is present in
+    ``data.non_tensor_batch`` (vLLM rollout adapter populates it), emit
+    ``train/finish_length`` / ``train/finish_eos`` / ``train/finish_stop``.
     """
     global _SOLVED_PROBLEM_IDS
 
@@ -74,12 +277,195 @@ def _build_step_metrics(
         "train/prompts_unlocked": len(_SOLVED_PROBLEM_IDS),
         "train/fraction_filtered": adv_diagnostics.get("fraction_filtered", 0.0),
     }
+
+    # ---- Pop per-rollout payloads (non-scalar) BEFORE we copy scalars to W&B.
+    cluster_ids_t = cluster_diagnostics.pop("cluster_ids", None) if cluster_diagnostics else None
+    parsed_answers = cluster_diagnostics.pop("parsed_answers", None) if cluster_diagnostics else None
+
     # Judge/cluster diagnostics — only present when cluster_source=judge.
-    for key in ("distinct_clusters_mean", "degenerate_rollouts",
-                "judge_parse_ok_rate", "judge_overflow_skipped"):
-        if key in cluster_diagnostics:
-            metrics[f"train/{key}"] = cluster_diagnostics[key]
+    if cluster_diagnostics:
+        for key in ("distinct_clusters_mean", "degenerate_rollouts",
+                    "judge_parse_ok_rate", "judge_overflow_skipped"):
+            if key in cluster_diagnostics:
+                metrics[f"train/{key}"] = cluster_diagnostics[key]
+
+    # ---- Per-rollout JSONL detail logging (#2) + finish_reason aggregates (#3).
+    if data is not None:
+        index = data.non_tensor_batch.get("uid") if hasattr(data, "non_tensor_batch") else None
+        index_np = np.asarray(index) if index is not None else None
+        finish_grouped = (
+            _finish_reasons_for_rollouts(data, index_np, problem_ids, rewards_grouped.shape[1])
+            if index_np is not None else None
+        )
+        length_grouped = (
+            _response_lengths_for_rollouts(data, index_np, rewards_grouped.shape[1])
+            if index_np is not None else None
+        )
+
+        # #3 aggregates — count across all rollouts in this batch.
+        if finish_grouped is not None:
+            flat = [fr for row in finish_grouped for fr in row]
+            counts = _finish_reason_counts(flat)
+            metrics["train/finish_length"] = counts["length"]
+            metrics["train/finish_eos"] = counts["eos"]
+            metrics["train/finish_stop"] = counts["stop"]
+
+        # #2 per-rollout JSONL.
+        global_step = int(data.meta_info.get("global_steps", -1)) if hasattr(data, "meta_info") else -1
+        rows = _per_rollout_rows(
+            global_step=global_step,
+            problem_ids=problem_ids,
+            rewards_grouped=rewards_grouped,
+            cluster_ids=cluster_ids_t,
+            parsed_answers=parsed_answers,
+            finish_grouped=finish_grouped,
+            length_grouped=length_grouped,
+        )
+        _write_per_rollout_rows(rows, global_step)
+
     return metrics
+
+
+def _per_rollout_rows(
+    *,
+    global_step: int,
+    problem_ids: list,
+    rewards_grouped: torch.Tensor,
+    cluster_ids: torch.Tensor | None,
+    parsed_answers: list[list[str]] | None,
+    finish_grouped: list[list[str | None]] | None,
+    length_grouped: list[list[int]] | None,
+) -> list[dict[str, Any]]:
+    """Build one dict per (prompt, rollout_idx) for the JSONL sink.
+
+    Schema (per the relaunch doc):
+      global_step, prompt_id, rollout_idx, parsed_answer, reward,
+      cluster_id, finish_reason, response_length.
+
+    Set-arm rows carry a non-null ``cluster_id``; GRPO rows pass ``cluster_ids=None``
+    and get ``cluster_id=null`` — same schema across all three arms so offline
+    joins are trivial.
+    """
+    rows: list[dict[str, Any]] = []
+    rewards = rewards_grouped.detach().cpu().tolist()
+    cids = cluster_ids.detach().cpu().tolist() if cluster_ids is not None else None
+    n_prompts = len(problem_ids)
+    n_rollouts = rewards_grouped.shape[1]
+    for p in range(n_prompts):
+        pid = problem_ids[p]
+        pid_out = pid.item() if hasattr(pid, "item") else pid
+        for r in range(n_rollouts):
+            row = {
+                "global_step": global_step,
+                "prompt_id": pid_out,
+                "rollout_idx": r,
+                "parsed_answer": (parsed_answers[p][r] if parsed_answers else None),
+                "reward": float(rewards[p][r]),
+                "cluster_id": (int(cids[p][r]) if cids is not None else None),
+                "finish_reason": (finish_grouped[p][r] if finish_grouped else None),
+                "response_length": (int(length_grouped[p][r]) if length_grouped else None),
+            }
+            rows.append(row)
+    return rows
+
+
+def _parsed_answers_for_grpo(
+    data: Any,
+    index_np: np.ndarray,
+    n_rollouts: int,
+) -> list[list[str]] | None:
+    """Per-rollout boxed-answer strings on the GRPO path, grouped by prompt.
+
+    Pre-relaunch #2c: symmetric with the set arms, which get
+    ``parsed_answers`` from ``clusters_judge.assign_judge_clusters`` (it
+    decodes responses for the judge call and reuses the decode). On the GRPO
+    path there's no judge, so we decode ourselves with the tokenizer stashed
+    on ``data.meta_info["cs224r_tokenizer"]`` (set in ``fit()`` next to the
+    ``global_steps`` stash, fork-side).
+
+    Returns ``None`` if the tokenizer is missing (smoke/older fork) — the JSONL
+    writer then emits ``parsed_answer=null`` for that step, same as before.
+    """
+    if data is None or not hasattr(data, "batch"):
+        return None
+    tok = data.meta_info.get("cs224r_tokenizer") if hasattr(data, "meta_info") else None
+    if tok is None:
+        return None
+    responses = data.batch.get("responses")
+    if responses is None:
+        return None
+    # Decode batch once, then group by uid like _group_rewards_by_index.
+    texts = tok.batch_decode(responses, skip_special_tokens=True)
+    seen: dict[Any, int] = {}
+    for uid in index_np:
+        key = uid.item() if hasattr(uid, "item") else uid
+        if key not in seen:
+            seen[key] = len(seen)
+    grouped: list[list[str]] = [[] for _ in range(len(seen))]
+    for i, uid in enumerate(index_np):
+        key = uid.item() if hasattr(uid, "item") else uid
+        grouped[seen[key]].append(_extract_boxed_answer(texts[i]))
+    return grouped
+
+
+def _build_grpo_step_metrics(
+    token_level_rewards: torch.Tensor,   # [batch, response_length]
+    response_mask: torch.Tensor,         # [batch, response_length]
+    index: np.ndarray,                   # [batch] uids
+    data: Any,
+) -> dict:
+    """GRPO W&B parity (#9) + GRPO-side per-rollout JSONL (#2).
+
+    Verl's stock GRPO advantage path does not go through ``_build_step_metrics``
+    today — this is the entry point the fork-side patch
+    (``infra/patches/maxrl_relaunch_2_3_9.patch``) calls from inside the
+    GRPO branch of ``compute_advantage`` in ``ray_trainer.py``.
+
+    Populates only ``train/pass_at_8``, ``train/prompts_unlocked``,
+    ``train/fraction_filtered`` (and finish_reason aggregates). No judge keys.
+
+    Pre-relaunch #2c: also extracts ``\\boxed{...}`` per-rollout via the
+    tokenizer stash, so the GRPO JSONL rows carry the same ``parsed_answer``
+    field the set arms do — joins across the three arms stay trivial.
+
+    Pre-relaunch #d: ``fraction_filtered`` is computed from the same
+    ``keep_mask = all-rollouts-equal-reward`` predicate verl's GRPO path
+    implicitly applies (id2mean − rewards = 0 when all rewards in a group
+    match, so the resulting advantage is zero regardless of std-norm). We do
+    NOT additionally zero anything trainer-side: the gradient contribution is
+    already zero by construction; this just reports the rate.
+    """
+    # Group rewards prompt-major to compute pass_at_8 / fraction_filtered.
+    rewards_grouped, problem_ids = _group_rewards_by_index(
+        token_level_rewards, response_mask, index, n_rollouts=N_ROLLOUTS,
+    )
+    # zero-grad trigger on GRPO: all rollouts in a prompt share one reward →
+    # the GRPO baseline (rewards − id2mean) is identically zero → no gradient
+    # signal from that prompt. Mirrors the set-arm `keep_mask = False` rule at
+    # objective_minority.set_based_marginal_advantages (single-cluster
+    # collapse). Both arms emit `train/fraction_filtered` with consistent
+    # semantics: "fraction of prompts where the kernel produces zero
+    # gradient for this prompt".
+    keep_mask = ~((rewards_grouped == rewards_grouped[:, :1]).all(dim=1))
+    n_prompts = rewards_grouped.shape[0]
+    n_filtered = int((~keep_mask).sum().item())
+    adv_diagnostics = {
+        "fraction_filtered": n_filtered / max(n_prompts, 1),
+        "n_filtered_prompts": n_filtered,
+    }
+
+    # #2c: build parsed_answers via the stashed tokenizer + boxed extractor;
+    # plumb through cluster_diagnostics so the JSONL writer in
+    # _build_step_metrics picks it up like it does on the judge path.
+    index_np = np.asarray(index) if not isinstance(index, np.ndarray) else index
+    parsed_answers = _parsed_answers_for_grpo(data, index_np, N_ROLLOUTS)
+    cluster_diagnostics: dict[str, Any] = {}
+    if parsed_answers is not None:
+        cluster_diagnostics["parsed_answers"] = parsed_answers
+
+    return _build_step_metrics(
+        rewards_grouped, problem_ids, adv_diagnostics, cluster_diagnostics, data=data
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -125,7 +511,15 @@ def _minority_subset_score(
     clusters4: np.ndarray,
     rng: np.random.Generator,
 ) -> float:
-    """f(G) = mean reward of rollouts in the rarest cluster (random tiebreak)."""
+    """f(G) = mean reward of rollouts in the rarest cluster (random tiebreak).
+
+    Degenerate-rollout handling (cluster_id = DEGENERATE_CLUSTER_ID = -1, paper's
+    "cluster 100" for code/gibberish/non-math responses) is an OPEN POLICY
+    DECISION — see `main/docs/timeline.md` (2026-05-31 "Open policy question").
+    Current behavior: -1 is treated like any other cluster ID, so it can be
+    selected as "rarest" and a degenerate rollout that happened to box the right
+    answer can become the subset score.
+    """
     counts = Counter(clusters4.tolist())
     min_count = min(counts.values())
     rarest = [c for c, cnt in counts.items() if cnt == min_count]
@@ -186,6 +580,9 @@ def set_based_marginal_advantages(
         if len(set(c.tolist())) <= 1:
             # Collapsed: every subset has one cluster -> minority/poly-epo all
             # produce the same f(G); marginals are exactly zero. Skip the prompt.
+            # Pre-relaunch #d: this is the set-arm zero-grad trigger reported
+            # via `train/fraction_filtered`. Mirror on the GRPO path is
+            # all-rollouts-equal-reward (see `_build_grpo_step_metrics`).
             continue
         if needs_rng:
             # verl problem_ids are UUID strings (e.g. 'f8745e4e-b10b-...'); main/'s
@@ -462,9 +859,10 @@ def assign_clusters_from_arm_config(
     if cluster_source == "judge":
         if data is None:
             raise RuntimeError(
-                f"cluster_source=judge for {arm_name} requires the ray_trainer patch "
-                "maxrl_expose_data_to_adv_est.patch to expose `data` to the "
-                "registered adv_estimator hook. Got data=None."
+                f"cluster_source=judge for {arm_name} requires the ray_trainer "
+                "hook from maxrl fork commit 572a592 (cs224r-patches branch), "
+                "which exposes `data` to registered adv_estimator hooks. Got "
+                "data=None — check MAXRL_BRANCH_COMMIT in infra/modal_image.py."
             )
         from train.clusters_judge import assign_judge_clusters, build_judge_client_from_env
 
@@ -530,8 +928,8 @@ def assign_clusters_for_minority_cot_hook(
       ``clusters_mock.assign_mock_clusters``. No judge call.
     * ``judge`` — Stage 3b behavior: call the deployed judge service via
       ``clusters_judge.assign_judge_clusters``. Requires ``data`` (DataProto
-      from the ray_trainer dispatch — see ``maxrl_expose_data_to_adv_est.patch``)
-      and a JUDGE_BASE_URL env var.
+      from the ray_trainer dispatch — exposed by maxrl fork commit 572a592
+      on cs224r-patches) and a ``JUDGE_BASE_URL`` env var.
     """
     mc = arm_block_from_adv_config(config, "minority_cot")
     return assign_clusters_from_arm_config(

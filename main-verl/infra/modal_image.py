@@ -25,7 +25,7 @@ _LOCAL_MAIN_VERL_DIR = _LOCAL_REPO_ROOT / "main-verl"
 
 MAXRL_FORK = "https://github.com/chicken602/maxrl.git"
 MAXRL_BRANCH = "cs224r-patches"
-MAXRL_BRANCH_COMMIT = "ce8f6740a2b81f4e7bf8685a5a326329198a1df6"  # HEAD of cs224r-patches as of 2026-05-31
+MAXRL_BRANCH_COMMIT = "33873ec9335007392ca5467ff4ca82a3cb823f71"  # HEAD of cs224r-patches as of 2026-05-31 (post-relaunch fixes)
 
 _VLLM_VERSION = "0.9.0"
 _RAY_VERSION = "2.44.1"  # <!-- TODO: bump if smoke Ray/GPU init fails -->
