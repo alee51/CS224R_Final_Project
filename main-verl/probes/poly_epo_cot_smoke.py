@@ -4,8 +4,9 @@ Mirrors probes/minority_cot_smoke.py with three changes:
 1. Function name: minority_cot_smoke -> poly_epo_cot_smoke.
 2. Config name passed to trainer subprocess: minority_cot_smoke_1p7b -> poly_epo_cot_smoke_1p7b.
 3. Pre-flight registry assertion: verifies 'poly_epo_cot' is in ADV_ESTIMATOR_REGISTRY
-   before Ray spins up, failing fast if the patch (infra/patches/maxrl_poly_epo_cot_adv_est.patch)
-   did not apply at image build.
+   before Ray spins up, failing fast if the maxrl fork was built off a sha that
+   predates the poly_epo_cot adv-estimator commit (fork sha 9f9fcc0 on
+   cs224r-patches).
 
 Default app name: cs224r-verl-stage05 (set via CS224R_APP_NAME env var in launch script).
 """
@@ -69,14 +70,16 @@ def poly_epo_cot_smoke() -> None:
 
     print("main_ppo import OK")
 
-    # Pre-flight: verify poly_epo_cot estimator was registered by the S5.1 patch.
-    # Fails fast inside the container before Ray spins up, saving ~3 min per
-    # failed hook iteration if the patch (infra/patches/maxrl_poly_epo_cot_adv_est.patch)
-    # did not apply at image build.
+    # Pre-flight: verify poly_epo_cot estimator was registered. Fails fast
+    # inside the container before Ray spins up, saving ~3 min per failed hook
+    # iteration if the maxrl fork was built off a sha that predates the
+    # poly_epo_cot adv-estimator commit (fork sha 9f9fcc0 on cs224r-patches).
     from verl.trainer.ppo.core_algos import ADV_ESTIMATOR_REGISTRY
 
     assert "poly_epo_cot" in ADV_ESTIMATOR_REGISTRY, (
-        "poly_epo_cot estimator not registered — S5.1 patch did not apply."
+        "poly_epo_cot estimator not registered — maxrl fork is missing commit "
+        "9f9fcc0 (cs224r-patches branch). Check MAXRL_BRANCH_COMMIT in "
+        "infra/modal_image.py."
     )
     print("pre-flight: 'poly_epo_cot' in ADV_ESTIMATOR_REGISTRY — OK")
 

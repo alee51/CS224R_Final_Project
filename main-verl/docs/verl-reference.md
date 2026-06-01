@@ -81,9 +81,9 @@ Our bs=128 OOM on single collocated H200/B200 is the main pain we *hope* VeRL ad
 
 **Locked decision:** [`reward-decision.md`](./reward-decision.md) — mentor direction is **upstream `math_reward.py`** (boxed prompt + last `\boxed{}` + Hendrycks `strip_string` + string `==`). **Not** `math_verify`, **not** `math_dapo`, **not** `main/train/reward.py`.
 
-The fork ships the scorer as **`verl/utils/reward_score/math.py`** (same logic as upstream `math_reward.py`). At maxrl @ `7197bbb` unpatched, `polaris` wrongly routed to `math_verify`; we **patch the router at image build** ([`../infra/patches/maxrl_polaris_math_reward.patch`](../infra/patches/maxrl_polaris_math_reward.patch)).
+The fork ships the scorer as **`verl/utils/reward_score/math.py`** (same logic as upstream `math_reward.py`). At maxrl @ `7197bbb` unpatched, `polaris` wrongly routed to `math_verify`; the router fix lives on the maxrl fork as commit **`cb8160f cs224r: route polaris/math_reward to math.py reward`** (branch `cs224r-patches`).
 
-| `data_source` | Routed scorer (after patch) | Extraction + compare |
+| `data_source` | Routed scorer | Extraction + compare |
 | --- | --- | --- |
 | **`polaris`** (our default) | **`math.py`** | Last `\boxed{}` → `strip_string` → `==` |
 | **`math_reward`** (alias) | **`math.py`** | same |

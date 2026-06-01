@@ -8,8 +8,9 @@
 #   JUDGE_AUTH_TOKEN=...   (optional)
 #   JUDGE_HEALTH_URL=https://chicken602--health.modal.run   (optional override)
 #
-# Image rebuild count 5 (adds maxrl_expose_data_to_adv_est.patch).
-# Triggers automatically on first launch after modal_image.py changes.
+# Requires the maxrl fork at cs224r-patches HEAD to include commit 572a592
+# (passes DataProto to registered adv_estimator hooks). Image rebuilds
+# automatically when MAXRL_BRANCH_COMMIT in infra/modal_image.py changes.
 set -euo pipefail
 
 : "${CS224R_APP_NAME:=cs224r-verl-stage03b}"

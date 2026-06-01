@@ -1,13 +1,14 @@
 # Stage 5 smoke — poly_epo_cot advantage estimator, Qwen3-1.7B-Base, Polaris-51K
 #
 # Reward stack (LOCKED, unchanged from Stage 2): docs/reward-decision.md —
-# MathReward (math.py) via patched router (polaris → math.compute_score).
-# Prompt suffix from maxrl polaris preprocess.  No custom_reward_function.path.
+# MathReward (math.py) via the maxrl fork's router (polaris → math.compute_score,
+# fork commit cb8160f on cs224r-patches). Prompt suffix from maxrl polaris
+# preprocess. No custom_reward_function.path.
 #
 # algorithm.adv_estimator: poly_epo_cot
 #   Invokes compute_poly_epo_cot_outcome_advantage registered via
-#   @register_adv_est(AdvantageEstimator.POLY_EPO_COT) in the patched
-#   verl/trainer/ppo/core_algos.py (infra/patches/maxrl_poly_epo_cot_adv_est.patch).
+#   @register_adv_est(AdvantageEstimator.POLY_EPO_COT) in
+#   verl/trainer/ppo/core_algos.py (maxrl fork commit 9f9fcc0 on cs224r-patches).
 #   This is NOT adv_estimator: maxrl (paper method, out of scope per migration plan §10).
 #   This is NOT adv_estimator: grpo (Stage 2 baseline) or minority_cot (Stage 3a/3b).
 #

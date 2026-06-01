@@ -1,7 +1,8 @@
 # Stage 3b smoke — minority_cot with REAL judge clusters, Qwen3-1.7B-Base, Polaris-51K.
 #
 # Cluster source: judge (chicken602 deploy of Qwen3-4B-Instruct-2507 @ 40K YaRN).
-# Reward stack (LOCKED): docs/reward-decision.md — MathReward via patched router.
+# Reward stack (LOCKED): docs/reward-decision.md — MathReward via the maxrl
+# fork's router (polaris → math.compute_score, fork commit cb8160f).
 #
 # Diff vs minority_cot_smoke_1p7b.yaml (Stage 3a mock):
 #   algorithm.minority_cot.cluster_source: judge      (was: implicit mock)
@@ -19,7 +20,8 @@
 #   JUDGE_AUTH_TOKEN: optional bearer token (None if judge is unauthenticated).
 #
 # Stage 3b prereqs:
-#   - Image rebuild 5 with maxrl_expose_data_to_adv_est.patch applied.
+#   - maxrl fork at cs224r-patches HEAD (must include commit 572a592, which
+#     exposes DataProto to registered adv hooks — needed for judge calls).
 #   - Judge redeployed on chicken602 with Qwen3-4B-Instruct-2507.
 #   - S4.5 re-validation PASS (≥90% parse + ≥80% agreement on new judge).
 

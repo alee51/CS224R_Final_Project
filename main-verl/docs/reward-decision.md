@@ -31,9 +31,9 @@ VeRL does **not** inject a prompt for you. The instruction is **only** what we w
 | **`polaris`** (default) | `math.compute_score` | `verl/utils/reward_score/math.py` |
 | **`math_reward`** (alias) | `math.compute_score` | same |
 
-**Before patch (maxrl @ `7197bbb` unpatched):** `polaris` → `math_verify.py` — **wrong for this decision.**
+**Before fix (maxrl @ `7197bbb`):** `polaris` → `math_verify.py` — **wrong for this decision.**
 
-**Patch:** [`../infra/patches/maxrl_polaris_math_reward.patch`](../infra/patches/maxrl_polaris_math_reward.patch) applied at Modal image build ([`../infra/modal_image.py`](../infra/modal_image.py)).
+**Fix:** maxrl fork commit **`cb8160f cs224r: route polaris/math_reward to math.py reward`** on branch `cs224r-patches`. The Modal image clones the fork at the SHA pinned by `MAXRL_BRANCH_COMMIT` in [`../infra/modal_image.py`](../infra/modal_image.py).
 
 Hydra: `reward_model.enable: false` — built-in rule scorer via parquet routing only. **No** `custom_reward_function.path`.
 

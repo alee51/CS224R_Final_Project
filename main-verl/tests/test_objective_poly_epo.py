@@ -19,6 +19,17 @@ def test_poly_epo_subset_score_hand():
     assert _poly_epo_subset_score(r4, c4) == pytest.approx(0.25)
 
 
+def test_poly_epo_subset_score_excludes_degenerate():
+    """Paper App. A.1: cluster 100 (DEGENERATE_CLUSTER_ID=-1) is excluded from
+    the diversity numerator. clusters=[-1,-1,0,1] -> 2 real distinct (not 3)."""
+    r4 = np.array([1.0, 1.0, 1.0, 1.0])
+    assert _poly_epo_subset_score(r4, np.array([-1, -1, 0, 1])) == pytest.approx(2 / 4)
+    # All-degenerate subset -> diversity 0, score 0 regardless of reward.
+    assert _poly_epo_subset_score(r4, np.array([-1, -1, -1, -1])) == pytest.approx(0.0)
+    # Mixed degenerate + single real cluster -> diversity 1/4.
+    assert _poly_epo_subset_score(r4, np.array([-1, -1, -1, 0])) == pytest.approx(1 / 4)
+
+
 def test_poly_epo_advantages_zero_sum_and_diversity_signal():
     """Higher cluster diversity within a subset boosts f -> positive marginal
     for rollouts that bring new clusters."""

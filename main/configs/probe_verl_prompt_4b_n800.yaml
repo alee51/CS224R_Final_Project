@@ -1,0 +1,63 @@
+# Raw Qwen3-4B-Base under the verl-locked maxrl Polaris prompt (\boxed{} only).
+# Goal: get the canonical step-0 pass@8 / non-zero rate for our verl training stack,
+# to compare against paper Fig. 2 right (~43% at step 0). Phase 1 only — no judge.
+#
+# Manifest reused from probes/05-27/random_fullgold_n800/manifest.jsonl
+# (uniform random Polaris-53k, full gold types, n=800).
+
+global_seed: 42
+operator: nancy
+gpu_class: B200
+modal_price_per_sec: 0.001736
+
+prompt_variant: verl_polaris_maxrl
+reuse_manifest: true
+external_manifest: true
+phase1_only: true
+log_rollout_table: false
+wandb_log_every_batches: 50
+
+smoke: false
+smoke_per_band: 1
+smoke_n_rollouts: 2
+
+resume_from_phase: null
+
+sampling:
+  per_band: 100
+  difficulty_bands: ["0/8", "1/8", "2/8", "3/8", "4/8", "5/8", "6/8", "7/8"]
+  rollouts_per_prompt: 8
+  temperature: 1.0
+
+phase1:
+  model: Qwen/Qwen3-4B-Base
+  max_prompt_length: 1024
+  max_response_length: 4096
+  gpu_memory_utilization: 0.85
+  max_model_len: 5120
+  max_num_seqs: 128
+  enable_prefix_caching: true
+
+phase2:
+  # unused (phase1_only=true) but the config loader still expects the block
+  model: Qwen/Qwen3-4B-Instruct-2507
+  gpu_memory_utilization: 0.85
+  max_model_len: 32768
+  max_num_seqs: 4
+  temperature: 0.0
+  max_tokens: 1024
+  apply_chat_template: true
+
+artifacts:
+  volume_name: main-artifacts
+  volume_mount: /vol
+  hf_cache_volume: hf-cache
+  manifest_path: probes/05-27/random_fullgold_n800/manifest.jsonl
+  rollouts_path: probes/05-31/verl_prompt_4b_n800/phase1_rollouts.jsonl
+  phase1_done_path: probes/05-31/verl_prompt_4b_n800/phase1_done.json
+  pointer_path: docs/probes/artifacts/05-31_verl_prompt_4b.pointer.json
+
+wandb:
+  entity: 224r-project
+  project: cs224r-minority-voting
+  group: probe-verl-prompt-4b-n800-05-31

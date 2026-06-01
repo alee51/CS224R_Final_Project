@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # One-shot Stage 3b smoke launcher. Bundles judge URL + chicken602 profile.
 #
-# Triggers verl image rebuild #5 on first run (adds maxrl_expose_data_to_adv_est.patch).
+# Requires the maxrl fork at cs224r-patches HEAD to include commit 572a592
+# (passes DataProto to registered adv_estimator hooks).
 # Inner script runs probes/minority_cot_judge_smoke.py with health-probe pre-flight.
 set -euo pipefail
 

@@ -27,6 +27,7 @@ from typing import Any
 import numpy as np
 import torch
 
+from judge.types import DEGENERATE_CLUSTER_ID
 from train.objective_minority import (
     SUBSET_SIZE,
     AdvantageOut,
@@ -40,11 +41,18 @@ from train.objective_minority import (
 # ---------------------------------------------------------------------------
 
 def _poly_epo_subset_score(rewards4: np.ndarray, clusters4: np.ndarray) -> float:
-    """f(G) = mean(r in G) * (distinct cluster ids in G) / k.
+    """f(G) = mean(r in G) * (distinct real cluster ids in G) / k.
+
+    Per paper Appendix A.1: ``cluster_id = 100`` (the "degenerate" bucket for
+    code/gibberish/non-math responses, internally mapped to
+    DEGENERATE_CLUSTER_ID = -1) is removed from the diversity numerator. So we
+    count ``len(set(clusters_in_subset \\ {DEGENERATE_CLUSTER_ID}))``, not the
+    full set. Reward mean is still computed over all 4 rollouts in the subset.
 
     Deterministic — no rng tiebreak needed (unlike minority_cot).
     """
-    return float(rewards4.mean() * len(set(clusters4.tolist())) / SUBSET_SIZE)
+    real = {c for c in clusters4.tolist() if c != DEGENERATE_CLUSTER_ID}
+    return float(rewards4.mean() * len(real) / SUBSET_SIZE)
 
 
 def _poly_epo_cot_advantages(

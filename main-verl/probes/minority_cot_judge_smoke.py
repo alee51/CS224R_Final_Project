@@ -5,7 +5,8 @@ Mirrors probes/minority_cot_smoke.py (Stage 3a mock) with these differences:
 2. JUDGE_BASE_URL / JUDGE_AUTH_TOKEN env vars passed through to the container
    so train.clusters_judge can reach the deployed judge service.
 3. Extra pre-flight assertions:
-   - "minority_cot" in ADV_ESTIMATOR_REGISTRY (registry patch applied).
+   - "minority_cot" in ADV_ESTIMATOR_REGISTRY (maxrl fork must include
+     cs224r-patches commit e047d0e).
    - JUDGE_BASE_URL non-empty (cluster_source=judge requires it).
    - Judge health endpoint returns 200 within 180s (vLLM cold-start tolerated).
 4. Reads JUDGE_BASE_URL from the local environment and forwards it via Modal
@@ -105,21 +106,23 @@ def minority_cot_judge_smoke() -> None:
 
     print("main_ppo import OK")
 
-    # Pre-flight 1: registry patches applied.
+    # Pre-flight 1: minority_cot adv estimator registered (maxrl fork must
+    # include cs224r-patches commit e047d0e).
     from verl.trainer.ppo.core_algos import ADV_ESTIMATOR_REGISTRY
     assert "minority_cot" in ADV_ESTIMATOR_REGISTRY, (
-        "minority_cot estimator not registered — maxrl_minority_cot_adv_est.patch "
-        "did not apply at image build."
+        "minority_cot estimator not registered — maxrl fork is missing commit "
+        "e047d0e (cs224r-patches branch)."
     )
     print("pre-flight 1: 'minority_cot' in ADV_ESTIMATOR_REGISTRY — OK")
 
-    # Pre-flight 2: expose-data patch applied (check ray_trainer source).
+    # Pre-flight 2: expose-data hook present (maxrl fork must include
+    # cs224r-patches commit 572a592 — passes DataProto to registered adv hooks).
     import inspect
     from verl.trainer.ppo import ray_trainer as _rt
     src = inspect.getsource(_rt.compute_advantage)
     assert '"data": data' in src, (
         "ray_trainer compute_advantage dispatch missing 'data' kwarg — "
-        "maxrl_expose_data_to_adv_est.patch did not apply at image build."
+        "maxrl fork is missing commit 572a592 (cs224r-patches branch)."
     )
     print("pre-flight 2: ray_trainer 'data' kwarg present — OK")
 

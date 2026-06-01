@@ -4,8 +4,9 @@ Mirrors probes/grpo_smoke.py with three changes:
 1. Function name: grpo_smoke -> minority_cot_smoke.
 2. Config name passed to trainer subprocess: grpo_smoke_1p7b -> minority_cot_smoke_1p7b.
 3. Pre-flight registry assertion: verifies 'minority_cot' is in ADV_ESTIMATOR_REGISTRY
-   before Ray spins up, failing fast if the patch (infra/patches/maxrl_minority_cot_adv_est.patch)
-   did not apply at image build.
+   before Ray spins up, failing fast if the maxrl fork was built off a sha that
+   predates the minority_cot adv-estimator commit (fork sha e047d0e on
+   cs224r-patches).
 
 Default app name: cs224r-verl-stage03a (set via CS224R_APP_NAME env var in launch script).
 """
@@ -69,14 +70,15 @@ def minority_cot_smoke() -> None:
 
     print("main_ppo import OK")
 
-    # Pre-flight: verify minority_cot estimator was registered by the patch.
-    # Fails fast inside the container before Ray spins up, saving ~3 min per
-    # failed hook iteration if the patch (infra/patches/maxrl_minority_cot_adv_est.patch)
-    # did not apply at image build.
+    # Pre-flight: verify minority_cot estimator was registered. Fails fast
+    # inside the container before Ray spins up, saving ~3 min per failed hook
+    # iteration if the maxrl fork was built off a sha that predates the
+    # minority_cot adv-estimator commit (fork sha e047d0e on cs224r-patches).
     from verl.trainer.ppo.core_algos import ADV_ESTIMATOR_REGISTRY
     assert "minority_cot" in ADV_ESTIMATOR_REGISTRY, (
-        "minority_cot estimator not registered — patch did not apply at image build. "
-        "Check infra/patches/maxrl_minority_cot_adv_est.patch and modal_image.py."
+        "minority_cot estimator not registered — maxrl fork is missing commit "
+        "e047d0e (cs224r-patches branch). Check MAXRL_BRANCH_COMMIT in "
+        "infra/modal_image.py."
     )
     print("pre-flight: 'minority_cot' in ADV_ESTIMATOR_REGISTRY — OK")
 
