@@ -629,6 +629,22 @@
         "mean_n_correct": 1.5,
         "u_correct_mean": 1.140625,
         "step": 380
+      },
+      {
+        "n_prompts": 128,
+        "n_prompts_with_correct": 58,
+        "non_zero_rate": 0.453125,
+        "mean_n_correct": 1.421875,
+        "u_correct_mean": 1.2758620689655173,
+        "step": 390
+      },
+      {
+        "n_prompts": 128,
+        "n_prompts_with_correct": 47,
+        "non_zero_rate": 0.3671875,
+        "mean_n_correct": 1.3359375,
+        "u_correct_mean": 1.3617021276595744,
+        "step": 400
       }
     ],
     "polyepo": [

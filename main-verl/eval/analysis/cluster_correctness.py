@@ -160,8 +160,10 @@ def main():
             prob = count / total if total else 0
             print(f"      {rank}  |  {count:>4d} | {total:>4d} |  {prob:.3f}")
         print()
-        print(f"  rarest cluster == correct: {r['rarest_eq_correct_rate']:.3f}")
-        print(f"  most-common cluster == correct: {r['most_common_eq_correct_rate']:.3f}")
+        rarest_val = r.get("rarest_eq_correct_rate")
+        mc_val = r.get("most_common_eq_correct_rate")
+        print(f"  rarest cluster == correct: {rarest_val:.3f}" if rarest_val is not None else "  rarest cluster == correct: n/a (no clusters; e.g. GRPO has no judge during training)")
+        print(f"  most-common cluster == correct: {mc_val:.3f}" if mc_val is not None else "  most-common cluster == correct: n/a")
         print()
         print(f"  Cluster size histogram (size: #occurrences):")
         for size in sorted(r["cluster_size_histogram"]):

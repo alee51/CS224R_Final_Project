@@ -14,7 +14,7 @@ step with >=1 correct rollout.
 Reads per-rollout JSONLs at
   main/data/probes/per_rollout_v2/{arm}/{run_id or unknown_run}/step_<N>.jsonl
 
-Output: writeup/results/u_correct_trajectory.json + writeup/results/u_correct_summary.md.
+Output: main-verl/writeup/results/u_correct_trajectory.json + main-verl/writeup/results/u_correct_summary.md.
 """
 
 from __future__ import annotations
@@ -29,8 +29,8 @@ ARMS = ("grpo", "minority", "polyepo")
 DEGENERATE = -1
 ROOT = Path("/Users/nancybao/Desktop/dev/cs224r_finalproject")
 PER_ROLLOUT_DIR = ROOT / "main/data/probes/per_rollout_v2"
-OUT_JSON = ROOT / "writeup/results/u_correct_trajectory.json"
-OUT_MD = ROOT / "writeup/results/u_correct_summary.md"
+OUT_JSON = ROOT / "main-verl/writeup/results/u_correct_trajectory.json"
+OUT_MD = ROOT / "main-verl/writeup/results/u_correct_summary.md"
 
 
 def iter_step_files(arm_dir: Path):

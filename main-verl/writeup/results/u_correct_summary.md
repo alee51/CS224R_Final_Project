@@ -17,7 +17,7 @@ Steps 0..400, sampled every 10. Source: per-rollout JSONLs under `main/data/prob
 | minority | 0-99 | 1.111 | 0.391 | 502 |
 | minority | 100-199 | 1.168 | 0.432 | 553 |
 | minority | 200-299 | 1.187 | 0.475 | 608 |
-| minority | 300-399 | 1.167 | 0.458 | 528 |
+| minority | 300-399 | 1.178 | 0.458 | 586 |
 | polyepo | 0-99 | 1.173 | 0.429 | 494 |
 | polyepo | 100-199 | 1.236 | 0.469 | 600 |
 | polyepo | 200-299 | 1.227 | 0.477 | 610 |
