@@ -35,7 +35,7 @@ Per Poly-EPO Table 1 / our `paper/method.md` §6. **All three arms, final checkp
 ### 2.2 Sampling
 - temp=1.0, top_p=1.0, top_k=-1 — matches training. **Do not** drop to temp=0.7 just because that's the eval-paper convention; we want our eval distribution = our train distribution.
 - n_rollouts ≥ 2·k_max so unbiased pass@k variance is small. For pass@16 → n=32; for AIME pass@32 → n=64.
-- Math-Verify on parsed answer (STANDARDS §reward), *not* train grader, on the OOD splits. Re-grade Polaris with both to confirm no grader-drift on in-dist.
+- **Training grader (verl `reward_score.math.compute_score`, Hendrycks `is_equiv`) on ALL splits, in-dist and OOD.** STANDARDS.md §"Eval" calls this non-negotiable: any divergence underreports pass@k by 5–10 pp on MATH-500-class datasets (confirmed by the 2026-06-02 rescore exercise). Earlier draft of this plan said "Math-Verify on OOD" — stale; the actual `run_eval.py` calls the training grader everywhere.
 
 ### 2.3 Statistics
 - Unbiased `pass@k` per `_pass_at_k_unbiased` already in `main/probes/checkpoint_rollout_eval.py`.
