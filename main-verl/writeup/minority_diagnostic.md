@@ -118,5 +118,6 @@ Poly-EPO's all-distinct-clusters objective sidesteps this exact issue and gets ~
 
 ## Held-out eval
 
-Current pass@k by arm + dataset is in `comparison.md`. Locked eval panel and
-candidate non-pass@k metrics are in `writeup/eval_panel_candidates.md`.
+Current pass@k by arm + dataset is in `main-verl/writeup/results/comparison.md`.
+Locked eval spec (datasets, metrics) is in `main-verl/writeup/eval.md`; run
+plan in `main-verl/writeup/eval_build.md`.

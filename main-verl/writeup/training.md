@@ -145,7 +145,7 @@ metric that depends only on per-rollout scalars. In particular:
   on the saved rollouts.
 - **Cluster-correctness alignment.** `P(rarest cluster = correct cluster | prompt)`
   is a join on `cluster_id` and `reward`. This is what
-  `main-verl/eval/results/minority_diagnostic.md` uses.
+  `main-verl/writeup/minority_diagnostic.md` uses.
 - **Coverage and entropy trajectories.** All `coverage@k`, `entropy@k`, and
   `distinct_answers@k` quantities defined in `eval.md` have direct training-time
   analogs computable from the JSONL.

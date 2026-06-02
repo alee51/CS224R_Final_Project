@@ -10,3 +10,6 @@ checkpoints/
 wandb/
 .modal_tmp/
 main/data/checkpoints_transfer/
+
+# Per-rollout JSONLs pulled local from Modal — large, ephemeral
+main/data/probes/per_rollout_v2/

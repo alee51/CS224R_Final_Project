@@ -6,7 +6,7 @@ Reads:
   - /tmp/min_*.json (when minority eval lands)
 
 Outputs:
-  - main/docs/eval_4b_comparison_2026-06-02.md (markdown table)
+  - main-verl/writeup/results/comparison.md (markdown table)
   - main/data/probes/eval_4b/cross_arm_summary.json
 """
 
@@ -18,7 +18,10 @@ from collections import Counter
 from pathlib import Path
 
 K_VALUES = [1, 4, 8, 16]
-DATASETS = ["aime25", "polaris_val", "math500", "dapo2k"]
+# NOTE: dataset list and K_VALUES are placeholders — both are open decisions
+# tracked in writeup/eval.md §1 and §5. Reconcile with the locked spec before
+# trusting any output from this script.
+DATASETS: list[str] = []
 ARMS = ["grpo", "polyepo", "minority"]
 
 
@@ -91,8 +94,8 @@ def build_markdown(by_arm) -> str:
     out = []
     out.append("# 4B verl run — held-out eval (2026-06-02)")
     out.append("")
-    out.append("All step 400 checkpoints. `n_rollouts=16`, `temperature=1.0`, `top_p=1.0`.")
-    out.append("Scorer: verl `math_dapo.compute_score(strict_box_verify=True)` — `\\boxed{}` extraction + exact-string match.")
+    out.append("All step 400 checkpoints. `temperature=1.0`, `top_p=1.0`, `max_tokens=4096`.")
+    out.append("Scorer: verl `math.compute_score` (Hendrycks `is_equiv`), same as training (see `writeup/eval.md` §3).")
     out.append("")
 
     all_datasets = sorted({ds for arm in by_arm for ds in by_arm[arm]})
@@ -169,7 +172,7 @@ def main():
         print(f"  {arm}: {list(dss.keys())}")
 
     md = build_markdown(by_arm)
-    out_path = Path(args.root) / "main/docs/eval_4b_comparison_2026-06-02.md"
+    out_path = Path(args.root) / "main-verl/writeup/results/comparison.md"
     out_path.parent.mkdir(parents=True, exist_ok=True)
     out_path.write_text(md)
     print(f"wrote {out_path}")
