@@ -6,12 +6,13 @@ set -euo pipefail
 cd "$(dirname "$0")/../../.."
 NOW=$(date -u '+%H%M')
 
-MODAL_PROFILE=stonedpinecones \
+MODAL_PROFILE=abao \
 CS224R_APP_NAME=cs224r-eval-polyepo-step400-${NOW} \
 CS224R_EVAL_CKPT_PATH=/vol/checkpoints/main-verl/poly_epo_cot_train_4b_1epoch_lr3e6/global_step_400/actor \
 CS224R_EVAL_LABEL=polyepo_step400 \
-CS224R_EVAL_DATASETS=aime25,polaris_val,math500,hmmt_feb25,hmmt_nov25,beyondaime \
-CS224R_EVAL_N_ROLLOUTS=16 \
+CS224R_EVAL_DATASETS=aime25,aime26,hmmt_feb25,hmmt_nov25,beyondaime,math500 \
+CS224R_EVAL_N_ROLLOUTS=64 \
+CS224R_EVAL_LOGPROBS=20 \
 CS224R_EVAL_OUTPUT_DIR=/vol/probes/eval_4b \
 CS224R_EVAL_GPU_COUNT=1 \
 PYTHONPATH=main-verl \

@@ -1,15 +1,16 @@
 #!/usr/bin/env bash
-# Eval the minority_cot step-400 ckpt on the full panel.
-# Run from repo root: bash main-verl/eval/launchers/minority.sh
+# Eval the BASE arm (Qwen3-4B-Base, no training) on the full panel.
+# Run from repo root: bash main-verl/eval/launchers/base.sh
 set -euo pipefail
 
 cd "$(dirname "$0")/../../.."
 NOW=$(date -u '+%H%M')
 
 MODAL_PROFILE=abao \
-CS224R_APP_NAME=cs224r-eval-minority-step400-${NOW} \
-CS224R_EVAL_CKPT_PATH=/vol/checkpoints/main-verl/minority_cot_train_4b_1epoch_lr3e6/global_step_400/actor \
-CS224R_EVAL_LABEL=minority_step400 \
+CS224R_APP_NAME=cs224r-eval-base-step400-${NOW} \
+CS224R_EVAL_BASE=1 \
+CS224R_EVAL_CKPT_PATH="" \
+CS224R_EVAL_LABEL=base_step400 \
 CS224R_EVAL_DATASETS=aime25,aime26,hmmt_feb25,hmmt_nov25,beyondaime,math500 \
 CS224R_EVAL_N_ROLLOUTS=64 \
 CS224R_EVAL_LOGPROBS=20 \
