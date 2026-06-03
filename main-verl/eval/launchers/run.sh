@@ -36,15 +36,15 @@ case "$CS224R_ARM" in
     ARM_LABEL="base"
     ;;
   grpo)
-    CS224R_EVAL_CKPT_PATH="/vol/checkpoints/main-verl/grpo_train_4b_1epoch_lr3e6/global_step_400/actor"
+    CS224R_EVAL_CKPT_PATH="/vol/merged_hf/grpo_step400"
     ARM_LABEL="grpo"
     ;;
   minority)
-    CS224R_EVAL_CKPT_PATH="/vol/checkpoints/main-verl/minority_cot_train_4b_1epoch_lr3e6/global_step_400/actor"
+    CS224R_EVAL_CKPT_PATH="/vol/merged_hf/minority_step400"
     ARM_LABEL="minority"
     ;;
   polyepo)
-    CS224R_EVAL_CKPT_PATH="/vol/checkpoints/main-verl/poly_epo_cot_train_4b_1epoch_lr3e6/global_step_400/actor"
+    CS224R_EVAL_CKPT_PATH="/vol/merged_hf/polyepo_step400"
     ARM_LABEL="polyepo"
     ;;
   *)

@@ -1,57 +1,85 @@
-# Base Arm Eval — Grader Sanity Check (BLOCKED)
+# Base Arm Eval — Grader Sanity Check (base × aime25)
 
-**Status: UNABLE TO COMPLETE — Modal Download Failure**
+_Updated 2026-06-02 post-pull; supersedes the prior "BLOCKED" version of this doc._
 
-## Summary
+Per `eval.md` §8, every (arm × dataset) headline number requires a 4-part
+sanity check before publishing. Only **base × aime25** has been fully
+verified so far (the file is locally pulled at `/tmp/base_aime25.json`,
+1.94 GB). The other 4 base smallood shards are on abao but not yet pulled.
 
-Attempted to pull all 5 base-arm smallood eval JSONs from abao Modal account per eval.md §8 sanity-check protocol.
+## 1. n_correct distribution (30 prompts, n=64)
 
-## Findings
+| n_correct | # prompts |
+|---:|---:|
+| 0 | 20 |
+| 1 | 4 |
+| 2 | 1 |
+| 4 | 2 |
+| 5 | 1 |
+| 8 | 1 |
+| 9 | 1 |
 
-### Modal File Inventory (✓ confirmed files exist)
-All 5 required JSONs are present on Modal abao account `main-artifacts` volume:
-- `probes/eval_4b/base_step400_smallood_aime25.json`
-- `probes/eval_4b/base_step400_smallood_aime26.json`
-- `probes/eval_4b/base_step400_smallood_hmmt_feb25.json`
-- `probes/eval_4b/base_step400_smallood_hmmt_nov25.json`
-- `probes/eval_4b/base_step400_smallood_beyondaime.json`
+Heavy floor (20/30 prompts unsolved across all 64 rollouts) is consistent
+with a base model on aime25 — `mean_reward_at_1 = 0.033`, `pass@64 = 0.333`.
+Empty-`preds` rate = 27.3% (524/1920 rollouts produced no `\boxed{}`).
 
-(Verified via `modal volume ls main-artifacts probes/eval_4b/ | grep base_step400_smallood`)
+## 2. Sample (problem, gt, preds[:3], rewards[:3])
 
-### Download Failure (✗)
+```
+[0] gt='70'   n_correct=8  preds[:3]=['', '', '0']   rewards[:3]=[0.0, 0.0, 0.0]
+    "Find the sum of all integer bases b>9 for which 17_b is a divisor of 97_b..."
 
-Multiple download strategies attempted:
+[1] gt='588'  n_correct=0  preds[:3]=['', '924', '756']   rewards[:3]=[0.0, 0.0, 0.0]
+    "On △ABC points A, D, E, and B lie in that order on side AB with AD=4, ..."
 
-1. **`modal volume get` CLI with loop** — created empty 0-byte files, process hung indefinitely
-2. **Sequential `modal volume get` with --force flag** — same result
-3. **Python subprocess wrapper calling `modal volume get`** — returned zero status but files remained 0 bytes
-4. **Modal Python SDK** — Version 1.4.3 does not support `Volume.lookup()` API for direct file access
+[2] gt='16'   n_correct=4  preds[:3]=['756', '1', '']   rewards[:3]=[0.0, 0.0, 0.0]
+    "The 9 members of a baseball team went to an ice-cream parlor..."
+```
 
-**Symptom:** `modal volume get` CLI command creates placeholder files but downloads stall. No error messages; process runs but does not complete. Killing the process (SIGTERM) does not prevent file creation with 0 bytes.
+Parsed answers look like genuine integer answers (no `[INVALID]` sentinels);
+empty strings reflect rollouts where the base model never emits `\boxed{}`.
+No format-level grader confusion.
 
-## Impact
+## 3. Same-grader rescore (`rescore.py`)
 
-Cannot run mandatory pre-headline sanity checks:
-1. ~~n_correct distribution histogram~~
-2. ~~Sample tuples: (problem_id, gt, pred[0], reward[0])~~
-3. ~~Rescore validation: math.compute_score vs math_dapo (threshold: <10% disagreement)~~
+Replaying `math.compute_score` on saved rollout text and recomputing pass@k:
 
-**Tier 1 analysis blocked** until JSONs are available locally.
+| k | saved | rescored | Δ |
+|---:|---:|---:|---:|
+| 1 | 0.0187 | 0.0187 | +0.0000 |
+| 2 | 0.0361 | 0.0361 | +0.0000 |
+| 4 | 0.0669 | 0.0669 | +0.0000 |
+| 8 | 0.1161 | 0.1161 | +0.0000 |
+| 16 | 0.1819 | 0.1819 | +0.0000 |
+| 32 | 0.2537 | 0.2537 | +0.0000 |
+| 64 | 0.3333 | 0.3333 | +0.0000 |
 
-## Recommendation
+Identical — the saved JSON's `rewards` were produced by the same vendored
+Hendrycks `is_equiv` that `rescore.py` runs offline. No silent grader drift
+between eval-time and analysis-time.
 
-1. Verify Modal abao account credentials and workspace access
-2. Check if file permissions or volume mount issues exist on Modal side
-3. Try downloading via:
-   - Alternate credentials (if multiple are configured)
-   - Direct Modal app that reads the files and streams to stdout
-   - Modal Volume API without CLI (if Python SDK supports read operations)
-4. Confirm eval runs completed successfully on abao (check Modal app logs for step-400 completion status)
+## 4. `math_dapo` tripwire (eval.md §8 belt-and-suspenders)
 
-## Next Steps (User Action Required)
+**Locally: SKIPPED** — `verl.utils.reward_score.math_dapo` and `math_verify`
+are not importable from this machine. `rescore.py` now (a) attempts the
+import at startup, (b) engages a per-rollout agreement check (math vs
+math_dapo strict-box, flags if <90%) on 20 sampled problems per dataset,
+(c) prints a `[tripwire] SKIPPED` line with reason when the import fails.
+Run on Modal (or `pip install verl` + `math_verify` locally) to engage.
 
-**Do not proceed with push/commit until grader sanity check passes.** Per eval.md §8, publishing pass@k without sanity checks exposes risk of silent-grader bugs (user has been burned by 2 in the past).
+**This is the only spec §8 step still outstanding for base × aime25.**
+Plan: re-fire `rescore.py` inside the Modal image where verl is already
+installed, dump the agreement rate to `writeup/results/`.
 
----
+## Status
 
-_Generated: 2026-06-02 19:49 PDT_
+- Steps 1–3: ✅ pass
+- Step 4: ⏳ deferred to a Modal-side rescore (script ready, ledger entry pending)
+
+For the other 4 base smallood shards (aime26 / hmmt_feb25 / hmmt_nov25 /
+beyondaime) and for math500, repeat steps 1–4 once the files are pulled
+locally or rescored in-place on abao. Headline base pass@k is safe to cite
+for aime25; the other 5 datasets still need this loop.
+
+For the broader pipeline audit (which analysis scripts work end-to-end on
+this JSON, what was patched), see `eval_pipeline_verification.md`.

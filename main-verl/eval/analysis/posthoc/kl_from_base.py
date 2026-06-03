@@ -107,6 +107,22 @@ def per_token_kl(policy_topk: dict, base_topk: dict) -> float:
     import math
     if not policy_topk or not base_topk:
         return float("nan")
+    # Saved JSON has str token-id keys (json serializes int keys as str);
+    # Modal-side base_topk is built with int keys. Coerce to int so the
+    # union is computed over the same key space — without this, the union
+    # double-counts every token and per_token_kl returns garbage.
+    def _to_int_keys(d: dict) -> dict[int, float]:
+        out = {}
+        for k, v in d.items():
+            try:
+                out[int(k)] = v
+            except (TypeError, ValueError):
+                continue
+        return out
+    policy_topk = _to_int_keys(policy_topk)
+    base_topk = _to_int_keys(base_topk)
+    if not policy_topk or not base_topk:
+        return float("nan")
     keys = set(policy_topk.keys()) | set(base_topk.keys())
     eps = 1e-12
 

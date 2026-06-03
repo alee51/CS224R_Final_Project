@@ -16,9 +16,17 @@ from __future__ import annotations
 
 import argparse
 import json
+import random
 import re
 from math import comb
 from pathlib import Path
+
+try:
+    from verl.utils.reward_score import math_dapo as _math_dapo
+    _HAS_MATH_DAPO = True
+except Exception:
+    _math_dapo = None
+    _HAS_MATH_DAPO = False
 
 
 # Inlined Hendrycks `is_equiv` and helpers — copied from
@@ -203,7 +211,7 @@ def compute_score_math(solution_str, ground_truth):
         return 0.0, None
 
 
-def rescore(data: dict, k_values=(1, 4, 8, 16)) -> dict:
+def rescore(data: dict, k_values=(1, 2, 4, 8, 16, 32, 64)) -> dict:
     """Rescore each per_prompt entry using the training grader."""
     out = {"label": data["label"], "ckpt_path": data["ckpt_path"],
            "n_rollouts": data["n_rollouts"], "datasets": {}}
@@ -247,11 +255,54 @@ def rescore(data: dict, k_values=(1, 4, 8, 16)) -> dict:
     return out
 
 
+def math_dapo_tripwire(data: dict, n_problems: int = 20, seed: int = 42) -> dict:
+    """Per eval.md §8 belt-and-suspenders: rescore n problems with
+    math_dapo.compute_score(strict_box_verify=True) and check per-rollout
+    agreement with the saved (math grader) reward. <90% = investigate."""
+    if not _HAS_MATH_DAPO:
+        return {"status": "skipped",
+                "reason": "verl.utils.reward_score.math_dapo not importable; "
+                          "run on Modal (or pip install verl + math_verify) to engage"}
+    rng = random.Random(seed)
+    out = {"status": "ran", "n_problems": n_problems, "seed": seed, "by_dataset": {}}
+    for ds_name, ds in data["datasets"].items():
+        prompts = ds["per_prompt"]
+        idxs = rng.sample(range(len(prompts)), min(n_problems, len(prompts)))
+        agree = total = both_pos = ours_only = dapo_only = 0
+        for i in idxs:
+            p = prompts[i]
+            gt = p["ground_truth"]
+            for rollout, our_r in zip(p["rollouts"], p["rewards"]):
+                try:
+                    dapo_r = float(_math_dapo.compute_score(rollout, gt,
+                                                            strict_box_verify=True))
+                except Exception:
+                    dapo_r = 0.0
+                ours = our_r > 0.5
+                dapo = dapo_r > 0.5
+                agree += int(ours == dapo)
+                total += 1
+                if ours and dapo: both_pos += 1
+                elif ours: ours_only += 1
+                elif dapo: dapo_only += 1
+        rate = agree / total if total else 0.0
+        out["by_dataset"][ds_name] = {
+            "n_problems": len(idxs), "n_rollouts": total,
+            "agree": agree, "rate": rate,
+            "both_pos": both_pos, "math_only_pos": ours_only, "math_dapo_only_pos": dapo_only,
+            "status": "OK" if rate >= 0.9 else "INVESTIGATE",
+        }
+    return out
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("eval_json")
     ap.add_argument("--out", default=None,
                     help="output path (default: <input>_rescored.json)")
+    ap.add_argument("--tripwire-n", type=int, default=20,
+                    help="n problems per dataset for math_dapo tripwire (eval.md §8)")
+    ap.add_argument("--tripwire-seed", type=int, default=42)
     args = ap.parse_args()
     src = Path(args.eval_json)
     data = json.load(src.open())
@@ -266,10 +317,29 @@ def main():
         old = data["datasets"][ds_name]["pass_at_k"]
         new = rescored["datasets"][ds_name]["pass_at_k"]
         print(f"  {ds_name}:")
-        for k in sorted(old):
+        keys = sorted(set(old) & set(new), key=lambda s: int(s.split("@")[1]))
+        for k in keys:
             o = old[k]; n = new[k]
             d = n - o
             print(f"    {k}: {o:.4f} -> {n:.4f} ({'+' if d>=0 else ''}{d:.4f})")
+        only_old = sorted(set(old) - set(new))
+        only_new = sorted(set(new) - set(old))
+        if only_old:
+            print(f"    [warn] in saved but not rescored: {only_old}")
+        if only_new:
+            print(f"    [warn] in rescored but not saved: {only_new}")
+
+    # math_dapo tripwire (eval.md §8 belt-and-suspenders)
+    tw = math_dapo_tripwire(data, n_problems=args.tripwire_n, seed=args.tripwire_seed)
+    print(f"\n[tripwire] math vs math_dapo(strict_box_verify=True)")
+    if tw["status"] == "skipped":
+        print(f"  SKIPPED: {tw['reason']}")
+    else:
+        for ds_name, r in tw["by_dataset"].items():
+            print(f"  {ds_name}: agree {r['agree']}/{r['n_rollouts']} = "
+                  f"{r['rate']:.3f}  [{r['status']}]  "
+                  f"(both+={r['both_pos']}, math+only={r['math_only_pos']}, "
+                  f"dapo+only={r['math_dapo_only_pos']})")
 
 
 if __name__ == "__main__":

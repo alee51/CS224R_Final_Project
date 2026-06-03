@@ -115,32 +115,41 @@ def eval_4b() -> None:
           f"n={n_rollouts} logprobs={logprobs_topn} base_mode={base_mode}")
     print(f"[eval_4b] cuda: device_count={torch.cuda.device_count()}")
 
-    # ---- 1. Resolve model dir (merge FSDP -> HF, or use HF base directly) ----
+    # ---- 1. Resolve model dir (merge FSDP -> HF, or use HF base/pre-merged directly) ----
     if base_mode:
         # Base arm: skip merge, load Qwen3-4B-Base directly from HF.
         model_id = "Qwen/Qwen3-4B-Base"
         print(f"[eval_4b] BASE mode: loading {model_id} from HF (CKPT_PATH ignored: {ckpt_path!r})")
     else:
-        merged_dir = Path("/tmp/merged_hf")
-        if merged_dir.exists():
-            import shutil
-            shutil.rmtree(merged_dir)
-        merged_dir.mkdir(parents=True)
+        ckpt_p = Path(ckpt_path)
+        hf_config = ckpt_p / "config.json"
+        hf_shards = list(ckpt_p.glob("model*.safetensors"))
+        if hf_config.exists() and hf_shards:
+            # Pre-merged HF format on the volume — skip the Modal-side merger entirely.
+            print(f"[eval_4b] ckpt {ckpt_path} is HF format "
+                  f"(config.json + {len(hf_shards)} safetensors); skipping merge")
+            model_id = ckpt_path
+        else:
+            merged_dir = Path("/tmp/merged_hf")
+            if merged_dir.exists():
+                import shutil
+                shutil.rmtree(merged_dir)
+            merged_dir.mkdir(parents=True)
 
-        t0 = time.time()
-        print(f"[eval_4b] merging FSDP shards from {ckpt_path} -> {merged_dir}")
-        merge_cmd = [
-            sys.executable,
-            "/root/maxrl/scripts/model_merger.py",
-            "merge",
-            "--backend", "fsdp",
-            "--local_dir", ckpt_path,
-            "--target_dir", str(merged_dir),
-        ]
-        subprocess.run(merge_cmd, check=True)
-        print(f"[eval_4b] merge done in {time.time() - t0:.1f}s")
-        print(f"[eval_4b] merged files: {sorted(p.name for p in merged_dir.iterdir())[:10]}")
-        model_id = str(merged_dir)
+            t0 = time.time()
+            print(f"[eval_4b] merging FSDP shards from {ckpt_path} -> {merged_dir}")
+            merge_cmd = [
+                sys.executable,
+                "/root/maxrl/scripts/model_merger.py",
+                "merge",
+                "--backend", "fsdp",
+                "--local_dir", ckpt_path,
+                "--target_dir", str(merged_dir),
+            ]
+            subprocess.run(merge_cmd, check=True)
+            print(f"[eval_4b] merge done in {time.time() - t0:.1f}s")
+            print(f"[eval_4b] merged files: {sorted(p.name for p in merged_dir.iterdir())[:10]}")
+            model_id = str(merged_dir)
 
     # ---- 2. Load vLLM ----
     print(f"[eval_4b] loading vLLM model={model_id}")

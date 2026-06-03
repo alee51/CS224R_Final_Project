@@ -2,7 +2,9 @@
 
 No numbers here yet. Prior partial results were deleted because their grader /
 sampling provenance was unclear. Re-run will populate this file via
-`main-verl/eval/analysis/compare.py`.
+`main-verl/eval/analysis/posthoc/auc_at_k.py` (pass@k table) plus
+`main-verl/eval/analysis/posthoc/diff_at_k_split.py` (solved/unsolved partition).
+The old `compare.py` is archived under `main-verl/eval/analysis/_legacy/`.
 
 Authoritative spec: `main-verl/writeup/eval.md`.
 Run plan: `main-verl/writeup/eval_build.md`.

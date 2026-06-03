@@ -57,7 +57,7 @@ def auc_for_ds(ds: dict) -> tuple[float, list[tuple[int, float]]]:
         return float("nan"), points
     ks = np.array([p[0] for p in points], dtype=float)
     vs = np.array([p[1] for p in points], dtype=float)
-    auc = float(np.trapz(vs, ks))
+    auc = float(np.trapezoid(vs, ks))
     return auc, points
 
 

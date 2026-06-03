@@ -4,7 +4,7 @@ Operational state for Modal accounts, budgets, and what artifacts live where.
 **Do not duplicate this info anywhere else.** Other docs link here; they do
 not restate run IDs, ckpt paths, budgets, or inventory.
 
-_Last verified: 2026-06-02 (post step-400 inventory sweep)._
+_Last verified: 2026-06-02 (base smallood + math500 landed on abao; trained-arm eval still blocked)._
 
 ## Accounts
 
@@ -42,10 +42,12 @@ NOT named by run_id like the others. Don't assume run_id-named paths everywhere.
 
 ## Held-out eval JSONs already on Modal
 
-These are the surviving outputs from prior eval probes. **Provenance unclear**
-(grader version, sampling config) — quarantine until rescored via
-`main-verl/eval/analysis/rescore.py` with the current `math.compute_score`
-grader. Do NOT cite numbers from these files until rescore confirms.
+### Quarantined (pre-locked-config, provenance unclear)
+
+Surviving outputs from prior eval probes. Grader version + sampling config
+unknown — quarantine until rescored via `main-verl/eval/analysis/posthoc/rescore.py`
+with the current `math.compute_score` grader. Do NOT cite numbers from these
+files until rescore confirms.
 
 | account | path | files present |
 |---|---|---|
@@ -55,6 +57,31 @@ grader. Do NOT cite numbers from these files until rescore confirms.
 
 GRPO has partial OOD coverage but is missing HMMT-Nov, BeyondAIME. Poly-EPO is
 the only arm with the full hard-OOD set on disk.
+
+### Fresh (locked-config, abao)
+
+Base arm (Qwen3-4B-Base) full panel produced under the locked spec
+(`n=64`, `logprobs=20`, `math.compute_score` grader). Citable.
+
+| account | path | files present |
+|---|---|---|
+| abao | `/vol/probes/eval_4b/` | `base_step400_math500_math500.json`, `base_step400_smallood_aime25.json`, `base_step400_smallood_aime26.json`, `base_step400_smallood_hmmt_feb25.json`, `base_step400_smallood_hmmt_nov25.json`, `base_step400_smallood_beyondaime.json`, `base_step400_smallood_<all-five>.json` (combined, 1.4 GB), `base_schemaprobe_aime25.json` |
+
+Locally pulled so far: `/tmp/base_aime25.json` (1.94 GB, full file with
+logprobs). Other 4 smallood shards downloaded on abao but not yet analyzed
+into `writeup/results/`; only `base × aime25` has pass@k + AUC@k extracted
+(see `writeup/results/auc_at_k.md`).
+
+### Trained-arm fresh eval — BLOCKED
+
+GRPO, Minority-CoT, Poly-EPO-CoT have **no fresh-config eval JSONs** yet.
+Phase 1 fired all 3 × 2 shards on abao at 17:13 PDT; all 4 GRPO/Poly-EPO jobs
+failed at the FSDP-merge step (corrupted `model_world_size_*_rank_*.pt` after
+Modal CLI transfer to abao; Minority jobs status unknown). See
+`writeup/results/PHASE1_PROGRESS.md` and memory
+`project_modal_cli_unreliable_large_pt`. Workaround in progress: HF-merge
+locally and upload merged weights to abao (GRPO already at
+`/tmp/merged_grpo_hf/`, ready to push).
 
 ## Eval re-run scoping (what this implies)
 

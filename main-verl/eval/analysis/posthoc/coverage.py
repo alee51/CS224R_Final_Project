@@ -100,7 +100,7 @@ def main():
         print(f"  pass@k: {ds['pass_at_k']}")
         print(f"  mean_reward_at_1: {ds['mean_reward_at_1']:.4f}")
         pp = ds["per_prompt"]
-        K_VALUES = [1, 4, 8, 16]
+        K_VALUES = [1, 2, 4, 8, 16, 32, 64]
         print(f"\n  k    cov   dist  ent  maj")
         for k in K_VALUES:
             if k > data["n_rollouts"]:

@@ -108,8 +108,9 @@ the pipeline.
 Run as soon as all 4 arms' JSONs for a dataset are local. Per `eval.md` §6.1:
 
 ```bash
-python main-verl/eval/analysis/compare.py     # cross-arm pass@k table
-python main-verl/eval/analysis/coverage.py    # majority@k, distinct, entropy, coverage
+python main-verl/eval/analysis/posthoc/auc_at_k.py main-verl/eval/probes/eval_4b/*.json        # cross-arm AUC@k table (replaces legacy compare.py)
+python main-verl/eval/analysis/posthoc/diff_at_k_split.py main-verl/eval/probes/eval_4b/*.json # cross-arm solved/unsolved partition
+python main-verl/eval/analysis/posthoc/coverage.py main-verl/eval/probes/eval_4b/*.json        # majority@k, distinct, entropy, coverage
 # NEW analysis scripts to write:
 #   - AUC@k                               (5 lines, trivial)
 #   - Potential@k                         (trivial from n_correct)
@@ -148,7 +149,7 @@ time instead of Phase 1 + 2 hr for Phase 3.
 
 Base arm is excluded (KL(base ‖ base) = 0).
 
-New script: `main-verl/eval/analysis/kl_from_base.py`
+New script: `main-verl/eval/analysis/posthoc/kl_from_base.py`
 - Load Qwen3-4B-Base via vLLM with `logprobs=20`
 - For each (trained arm × dataset) saved rollout, teacher-force the rollout token sequence through base
 - Compute per-token KL using policy's saved top-20 logprobs and base's top-20 logprobs at each step

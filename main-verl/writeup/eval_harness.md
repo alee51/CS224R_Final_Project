@@ -72,20 +72,23 @@ Strip `rollouts` text before any external upload.
 
 ```bash
 # Re-apply training grader to a saved eval JSON
-python3 main-verl/eval/analysis/rescore.py /tmp/<arm>_<dataset>.json
+python3 main-verl/eval/analysis/posthoc/rescore.py /tmp/<arm>_<dataset>.json
 
 # majority@k + distinct-answers@k + entropy@k
-python3 main-verl/eval/analysis/coverage.py /tmp/<arm>_<dataset>.json
+python3 main-verl/eval/analysis/posthoc/coverage.py /tmp/<arm>_<dataset>.json
 
 # Cross-arm pass@k markdown → writes to main-verl/writeup/results/comparison.md
-python3 main-verl/eval/analysis/compare.py
+# (compare.py was the early driver; superseded by auc_at_k + diff_at_k_split.
+#  archived under main-verl/eval/analysis/_legacy/)
+python3 main-verl/eval/analysis/posthoc/auc_at_k.py main-verl/eval/probes/eval_4b/*.json
+python3 main-verl/eval/analysis/posthoc/diff_at_k_split.py main-verl/eval/probes/eval_4b/*.json
 
 # Training-time per-rollout diagnostic
-python3 main-verl/eval/analysis/per_rollout_diagnostic.py --sample-every 5
+python3 main-verl/eval/analysis/training/per_rollout_diagnostic.py --sample-every 5
 
 # Per-rank cluster correctness (training, minority + polyepo)
-python3 main-verl/eval/analysis/cluster_correctness.py --step-min 100 --step-max 400 --sample-every 10
+python3 main-verl/eval/analysis/training/cluster_correctness.py --step-min 100 --step-max 400 --sample-every 10
 
 # |U_correct| trajectory (training, minority + polyepo)
-python3 main-verl/eval/analysis/u_correct.py --sample-every 10
+python3 main-verl/eval/analysis/training/u_correct.py --sample-every 10
 ```
