@@ -52,9 +52,11 @@ def ema(series, alpha):
 def plot_metric_smoothing_variants(metric_key, title, ylabel, fname_stem,
                                     arms=("GRPO","Minority-CoT","Poly-EPO-CoT"),
                                     smoothings=(0.6, 0.85, 0.95),
-                                    higher_is_better=True):
+                                    higher_is_better=True,
+                                    figsize=(10, 5),
+                                    suffix=""):
     for alpha in smoothings:
-        fig, ax = plt.subplots(figsize=(10, 5), dpi=150)
+        fig, ax = plt.subplots(figsize=figsize, dpi=150)
         for arm in arms:
             df, color = load(arm)
             if metric_key not in df.columns:
@@ -72,7 +74,7 @@ def plot_metric_smoothing_variants(metric_key, title, ylabel, fname_stem,
         ax.legend(loc="best", fontsize=11)
         ax.grid(True, alpha=0.3)
         fig.tight_layout()
-        out = OUT / f"{fname_stem}_ema{int(alpha*100)}.png"
+        out = OUT / f"{fname_stem}_ema{int(alpha*100)}{suffix}.png"
         fig.savefig(out, dpi=150, bbox_inches="tight")
         plt.close(fig)
         print(f"wrote {out.relative_to(RESULTS)}")
@@ -159,18 +161,19 @@ def plot_entropy_twin_axis(alpha=0.85):
     print(f"wrote {out.relative_to(RESULTS)}")
 
 if __name__ == "__main__":
-    # pass@8: 3 smoothing variants
+    # pass@8 + fraction_filtered: ema95, square cell only
     plot_metric_smoothing_variants(
         "train/pass_at_8", "Train Pass@8", "Pass@8",
-        "pass_at_8", smoothings=(0.6, 0.85, 0.95), higher_is_better=True,
+        "pass_at_8", smoothings=(0.95,), higher_is_better=True,
+        figsize=(6, 5.5), suffix="_square",
     )
-    # fraction_filtered: 3 smoothing variants
     plot_metric_smoothing_variants(
         "train/fraction_filtered", "Train Fraction Filtered",
         "Fraction filtered", "fraction_filtered",
-        smoothings=(0.6, 0.85, 0.95), higher_is_better=False,
+        smoothings=(0.95,), higher_is_better=False,
+        figsize=(6, 5.5), suffix="_square",
     )
-    # entropy: calibrated back-out + twin-axis alt
+    # entropy (deferred to paper, kept for reference): calibrated back-out + twin-axis alt
     plot_entropy_calibrated(alpha=0.85)
     plot_entropy_twin_axis(alpha=0.85)
     print("done")
