@@ -46,4 +46,29 @@ All 4 trained-arm jobs launched at 17:13 PDT but **FAILED** at checkpoint merge 
 
 ## Sanity check (n_correct dist + sample tuples per arm)
 
-(populated when each arm's first JSON lands)
+### Base arm (n=500 prompts for math500)
+Preliminary stats from `base_step400_math500_math500.json`:
+- **pass@1:** 0.358 (179/500 correct on first rollout)
+- **pass@8:** 0.806 (403/500 correct on any of first 8 rollouts)
+- **pass@64:** 0.928 (464/500 correct on any of 64 rollouts)
+- **Reward distribution** (first rollout): mean=0.384 (384/1000 expected on random sample)
+
+**Trained arms:** Blocked by checkpoint corruption. Cannot perform grader sanity checks until GRPO/PolyEPO/Minority checkpoints are verified on abao.
+
+## Exit Criteria & Final Status
+
+**Session started:** ~17:13 PDT (2026-06-02), when base eval jobs launched  
+**Cycle 1 timestamp:** 19:54-19:58 PDT  
+**Session duration:** ~45 min (well within 5-hour window, but Phase 1 blocked by upstream issue)
+
+**JSONs landed:** 2/8 shards (25%)
+- Base math500: 1/1 ✓
+- Base smallood: ~1/1 partial ✓ (downloads interrupted, but 1.4GB combined file received)
+- GRPO × 2: 0/2 (eval failed at checkpoint merge)
+- PolyEPO × 2: 0/2 (eval failed at checkpoint merge)
+- Minority × 2: 0/2 (unknown — jobs may not have launched)
+
+**Apps failed:** 4 (GRPO math500, GRPO smallood, PolyEPO math500, PolyEPO smallood) due to corrupted checkpoints  
+**Commits made:** 2 (cycle 1 status, critical failure flag)
+
+**Monitoring loop status:** `/loop 15m bash /tmp/phase1_monitor.sh` scheduled but Phase 1 cannot progress until checkpoints are fixed.
