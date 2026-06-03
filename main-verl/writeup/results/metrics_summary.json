@@ -1,0 +1,44 @@
+{
+  "GRPO": {
+    "train/pass_at_8": 0.4296875,
+    "train/fraction_filtered": 0.5859375,
+    "train/prompts_unlocked": "1216",
+    "actor/entropy": 0.2632368505001068,
+    "actor/ppo_kl": 0.00011926885013524569,
+    "critic/rewards/mean": 0.1796875,
+    "actor/pg_loss": 1.1061900295317173e-05,
+    "train/finish_length": "32",
+    "train/finish_eos": "992",
+    "train/finish_stop": "0"
+  },
+  "Minority-CoT": {
+    "train/pass_at_8": 0.3671875,
+    "train/fraction_filtered": 0.1328125,
+    "train/prompts_unlocked": "1166",
+    "actor/entropy": 75.18561553955078,
+    "actor/ppo_kl": 3.986780086506769e-06,
+    "critic/rewards/mean": 0.1669921875,
+    "actor/pg_loss": 0.0013594787596957758,
+    "train/distinct_clusters_mean": 3.671875,
+    "train/degenerate_rollouts": "220",
+    "train/judge_parse_ok_rate": 1.0,
+    "train/finish_length": "34",
+    "train/finish_eos": "990",
+    "train/finish_stop": "0"
+  },
+  "Poly-EPO-CoT": {
+    "train/pass_at_8": 0.4140625,
+    "train/fraction_filtered": 0.1640625,
+    "train/prompts_unlocked": "1772",
+    "actor/entropy": 58.266719818115234,
+    "actor/ppo_kl": 4.431280206063093e-05,
+    "critic/rewards/mean": 0.177734375,
+    "actor/pg_loss": 0.0016656865118420683,
+    "train/distinct_clusters_mean": 3.53125,
+    "train/degenerate_rollouts": "226",
+    "train/judge_parse_ok_rate": 1.0,
+    "train/finish_length": "40",
+    "train/finish_eos": "984",
+    "train/finish_stop": "0"
+  }
+}
