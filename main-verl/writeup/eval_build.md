@@ -124,7 +124,29 @@ diversity / behavioral metrics.
 
 ## Phase 3 — KL from base (18 forward jobs, ~$30)
 
-After Phase 1 fully done.
+After Phase 1 fully done — UNLESS overlapped with Phase 1 (see below).
+
+### Phase 1 / Phase 3 overlap (saves ~1.5 hr wall-clock)
+
+Phase 3 is **per-(arm × dataset) independent** — each cell only needs THAT
+arm's logprobs on THAT dataset, not the rest of Phase 1. So instead of
+running Phase 1 → Phase 3 sequentially, fire each Phase 3 cell as soon as
+its corresponding Phase 1 cell's JSON lands on abao.
+
+The monitor agent polls every 15 min for new JSONs. When it sees a new
+`<arm>_step400_<shard>.json` for a trained arm (not base), it fires
+`kl_from_base.py` for that cell immediately. Phase 3 cells run concurrent
+with Phase 1's still-in-flight cells, sharing the 10-GPU abao cap:
+
+- Phase 1 at full sweep uses 8 GPUs (4 arms × 2 shards)
+- That leaves 2 slots for Phase 3 concurrency
+- As Phase 1 cells finish, more slots open up for Phase 3
+
+Wall-clock impact: Phase 3 mostly hides inside Phase 1's tail (math500 is
+the long pole). Eval headline + KL diagnostic both land by ~Phase 1 finish
+time instead of Phase 1 + 2 hr for Phase 3.
+
+Base arm is excluded (KL(base ‖ base) = 0).
 
 New script: `main-verl/eval/analysis/kl_from_base.py`
 - Load Qwen3-4B-Base via vLLM with `logprobs=20`
