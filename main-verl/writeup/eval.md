@@ -115,9 +115,9 @@ All computed offline from saved JSON `{rewards, parsed_answer, rollouts, n_corre
 | `actor/entropy`, `ppo_kl`, `critic/rewards/mean` | W&B (verl default) | logged |
 | `train/distinct_clusters_mean`, `train/degenerate_rollouts` | W&B | set arms only |
 | `train/judge_parse_ok_rate`, `train/judge_overflow_skipped` | W&B | set arms only |
-| **`|U_correct|` trajectory** | `analysis/u_correct.py` on training-time per-rollout JSONLs | DONE for minority + poly_epo. **GRPO requires $15 judge pass over GRPO training rollouts** (Phase 5) to participate on the same axes — without it, GRPO is stuck at trivially `\|U_correct\|=1`. **LOCKED IN.** |
-| Cluster-correctness by rank (rarest-correct rate by cluster size) | `analysis/cluster_correctness.py` | DONE for minority (35% rarest-correct, inverted from "rarest=correct" hypothesis). Refresh for poly_epo for parity. |
-| Token-entropy gap (80–200× minority vs GRPO) | W&B `actor/entropy` | already documented |
+| **`|U_correct|` trajectory** | `analysis/u_correct.py` on training-time per-rollout JSONLs | DONE for minority + poly_epo. GRPO is stuck at trivially `\|U_correct\|=1` because the per-rollout JSONL schema (`objective_minority.py:329`) intentionally drops rollout text after `_extract_boxed_answer`. **Phase 5 (retroactive judge over GRPO training rollouts) is DEFERRED — rollout text is unrecoverable from any storage** (verified 2026-06-02 — W&B `log_val_generations` has 32 pairs/run; judge service didn't persist; Modal app logs expired). Post-deadline options if we want GRPO on the trajectory: (a) ~$5 replay of step-400 ckpt for a single point, (b) ~$70–100 multi-ckpt replay for the full trajectory. v1 poster plots minority + poly_epo only with a footnote. |
+| Cluster-correctness by rank (rarest-correct rate) | `analysis/cluster_correctness.py` | DONE for minority + polyepo. In the well-posed regime (unique rarest × n_correct ≤ 2), rarest=correct ≈ chance (~0.33) for both — rarity is uncorrelated with correctness. Live doc: `writeup/results/cluster_correctness.md`. |
+| Token-entropy gap (minority vs poly-EPO, ~29% higher at step 400) | W&B `actor/entropy` (set arms only) | already documented |
 
 ### 6.4 — Judge-based eval-time
 

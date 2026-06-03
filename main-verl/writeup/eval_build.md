@@ -144,21 +144,30 @@ Already exists for minority; needs parity work for poly_epo + GRPO.
 | Refresh `u_correct.py` on final step-400 per-rollout JSONLs | existing | run when minority + poly_epo full JSONLs synced |
 | Run `cluster_correctness.py` for poly_epo | existing | adds the parallel-to-minority plot (memory expects ~45–50% rarest-correct vs minority's 35%) |
 | Pull W&B aggregate plots for all 4 arms (pass@8, fraction_filtered, actor/entropy, ppo_kl, distinct_clusters_mean, etc.) | new W&B export script or manual | poster figure source |
-| GRPO `|U_correct|` (depends on Phase 5 judge pass) | re-run `u_correct.py` after GRPO training rollouts have cluster_ids | gates cross-arm training-time diversity plot |
+| GRPO `|U_correct|` | (deferred — see Phase 5) | not blocking; poster v1 plots minority + poly_epo with footnote |
 
 Outputs to (new) `main-verl/writeup/results/training_dynamics.md`.
 
-## Phase 5 — Judge on GRPO training rollouts ($15, one-time)
+## Phase 5 — Judge on GRPO training rollouts — **DEFERRED**
 
-Closes the cross-arm `|U_correct|` training-time parity.
+Original goal: cluster GRPO's training rollouts retroactively so all 3 arms
+share the same `|U_correct|` training-time axes.
 
-- Sample every 5 training steps from GRPO per-rollout JSONLs at `/vol/per_rollout/rof8t8kf/step_*.jsonl` (on anastasia — needs the per-rollout JSONLs copied to wherever the judge can read them, OR judge-from-local).
-- ~40 steps × 128 prompts × 1 judge call each ≈ 5k calls.
-- POST to existing production judge service (same endpoint used in training; see `main-verl/train/clusters_judge.py`).
-- Write augmented JSONLs with `cluster_id` field populated.
-- Re-run `analysis/u_correct.py` for GRPO. Now all 3 trained arms have `|U_correct|` trajectories on the same axes.
+**Why deferred (2026-06-02 audit):** rollout text from training is
+unrecoverable from any storage. Verified locations: per-rollout JSONLs
+intentionally drop text after `_extract_boxed_answer`
+(`main-verl/train/objective_minority.py:329`); W&B `log_val_generations`
+only has 32 (prompt, completion) pairs per run; the judge service didn't
+persist either side; Modal app stdout logs expired (apps no longer in
+`modal app list`). Full report: rollout-text hunter agent 2026-06-02 17:35 PDT.
 
-Can fire any time after Phase 1 starts; not blocking.
+**v1 poster:** plot minority + poly_epo `|U_correct|` trajectory; GRPO with
+explicit footnote ("no judge during training → no on-policy cluster IDs").
+
+**Post-deadline options if we want GRPO on the trajectory:**
+- (a) Replay step-400 GRPO ckpt on a fixed prompt subset → judge → cluster → single point per arm. ~$5, <30 min. Seed-determinism caveat (vLLM + FSDP not bit-exact).
+- (b) Replay ~40 saved ckpts × 3 arms for the full trajectory. ~$70–100 + ~6 GPU-hr.
+- (c) Use existing held-out eval rollouts (`/probes/eval_4b/*.json`, full text, 30 AIME-25 × 16 rollouts × 3 arms) and cluster eval-time instead — measures something different (eval distribution) but cleanly cross-arm-matched.
 
 ## Build-only nuances (not in eval.md or MODAL_STATUS.md)
 
