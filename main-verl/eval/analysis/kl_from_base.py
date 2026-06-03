@@ -1,16 +1,35 @@
 """Per-token KL(π_arm ‖ π_base) on saved policy rollouts (Phase 3).
 
 For each (trained arm × dataset) JSON we have:
-  - per_prompt[i].rollouts       — generation text from the trained policy
-  - per_prompt[i].logprobs       — policy's saved top-K (token_id → logprob)
+  - per_prompt[i].rendered_prompt — chat-templated prompt the policy was conditioned on
+  - per_prompt[i].rollouts        — generation text from the trained policy
+  - per_prompt[i].logprobs        — policy's saved top-K (token_id → logprob)
 
 This script loads Qwen3-4B-Base via vLLM with `logprobs=20`, teacher-forces
-each rollout token sequence through the base model (`prompt_logprobs=K` on a
-chat-templated prompt + the rollout text), then computes per-token
-KL(p_policy_topK ‖ p_base_topK) using both models' top-K dicts at each step.
-We renormalize each over the union of token_ids that appear in either dict
-(padding missing entries with -1e9 logprob ≈ 0 mass) so the divergence is
-well-defined.
+the base model with `rendered_prompt + rollout_text` (prompt_logprobs=K),
+slices the base distributions for the rollout positions, and computes
+per-token KL(p_policy_topK ‖ p_base_topK).
+
+### Alignment math (do NOT change without re-deriving)
+
+Policy: `comp.logprobs[t]` is the distribution that generated the t-th rollout
+token, given (rendered_prompt + rollout_tokens[0:t]). One entry per generated
+token; index 0 is the dist for the first generated token. The policy JSON
+serializes this verbatim as `per_prompt[i].logprobs[r][t]`.
+
+Base (teacher-forced): vLLM `prompt_logprobs` is one entry per INPUT token.
+At input position p, the entry is the distribution PREDICTING input token p,
+conditioned on input tokens [0, p). Index 0 is None (no left context).
+
+Therefore for the base to match the policy's conditioning we must feed it
+`rendered_prompt + rollout_text` and SLICE the rollout positions. If
+P = len(tokenize(rendered_prompt)) (no special tokens, since the prompt is
+already chat-templated text), then `base_prompt_lp[P + t]` is the base's
+distribution over rollout token t given (rendered_prompt + rollout_tokens[0:t])
+— exactly aligned with `pol_steps[t]`.
+
+We renormalize each distribution over the union of token_ids that appear in
+either side's top-K dict so the divergence is well-defined.
 
 Skipped arms: base (KL(base ‖ base) = 0).
 
@@ -189,31 +208,38 @@ def kl_pass() -> None:
             if max_prompts:
                 per_prompt = per_prompt[:max_prompts]
 
-            # Build (prompt_text, rollout_logprobs) batch.
-            # We need the chat-templated prompt prefix. We don't have the
-            # original prompt text saved, so we reconstruct it via the
-            # ground_truth + problem_id is insufficient — instead we ASSUME
-            # the rollout text already starts at the model's first generated
-            # token, so we teacher-force JUST the rollout text and only score
-            # the positions we have policy logprobs for.
-            #
-            # vLLM's prompt_logprobs aligns to input token positions (no shift
-            # for BOS). The policy's saved logprobs are one entry per
-            # GENERATED token, which corresponds 1:1 to rollout token positions
-            # starting at index 0 of the rollout (after tokenization). The
-            # first prompt_logprobs slot is None (no left context), so we
-            # offset by 1 when aligning.
+            # Build (rendered_prompt + rollout_text, prompt_token_count, policy_logprobs) batch.
+            # Per the docstring alignment math: we MUST teacher-force the base
+            # model on the same left context the policy saw. That's the chat-
+            # templated prompt text plus the rollout. Then we slice the base
+            # `prompt_logprobs` starting at position P=len(tokenize(prompt))
+            # so each base distribution shares conditioning with the matching
+            # policy step.
             tf_inputs = []
-            meta = []  # (prompt_idx, rollout_idx, policy_token_steps)
+            meta = []  # (prompt_idx, rollout_idx, policy_token_steps, prompt_token_count)
+            missing_prompt_warned = False
             for i_p, p in enumerate(per_prompt):
                 pol_lp_list = p.get("logprobs") or []
                 rollouts = p["rollouts"][:max_rollouts]
                 pol_lp_list = pol_lp_list[:max_rollouts]
+                rendered_prompt = p.get("rendered_prompt")
+                if not rendered_prompt:
+                    if not missing_prompt_warned:
+                        print(f"[kl] WARN: per_prompt entries missing 'rendered_prompt' "
+                              f"in {fp}; can't align base TF without it. Re-run run_eval.py "
+                              f"on this arm/dataset to repopulate.")
+                        missing_prompt_warned = True
+                    continue
+                # Count prompt tokens with the same tokenizer the base uses.
+                # add_special_tokens=False because the chat-templated string
+                # already contains every special-token marker; we don't want
+                # the tokenizer to prepend another BOS.
+                prompt_token_count = len(tok(rendered_prompt, add_special_tokens=False).input_ids)
                 for i_r, (text, pol_steps) in enumerate(zip(rollouts, pol_lp_list)):
                     if not text or not pol_steps:
                         continue
-                    tf_inputs.append(text)
-                    meta.append((i_p, i_r, pol_steps))
+                    tf_inputs.append(rendered_prompt + text)
+                    meta.append((i_p, i_r, pol_steps, prompt_token_count))
 
             if not tf_inputs:
                 print(f"[kl] no rollouts with logprobs for {arm}/{ds_name}")
@@ -225,20 +251,18 @@ def kl_pass() -> None:
             per_prompt_kls: list[dict] = []
             current_prompt_idx = -1
             current_entry = None
-            for (i_p, i_r, pol_steps), out in zip(meta, outs):
-                # prompt_logprobs: list aligned to tokenized prompt; index 0 None.
+            for (i_p, i_r, pol_steps, prompt_token_count), out in zip(meta, outs):
+                # prompt_logprobs: list aligned to tokenized (prompt+rollout) input;
+                # index 0 is None (no left context for the first token). For the
+                # base distribution that PREDICTED rollout token t given
+                # (prompt + rollout_tokens[0:t]), we want
+                # prompt_logprobs[prompt_token_count + t].
                 base_prompt_lp = out.prompt_logprobs or []
-                # Align: prompt has T tokens; positions 1..T-1 have top-K dicts.
-                # We want the dict at position t to compare against the policy
-                # distribution that GENERATED token t. The policy step list is
-                # one entry per generated token at positions 0..R-1.
-                # Teacher-forcing maps generated token 0 → input position 0;
-                # the base distribution PREDICTING that token sits at input
-                # position 0's logprobs entry — but vLLM's slot 0 is None, so
-                # we actually use slot 1 to score token 0. (We just want a
-                # consistent base-distribution dict at the same step.)
                 base_steps = []
-                for slot in base_prompt_lp[1:]:
+                # Slice rollout positions; this gives base distributions for
+                # rollout-token positions 0..R-1, exactly aligned with pol_steps.
+                rollout_slice = base_prompt_lp[prompt_token_count:]
+                for slot in rollout_slice:
                     if slot is None:
                         base_steps.append({})
                         continue
@@ -251,6 +275,10 @@ def kl_pass() -> None:
                             continue
                     base_steps.append(entry)
 
+                # Defensive: pol_steps and base_steps should now match length;
+                # trim to min in case of tokenizer edge cases (e.g. trailing
+                # whitespace re-tokenization). A few-token mismatch is fine;
+                # a large mismatch indicates the slicing is off.
                 n = min(len(pol_steps), len(base_steps))
                 kls = []
                 for t in range(n):
@@ -322,4 +350,8 @@ def kl_pass() -> None:
 def main() -> None:
     print(f"[launch] input_glob={_INPUT_GLOB} out={_OUTPUT_DIR} "
           f"max_prompts={_MAX_PROMPTS} max_rollouts={_MAX_ROLLOUTS} topn={_TOPN}")
-    kl_pass.remote()
+    # .spawn() = fire-and-forget; survives local-side disconnect when paired
+    # with `modal run --detach`. Output JSONs land on the artifacts volume.
+    call = kl_pass.spawn()
+    print(f"[launch] spawned kl_pass call_id={call.object_id}; "
+          f"per-(arm,dataset) JSONs will land at {_OUTPUT_DIR}/<arm>_<dataset>.json")

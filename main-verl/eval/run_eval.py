@@ -231,7 +231,7 @@ def eval_4b() -> None:
         )
 
         per_prompt = []
-        for prompt_id, gt, out in zip(problem_ids, gts, outs):
+        for prompt_id, gt, out, rendered_prompt in zip(problem_ids, gts, outs, rendered):
             rollouts = [comp.text for comp in out.outputs]
             rewards = []
             preds = []
@@ -276,6 +276,11 @@ def eval_4b() -> None:
             entry = {
                 "problem_id": prompt_id,
                 "ground_truth": str(gt),
+                # Save the chat-templated prompt verbatim. Phase 3 (kl_from_base)
+                # needs this to teacher-force the base model with the SAME left
+                # context the policy saw — otherwise base distributions are
+                # conditioned on the wrong tokens and the KL is meaningless.
+                "rendered_prompt": rendered_prompt,
                 "n_correct": int(sum(1 for r in rewards if r > 0.5)),
                 "rewards": rewards,
                 "preds": preds,
@@ -326,8 +331,13 @@ def eval_4b() -> None:
             json.dump(per_ds_payload, f, indent=2)
         artifacts_volume.commit()
         print(f"[eval_4b] wrote per-dataset {per_ds_path}")
-        print(f"[eval_4b] {ds_name} done: pass@1={passk.get('pass@1', 0):.3f} "
-              f"pass@8={passk.get('pass@8', 0):.3f} pass@16={passk.get('pass@16', 0):.3f}")
+        # Only print pass@k for k values that actually exist in the dict (i.e.,
+        # k <= n_rollouts). Schema probe at n=8 originally surfaced bogus
+        # "pass@16=0.000" / "pass@32=0.000" because .get(..., 0) defaulted
+        # missing keys to 0.0 — and downstream readers could mistake that for
+        # a real zero pass rate.
+        _passk_summary = " ".join(f"{k}={v:.3f}" for k, v in passk.items())
+        print(f"[eval_4b] {ds_name} done: {_passk_summary}")
 
     # ---- 4. Write JSON ----
     output_path = output_dir / f"{label}_{'-'.join(datasets)}.json"
@@ -344,4 +354,12 @@ def main() -> None:
     mode = "BASE" if _BASE_MODE else "TRAINED"
     print(f"[launch] mode={mode} label={_LABEL} ckpt={_CKPT_PATH} "
           f"datasets={_DATASETS} n={_N_ROLLOUTS} logprobs={_LOGPROBS}")
-    eval_4b.remote()
+    # .spawn() is fire-and-forget: the remote function call gets enqueued and
+    # the local entrypoint returns immediately. With `modal run --detach` the
+    # remote job survives any local-side disconnect (wifi drop, laptop close,
+    # `modal run` ctrl-C). Use .remote() only when you want the local caller
+    # to block on the result.
+    call = eval_4b.spawn()
+    print(f"[launch] spawned eval_4b call_id={call.object_id}; "
+          f"output JSON will land on the artifacts volume at "
+          f"{_OUTPUT_DIR}/{_LABEL}_<dataset>.json")
