@@ -33,7 +33,7 @@ from pathlib import Path
 import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from analysis_io import collect, write_markdown  # noqa: E402
+from analysis_io import collect, collected_from_json, write_markdown  # noqa: E402
 
 _TOKEN_RE = re.compile(r"\w+|[^\w\s]")
 
@@ -102,32 +102,21 @@ def distinct_n(rollouts_tokens: list[list[str]], n: int) -> float:
     return (len(seen) / total) if total else 0.0
 
 
-def main():
-    ap = argparse.ArgumentParser()
-    ap.add_argument("paths", nargs="+")
-    ap.add_argument("--max-rollouts", type=int, default=16,
-                    help="cap rollouts per problem to bound Self-BLEU cost (default 16)")
-    ap.add_argument("--max-problems", type=int, default=0,
-                    help="cap problems per dataset (0 = no cap)")
-    ap.add_argument("--out", default="self_bleu.md")
-    args = ap.parse_args()
-
-    data = collect(args.paths)
+def _render(data: dict, max_rollouts: int = 16, max_problems: int = 0) -> str:
     if not data:
-        print("[self_bleu] no inputs found")
-        return
+        return "# Self-BLEU and distinct-n-gram\n\nNo input data.\n"
 
     rows: dict[tuple[str, str], dict[str, float]] = {}
     for (arm, ds_name), ds in sorted(data.items()):
         per_prompt = ds["per_prompt"]
-        if args.max_problems:
-            per_prompt = per_prompt[: args.max_problems]
+        if max_problems:
+            per_prompt = per_prompt[: max_problems]
         sbs = []
         d1s = []
         d2s = []
         d3s = []
         for p in per_prompt:
-            rollouts = p["rollouts"][: args.max_rollouts]
+            rollouts = p["rollouts"][: max_rollouts]
             toks = [tokenize(r) for r in rollouts if r]
             if len(toks) < 2:
                 continue
@@ -148,7 +137,7 @@ def main():
 
     lines = ["# Self-BLEU and distinct-n-gram (rollout text)", "",
              "Self-BLEU: **lower = more diverse**. distinct_n: **higher = more diverse**.",
-             f"Sampled up to {args.max_rollouts} rollouts/problem (Self-BLEU is O(n^2)).",
+             f"Sampled up to {max_rollouts} rollouts/problem (Self-BLEU is O(n^2)).",
              ""]
     for ds_name in datasets:
         lines.append(f"## {ds_name}")
@@ -165,7 +154,26 @@ def main():
             )
         lines.append("")
 
-    md = "\n".join(lines) + "\n"
+    return "\n".join(lines) + "\n"
+
+
+def analyze(json_data: dict, max_rollouts: int = 8, max_problems: int = 0) -> str:
+    return _render(collected_from_json(json_data),
+                   max_rollouts=max_rollouts, max_problems=max_problems)
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("paths", nargs="+")
+    ap.add_argument("--max-rollouts", type=int, default=16)
+    ap.add_argument("--max-problems", type=int, default=0)
+    ap.add_argument("--out", default="self_bleu.md")
+    args = ap.parse_args()
+    data = collect(args.paths)
+    if not data:
+        print("[self_bleu] no inputs found")
+        return
+    md = _render(data, max_rollouts=args.max_rollouts, max_problems=args.max_problems)
     out = write_markdown(args.out, md)
     print(md)
     print(f"[self_bleu] wrote {out}")

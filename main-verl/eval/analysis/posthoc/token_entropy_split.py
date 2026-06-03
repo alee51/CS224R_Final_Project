@@ -34,7 +34,7 @@ from pathlib import Path
 import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from analysis_io import collect, write_markdown  # noqa: E402
+from analysis_io import collect, collected_from_json, write_markdown  # noqa: E402
 
 
 def step_entropy_bits(step: dict) -> float | None:
@@ -72,16 +72,9 @@ def rollout_mean_entropy(token_steps) -> float | None:
     return float(np.mean(es))
 
 
-def main():
-    ap = argparse.ArgumentParser()
-    ap.add_argument("paths", nargs="+")
-    ap.add_argument("--out", default="token_entropy_split.md")
-    args = ap.parse_args()
-
-    data = collect(args.paths)
+def _render(data: dict) -> str:
     if not data:
-        print("[token_entropy_split] no inputs found")
-        return
+        return "# Per-rollout mean token entropy\n\nNo input data.\n"
 
     rows: dict[tuple[str, str], dict] = {}
     skipped: list[tuple[str, str, str]] = []
@@ -146,7 +139,23 @@ def main():
             lines.append(f"- {arm} / {ds}: {reason}")
         lines.append("")
 
-    md = "\n".join(lines) + "\n"
+    return "\n".join(lines) + "\n"
+
+
+def analyze(json_data: dict) -> str:
+    return _render(collected_from_json(json_data))
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("paths", nargs="+")
+    ap.add_argument("--out", default="token_entropy_split.md")
+    args = ap.parse_args()
+    data = collect(args.paths)
+    if not data:
+        print("[token_entropy_split] no inputs found")
+        return
+    md = _render(data)
     out = write_markdown(args.out, md)
     print(md)
     print(f"[token_entropy_split] wrote {out}")

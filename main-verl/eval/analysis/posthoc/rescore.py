@@ -295,6 +295,48 @@ def math_dapo_tripwire(data: dict, n_problems: int = 20, seed: int = 42) -> dict
     return out
 
 
+def analyze(json_data: dict, tripwire_n: int = 20, tripwire_seed: int = 42) -> str:
+    """Library API: same-grader rescore + math_dapo tripwire on one already-
+    loaded eval JSON. Returns markdown summary string (does NOT write the
+    rescored JSON to disk — only the diff + tripwire counts)."""
+    rescored = rescore(json_data)
+    lines = [f"# Rescore (same grader) + math_dapo tripwire — {json_data.get('label','')}",
+             "", "## Same-grader rescore (`math.compute_score`)", ""]
+    for ds_name in json_data["datasets"]:
+        old = json_data["datasets"][ds_name]["pass_at_k"]
+        new = rescored["datasets"][ds_name]["pass_at_k"]
+        lines.append(f"### {ds_name}")
+        lines.append("")
+        lines.append("| k | saved | rescored | Δ |")
+        lines.append("|---|---|---|---|")
+        keys = sorted(set(old) & set(new), key=lambda s: int(s.split("@")[1]))
+        for k in keys:
+            o = old[k]; n = new[k]; d = n - o
+            lines.append(f"| {k} | {o:.4f} | {n:.4f} | {'+' if d>=0 else ''}{d:.4f} |")
+        only_old = sorted(set(old) - set(new))
+        only_new = sorted(set(new) - set(old))
+        if only_old:
+            lines.append(f"")
+            lines.append(f"_warn: in saved but not rescored: {only_old}_")
+        if only_new:
+            lines.append(f"_warn: in rescored but not saved: {only_new}_")
+        lines.append("")
+
+    lines.append("## math_dapo tripwire (eval.md §8)")
+    lines.append("")
+    tw = math_dapo_tripwire(json_data, n_problems=tripwire_n, seed=tripwire_seed)
+    if tw["status"] == "skipped":
+        lines.append(f"**SKIPPED** — {tw['reason']}")
+    else:
+        lines.append("| dataset | agree | rate | status | both+ | math+only | math_dapo+only |")
+        lines.append("|---|---|---|---|---|---|---|")
+        for ds_name, r in tw["by_dataset"].items():
+            lines.append(f"| {ds_name} | {r['agree']}/{r['n_rollouts']} | "
+                         f"{r['rate']:.3f} | {r['status']} | "
+                         f"{r['both_pos']} | {r['math_only_pos']} | {r['math_dapo_only_pos']} |")
+    return "\n".join(lines) + "\n"
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("eval_json")
@@ -310,36 +352,8 @@ def main():
     out_path = Path(args.out) if args.out else src.with_name(src.stem + "_rescored.json")
     out_path.write_text(json.dumps(rescored, indent=2))
     print(f"wrote {out_path}")
-
-    # Comparison print
-    print(f"\nlabel: {data['label']}")
-    for ds_name in data["datasets"]:
-        old = data["datasets"][ds_name]["pass_at_k"]
-        new = rescored["datasets"][ds_name]["pass_at_k"]
-        print(f"  {ds_name}:")
-        keys = sorted(set(old) & set(new), key=lambda s: int(s.split("@")[1]))
-        for k in keys:
-            o = old[k]; n = new[k]
-            d = n - o
-            print(f"    {k}: {o:.4f} -> {n:.4f} ({'+' if d>=0 else ''}{d:.4f})")
-        only_old = sorted(set(old) - set(new))
-        only_new = sorted(set(new) - set(old))
-        if only_old:
-            print(f"    [warn] in saved but not rescored: {only_old}")
-        if only_new:
-            print(f"    [warn] in rescored but not saved: {only_new}")
-
-    # math_dapo tripwire (eval.md §8 belt-and-suspenders)
-    tw = math_dapo_tripwire(data, n_problems=args.tripwire_n, seed=args.tripwire_seed)
-    print(f"\n[tripwire] math vs math_dapo(strict_box_verify=True)")
-    if tw["status"] == "skipped":
-        print(f"  SKIPPED: {tw['reason']}")
-    else:
-        for ds_name, r in tw["by_dataset"].items():
-            print(f"  {ds_name}: agree {r['agree']}/{r['n_rollouts']} = "
-                  f"{r['rate']:.3f}  [{r['status']}]  "
-                  f"(both+={r['both_pos']}, math+only={r['math_only_pos']}, "
-                  f"dapo+only={r['math_dapo_only_pos']})")
+    print()
+    print(analyze(data, tripwire_n=args.tripwire_n, tripwire_seed=args.tripwire_seed))
 
 
 if __name__ == "__main__":

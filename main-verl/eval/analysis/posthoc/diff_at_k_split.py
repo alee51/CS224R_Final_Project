@@ -29,7 +29,7 @@ from pathlib import Path
 import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from analysis_io import collect, write_markdown  # noqa: E402
+from analysis_io import collect, collected_from_json, write_markdown  # noqa: E402
 
 K_VALUES = [1, 4, 8, 16, 32, 64]
 
@@ -49,17 +49,9 @@ def split_solved_unsolved(per_prompt):
     return solved, unsolved
 
 
-def main():
-    ap = argparse.ArgumentParser()
-    ap.add_argument("paths", nargs="+")
-    ap.add_argument("--out", default="diff_at_k_split.md")
-    args = ap.parse_args()
-
-    data = collect(args.paths)
+def _render(data: dict) -> str:
     if not data:
-        print("[diff_at_k_split] no inputs found")
-        return
-
+        return "# distinct_answers@k split\n\nNo input data.\n"
     arms = sorted({a for (a, _) in data})
     datasets = sorted({d for (_, d) in data})
 
@@ -95,7 +87,23 @@ def main():
                 lines.append("| " + " | ".join(cells) + " |")
             lines.append("")
 
-    md = "\n".join(lines) + "\n"
+    return "\n".join(lines) + "\n"
+
+
+def analyze(json_data: dict) -> str:
+    return _render(collected_from_json(json_data))
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("paths", nargs="+")
+    ap.add_argument("--out", default="diff_at_k_split.md")
+    args = ap.parse_args()
+    data = collect(args.paths)
+    if not data:
+        print("[diff_at_k_split] no inputs found")
+        return
+    md = _render(data)
     out = write_markdown(args.out, md)
     print(md)
     print(f"[diff_at_k_split] wrote {out}")

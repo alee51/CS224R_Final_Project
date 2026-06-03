@@ -29,7 +29,7 @@ from pathlib import Path
 import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from analysis_io import collect, write_markdown  # noqa: E402
+from analysis_io import collect, collected_from_json, write_markdown  # noqa: E402
 
 PATTERNS = [
     r"\bwait\b",
@@ -49,16 +49,9 @@ def count_in_rollout(text: str) -> list[int]:
     return [len(rx.findall(text)) for rx in COMPILED]
 
 
-def main():
-    ap = argparse.ArgumentParser()
-    ap.add_argument("paths", nargs="+")
-    ap.add_argument("--out", default="reflective_actions.md")
-    args = ap.parse_args()
-
-    data = collect(args.paths)
+def _render(data: dict) -> str:
     if not data:
-        print("[reflective_actions] no inputs found")
-        return
+        return "# Reflective-action frequency in rollout text\n\nNo input data.\n"
 
     rows: dict[tuple[str, str], dict[str, float]] = {}
     for (arm, ds_name), ds in sorted(data.items()):
@@ -111,7 +104,23 @@ def main():
             lines.append("| " + " | ".join(cells) + " |")
         lines.append("")
 
-    md = "\n".join(lines) + "\n"
+    return "\n".join(lines) + "\n"
+
+
+def analyze(json_data: dict) -> str:
+    return _render(collected_from_json(json_data))
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("paths", nargs="+")
+    ap.add_argument("--out", default="reflective_actions.md")
+    args = ap.parse_args()
+    data = collect(args.paths)
+    if not data:
+        print("[reflective_actions] no inputs found")
+        return
+    md = _render(data)
     out = write_markdown(args.out, md)
     print(md)
     print(f"[reflective_actions] wrote {out}")

@@ -85,31 +85,44 @@ def majority_at_k(per_prompt, k):
     return mvotes / len(per_prompt)
 
 
-def main():
-    ap = argparse.ArgumentParser()
-    ap.add_argument("eval_json", help="path to eval_4b JSON output")
-    args = ap.parse_args()
-    p = Path(args.eval_json)
-    data = json.load(p.open())
-    print(f"=== {data['label']} ===")
-    print(f"ckpt: {data['ckpt_path']}")
-    print(f"n_rollouts: {data['n_rollouts']}")
+K_VALUES = [1, 2, 4, 8, 16, 32, 64]
 
-    for ds_name, ds in data["datasets"].items():
-        print(f"\n--- {ds_name} (n={ds['n_prompts']} prompts) ---")
-        print(f"  pass@k: {ds['pass_at_k']}")
-        print(f"  mean_reward_at_1: {ds['mean_reward_at_1']:.4f}")
+
+def analyze(json_data: dict) -> str:
+    """Library API: takes one already-loaded eval JSON, returns markdown."""
+    lines = [f"# coverage / distinct / entropy / majority @k — {json_data.get('label', '')}",
+             "",
+             f"- ckpt: `{json_data.get('ckpt_path', '')}`",
+             f"- n_rollouts: {json_data.get('n_rollouts', '?')}",
+             ""]
+    n_roll = json_data.get("n_rollouts", 64)
+    for ds_name, ds in json_data["datasets"].items():
+        lines.append(f"## {ds_name} (n={ds['n_prompts']} prompts)")
+        lines.append("")
+        lines.append(f"- saved pass@k: `{ds['pass_at_k']}`")
+        lines.append(f"- mean_reward_at_1: {ds['mean_reward_at_1']:.4f}")
+        lines.append("")
         pp = ds["per_prompt"]
-        K_VALUES = [1, 2, 4, 8, 16, 32, 64]
-        print(f"\n  k    cov   dist  ent  maj")
+        lines.append("| k | coverage | distinct_answers | entropy(bits) | majority |")
+        lines.append("|---|---|---|---|---|")
         for k in K_VALUES:
-            if k > data["n_rollouts"]:
+            if k > n_roll:
                 continue
             cov = coverage_at_k(pp, k)
             da = distinct_answers_at_k(pp, k)
             ent = answer_entropy_at_k(pp, k)
             maj = majority_at_k(pp, k)
-            print(f"  {k:>2d}  {cov:.2f}  {da:.2f}  {ent:.2f}  {maj:.3f}")
+            lines.append(f"| {k} | {cov:.2f} | {da:.2f} | {ent:.2f} | {maj:.3f} |")
+        lines.append("")
+    return "\n".join(lines) + "\n"
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("eval_json", help="path to eval_4b JSON output")
+    args = ap.parse_args()
+    data = json.load(Path(args.eval_json).open())
+    print(analyze(data))
 
 
 if __name__ == "__main__":

@@ -26,7 +26,7 @@ from pathlib import Path
 import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from analysis_io import collect, write_markdown  # noqa: E402
+from analysis_io import collect, collected_from_json, write_markdown  # noqa: E402
 
 K_VALUES = [1, 4, 8, 16, 32]
 
@@ -48,20 +48,11 @@ def potential_at_k(per_prompt, k):
     return recoverable / failed, failed, recoverable
 
 
-def main():
-    ap = argparse.ArgumentParser()
-    ap.add_argument("paths", nargs="+")
-    ap.add_argument("--out", default="potential_at_k.md")
-    args = ap.parse_args()
-
-    data = collect(args.paths)
+def _render(data: dict) -> str:
     if not data:
-        print("[potential_at_k] no inputs found")
-        return
-
+        return "# Potential@k\n\nNo input data.\n"
     arms = sorted({a for (a, _) in data})
     datasets = sorted({d for (_, d) in data})
-
     lines = ["# Potential@k", "",
              "For each (arm, dataset, k): fraction of problems that failed in",
              "the first k rollouts but were solved at least once across all",
@@ -82,8 +73,23 @@ def main():
                 row.append(f"{rate:.3f}")
             lines.append("| " + " | ".join(row) + " |")
         lines.append("")
+    return "\n".join(lines) + "\n"
 
-    md = "\n".join(lines) + "\n"
+
+def analyze(json_data: dict) -> str:
+    return _render(collected_from_json(json_data))
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("paths", nargs="+")
+    ap.add_argument("--out", default="potential_at_k.md")
+    args = ap.parse_args()
+    data = collect(args.paths)
+    if not data:
+        print("[potential_at_k] no inputs found")
+        return
+    md = _render(data)
     out = write_markdown(args.out, md)
     print(md)
     print(f"[potential_at_k] wrote {out}")

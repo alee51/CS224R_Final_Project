@@ -93,6 +93,12 @@ image = (
             "__pycache__",
             ".pytest_cache",
             ".DS_Store",
+            # 18 GB of local FSDP shards / merged ckpts under active modification
+            # (Nancy's concurrent ckpt downloads) crash `add_local_dir` with
+            # "modified during build". They're never read on Modal — the
+            # main-artifacts volume holds the canonical copies.
+            "eval/probes/ckpts",
+            "eval/probes/eval_4b",
         ],
     )
 )

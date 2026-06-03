@@ -24,7 +24,7 @@ from pathlib import Path
 import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from analysis_io import collect, write_markdown  # noqa: E402
+from analysis_io import collect, collected_from_json, write_markdown  # noqa: E402
 
 K_LADDER = [1, 2, 4, 8, 16, 32, 64]
 
@@ -61,17 +61,9 @@ def auc_for_ds(ds: dict) -> tuple[float, list[tuple[int, float]]]:
     return auc, points
 
 
-def main():
-    ap = argparse.ArgumentParser()
-    ap.add_argument("paths", nargs="+", help="one or more eval JSON files / globs")
-    ap.add_argument("--out", default="auc_at_k.md")
-    args = ap.parse_args()
-
-    data = collect(args.paths)
+def _render(data: dict) -> str:
     if not data:
-        print("[auc_at_k] no inputs found")
-        return
-
+        return "# AUC@k\n\nNo input data.\n"
     arms = sorted({a for (a, _ds) in data})
     datasets = sorted({d for (_a, d) in data})
 
@@ -89,14 +81,29 @@ def main():
             row.append(f"{auc:.3f}" if not np.isnan(auc) else "—")
         lines.append("| " + " | ".join(row) + " |")
 
-    # per-cell pass-at-k breakdown for transparency
     lines += ["", "## Underlying pass@k points", ""]
     for (arm, ds_name), ds in sorted(data.items()):
         _, pts = auc_for_ds(ds)
         pretty = ", ".join(f"pass@{k}={v:.3f}" for k, v in pts)
         lines.append(f"- **{arm} / {ds_name}**: {pretty}")
+    return "\n".join(lines) + "\n"
 
-    md = "\n".join(lines) + "\n"
+
+def analyze(json_data: dict) -> str:
+    """Library API: takes one already-loaded eval JSON, returns markdown."""
+    return _render(collected_from_json(json_data))
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("paths", nargs="+", help="one or more eval JSON files / globs")
+    ap.add_argument("--out", default="auc_at_k.md")
+    args = ap.parse_args()
+    data = collect(args.paths)
+    if not data:
+        print("[auc_at_k] no inputs found")
+        return
+    md = _render(data)
     out = write_markdown(args.out, md)
     print(md)
     print(f"[auc_at_k] wrote {out}")

@@ -94,6 +94,16 @@ def collect(patterns: Iterable[str]) -> dict[tuple[str, str], dict]:
     return out
 
 
+def collected_from_json(json_data: dict) -> dict[tuple[str, str], dict]:
+    """Same shape as collect(), but built from one already-loaded JSON.
+
+    Lets analyze() functions skip a json.load — critical when the file is
+    multi-GB and would otherwise be re-parsed once per script invocation.
+    """
+    arm = arm_from_label(json_data.get("label", "unknown"))
+    return {(arm, ds_name): ds for ds_name, ds in json_data.get("datasets", {}).items()}
+
+
 def write_markdown(rel_path: str, text: str) -> Path:
     """Write a markdown file under main-verl/writeup/results/<rel_path>."""
     # _io.py lives at main-verl/eval/analysis/_io.py → parents[2] = main-verl/
