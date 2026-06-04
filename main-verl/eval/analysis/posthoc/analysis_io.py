@@ -70,25 +70,37 @@ def arm_from_label(label: str) -> str:
     return label
 
 
-def iter_arm_dataset(paths: Iterable[Path]):
-    """Yield (arm, dataset_name, dataset_dict, label, top_level) tuples."""
+def iter_arm_dataset(paths: Iterable[Path], *, drop_heavy: bool = True):
+    """Yield (arm, dataset_name, dataset_dict, label, top_level) tuples.
+
+    drop_heavy: if True (default), strip per_prompt[i].logprobs (the largest field
+    by far — multi-GB for n=64 evals with top-20 logprobs per token). Saves OOM
+    when iterating across all 20 files. Set False for analyses that need logprobs
+    (token_entropy_split, kl_from_base).
+    """
+    decoder = json.JSONDecoder(strict=False)  # tolerate raw control chars in rollout text
     for p in paths:
         try:
-            top = json.loads(p.read_text())
+            top = decoder.decode(p.read_text())
         except Exception as exc:  # pragma: no cover
             print(f"[_io] WARN failed to load {p}: {exc}")
             continue
         label = top.get("label", p.stem)
         arm = arm_from_label(label)
         datasets = top.get("datasets", {})
+        if drop_heavy:
+            for ds in datasets.values():
+                for pp in ds.get("per_prompt", []):
+                    pp.pop("logprobs", None)
         for ds_name, ds in datasets.items():
             yield arm, ds_name, ds, label, top
+        del top  # let GC reclaim before next file
 
 
-def collect(patterns: Iterable[str]) -> dict[tuple[str, str], dict]:
+def collect(patterns: Iterable[str], *, drop_heavy: bool = True) -> dict[tuple[str, str], dict]:
     """Map (arm, dataset_name) → ds dict for each file matched by the patterns."""
     out: dict[tuple[str, str], dict] = {}
-    for arm, ds_name, ds, _label, _top in iter_arm_dataset(expand_inputs(patterns)):
+    for arm, ds_name, ds, _label, _top in iter_arm_dataset(expand_inputs(patterns), drop_heavy=drop_heavy):
         # Last writer wins (later files override earlier ones for the same key).
         out[(arm, ds_name)] = ds
     return out
@@ -106,8 +118,9 @@ def collected_from_json(json_data: dict) -> dict[tuple[str, str], dict]:
 
 def write_markdown(rel_path: str, text: str) -> Path:
     """Write a markdown file under main-verl/writeup/results/<rel_path>."""
-    # _io.py lives at main-verl/eval/analysis/_io.py → parents[2] = main-verl/
-    root = Path(__file__).resolve().parents[2] / "writeup" / "results"
+    # analysis_io.py lives at main-verl/eval/analysis/posthoc/analysis_io.py
+    # → parents[3] = main-verl/
+    root = Path(__file__).resolve().parents[3] / "writeup" / "results"
     root.mkdir(parents=True, exist_ok=True)
     out = root / rel_path
     out.parent.mkdir(parents=True, exist_ok=True)

@@ -82,7 +82,7 @@ hf_cache_volume = modal.Volume.from_name(HF_CACHE_VOLUME_NAME, create_if_missing
 @app.function(
     image=image,
     gpu=f"B200:{_GPU_COUNT}",
-    timeout=3 * 3600,
+    timeout=24 * 3600,
     secrets=[
         modal.Secret.from_name("HUGGINGFACE"),
         modal.Secret.from_name("WANDB_API_KEY"),
@@ -159,13 +159,15 @@ def eval_4b() -> None:
     llm = LLM(
         model=model_id,
         tensor_parallel_size=gpu_count,
-        gpu_memory_utilization=0.95,         # bumped from 0.85; single vLLM proc per app, nothing else on GPU
+        gpu_memory_utilization=0.98,         # bumped from 0.85; single vLLM proc per app, nothing else on GPU
         max_model_len=5120,
         enforce_eager=True,                   # B200 requirement (memory: project_b200_eager_required)
         dtype="bfloat16",
         trust_remote_code=True,
-        max_num_seqs=4096,                    # was vLLM default 256 → GPU idle waiting for batch fills.
-                                              # 4096 is a soft ceiling; vLLM auto-caps to whatever the KV cache fits.
+        max_num_seqs=128,                     # 4096 caused heavy KV-cache preemption thrash on polyepo
+                                              # (long rollouts at max_tokens=4096 → ~590 MB KV/seq;
+                                              # 150 GB budget supports ~254 concurrent seqs worst-case).
+                                              # 128 leaves ~2x headroom even for worst-case sequence lengths.
         max_num_batched_tokens=32768,         # was default 2048 → tiny batches at decode. 32K matches B200 compute throughput.
     )
 
