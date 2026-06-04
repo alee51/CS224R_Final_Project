@@ -24,8 +24,7 @@ raw numeric tables.
 | [potential_at_k.md](potential_at_k.md) | Fraction of failed-at-k prompts that are eventually solvable in n=64; budget-bound vs quality-bound failure. Base has most recoverable failures except on hmmt_nov25 where the pattern flips. | 5 datasets × 4 arms × k∈{1,4,8,16,32} |
 | [reflective_actions.md](reflective_actions.md) | Per-rollout count of 7 "reflective" lexical phrases. GRPO bumps `however` ~1.5–2× over base; polyepo/hmmt_nov25 has wait=1.296 (likely repetition artifact). | 5 datasets × 4 arms × 7 phrases + total/roll + total/1k_tok |
 | [self_bleu.md](self_bleu.md) | Self-BLEU (lower = more diverse) and distinct-1/2/3-grams on rollout text. Base ~2-3× more diverse than trained arms at distinct-1 level; the two metrics disagree on direction on aime26 / hmmt_feb25 / beyondaime. | 5 datasets × 4 arms; subsampled to 8 rollouts × 16 prompts |
-
-`coverage.md` is not yet present in this directory (likely still running) — re-link here when it lands.
+| [coverage.md](coverage.md) | coverage / distinct_answers / entropy / majority @k over rollouts. Base higher entropy + distinct_answers than any trained arm; base majority-vote rate non-zero at k≥4 while trained arms ≈ 0. | 5 datasets × 4 arms × k∈{1,2,4,8,16,32} |
 
 ## Headline numbers
 
@@ -46,6 +45,32 @@ pass@64 spot-checks (from the ladder in `auc_at_k.md`):
 | grpo | 0.067 | 0.067 | 0.120 | 0.067 | 0.167 |
 | minority | 0.033 | 0.100 | 0.090 | 0.100 | 0.167 |
 | polyepo | 0.133 | 0.000 | 0.130 | 0.167 | 0.167 |
+
+## The hmmt_nov25 crossover explained (2026-06-04)
+
+Why does base lose to all 3 trained arms on hmmt_nov25 at k≥32? **Depth vs breadth.**
+
+| arm | n=0 prompts | n=1 | n=2-4 | n=5-9 | n=10-31 | total_correct (of 1920) |
+|---|---|---|---|---|---|---|
+| **base** | 26 | 0 | 0 | 2 | **2** | **54** |
+| grpo | 25 | 1 | 2 | 1 | 1 | 24 |
+| minority | 25 | 1 | 1 | 3 | 0 | 24 |
+| polyepo | 25 | 1 | 2 | 1 | 1 | 27 |
+
+Base solves **4 unique prompts** but **deeply** (concentrated: 5, 16, 26, 7
+correct rollouts on those 4 — 54 total). Trained arms solve **5 unique prompts**
+but **shallowly** (mostly 1-12 correct out of 64).
+
+- Low k (1-16): base wins because each *attempt* is more likely correct
+- pass@64: trained arms win because they cover one more unique prompt
+  (5/30 = 0.167 vs 4/30 = 0.133)
+
+Trained arms trade depth for breadth — more answer diversity occasionally
+stumbles onto a correct answer on more prompts via stochastic exploration.
+The "diversity hypothesis" works **only at saturated sample budgets**.
+
+This is hmmt_nov25-specific. Other datasets don't show the crossover —
+trained arms don't even cover the same number of unique prompts as base.
 
 Bottom line: at step-400 the trained arms underperform base on the OOD math
 panel except on hmmt_nov25, where base saturates early and all 3 trained
