@@ -1,3 +1,4 @@
+| [kl_summary.md](kl_summary.md) | Per-token KL(π_arm ‖ π_base) on rollouts (teacher-forced base). Mean ≫ median: divergence concentrated in a small fraction of high-leverage tokens. Minority NOT the most-divergent. | 3 arms × 5 datasets × mean+median KL (bits) |
 # Eval results index — 4 arms × 5 OOD datasets
 
 Eval setup: 4 arms × 5 smallood datasets × n=64 rollouts × temp=1.0, max_tokens=4096
