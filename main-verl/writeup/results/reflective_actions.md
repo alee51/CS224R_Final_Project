@@ -1,5 +1,27 @@
 # Reflective-action frequency in rollout text
 
+## TL;DR
+
+**What it measures.** Per-rollout count of seven self-monitoring / hedging
+phrases (`wait`, `however`, `verify`, `because`, `alternatively`,
+`let me check`, `let me reconsider`), matched as case-insensitive whole-word
+regex. Averaged within (arm, dataset). `total/roll` is per-rollout count
+across all seven patterns; `total/1k_tok` normalizes by rollout length so
+arms with longer rollouts don't look artificially more reflective.
+
+**How to read.** Compare arms within a dataset. Higher = more "reflective"
+surface text, which is a *very* rough proxy for chain-of-thought
+self-correction. The two `let_me_*` patterns are essentially always 0 across
+all (arm, dataset) cells — the model rarely uses those exact phrases.
+
+**Headline.** GRPO and polyepo bump the `however` rate ~1.5–2× over base on
+several datasets; minority sits between base and GRPO. **Outlier:
+polyepo/hmmt_nov25 has wait=1.296** (vs base=0.150) — 8.6× baseline and
+~3× the next-highest cell, driving total/roll=2.083. **minority/aime26 has
+alternatively=0.235** vs base=0.052 — 4.5× baseline. These two are large
+enough to warrant a sanity check that they aren't a single-prompt or single-
+rollout repetition artifact.
+
 Counts per rollout, then averaged. `total_per_1k_tokens` is the
 rate normalized by rollout length to control for verbosity.
 
@@ -48,3 +70,29 @@ rate normalized by rollout length to control for verbosity.
 | minority | 1920 | 0.066 | 0.546 | 0.088 | 0.369 | 0.014 | 0.000 | 0.000 | 1.083 | 1.180 |
 | polyepo | 1920 | 1.296 | 0.511 | 0.119 | 0.126 | 0.030 | 0.000 | 0.000 | 2.083 | 1.344 |
 
+## How this was computed
+
+- **Script**: `main-verl/eval/analysis/posthoc/reflective_actions.py`. Seven
+  regex patterns (`\bwait\b`, `\bhowever\b`, `\bverify\b`, `\bbecause\b`,
+  `\balternatively\b`, `\blet me check\b`, `\blet me reconsider\b`), all
+  case-insensitive. Counts are summed over a rollout, then averaged across
+  rollouts within (arm, dataset).
+- **Inputs**: same 20 probe JSONs (`*_step400_smallood_*.json`); reads
+  `per_prompt[i].rollouts[j]` text.
+- **Tokenization**: `total/1k_tok` uses **whitespace tokens**
+  (`len(rollout.split())` divided by 1000), NOT model tokens. So the
+  per-1k-tok rate is an underestimate relative to the BPE-token count the
+  policy actually produced, but the *relative* comparison across arms is
+  preserved.
+- **n_roll**: number of dataset_size × n=64 rollouts per (arm, dataset).
+  30-prompt datasets → 1920 rollouts; beyondaime (100 prompts) → 6400
+  rollouts.
+- **Limitations / caveats**:
+  - "Reflective" is a surface lexical proxy; nothing here measures
+    whether the reflection improved the answer.
+  - polyepo/hmmt_nov25 `wait=1.296` looks like a token-level repetition
+    artifact (the policy may have entered a `wait wait wait …` loop on a
+    subset of prompts). Worth a spot-check of high-count rollouts before
+    citing this as "more reflective".
+  - Empty rollouts are skipped; multi-word phrases use word boundaries on
+    the ends only (intermediate spaces are literal).

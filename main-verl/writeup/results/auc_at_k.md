@@ -1,5 +1,23 @@
 # AUC@k (locked k ladder {1, 2, 4, 8, 16, 32, 64})
 
+## TL;DR
+
+**What it measures.** A single scalar summary of the pass@k curve over the
+locked k-ladder, computed as `trapezoid(pass_at_k, ks)`. Rewards both
+pass@1 quality and large-k coverage; arms with a higher curve at any k get a
+proportionally larger AUC.
+
+**How to read.** Larger = better. Compare arms within a column (same dataset).
+The "Underlying pass@k points" section below the table shows the raw curve;
+those values should be monotonically non-decreasing in k (a property of
+pass@k).
+
+**Headline.** Base dominates on 4 of 5 datasets (aime25, aime26, beyondaime,
+hmmt_feb25), often by 2-4×. The exception is **hmmt_nov25**, where all three
+trained arms slightly beat base (polyepo 7.998, minority 7.988, grpo 7.850 vs
+base 7.685) — driven by base's pass@k curve flattening past k=16. **polyepo
+collapses to AUC=0 on aime26** (0/30 solved across all 1920 rollouts).
+
 | arm \ dataset | aime25 | aime26 | beyondaime | hmmt_feb25 | hmmt_nov25 |
 |---|---|---|---|---|---|
 | base | 14.566 | 9.360 | 12.180 | 7.322 | 7.685 |
@@ -29,3 +47,31 @@
 - **polyepo / beyondaime**: pass@1=0.006, pass@2=0.012, pass@4=0.022, pass@8=0.037, pass@16=0.058, pass@32=0.085, pass@64=0.130
 - **polyepo / hmmt_feb25**: pass@1=0.004, pass@2=0.007, pass@4=0.014, pass@8=0.028, pass@16=0.054, pass@32=0.100, pass@64=0.167
 - **polyepo / hmmt_nov25**: pass@1=0.014, pass@2=0.026, pass@4=0.046, pass@8=0.075, pass@16=0.108, pass@32=0.142, pass@64=0.167
+
+## How this was computed
+
+- **Script**: `main-verl/eval/analysis/posthoc/auc_at_k.py` (definition
+  `AUC@k = trapezoid(pass_at_k_vector, ks)` over k ladder {1,2,4,8,16,32,64}).
+- **Inputs**: the 20 `*_step400_smallood_*.json` probe files (4 arms ×
+  5 datasets) under `/vol/probes/eval_4b/`. Each file holds the per-prompt
+  rewards, predictions, and a saved `pass_at_k` dict; the script
+  recomputes pass@k from `per_prompt[i].n_correct` if the saved dict is
+  missing keys.
+- **Eval probe sampling (re-used from `main-verl/eval/run_eval.py`)**:
+  Qwen3-4B-Base + 3 trained-step-400 HF-merged checkpoints, B200:1,
+  vLLM `enforce_eager=True`, `gpu_memory_utilization=0.95`,
+  `max_model_len=5120`, `max_num_seqs=4096`,
+  `temperature=1.0, top_p=1.0, max_tokens=4096`, **n=64 rollouts/prompt**,
+  `logprobs=20`.
+- **Grader**: `verl.utils.reward_score.math.compute_score` (Hendrycks
+  `is_equiv`, mathd ∨ sympy fallback). Same grader used by the training
+  reward signal.
+- **Limitations / caveats**:
+  - The trapezoid uses raw k as the x-axis (not log-k), so high-k bins
+    dominate the area — a model that only wins at k=64 can match a model
+    that wins at k=1..8.
+  - AUC@k uses the unbiased pass@k estimator
+    `1 - C(n-c, k) / C(n, k)` so partial-credit problems are smoothed.
+    Zero AUC means **zero** correct rollouts across the full n=64
+    (genuine collapse, not a thresholding artifact).
+

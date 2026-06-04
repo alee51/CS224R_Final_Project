@@ -1,5 +1,27 @@
 # distinct_answers@k split by solved vs unsolved
 
+## TL;DR
+
+**What it measures.** Counts the number of distinct parsed answers a policy
+emits in its first k rollouts, averaged over prompts, then **partitioned**
+into two groups: `solved` (n_correct > 0 across all 64 rollouts) and
+`unsolved` (n_correct == 0). If a method's diversity is genuine reasoning
+breadth, it should hold up on solved prompts; if the "extra" distinct answers
+only show up on unsolved prompts, diversity is "going to wrong answers".
+
+**How to read.** Compare arms within a (partition, dataset, k) cell. Look
+especially at the `unsolved` partition at large k: that's where a diversity-
+seeking objective should pay off. `n_partition` is the prompt count behind the
+row (a row with `n_partition=1` is statistically meaningless).
+
+**Headline.** Base has the highest diff@k on essentially every (partition,
+dataset) cell — its rollouts spray across many distinct answers. Among
+trained arms, the picture is mixed: minority is **not** the consistently most
+diverse arm. On `beyondaime/unsolved` minority is actually the LEAST diverse
+trained arm (diff@64 = 18.374 vs grpo 20.500, polyepo 19.264). Solved-side
+ns are tiny for trained arms (often 1-5 prompts), so solved-vs-unsolved
+comparisons should be read with that small-n caveat in mind.
+
 Load-bearing for the minority-CoT diversity story:
 if minority's distinct-answers advantage is concentrated in the
 unsolved partition, diversity is going to wrong answers.
@@ -98,3 +120,22 @@ unsolved partition, diversity is going to wrong answers.
 | minority | 25 | 0.640 | 1.880 | 3.040 | 5.840 | 9.920 | 17.960 |
 | polyepo | 25 | 0.560 | 2.360 | 3.960 | 6.440 | 10.640 | 17.760 |
 
+## How this was computed
+
+- **Script**: `main-verl/eval/analysis/posthoc/diff_at_k_split.py`. Per prompt,
+  takes the first k parsed answers (excluding empty or `[INVALID]`), counts
+  unique values; partitions prompts by `n_correct > 0` vs `== 0`; averages
+  the count within partition.
+- **Inputs**: same 20 probe JSONs (`*_step400_smallood_*.json`), all 64
+  rollouts per prompt. No subsampling.
+- **Eval probe sampling**: as in `auc_at_k.md` (n=64, T=1.0, top_p=1.0,
+  max_tokens=4096, vLLM B200:1 enforce_eager).
+- **Limitations / caveats**:
+  - Distinct-answer count depends on the answer-extractor (verl math
+    grader's parsing). Two semantically-identical answers in different
+    surface forms (e.g. `42` vs `42.0`) may be counted as distinct.
+  - `n_partition` shrinks the cross-arm comparison: the solved partition
+    has only 1-5 prompts for trained arms on aime25/26/hmmt_feb25/nov25,
+    so headline solved-side differences within those datasets are noisy.
+  - polyepo/aime26 has `n_partition=0` in the solved table (consistent
+    with `pass@k = 0` in `auc_at_k.md`).
