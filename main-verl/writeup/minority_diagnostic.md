@@ -122,3 +122,31 @@ Poly-EPO sidesteps this by rewarding *every* distinct cluster: any correct clust
 Current pass@k by arm + dataset is in `main-verl/writeup/results/comparison.md`.
 Locked eval spec (datasets, metrics) is in `main-verl/writeup/eval.md`; run
 plan in `main-verl/writeup/eval_build.md`.
+
+## Eval-time epilogue (2026-06-04)
+
+The training-time diversity finding above (minority > GRPO at training step
+200 by +0.30 distinct answers/prompt and +0.15 bits answer entropy) **does
+NOT carry into eval-time** on OOD. From the held-out eval JSONs at
+`main-verl/eval/probes/eval_4b/`:
+
+- `diff_at_k_split.md` beyondaime unsolved: grpo diff@k=64 = **20.50** >
+  polyepo 19.26 > **minority 18.37**. Minority is the *least* diverse trained
+  arm on the unsolved partition of the biggest OOD dataset.
+- `self_bleu.md` aime26: grpo distinct-1 (0.0435) is the lowest, but grpo
+  Self-BLEU (0.3317) is also the lowest — the two diversity metrics
+  disagree on direction. Minority is in the middle on both.
+- `kl_summary.md` per-arm mean KL (averaged over 5 datasets): grpo 2.71 >
+  minority 2.57 > polyepo 2.33 bits/token. Minority is again the middle
+  arm; not the most-divergent from base.
+
+Implication for the poster narrative: minority did induce slightly more
+training-time answer diversity than GRPO at the comparable training step
+(real, validated above), but at eval-time on OOD prompts the diversity
+distinction disappears or even reverses. The cluster-correctness story
+(rarity uncorrelated with correctness → minority gradient is approximately
+random) is still the load-bearing mechanism explanation for why minority
+fails to outperform GRPO; the secondary "but minority IS more diverse"
+qualifier has weaker support at eval-time than the training data suggested.
+
+Detailed eval analyses + audit: `main-verl/writeup/results/INDEX.md`.
