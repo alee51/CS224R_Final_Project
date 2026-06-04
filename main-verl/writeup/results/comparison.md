@@ -1,7 +1,8 @@
-# Cross-arm held-out eval — 4 arms × 5 OOD datasets
+# Cross-arm held-out eval — 4 arms × 6 OOD datasets
 
-**Generated:** 2026-06-04 from 4 arms × 5 smallood × n=64 eval JSONs at
-`main-verl/eval/probes/eval_4b/{base,grpo,minority,polyepo}_step400_smallood_<ds>.json`.
+**Generated:** 2026-06-04 from 4 arms × 6 datasets (5 smallood + math500),
+n=64 eval JSONs at
+`main-verl/eval/probes/eval_4b/{base,grpo,minority,polyepo}_step400_<shard>_<ds>.json`.
 
 Authoritative spec: `main-verl/writeup/eval.md`. Run plan: `eval_build.md`.
 Detailed index of all derived analyses: [INDEX.md](INDEX.md).
@@ -61,6 +62,41 @@ base saturates around 0.133 by k=32; trained arms cross over at k=32+ and
 reach 0.167 at k=64 (one more unique prompt solved via stochastic
 exploration). See [INDEX.md](INDEX.md#the-hmmt_nov25-crossover-explained-2026-06-04)
 for the n_correct distribution analysis.
+
+### math500 (n=500 prompts) — easy OOD
+
+| arm | pass@1 | pass@2 | pass@4 | pass@8 | pass@16 | pass@32 | pass@64 |
+|---|---|---|---|---|---|---|---|
+| **base** | **0.358** | **0.541** | **0.704** | **0.806** | **0.864** | **0.902** | **0.928** |
+| grpo | 0.299 | 0.427 | 0.542 | 0.636 | 0.711 | 0.769 | 0.816 |
+| minority | 0.265 | 0.388 | 0.504 | 0.602 | 0.683 | 0.750 | 0.804 |
+| polyepo | ⚠️ MISSING | — | — | — | — | — | — |
+
+**Polyepo math500 generation crashed mid-JSON-write.** All 32000 rollouts
+generated successfully (logs confirm "generated in 12597s") but the
+script hung during the json.dump call. Only 85.3 MiB of the expected
+50+ GB JSON was committed before the process was killed (Modal app
+`ap-h8zHYGx8IuvDhiPOfYtITd`). Per-prompt data is unrecoverable from
+the truncated file beyond prompt 2. Re-fire deferred — the 23 other
+cells are sufficient for the v1 poster story. See [eval_pipeline_bugs.md](eval_pipeline_bugs.md)
+for full diagnosis.
+
+**Same pattern as smallood:** base wins at every k. The trained-arm gap
+to base is *smaller* on math500 (~10–20 percentage points at most k) than
+on hard-OOD (where trained arms underperform base by 50–95%). Both
+GRPO and Minority converge to similar pass@64 (~0.81). The crossover
+seen on hmmt_nov25 does NOT happen here — base saturates around 0.93,
+trained arms saturate around 0.80, no overtaking.
+
+⚠️ **math_dapo tripwire on base × math500 = 58.3% agreement** (well below
+the 90% threshold). All 534 disagreements are `math+only` — the math
+grader (Hendrycks `is_equiv`) accepts latex-equivalent formats
+(e.g., `\\frac{14}{3}` matches `\frac{14}{3}`, `(3, \\frac{\\pi}{2})`
+matches `\left( 3, \\frac{\\pi}{2} \right)`) that math_dapo's strict
+string match rejects. **The math grader is internally consistent (100%
+rescore-match) so cross-arm pass@k comparisons WITHIN this eval are
+valid**, but math500 pass@k under strict scoring would be lower across
+the board (likely 30-40 percentage points lower). See [grader_sanity_all.md](grader_sanity_all.md#math_dapo-tripwire-evalmd-8-step-4--5-cells).
 
 ## Bottom line
 

@@ -1,90 +1,135 @@
-# Restart state — 2026-06-04 ~01:25 PDT
+# Restart state — 2026-06-04 03:00 PDT (overnight session complete)
 
-Resume context after overnight session. Read this first.
+Resume context for fresh post-compact session. Read this first.
 
 ## Session-end summary
 
-**Tier 1 analysis is COMPLETE for 4 arms × 5 OOD datasets** (20 eval JSONs).
-All 6 analysis scripts produced annotated markdown results + a central
-INDEX.md. KL Phase 3 produced 15 (arm, dataset) JSONs and a summary.
+**Phase 1 + Phase 3 + Tier 1 analysis essentially DONE for the 4-arm × 6-dataset
+locked eval.** Canonical pointer: [`eval_complete.md`](eval_complete.md).
+Single-line summary of every analysis file: [`INDEX.md`](INDEX.md).
 
-Start here: `main-verl/writeup/results/INDEX.md`. Headline tables also in
-`main-verl/writeup/results/comparison.md`.
+One cell is missing: **polyepo × math500 GEN crashed mid-JSON-write**
+(`ap-h8zHYGx8IuvDhiPOfYtITd`). 23/24 Phase 1 cells, 17/18 Phase 3 KL cells
+complete. v1 poster ships with this. Re-fire deferred —
+see [`eval_pipeline_bugs.md`](eval_pipeline_bugs.md) Bug 5.
 
-## Committed this session (chronological)
+## What's on disk
 
-| sha | what |
+### Phase 1 GEN (23/24 cells on abao `/vol/probes/eval_4b/`)
+
+| arm | aime25 | aime26 | hmmt_feb25 | hmmt_nov25 | beyondaime | math500 |
+|---|---|---|---|---|---|---|
+| base | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| GRPO | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Minority | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Poly-EPO | ✓ | ✓ | ✓ | ✓ | ✓ | ✗ |
+
+### Phase 3 KL (17/18 cells on abao `/vol/probes/kl/`)
+
+| arm | aime25 | aime26 | hmmt_feb25 | hmmt_nov25 | beyondaime | math500 |
+|---|---|---|---|---|---|---|
+| GRPO | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Minority | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Poly-EPO | ✓ | ✓ | ✓ | ✓ | ✓ | ✗ (input GEN missing) |
+
+(Base auto-skipped: KL(π_base ‖ π_base) = 0.)
+
+### Tier 1 analysis markdowns at `main-verl/writeup/results/`
+
+- `auc_at_k.md` — pass@k ladder + AUC@k (4 arms × 6 datasets, polyepo/math500 missing)
+- `comparison.md` — headline pass@k tables
+- `coverage.md`, `diff_at_k_split.md`, `potential_at_k.md`, `reflective_actions.md`, `self_bleu.md` — 5 smallood diversity/reflection analyses
+- `kl_summary.md` — per-token KL from base (15 smallood + 2 math500)
+- `grader_sanity_all.md` — 3-way grader verification (eval.md §8)
+- `eval_pipeline_bugs.md` — 5 bugs hit + fixed
+- `eval_complete.md` — single canonical completion record
+- `INDEX.md` — file index
+
+### Memory updates
+- `project_eval_findings_2026_06_04.md` — main eval-time findings
+- (existing) `feedback_eval_verification.md` — protocol that flagged the grader risk
+
+## Headline finding (one paragraph for the poster intro)
+
+At step 400, the three trained arms (GRPO, Minority-CoT, Poly-EPO-CoT)
+underperform Qwen3-4B-Base on every OOD dataset at every k≤16. The
+exception is hmmt_nov25, where base saturates at pass@32=0.132 while
+all three trained arms reach 0.167 — a depth-vs-breadth crossover.
+Polyepo specifically suffers a complete repetition-collapse failure
+mode on aime26 (0/30 prompts solved across 64 rollouts each, verified
+real not grader-artifact). Per-token KL(π_arm ‖ π_base) is heavy-tailed
+(mean ~2.5 bits/token, median ~0.27) — RL training shifts a small
+fraction of high-leverage tokens hard, leaves the rest near-base.
+Minority is **not** the most-divergent trained arm in either eval-time
+KL or eval-time distinct-answers diversity, contradicting the naïve
+"minority = high entropy" prediction.
+
+## Grader is verified
+
+3 independent verifications, all passing — pass@k is genuine policy
+behavior, not grader artifact:
+
+1. **gt-in-preds match**: 452/452 cases where policy produced exact
+   ground-truth string were rewarded. Zero strict-equality misses.
+2. **Local rescore**: 200 sampled rollouts across 20 cells, 100% match
+   between stored reward and recomputed reward via `math.compute_score`.
+3. **math_dapo tripwire**: smallood agreement 97.6–100% across all 4
+   arms. math500 agreement is lower (58.3–71.0%) due to latex
+   normalization bias in `is_equiv` — math grader is consistently
+   LOOSER, never stricter, so cross-arm comparisons within our eval
+   are valid.
+4. **Pass@k recompute**: 140/140 saved values reproduce exactly from
+   independent recompute on `n_correct` using
+   `1 − C(n−c, k) / C(n, k)`. Max delta: 3e-18 (floating-point noise).
+
+Full detail: `grader_sanity_all.md`.
+
+## Bugs hit + fixed this session
+
+See `eval_pipeline_bugs.md`. Summary:
+
+1. `kl_from_base.py` stale `parents[2]` after posthoc/ reorg → `parents[3]`+guard
+2. `kl_from_base.py` vLLM OOM at default `max_num_seqs=256` for teacher-forcing → `max_num_seqs=16, gpu_mem_util=0.70`
+3. `kl_from_base.py` `max_model_len=5120` truncated polyepo rollouts → raised to 8192
+4. `run_eval.py` `max_num_seqs=4096` caused KV preemption thrash on long-rollout arms → lowered to 128, GPU util steady at 35% (bandwidth-bound)
+5. `run_eval.py` json.dump hung on polyepo math500 post-generation → only 2/500 prompts written, no fix applied (deferred)
+
+Also patched `kl_from_base.py` to skip files that fail to parse (Bug 5
+mitigation — future re-runs won't crash on truncated GEN JSONs).
+
+## Apps stopped at session end
+
+| app | reason |
 |---|---|
-| bbe2a34 | Tier 1 5 analyses (auc_at_k, diff_at_k_split, potential_at_k, reflective_actions, self_bleu) for 4 arms × 5 datasets. Also: 3 codepath fixes in analysis_io.py (strict=False, drop_heavy, write_markdown path); run_eval.py timeout 3h→6h. |
-| 241e44e | Annotate Tier 1 results (TL;DR + How-this-was-computed) + INDEX.md with audit findings. 8 items flagged, 1 contradicting "base dominates" framing. |
-| 31c3f3d | Verify polyepo/aime26 = 0 is real (repetition collapse, NOT grader bug) via rollout spot-check. |
-| a3cd30c | coverage.md (annotated) + hmmt_nov25 depth-vs-breadth analysis. |
-| afc3954 | Populate comparison.md with actual pass@k tables for all 4 arms × 5 datasets. |
-| 70ec4f5 | kl_summary.md aggregated from 15 KL JSONs; INDEX updated. |
-| bbe393b | Fix INDEX layout (kl_summary row was misplaced). |
-| d9ce269 | Eval-time epilogue to minority_diagnostic.md: training-time diversity finding does NOT carry into eval-time. |
+| `ap-h8zHYGx8IuvDhiPOfYtITd` | polyepo math500 GEN, killed because json.dump hung |
+| `ap-F226GQblGB5rxcFgFReI91` | smallood KL re-run for consistent n; completed cleanly |
 
-## Headline numbers (pass@k)
+## Apps in flight at session end
 
-See `main-verl/writeup/results/comparison.md` for the full per-dataset
-tables. Cross-arm summary:
+| app | what | ETA |
+|---|---|---|
+| `ap-nr3cBVsR1NcW0Ip0op570D` | math500 KL — grpo done, minority in progress (~8% at session start), polyepo will fail | ~30 min for minority then crash on polyepo (corrupted JSON) |
 
-- **Base wins on every (arm, dataset, k) for k≤16** across all 5 OOD datasets.
-- **Only crossover is hmmt_nov25 at k≥32**: base saturates at 0.133; all 3
-  trained arms reach 0.167. Explanation: depth vs breadth — base solves 4
-  prompts deeply (54 correct rollouts), trained arms solve 5 prompts
-  shallowly (24-27 correct).
-- **polyepo / aime26 = 0/1920 verified real** (repetition collapse, not
-  grader bug).
-- **Minority is NOT the most-diverse trained arm at eval-time** on
-  beyondaime unsolved: grpo 20.50 > polyepo 19.26 > minority 18.37
-  (`diff_at_k_split.md`).
-- **All trained arms collapse lexical diversity ~2×** vs base
-  (`self_bleu.md`, `coverage.md`).
+The crash on polyepo math500 KL is expected and benign — kl_from_base.py
+was patched mid-session to handle this gracefully, but the patch went in
+after this app was already launched.
 
-## Per-token KL from base
+## Resume checklist
 
-15 JSONs at `/vol/probes/kl/<arm>_<dataset>.json` (also pulled to `/tmp/`).
-Per-arm mean (averaged over 5 datasets): grpo 2.71 > minority 2.57 >
-polyepo 2.33 bits/token. **Mean ≫ median** for every cell — divergence
-concentrated in a small fraction of high-leverage tokens. See
-`main-verl/writeup/results/kl_summary.md`.
+1. Read this doc + `eval_complete.md` + `INDEX.md`
+2. `MODAL_PROFILE=abao modal app list` — confirm `ap-nr3c` is stopped or completed
+3. Pull final 2 math500 KL cells if not already in `kl_summary.md`:
+   `MODAL_PROFILE=abao modal volume get main-artifacts probes/kl/{grpo,minority}_math500.json /tmp/`
+4. If re-firing polyepo math500 GEN: use the updated `run_eval.py` config
+   (`max_num_seqs=128`, `gpu_mem_util=0.98`) and watch for the json.dump
+   hang. Consider patching `json.dump(..., indent=None)` first.
+5. v1 poster work — pull selected tables from `comparison.md`, `auc_at_k.md`,
+   `kl_summary.md`. Verification sentence: "all numbers verified per
+   `grader_sanity_all.md`".
 
-n_prompts inconsistency: my later overnight kl_pass run overwrote
-grpo/{aime25, aime26, beyondaime} with `max_prompts=20` cap; the original
-n=30/100 data was preserved for the other 12 cells. Killed the run at
-~01:21 to prevent overwriting minority + polyepo data.
+## What to NOT redo
 
-## What's deferred / still pending
-
-1. **token_entropy_split.md** — requires `drop_heavy=False` in analysis_io
-   (needs logprobs). 20 JSONs × multi-GB-of-logprobs = OOM risk if loaded
-   all at once. Either run per-file with subprocess + merge, or stream
-   parse. Not load-bearing for the headline poster numbers — kl_summary
-   covers most of what token entropy would tell us.
-2. **GRPO KL re-run at n=30/100** — my overnight run overwrote 3 cells
-   with smaller n. Re-firing kl_from_base.py with `CS224R_KL_MAX_PROMPTS=0`
-   would restore parity.
-3. **Final consolidation commit + push** — locally everything's committed
-   but not pushed to remote. `git push origin main` when ready.
-
-## How to re-run any Tier 1 analysis
-
-```
-cd /Users/nancybao/Desktop/dev/cs224r_finalproject
-PATHS=$(ls main-verl/eval/probes/eval_4b/*_step400_smallood_*.json | grep -v aime25-aime26)
-python3 main-verl/eval/analysis/posthoc/<script>.py $PATHS --out <script>.md
-# (output goes to main-verl/writeup/results/<script>.md via the patched
-# write_markdown path; ~10-40 min per analysis depending on what it reads.)
-```
-
-## Memory updates this session
-
-- `project_eval_findings_2026_06_04.md` (NEW): the eval-time findings,
-  superseding the older training-time-only memory.
-- `MEMORY.md` index updated.
-
-## State of in-flight / background jobs
-
-None. All sessions ended cleanly. KL Phase 3 Modal app `ap-3RW1A9wICGJ70fWGnvRITB`
-stopped by `modal app stop -y` at 01:21 to preserve high-n data.
+- All Tier 1 analyses (auc_at_k, coverage, etc.) — committed, no need to re-run
+- Grader sanity — fully verified, 100% match rates documented
+- KL on smallood cells — re-run done at consistent n on 2026-06-04 by `ap-F226`
+- Phase 4 training-time analyses — done in earlier session

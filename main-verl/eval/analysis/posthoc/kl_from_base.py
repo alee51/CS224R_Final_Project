@@ -55,11 +55,15 @@ import os
 import sys
 from pathlib import Path
 
-# kl_from_base.py lives at main-verl/eval/analysis/kl_from_base.py;
-# parents[2] = main-verl/
-_MAIN_VERL_ROOT = Path(__file__).resolve().parents[2]
-if str(_MAIN_VERL_ROOT) not in sys.path:
-    sys.path.insert(0, str(_MAIN_VERL_ROOT))
+# kl_from_base.py lives at main-verl/eval/analysis/posthoc/kl_from_base.py;
+# parents[3] = main-verl/. On Modal-side the file is mounted flat at /root/
+# so parents[3] doesn't exist — guard the local-only sys.path mutation.
+try:
+    _MAIN_VERL_ROOT = Path(__file__).resolve().parents[3]
+    if str(_MAIN_VERL_ROOT) not in sys.path:
+        sys.path.insert(0, str(_MAIN_VERL_ROOT))
+except IndexError:
+    pass
 
 import modal
 
@@ -182,11 +186,21 @@ def kl_pass() -> None:
     print(f"[kl] loading Qwen/Qwen3-4B-Base with logprobs={topn}")
 
     base_model_id = "Qwen/Qwen3-4B-Base"
+    # Teacher-forcing with prompt_logprobs=20 stores top-K logprobs for every
+    # input position — far heavier than normal generation. The default
+    # max_num_seqs (256) lets vLLM try to batch all 240 inputs at once, which
+    # OOMs the B200 (174/178 GiB in use, needs 5.7 more — observed
+    # 2026-06-03 in app ap-dvz549H9hytfCryAIwdN7C). Cap concurrency at 16
+    # and drop gpu_memory_utilization to leave headroom for the logprob
+    # tensors.
     llm = LLM(
         model=base_model_id,
         tensor_parallel_size=1,
-        gpu_memory_utilization=0.85,
-        max_model_len=5120,
+        gpu_memory_utilization=0.70,
+        max_model_len=8192,  # was 5120; polyepo rollouts can hit ~5800-token
+                             # (prompt + rollout) lengths (observed
+                             # 2026-06-03 in ap-8u9GPVGGm9HQCd1IzPpZnE).
+        max_num_seqs=16,
         enforce_eager=True,  # B200 requirement
         dtype="bfloat16",
         trust_remote_code=True,
@@ -210,7 +224,16 @@ def kl_pass() -> None:
         return
 
     for fp in inputs:
-        top = json.loads(Path(fp).read_text())
+        # Defensive: tolerate raw control chars in rollout text (matches
+        # the parallel session's analysis_io.py fix) AND skip files that
+        # fail to parse (e.g., a GEN run that died mid-write — see
+        # eval_pipeline_bugs.md Bug 5 on polyepo math500).
+        try:
+            decoder = json.JSONDecoder(strict=False)
+            top = decoder.decode(Path(fp).read_text())
+        except Exception as exc:
+            print(f"[kl] WARN: failed to parse {fp}: {exc} — skipping cell")
+            continue
         label = top.get("label", Path(fp).stem)
         arm = arm_from_label(label)
         if arm == "base":

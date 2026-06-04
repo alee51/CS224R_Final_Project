@@ -1,5 +1,9 @@
 # AUC@k (locked k ladder {1, 2, 4, 8, 16, 32, 64})
 
+_Updated 2026-06-04 to include math500 column. polyepo / math500 missing
+due to GEN failure (see [eval_pipeline_bugs.md](eval_pipeline_bugs.md))._
+
+
 ## TL;DR
 
 **What it measures.** A single scalar summary of the pass@k curve over the
@@ -18,12 +22,17 @@ trained arms slightly beat base (polyepo 7.998, minority 7.988, grpo 7.850 vs
 base 7.685) — driven by base's pass@k curve flattening past k=16. **polyepo
 collapses to AUC=0 on aime26** (0/30 solved across all 1920 rollouts).
 
-| arm \ dataset | aime25 | aime26 | beyondaime | hmmt_feb25 | hmmt_nov25 |
-|---|---|---|---|---|---|
-| base | 14.566 | 9.360 | 12.180 | 7.322 | 7.685 |
-| grpo | 2.826 | 2.133 | 4.932 | 2.133 | 7.850 |
-| minority | 1.562 | 3.695 | 3.681 | 3.818 | 7.988 |
-| polyepo | 5.088 | 0.000 | 5.115 | 5.951 | 7.998 |
+| arm \ dataset | aime25 | aime26 | beyondaime | hmmt_feb25 | hmmt_nov25 | math500 |
+|---|---|---|---|---|---|---|
+| base | 14.566 | 9.360 | 12.180 | 7.322 | 7.685 | **54.799** |
+| grpo | 2.826 | 2.133 | 4.932 | 2.133 | 7.850 | 46.288 |
+| minority | 1.562 | 3.695 | 3.681 | 3.818 | 7.988 | 44.900 |
+| polyepo | 5.088 | 0.000 | 5.115 | 5.951 | 7.998 | _MISSING_ |
+
+**math500 column (easy OOD):** Base AUC = 54.8, ~9x its hard-OOD AUC.
+GRPO and Minority sit around 45 — base's lead is smaller relative to the
+absolute pass@k (since all arms saturate higher on easy problems) but
+still unambiguous. No hmmt_nov25-style crossover here.
 
 ## Underlying pass@k points
 
@@ -47,6 +56,10 @@ collapses to AUC=0 on aime26** (0/30 solved across all 1920 rollouts).
 - **polyepo / beyondaime**: pass@1=0.006, pass@2=0.012, pass@4=0.022, pass@8=0.037, pass@16=0.058, pass@32=0.085, pass@64=0.130
 - **polyepo / hmmt_feb25**: pass@1=0.004, pass@2=0.007, pass@4=0.014, pass@8=0.028, pass@16=0.054, pass@32=0.100, pass@64=0.167
 - **polyepo / hmmt_nov25**: pass@1=0.014, pass@2=0.026, pass@4=0.046, pass@8=0.075, pass@16=0.108, pass@32=0.142, pass@64=0.167
+- **base / math500**: pass@1=0.358, pass@2=0.541, pass@4=0.704, pass@8=0.806, pass@16=0.864, pass@32=0.902, pass@64=0.928
+- **grpo / math500**: pass@1=0.299, pass@2=0.427, pass@4=0.542, pass@8=0.636, pass@16=0.711, pass@32=0.769, pass@64=0.816
+- **minority / math500**: pass@1=0.265, pass@2=0.388, pass@4=0.504, pass@8=0.602, pass@16=0.683, pass@32=0.750, pass@64=0.804
+- **polyepo / math500**: GEN failed mid-JSON-write — only 2/500 prompts recovered, pass@k not citable
 
 ## How this was computed
 

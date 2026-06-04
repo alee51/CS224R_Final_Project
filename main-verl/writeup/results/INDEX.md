@@ -1,8 +1,8 @@
-# Eval results index — 4 arms × 5 OOD datasets
+# Eval results index — 4 arms × 6 OOD datasets
 
-Eval setup: 4 arms × 5 smallood datasets × n=64 rollouts × temp=1.0, max_tokens=4096
+Eval setup: 4 arms × 6 datasets × n=64 rollouts × temp=1.0, max_tokens=4096
 Grader: `verl.utils.reward_score.math.compute_score` (Hendrycks `is_equiv`, mathd ∨ sympy fallback)
-Generated: 2026-06-04
+Generated: 2026-06-04. **Single canonical completion record: [eval_complete.md](eval_complete.md).**
 
 Arms:
 - **base** — Qwen3-4B-Base (no RL)
@@ -10,8 +10,11 @@ Arms:
 - **minority** — minority-CoT RL, step 400, FSDP→HF merged
 - **polyepo** — Poly-EPO CoT RL, step 400, FSDP→HF merged
 
-Datasets ("smallood" panel):
-- aime25 (30 prompts), aime26 (30), hmmt_feb25 (30), hmmt_nov25 (30), beyondaime (100)
+Datasets:
+- **smallood (5 hard-OOD, 220 prompts)**: aime25 (30), aime26 (30), hmmt_feb25 (30), hmmt_nov25 (30), beyondaime (100)
+- **math500 (1 easy-OOD, 500 prompts)**: math500
+
+⚠️ **polyepo × math500 GEN failed mid-JSON-write** — only 2/500 prompts written to disk before the process hung. See [eval_pipeline_bugs.md](eval_pipeline_bugs.md). The other 23 cells are complete and consistent.
 
 Each table below: each result file has a `## TL;DR` block at the top and a
 `## How this was computed` block at the bottom; the body in between is the
@@ -19,6 +22,8 @@ raw numeric tables.
 
 | Artifact | TL;DR | Full content |
 |---|---|---|
+| [eval_complete.md](eval_complete.md) | **Single canonical completion record** — Phase 1/3 ledger + headline finding + 3-verification grader story + §8 spec compliance + bug ledger + what's NOT in the eval. Read first. | Completion summary + ledgers + caveats |
+| [comparison.md](comparison.md) | Cross-arm headline pass@k tables, 4 arms × 6 datasets (5 hard-OOD + math500). Polyepo math500 is missing — JSON write hung. Base wins on every k≤16 across all 5 hard-OOD; depth-vs-breadth crossover on hmmt_nov25 only. | Per-dataset pass@k tables + bottom-line takeaways |
 | [auc_at_k.md](auc_at_k.md) | Scalar AUC of pass@k over k∈{1..64}; base wins on 4 of 5 datasets but loses on hmmt_nov25 to all 3 trained arms. polyepo collapses to 0 on aime26. | AUC@k table + per-(arm,dataset) pass@k ladder |
 | [diff_at_k_split.md](diff_at_k_split.md) | distinct_answers@k partitioned by solved vs unsolved; tests whether minority's extra diversity goes to wrong answers. Base most diverse everywhere; minority is NOT the most diverse trained arm on beyondaime/unsolved. | 2 partitions × 5 datasets × 4 arms × k∈{1,4,8,16,32,64} |
 | [potential_at_k.md](potential_at_k.md) | Fraction of failed-at-k prompts that are eventually solvable in n=64; budget-bound vs quality-bound failure. Base has most recoverable failures except on hmmt_nov25 where the pattern flips. | 5 datasets × 4 arms × k∈{1,4,8,16,32} |
@@ -26,26 +31,28 @@ raw numeric tables.
 | [self_bleu.md](self_bleu.md) | Self-BLEU (lower = more diverse) and distinct-1/2/3-grams on rollout text. Base ~2-3× more diverse than trained arms at distinct-1 level; the two metrics disagree on direction on aime26 / hmmt_feb25 / beyondaime. | 5 datasets × 4 arms; subsampled to 8 rollouts × 16 prompts |
 | [coverage.md](coverage.md) | coverage / distinct_answers / entropy / majority @k over rollouts. Base higher entropy + distinct_answers than any trained arm; base majority-vote rate non-zero at k≥4 while trained arms ≈ 0. | 5 datasets × 4 arms × k∈{1,2,4,8,16,32} |
 | [kl_summary.md](kl_summary.md) | Per-token KL(π_arm ‖ π_base) on rollouts (teacher-forced base). Mean ≫ median: divergence concentrated in a small fraction of high-leverage tokens. Minority NOT the most-divergent. | 3 arms × 5 datasets × mean+median KL (bits) |
+| [grader_sanity_all.md](grader_sanity_all.md) | Per-cell verification of grader correctness (eval.md §8). gt_in_preds_unrewarded=0 and rescore_match=10/10 on every cell — no grader bugs; saved rewards reproduce on independent recompute. The shocking pass@k findings are genuine policy behavior. | 4 arms × 5 datasets × 5 checks (n_correct dist, empty%, gt-in-preds, rescore, loop/garbage) |
+| [eval_pipeline_bugs.md](eval_pipeline_bugs.md) | Four eval-pipeline bugs hit + fixed this session: (1) kl_from_base parents[2]→[3] after posthoc/ reorg, (2) kl_from_base vLLM OOM at default max_num_seqs, (3) kl_from_base max_model_len=5120 too small for polyepo, (4) run_eval max_num_seqs=4096 KV-thrash. With root causes and lessons. | 4 bugs × symptom + cause + fix + lesson |
 
 ## Headline numbers
 
 From `auc_at_k.md`:
 
-| arm \ dataset | aime25 | aime26 | beyondaime | hmmt_feb25 | hmmt_nov25 |
-|---|---|---|---|---|---|
-| base | 14.566 | 9.360 | 12.180 | 7.322 | 7.685 |
-| grpo | 2.826 | 2.133 | 4.932 | 2.133 | 7.850 |
-| minority | 1.562 | 3.695 | 3.681 | 3.818 | 7.988 |
-| polyepo | 5.088 | 0.000 | 5.115 | 5.951 | 7.998 |
+| arm \ dataset | aime25 | aime26 | beyondaime | hmmt_feb25 | hmmt_nov25 | math500 |
+|---|---|---|---|---|---|---|
+| base | 14.566 | 9.360 | 12.180 | 7.322 | 7.685 | **54.799** |
+| grpo | 2.826 | 2.133 | 4.932 | 2.133 | 7.850 | 46.288 |
+| minority | 1.562 | 3.695 | 3.681 | 3.818 | 7.988 | 44.900 |
+| polyepo | 5.088 | 0.000 | 5.115 | 5.951 | 7.998 | _missing_ |
 
 pass@64 spot-checks (from the ladder in `auc_at_k.md`):
 
-| arm \ dataset | aime25 | aime26 | beyondaime | hmmt_feb25 | hmmt_nov25 |
-|---|---|---|---|---|---|
-| base | 0.333 | 0.200 | 0.290 | 0.200 | 0.133 |
-| grpo | 0.067 | 0.067 | 0.120 | 0.067 | 0.167 |
-| minority | 0.033 | 0.100 | 0.090 | 0.100 | 0.167 |
-| polyepo | 0.133 | 0.000 | 0.130 | 0.167 | 0.167 |
+| arm \ dataset | aime25 | aime26 | beyondaime | hmmt_feb25 | hmmt_nov25 | math500 |
+|---|---|---|---|---|---|---|
+| base | 0.333 | 0.200 | 0.290 | 0.200 | 0.133 | **0.928** |
+| grpo | 0.067 | 0.067 | 0.120 | 0.067 | 0.167 | 0.816 |
+| minority | 0.033 | 0.100 | 0.090 | 0.100 | 0.167 | 0.804 |
+| polyepo | 0.133 | 0.000 | 0.130 | 0.167 | 0.167 | _missing_ |
 
 ## The hmmt_nov25 crossover explained (2026-06-04)
 

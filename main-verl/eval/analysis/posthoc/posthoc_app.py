@@ -97,8 +97,16 @@ def _analyze_one(input_path: str, summaries_root: str,
         return results
 
     # Import the analyzers — done inside the worker so the orchestrator
-    # container doesn't need to load any of them.
-    sys.path.insert(0, str(Path(__file__).resolve().parent))
+    # container doesn't need to load any of them. The analyzers live at
+    # /root/main-verl/eval/analysis/posthoc/ on Modal (add_local_dir) and at
+    # __file__'s parent locally.
+    for _cand in (
+        Path("/root/main-verl/eval/analysis/posthoc"),
+        Path(__file__).resolve().parent,
+    ):
+        if (_cand / "auc_at_k.py").exists():
+            sys.path.insert(0, str(_cand))
+            break
     import auc_at_k, coverage, potential_at_k, reflective_actions
     import diff_at_k_split, token_entropy_split, self_bleu, rescore
 
@@ -142,6 +150,203 @@ def _analyze_one(input_path: str, summaries_root: str,
         lines.append(f"- `{fn_}`")
     (out_dir / "SUMMARY.md").write_text("\n".join(lines))
     return results
+
+
+def _sample_rollouts_md(label: str, data: dict, n_per_prompt: int = 3,
+                        n_prompts: int = 5, max_chars: int = 2500) -> str:
+    """For diagnosing weight-load / degeneration issues — dump a handful of
+    actual rollout texts per prompt, mixed across (correct, empty-pred, wrong)."""
+    out = [f"# Rollout samples — {label}", "",
+           f"Up to {n_per_prompt} rollouts/prompt × {n_prompts} prompts.",
+           "Truncated to first/last {max_chars//2}c each so loops are visible.",
+           ""]
+    for ds_name, ds in data.get("datasets", {}).items():
+        out.append(f"## {ds_name}")
+        out.append("")
+        prompts = ds["per_prompt"][:n_prompts]
+        for pi, p in enumerate(prompts):
+            out.append(f"### prompt {pi}: id=`{p['problem_id']}`  gt=`{p['ground_truth']}`  n_correct={p['n_correct']}")
+            out.append("")
+            # bucket rollouts: correct / empty-pred / wrong
+            buckets = {"correct": [], "empty_pred": [], "wrong": []}
+            for ri, (text, pred, rwd) in enumerate(zip(p["rollouts"], p["preds"], p["rewards"])):
+                if not text: continue
+                bucket = "correct" if rwd > 0.5 else ("empty_pred" if not pred else "wrong")
+                buckets[bucket].append((ri, text, pred, rwd))
+            for bucket, items in buckets.items():
+                take = items[:n_per_prompt]
+                for ri, text, pred, rwd in take:
+                    out.append(f"#### [{bucket}] rollout {ri}  pred=`{pred!r}`  reward={rwd}  len={len(text)}c")
+                    out.append("```")
+                    if len(text) > max_chars:
+                        out.append(text[:max_chars//2])
+                        out.append(f"...[{len(text) - max_chars} chars elided]...")
+                        out.append(text[-max_chars//2:])
+                    else:
+                        out.append(text)
+                    out.append("```")
+                    out.append("")
+        out.append("")
+    return "\n".join(out)
+
+
+def _repetition_metrics(text: str, ngram: int = 10) -> dict:
+    """Quantify how much a rollout loops. Returns:
+        max_ngram_repeat: how many times the most-repeated n-gram appears
+        repeat_ratio: fraction of n-gram occurrences that are NON-unique
+                       (1 - distinct_n) — higher = more repetition
+        max_run_repeat: longest run of consecutive identical n-grams
+        tail_repeats_head: does the last 500 chars contain text from the
+                            first 2000 chars? signature of late-rollout loop
+    """
+    import re
+    toks = re.findall(r"\w+|[^\w\s]", text.lower())
+    if len(toks) < ngram:
+        return {"max_ngram_repeat": 0, "repeat_ratio": 0.0,
+                "max_run_repeat": 0, "tail_repeats_head": False, "n_tokens": len(toks)}
+    from collections import Counter
+    ngrams = [tuple(toks[i:i+ngram]) for i in range(len(toks)-ngram+1)]
+    c = Counter(ngrams)
+    most_common_count = c.most_common(1)[0][1]
+    distinct = len(c)
+    total = len(ngrams)
+    repeat_ratio = 1 - distinct / total if total else 0.0
+    # longest run of consecutive identical ngrams
+    max_run = 1
+    cur_run = 1
+    for i in range(1, len(ngrams)):
+        if ngrams[i] == ngrams[i-1]:
+            cur_run += 1
+            max_run = max(max_run, cur_run)
+        else:
+            cur_run = 1
+    # Does the last 80-char window appear earlier in the text? (loop tail)
+    tail = text[-300:-100] if len(text) > 500 else ""
+    head = text[:max(0, len(text)-500)]
+    tail_repeats = bool(tail) and tail in head
+    return {
+        "max_ngram_repeat": most_common_count,
+        "repeat_ratio": round(repeat_ratio, 3),
+        "max_run_repeat": max_run,
+        "tail_repeats_head": tail_repeats,
+        "n_tokens": len(toks),
+    }
+
+
+@app.function(
+    image=image,
+    timeout=2 * 3600,
+    memory=65 * 1024,
+    cpu=4.0,
+    volumes={ARTIFACTS_MOUNT: artifacts_volume},
+)
+def repetition_diagnostic(
+    input_glob: str = "/vol/probes/eval_4b/*_step400_smallood_aime25.json",
+    summaries_root: str = "/vol/probes/eval_4b/_summaries",
+    skip_patterns: str = "schemaprobe,aime25-aime26",
+    ngram: int = 10,
+) -> None:
+    """Test H1 (reflection-loop degeneration). For each (arm, dataset), bucket
+    rollouts by reward (correct / empty_pred / wrong), then compute aggregate
+    repetition stats per bucket. If trained-arm empty_pred has dramatically
+    higher repetition than base's empty_pred → H1 supported."""
+    import glob as _glob, json
+    Path(summaries_root).mkdir(parents=True, exist_ok=True)
+    skips = [s for s in skip_patterns.split(",") if s]
+    files = sorted(_glob.glob(input_glob))
+    files = [f for f in files if not any(s in Path(f).name for s in skips)]
+    print(f"[rep_diag] {len(files)} files")
+    out_rows = []
+    for f in files:
+        label = Path(f).stem
+        arm = label.split("_step400")[0]
+        print(f"  loading {f}...")
+        with open(f) as fh:
+            data = json.load(fh)
+        for ds_name, ds in data["datasets"].items():
+            bucket_stats = {"correct": [], "empty_pred": [], "wrong": []}
+            for p in ds["per_prompt"]:
+                for text, pred, rwd in zip(p["rollouts"], p["preds"], p["rewards"]):
+                    if not text:
+                        continue
+                    bucket = "correct" if rwd > 0.5 else ("empty_pred" if not pred else "wrong")
+                    bucket_stats[bucket].append(_repetition_metrics(text, ngram=ngram))
+            for bucket, items in bucket_stats.items():
+                if not items:
+                    continue
+                n = len(items)
+                avg_repeat_ratio = sum(x["repeat_ratio"] for x in items) / n
+                avg_max_ngram = sum(x["max_ngram_repeat"] for x in items) / n
+                avg_max_run = sum(x["max_run_repeat"] for x in items) / n
+                pct_tail_loop = sum(1 for x in items if x["tail_repeats_head"]) / n
+                avg_tokens = sum(x["n_tokens"] for x in items) / n
+                # "looping rollout" heuristic: max_ngram_repeat >= 5 OR tail_repeats_head
+                pct_looping = sum(1 for x in items
+                                   if x["max_ngram_repeat"] >= 5 or x["tail_repeats_head"]) / n
+                out_rows.append({
+                    "arm": arm, "ds": ds_name, "bucket": bucket, "n": n,
+                    "avg_tokens": round(avg_tokens, 1),
+                    "avg_repeat_ratio": round(avg_repeat_ratio, 3),
+                    "avg_max_ngram_repeat": round(avg_max_ngram, 1),
+                    "avg_max_run": round(avg_max_run, 1),
+                    "pct_tail_repeats_head": round(pct_tail_loop, 3),
+                    "pct_looping_heuristic": round(pct_looping, 3),
+                })
+    # Write a comparison markdown
+    md = ["# Repetition diagnostic — H1 (reflection-loop degeneration) check", "",
+          f"_n-gram size = {ngram}; metrics computed per rollout, averaged per bucket._",
+          "",
+          "**Reading**: if trained-arm `empty_pred` row has ≫ repetition vs base `empty_pred`,",
+          "the looping hypothesis is supported. If similar, H1 is wrong.",
+          "",
+          "| arm | dataset | bucket | n | avg_tokens | avg_repeat_ratio | avg_max_ngram_repeat | avg_max_run | %tail_loop | %looping |",
+          "|---|---|---|---|---|---|---|---|---|---|"]
+    for r in out_rows:
+        md.append(f"| {r['arm']} | {r['ds']} | {r['bucket']} | {r['n']} | "
+                  f"{r['avg_tokens']} | {r['avg_repeat_ratio']} | "
+                  f"{r['avg_max_ngram_repeat']} | {r['avg_max_run']} | "
+                  f"{r['pct_tail_repeats_head']} | {r['pct_looping_heuristic']} |")
+    out_path = Path(summaries_root) / "repetition_diagnostic.md"
+    out_path.write_text("\n".join(md) + "\n")
+    artifacts_volume.commit()
+    print(f"[rep_diag] wrote {out_path}")
+    for r in out_rows:
+        print(f"  {r}")
+
+
+@app.function(
+    image=image,
+    timeout=2 * 3600,
+    memory=65 * 1024,
+    cpu=4.0,
+    volumes={ARTIFACTS_MOUNT: artifacts_volume},
+)
+def sample_rollouts(input_glob: str = "/vol/probes/eval_4b/*_step400_*.json",
+                    summaries_root: str = "/vol/probes/eval_4b/_summaries",
+                    skip_patterns: str = "schemaprobe,aime25-aime26",
+                    n_per_prompt: int = 3,
+                    n_prompts: int = 5,
+                    max_chars: int = 3000) -> None:
+    """Dump human-readable rollout samples for each matched JSON. Tiny output
+    files (per-cell markdown); never pulls the full JSON."""
+    import glob as _glob, json
+    Path(summaries_root).mkdir(parents=True, exist_ok=True)
+    skips = [s for s in skip_patterns.split(",") if s]
+    files = sorted(_glob.glob(input_glob))
+    files = [f for f in files if not any(s in Path(f).name for s in skips)]
+    print(f"[samples] {len(files)} files")
+    for f in files:
+        label = Path(f).stem
+        out_dir = Path(summaries_root) / label
+        out_dir.mkdir(parents=True, exist_ok=True)
+        print(f"  loading {f} ...")
+        with open(f) as fh:
+            data = json.load(fh)
+        md = _sample_rollouts_md(label, data, n_per_prompt=n_per_prompt,
+                                 n_prompts=n_prompts, max_chars=max_chars)
+        (out_dir / "rollout_samples.md").write_text(md)
+        print(f"  wrote {out_dir / 'rollout_samples.md'} ({len(md)/1000:.1f} KB)")
+    artifacts_volume.commit()
 
 
 @app.function(
