@@ -70,24 +70,26 @@ consistent across all five result files in this directory.
   hmmt_nov25 (failures are NOT budget-bound), while trained arms still
   have 0.038–0.138 potential at k=16, consistent with this hypothesis.
 
-### 2. polyepo / aime26 = 0 across the entire pass@k ladder
+### 2. polyepo / aime26 = 0 across the entire pass@k ladder — VERIFIED REAL (2026-06-04)
 - `auc_at_k.md` line 46: `pass@{1,2,4,8,16,32,64}` all 0.000 for
   polyepo / aime26.
-- This is **30 prompts × 64 rollouts = 1920 rollouts with zero correct
-  answers**, while polyepo solves prompts on aime25 (pass@64=0.133),
-  beyondaime (0.130), hmmt_feb25 (0.167), hmmt_nov25 (0.167).
-- Two scenarios:
-  1. Genuine failure — polyepo training collapsed something specific to
-     aime26's distribution.
-  2. Pipeline bug — answer-parser, grader, or prompt formatting
-     interacted badly with aime26's prompts for polyepo specifically.
-- **Recommended sanity check before claiming this as a result**: pull
-  3-5 polyepo/aime26 rollouts from the JSON, look at the
-  `(parsed_answer, ground_truth, reward)` tuples to confirm the rollouts
-  contain math but the grader rejects them, vs. the rollouts being
-  empty/malformed. This is the same class of silent-grader bug that has
-  bitten us twice; the eval-verification SOP (MEMORY:
-  `feedback_eval_verification.md`) applies.
+- **30 prompts × 64 rollouts = 1920 rollouts with zero correct answers**,
+  while polyepo solves prompts on aime25 (pass@64=0.133), beyondaime
+  (0.130), hmmt_feb25 (0.167), hmmt_nov25 (0.167).
+- **Spot-check 2026-06-04 confirms this is a genuine polyepo failure
+  mode, not a grader bug.** Sampled rollouts show:
+  - Prompt 7 rollout 0: infinite loop "### Step 47 ... Step 48 ... Step 49"
+    never reaches `\boxed{}` → pred = `""`.
+  - Prompt 15 rollout 0: sentence loop "Therefore, the common difference d
+    must be ... Therefore, the common difference d must be ...".
+  - Prompt 0 rollout 0: syntax noise `)))`, `]]`, `}}}` mid-code.
+  - Some preds ARE non-empty (e.g., `"39"`, `"278"`, `"220"`) but none
+    match ground truth (277, 244, 178). Grader correctly rejects wrong
+    answers — not a parser bug.
+- Polyepo's training has induced a **repetition-collapse failure mode**
+  triggered specifically on aime26 problems. Matches the audit's
+  polyepo/hmmt_nov25 wait=1.296 outlier (8.6x base) — same repetition
+  signature.
 - `diff_at_k_split.md` cross-confirms: polyepo/aime26 solved partition
   has n_partition=0 (line 47); unsolved has n_partition=30 (line 94) →
   polyepo never lands a correct answer on any aime26 prompt.
