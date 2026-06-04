@@ -1,4 +1,3 @@
-| [kl_summary.md](kl_summary.md) | Per-token KL(π_arm ‖ π_base) on rollouts (teacher-forced base). Mean ≫ median: divergence concentrated in a small fraction of high-leverage tokens. Minority NOT the most-divergent. | 3 arms × 5 datasets × mean+median KL (bits) |
 # Eval results index — 4 arms × 5 OOD datasets
 
 Eval setup: 4 arms × 5 smallood datasets × n=64 rollouts × temp=1.0, max_tokens=4096
@@ -26,6 +25,7 @@ raw numeric tables.
 | [reflective_actions.md](reflective_actions.md) | Per-rollout count of 7 "reflective" lexical phrases. GRPO bumps `however` ~1.5–2× over base; polyepo/hmmt_nov25 has wait=1.296 (likely repetition artifact). | 5 datasets × 4 arms × 7 phrases + total/roll + total/1k_tok |
 | [self_bleu.md](self_bleu.md) | Self-BLEU (lower = more diverse) and distinct-1/2/3-grams on rollout text. Base ~2-3× more diverse than trained arms at distinct-1 level; the two metrics disagree on direction on aime26 / hmmt_feb25 / beyondaime. | 5 datasets × 4 arms; subsampled to 8 rollouts × 16 prompts |
 | [coverage.md](coverage.md) | coverage / distinct_answers / entropy / majority @k over rollouts. Base higher entropy + distinct_answers than any trained arm; base majority-vote rate non-zero at k≥4 while trained arms ≈ 0. | 5 datasets × 4 arms × k∈{1,2,4,8,16,32} |
+| [kl_summary.md](kl_summary.md) | Per-token KL(π_arm ‖ π_base) on rollouts (teacher-forced base). Mean ≫ median: divergence concentrated in a small fraction of high-leverage tokens. Minority NOT the most-divergent. | 3 arms × 5 datasets × mean+median KL (bits) |
 
 ## Headline numbers
 
