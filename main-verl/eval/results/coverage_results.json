@@ -1,0 +1,542 @@
+{
+  "base_step400_smallood_aime25.json": {
+    "label": "base_step400_smallood",
+    "n_rollouts": 64,
+    "datasets": {
+      "aime25": {
+        "n_prompts": 30,
+        "pass_at_k": {
+          "pass@1": 0.01875,
+          "pass@2": 0.03606150793650794,
+          "pass@4": 0.06686403011759966,
+          "pass@8": 0.11609901235996176,
+          "pass@16": 0.1819086550805851,
+          "pass@32": 0.25369896446218815,
+          "pass@64": 0.3333333333333333
+        },
+        "coverage_at_k": {
+          "coverage@1": 0.018733974358974358,
+          "coverage@2": 0.036029965404965406,
+          "coverage@4": 0.0668029800565496,
+          "coverage@8": 0.11598505224600163,
+          "coverage@16": 0.1817132948852249,
+          "coverage@32": 0.2534384842017079,
+          "coverage@64": 0.3333333333333333
+        },
+        "distinct_answers_at_k": {
+          "distinct@1": 0.7,
+          "distinct@2": 1.3,
+          "distinct@4": 2.566666666666667,
+          "distinct@8": 5.4,
+          "distinct@16": 10.533333333333333,
+          "distinct@32": 20.066666666666666,
+          "distinct@64": 37.46666666666667
+        },
+        "entropy_at_k": {
+          "entropy@1": 0.0,
+          "entropy@2": 0.4444444444444444,
+          "entropy@4": 1.2255973613755349,
+          "entropy@8": 2.3612634754049986,
+          "entropy@16": 3.3197623959852507,
+          "entropy@32": 4.195142903721575,
+          "entropy@64": 5.015222431834345
+        }
+      }
+    }
+  },
+  "base_step400_smallood_aime26.json": {
+    "label": "base_step400_smallood",
+    "n_rollouts": 64,
+    "datasets": {
+      "aime26": {
+        "n_prompts": 30,
+        "pass_at_k": {
+          "pass@1": 0.019270833333333334,
+          "pass@2": 0.03574735449735449,
+          "pass@4": 0.061935819630161246,
+          "pass@8": 0.09569955452388931,
+          "pass@16": 0.12790513558001812,
+          "pass@32": 0.1584270766254452,
+          "pass@64": 0.2
+        },
+        "coverage_at_k": {
+          "coverage@1": 0.019270833333333334,
+          "coverage@2": 0.03574735449735449,
+          "coverage@4": 0.061935819630161246,
+          "coverage@8": 0.09569955452388931,
+          "coverage@16": 0.12790513558001812,
+          "coverage@32": 0.1584270766254452,
+          "coverage@64": 0.2
+        },
+        "distinct_answers_at_k": {
+          "distinct@1": 0.7333333333333333,
+          "distinct@2": 1.4,
+          "distinct@4": 2.8666666666666667,
+          "distinct@8": 5.166666666666667,
+          "distinct@16": 9.8,
+          "distinct@32": 18.166666666666668,
+          "distinct@64": 34.233333333333334
+        },
+        "entropy_at_k": {
+          "entropy@1": 0.0,
+          "entropy@2": 0.5555555555555556,
+          "entropy@4": 1.4481454170753212,
+          "entropy@8": 2.2793068704887767,
+          "entropy@16": 3.17940949856098,
+          "entropy@32": 3.973091836810297,
+          "entropy@64": 4.784093257945947
+        }
+      }
+    }
+  },
+  "base_step400_smallood_beyondaime.json": {
+    "label": "base_step400_smallood",
+    "n_rollouts": 64,
+    "datasets": {
+      "beyondaime": {
+        "n_prompts": 100,
+        "pass_at_k": {
+          "pass@1": 0.01828125,
+          "pass@2": 0.03366567460317461,
+          "pass@4": 0.058486423786860066,
+          "pass@8": 0.09464110501575819,
+          "pass@16": 0.14385970026790276,
+          "pass@32": 0.2087916035811618,
+          "pass@64": 0.29
+        },
+        "coverage_at_k": {
+          "coverage@1": 0.018276442307692306,
+          "coverage@2": 0.03365621184371184,
+          "coverage@4": 0.058468108768545045,
+          "coverage@8": 0.09460691698157017,
+          "coverage@16": 0.14380109220929468,
+          "coverage@32": 0.20871345950301773,
+          "coverage@64": 0.29
+        },
+        "distinct_answers_at_k": {
+          "distinct@1": 0.77,
+          "distinct@2": 1.39,
+          "distinct@4": 2.72,
+          "distinct@8": 4.85,
+          "distinct@16": 8.8,
+          "distinct@32": 16.14,
+          "distinct@64": 28.34
+        },
+        "entropy_at_k": {
+          "entropy@1": 0.0,
+          "entropy@2": 0.5274725274725275,
+          "entropy@4": 1.3349738323311255,
+          "entropy@8": 2.1097256861784484,
+          "entropy@16": 2.835080737688218,
+          "entropy@32": 3.532633012403967,
+          "entropy@64": 4.126934249530179
+        }
+      }
+    }
+  },
+  "grpo_step400_smallood_aime25.json": {
+    "label": "grpo_step400_smallood",
+    "n_rollouts": 64,
+    "datasets": {
+      "aime25": {
+        "n_prompts": 30,
+        "pass_at_k": {
+          "pass@1": 0.003125,
+          "pass@2": 0.006084656084656085,
+          "pass@4": 0.01153967624419766,
+          "pass@8": 0.020800282037722547,
+          "pass@16": 0.03418070559794515,
+          "pass@32": 0.04911961141469338,
+          "pass@64": 0.06666666666666667
+        },
+        "coverage_at_k": {
+          "coverage@1": 0.003125,
+          "coverage@2": 0.006084656084656085,
+          "coverage@4": 0.01153967624419766,
+          "coverage@8": 0.020800282037722547,
+          "coverage@16": 0.03418070559794515,
+          "coverage@32": 0.04911961141469338,
+          "coverage@64": 0.06666666666666667
+        },
+        "distinct_answers_at_k": {
+          "distinct@1": 0.36666666666666664,
+          "distinct@2": 1.0,
+          "distinct@4": 1.9333333333333333,
+          "distinct@8": 3.533333333333333,
+          "distinct@16": 6.866666666666666,
+          "distinct@32": 13.066666666666666,
+          "distinct@64": 24.433333333333334
+        },
+        "entropy_at_k": {
+          "entropy@1": 0.0,
+          "entropy@2": 0.36363636363636365,
+          "entropy@4": 0.9818435186787753,
+          "entropy@8": 1.698151825658956,
+          "entropy@16": 2.6253838433782906,
+          "entropy@32": 3.5372517635651355,
+          "entropy@64": 4.3640088149012835
+        }
+      }
+    }
+  },
+  "grpo_step400_smallood_aime26.json": {
+    "label": "grpo_step400_smallood",
+    "n_rollouts": 64,
+    "datasets": {
+      "aime26": {
+        "n_prompts": 30,
+        "pass_at_k": {
+          "pass@1": 0.0010416666666666667,
+          "pass@2": 0.0020833333333333333,
+          "pass@4": 0.004166666666666667,
+          "pass@8": 0.008333333333333333,
+          "pass@16": 0.016666666666666666,
+          "pass@32": 0.03333333333333333,
+          "pass@64": 0.06666666666666667
+        },
+        "coverage_at_k": {
+          "coverage@1": 0.0010416666666666667,
+          "coverage@2": 0.0020833333333333333,
+          "coverage@4": 0.004166666666666667,
+          "coverage@8": 0.008333333333333333,
+          "coverage@16": 0.016666666666666666,
+          "coverage@32": 0.03333333333333333,
+          "coverage@64": 0.06666666666666667
+        },
+        "distinct_answers_at_k": {
+          "distinct@1": 0.5333333333333333,
+          "distinct@2": 1.0333333333333334,
+          "distinct@4": 1.8333333333333333,
+          "distinct@8": 3.1,
+          "distinct@16": 5.933333333333334,
+          "distinct@32": 11.466666666666667,
+          "distinct@64": 20.233333333333334
+        },
+        "entropy_at_k": {
+          "entropy@1": 0.0,
+          "entropy@2": 0.2916666666666667,
+          "entropy@4": 0.7801110120592953,
+          "entropy@8": 1.4632384560139153,
+          "entropy@16": 2.3617238136043457,
+          "entropy@32": 3.275809196817278,
+          "entropy@64": 3.965285566839466
+        }
+      }
+    }
+  },
+  "grpo_step400_smallood_beyondaime.json": {
+    "label": "grpo_step400_smallood",
+    "n_rollouts": 64,
+    "datasets": {
+      "beyondaime": {
+        "n_prompts": 100,
+        "pass_at_k": {
+          "pass@1": 0.00703125,
+          "pass@2": 0.012956349206349208,
+          "pass@4": 0.022538622799728035,
+          "pass@8": 0.0367006101476505,
+          "pass@16": 0.05685600586325685,
+          "pass@32": 0.08412841739065995,
+          "pass@64": 0.12
+        },
+        "coverage_at_k": {
+          "coverage@1": 0.00703125,
+          "coverage@2": 0.012956349206349204,
+          "coverage@4": 0.022538622799728035,
+          "coverage@8": 0.0367006101476505,
+          "coverage@16": 0.05685600586325685,
+          "coverage@32": 0.08412841739065993,
+          "coverage@64": 0.12
+        },
+        "distinct_answers_at_k": {
+          "distinct@1": 0.72,
+          "distinct@2": 1.33,
+          "distinct@4": 2.15,
+          "distinct@8": 3.89,
+          "distinct@16": 6.79,
+          "distinct@32": 11.83,
+          "distinct@64": 20.56
+        },
+        "entropy_at_k": {
+          "entropy@1": 0.0,
+          "entropy@2": 0.46153846153846156,
+          "entropy@4": 1.0451074691212332,
+          "entropy@8": 1.7629679429660756,
+          "entropy@16": 2.4785341550448066,
+          "entropy@32": 3.097170651033863,
+          "entropy@64": 3.640431766425836
+        }
+      }
+    }
+  },
+  "minority_step400_smallood_aime25.json": {
+    "label": "minority_step400_smallood",
+    "n_rollouts": 64,
+    "datasets": {
+      "aime25": {
+        "n_prompts": 30,
+        "pass_at_k": {
+          "pass@1": 0.0015625,
+          "pass@2": 0.0030753968253968257,
+          "pass@4": 0.0059555811571940604,
+          "pass@8": 0.011155913978494626,
+          "pass@16": 0.019495647721454172,
+          "pass@32": 0.029365079365079365,
+          "pass@64": 0.03333333333333333
+        },
+        "coverage_at_k": {
+          "coverage@1": 0.0015625,
+          "coverage@2": 0.0030753968253968257,
+          "coverage@4": 0.0059555811571940604,
+          "coverage@8": 0.011155913978494626,
+          "coverage@16": 0.019495647721454172,
+          "coverage@32": 0.029365079365079365,
+          "coverage@64": 0.03333333333333333
+        },
+        "distinct_answers_at_k": {
+          "distinct@1": 0.36666666666666664,
+          "distinct@2": 0.8,
+          "distinct@4": 1.7333333333333334,
+          "distinct@8": 3.3666666666666667,
+          "distinct@16": 6.433333333333334,
+          "distinct@32": 11.7,
+          "distinct@64": 21.533333333333335
+        },
+        "entropy_at_k": {
+          "entropy@1": 0.0,
+          "entropy@2": 0.2631578947368421,
+          "entropy@4": 0.7024973214800826,
+          "entropy@8": 1.5607084559298587,
+          "entropy@16": 2.5367088008093863,
+          "entropy@32": 3.3510672307560525,
+          "entropy@64": 4.184387600622717
+        }
+      }
+    }
+  },
+  "minority_step400_smallood_aime26.json": {
+    "label": "minority_step400_smallood",
+    "n_rollouts": 64,
+    "datasets": {
+      "aime26": {
+        "n_prompts": 30,
+        "pass_at_k": {
+          "pass@1": 0.0026041666666666665,
+          "pass@2": 0.005158730158730159,
+          "pass@4": 0.010122247823860727,
+          "pass@8": 0.019489247311827957,
+          "pass@16": 0.036162314388120835,
+          "pass@32": 0.0626984126984127,
+          "pass@64": 0.1
+        },
+        "coverage_at_k": {
+          "coverage@1": 0.0026041666666666665,
+          "coverage@2": 0.005158730158730159,
+          "coverage@4": 0.010122247823860727,
+          "coverage@8": 0.019489247311827957,
+          "coverage@16": 0.036162314388120835,
+          "coverage@32": 0.0626984126984127,
+          "coverage@64": 0.1
+        },
+        "distinct_answers_at_k": {
+          "distinct@1": 0.4,
+          "distinct@2": 0.8,
+          "distinct@4": 1.5,
+          "distinct@8": 2.933333333333333,
+          "distinct@16": 6.133333333333334,
+          "distinct@32": 10.766666666666667,
+          "distinct@64": 18.833333333333332
+        },
+        "entropy_at_k": {
+          "entropy@1": 0.0,
+          "entropy@2": 0.2,
+          "entropy@4": 0.7783208335737187,
+          "entropy@8": 1.4208143612705388,
+          "entropy@16": 2.417809873346918,
+          "entropy@32": 3.1865383375298078,
+          "entropy@64": 3.898639133717265
+        }
+      }
+    }
+  },
+  "minority_step400_smallood_beyondaime.json": {
+    "label": "minority_step400_smallood",
+    "n_rollouts": 64,
+    "datasets": {
+      "beyondaime": {
+        "n_prompts": 100,
+        "pass_at_k": {
+          "pass@1": 0.00625,
+          "pass@2": 0.011418650793650795,
+          "pass@4": 0.019391572863941983,
+          "pass@8": 0.029808800338523636,
+          "pass@16": 0.04257582524077221,
+          "pass@32": 0.06134893782121159,
+          "pass@64": 0.09
+        },
+        "coverage_at_k": {
+          "coverage@1": 0.00625,
+          "coverage@2": 0.011418650793650795,
+          "coverage@4": 0.019391572863941983,
+          "coverage@8": 0.02980880033852364,
+          "coverage@16": 0.04257582524077221,
+          "coverage@32": 0.06134893782121159,
+          "coverage@64": 0.09
+        },
+        "distinct_answers_at_k": {
+          "distinct@1": 0.56,
+          "distinct@2": 1.05,
+          "distinct@4": 2.01,
+          "distinct@8": 3.46,
+          "distinct@16": 6.19,
+          "distinct@32": 10.68,
+          "distinct@64": 18.42
+        },
+        "entropy_at_k": {
+          "entropy@1": 0.0,
+          "entropy@2": 0.3815789473684211,
+          "entropy@4": 0.9827531025392809,
+          "entropy@8": 1.6421917431457236,
+          "entropy@16": 2.384022311959511,
+          "entropy@32": 3.0102168417429223,
+          "entropy@64": 3.5376144253282047
+        }
+      }
+    }
+  },
+  "polyepo_step400_smallood_aime25.json": {
+    "label": "polyepo_step400_smallood",
+    "n_rollouts": 64,
+    "datasets": {
+      "aime25": {
+        "n_prompts": 30,
+        "pass_at_k": {
+          "pass@1": 0.005729166666666666,
+          "pass@2": 0.010995370370370372,
+          "pass@4": 0.020314427992243964,
+          "pass@8": 0.035135630341410234,
+          "pass@16": 0.05549152812403461,
+          "pass@32": 0.0832541202965736,
+          "pass@64": 0.13333333333333333
+        },
+        "coverage_at_k": {
+          "coverage@1": 0.0057211538461538446,
+          "coverage@2": 0.01097934472934473,
+          "coverage@4": 0.02028237671019268,
+          "coverage@8": 0.035071527777307675,
+          "coverage@16": 0.05536332299582948,
+          "coverage@32": 0.08299771004016335,
+          "coverage@64": 0.13282051282051283
+        },
+        "distinct_answers_at_k": {
+          "distinct@1": 0.5,
+          "distinct@2": 0.9666666666666667,
+          "distinct@4": 2.033333333333333,
+          "distinct@8": 3.7,
+          "distinct@16": 7.566666666666666,
+          "distinct@32": 13.833333333333334,
+          "distinct@64": 23.966666666666665
+        },
+        "entropy_at_k": {
+          "entropy@1": 0.0,
+          "entropy@2": 0.38095238095238093,
+          "entropy@4": 0.9488376439268355,
+          "entropy@8": 1.7418924242381313,
+          "entropy@16": 2.780624515494914,
+          "entropy@32": 3.620783573219385,
+          "entropy@64": 4.321610342211998
+        }
+      }
+    }
+  },
+  "polyepo_step400_smallood_aime26.json": {
+    "label": "polyepo_step400_smallood",
+    "n_rollouts": 64,
+    "datasets": {
+      "aime26": {
+        "n_prompts": 30,
+        "pass_at_k": {
+          "pass@1": 0.0,
+          "pass@2": 0.0,
+          "pass@4": 0.0,
+          "pass@8": 0.0,
+          "pass@16": 0.0,
+          "pass@32": 0.0,
+          "pass@64": 0.0
+        },
+        "coverage_at_k": {
+          "coverage@1": 0.0,
+          "coverage@2": 0.0,
+          "coverage@4": 0.0,
+          "coverage@8": 0.0,
+          "coverage@16": 0.0,
+          "coverage@32": 0.0,
+          "coverage@64": 0.0
+        },
+        "distinct_answers_at_k": {
+          "distinct@1": 0.5,
+          "distinct@2": 0.9,
+          "distinct@4": 1.5666666666666667,
+          "distinct@8": 3.2666666666666666,
+          "distinct@16": 6.366666666666666,
+          "distinct@32": 11.9,
+          "distinct@64": 19.566666666666666
+        },
+        "entropy_at_k": {
+          "entropy@1": 0.0,
+          "entropy@2": 0.42105263157894735,
+          "entropy@4": 0.6884422676906129,
+          "entropy@8": 1.6155139356851853,
+          "entropy@16": 2.482645031265384,
+          "entropy@32": 3.271799542559565,
+          "entropy@64": 3.9075422463699616
+        }
+      }
+    }
+  },
+  "polyepo_step400_smallood_beyondaime.json": {
+    "label": "polyepo_step400_smallood",
+    "n_rollouts": 64,
+    "datasets": {
+      "beyondaime": {
+        "n_prompts": 100,
+        "pass_at_k": {
+          "pass@1": 0.00609375,
+          "pass@2": 0.01168154761904762,
+          "pass@4": 0.021532793180730776,
+          "pass@8": 0.03707062490395411,
+          "pass@16": 0.05794017029466887,
+          "pass@32": 0.0846781710690545,
+          "pass@64": 0.13
+        },
+        "coverage_at_k": {
+          "coverage@1": 0.00609375,
+          "coverage@2": 0.01172123015873016,
+          "coverage@4": 0.021744888066278865,
+          "coverage@8": 0.037862151918585975,
+          "coverage@16": 0.0601965869910147,
+          "coverage@32": 0.08966459169132426,
+          "coverage@64": 0.14
+        },
+        "distinct_answers_at_k": {
+          "distinct@1": 0.53,
+          "distinct@2": 1.07,
+          "distinct@4": 2.06,
+          "distinct@8": 3.82,
+          "distinct@16": 6.61,
+          "distinct@32": 11.24,
+          "distinct@64": 19.28
+        },
+        "entropy_at_k": {
+          "entropy@1": 0.0,
+          "entropy@2": 0.2891566265060241,
+          "entropy@4": 1.0012238366835886,
+          "entropy@8": 1.795950557068559,
+          "entropy@16": 2.4588034621987376,
+          "entropy@32": 3.0473912288076934,
+          "entropy@64": 3.5407291101027125
+        }
+      }
+    }
+  }
+}
