@@ -89,9 +89,6 @@
       "@64": 0.03
     }
   },
-  "polyepo_math500": {
-    "error": "parse error: premature EOF\n                                       \n                     (right here) ------^\n"
-  },
   "polyepo_beyondaime": {
     "arm": "polyepo",
     "dataset": "beyondaime",
@@ -105,6 +102,21 @@
       "@16": 0.02275036443303018,
       "@32": 0.028521643322903904,
       "@64": 0.03
+    }
+  },
+  "polyepo_math500": {
+    "arm": "polyepo",
+    "dataset": "math500",
+    "n_prompts": 500,
+    "n_prompts_with_correct": 405,
+    "mean_cot_diversity_at_k": {
+      "@1": 0.2674451923076923,
+      "@2": 0.38809520757020743,
+      "@4": 0.5027018629792559,
+      "@8": 0.601216461424788,
+      "@16": 0.6859962672489864,
+      "@32": 0.7625679542448859,
+      "@64": 0.8379076923076922
     }
   }
 }

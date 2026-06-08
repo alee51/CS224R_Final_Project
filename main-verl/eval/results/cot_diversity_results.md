@@ -4,8 +4,6 @@ Expected distinct correct CoT clusters in a random k-subset of 64 rollouts,
 averaged over all prompts. Clusters assigned by LLM judge (Qwen3-4B-Instruct)
 based on reasoning strategy (macro + micro approach), not final answer.
 
->  unavailable: eval JSON truncated (parse error).
-
 ## math500
 
 | arm | n_correct_prompts | div@1 | div@2 | div@4 | div@8 | div@16 | div@32 | div@64 |
@@ -13,7 +11,7 @@ based on reasoning strategy (macro + micro approach), not final answer.
 | base | 464/500 | 0.3153 | 0.4909 | 0.6649 | 0.7960 | 0.8951 | 0.9895 | 1.0938 |
 | grpo | 408/500 | 0.2784 | 0.4054 | 0.5268 | 0.6354 | 0.7355 | 0.8333 | 0.9398 |
 | minority | 402/500 | 0.2380 | 0.3523 | 0.4638 | 0.5613 | 0.6463 | 0.7244 | 0.7959 |
-| polyepo | N/A | N/A | N/A | N/A | N/A | N/A | N/A | N/A |
+| polyepo | 405/500 | 0.2674 | 0.3881 | 0.5027 | 0.6012 | 0.6860 | 0.7626 | 0.8379 |
 
 ## beyondaime
 

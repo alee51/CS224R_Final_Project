@@ -194,20 +194,25 @@ async def judge_correct_rollouts(prompts: list[dict]) -> list[dict]:
 # ── streaming reader ──────────────────────────────────────────────────────────
 
 def stream_prompts(path: Path) -> list[dict]:
-    """Stream per_prompt entries from a large eval JSON, keeping only needed fields."""
+    """Stream per_prompt entries from a large eval JSON, keeping only needed fields.
+    Fault-tolerant: returns whatever was read before any parse error (truncated files)."""
     import ijson
     prompts = []
-    with path.open("rb") as f:
-        for ds_name, ds_obj in ijson.kvitems(f, "datasets"):
-            for pp in ds_obj.get("per_prompt", []):
-                prompts.append({
-                    "problem_id":      pp["problem_id"],
-                    "ground_truth":    pp["ground_truth"],
-                    "rewards":         pp["rewards"],
-                    "rollouts":        pp.get("rollouts", []),
-                    "rendered_prompt": pp.get("rendered_prompt", ""),
-                    "problem":         _extract_problem(pp.get("rendered_prompt", "")),
-                })
+    try:
+        with path.open("rb") as f:
+            for ds_name, ds_obj in ijson.kvitems(f, "datasets"):
+                for pp in ds_obj.get("per_prompt", []):
+                    prompts.append({
+                        "problem_id":      pp["problem_id"],
+                        "ground_truth":    pp["ground_truth"],
+                        "rewards":         pp["rewards"],
+                        "rollouts":        pp.get("rollouts", []),
+                        "rendered_prompt": pp.get("rendered_prompt", ""),
+                        "problem":         _extract_problem(pp.get("rendered_prompt", "")),
+                    })
+    except Exception as e:
+        print(f"  WARNING: parse stopped at prompt {len(prompts)}: {e}")
+        print(f"  Continuing with {len(prompts)} recoverable prompts.")
     return prompts
 
 
