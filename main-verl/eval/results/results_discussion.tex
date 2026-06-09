@@ -25,73 +25,68 @@
 \begin{document}
 
 % ─────────────────────────────────────────────────────────────────────────────
-\section{Results}
+\section{Results and Discussion}
 \label{sec:results}
 % ─────────────────────────────────────────────────────────────────────────────
 
 We evaluate all three trained arms (GRPO, Minority-CoT, Poly-EPO) against an
 untrained base model (Qwen3-4B-Base) along two axes: \emph{answer coverage}
-(pass@$k$) and \emph{reasoning diversity} (CoT diversity@$k$). All metrics use
-the exact unbiased estimator averaged over all $\binom{n}{k}$ subsets of $k$
-rollouts from $n = 64$ total per prompt, so results are not sensitive to rollout
-ordering.
+(pass@$k$) and \emph{reasoning diversity} (distinct correct CoT clusters per
+solved problem). All pass@$k$ metrics use the exact unbiased estimator averaged
+over all $\binom{n}{k}$ subsets of $k$ rollouts from $n = 64$ total per prompt.
 
 % ─────────────────────────────────────────────────────────────────────────────
-\subsection{Pass@\texorpdfstring{$k$}{k} on OOD Benchmarks}
+\subsection{Pass@\texorpdfstring{$k$}{k}}
 \label{sec:results:passk}
 % ─────────────────────────────────────────────────────────────────────────────
-
-We measure pass@$k$ on six benchmarks spanning in-distribution and OOD settings:
-MATH-500 (500 problems, in-distribution), HMMT November 2025 (30 problems),
-HMMT February 2025 (30 problems), BeyondAIME (100 problems), AIME 2025
-(30 problems), and AIME 2026 (30 problems). Results are shown in
-Figure~\ref{fig:passk}.
 
 \begin{figure}[h]
 \centering
 \includegraphics[width=\linewidth]{fig1_passk.pdf}
-\caption{Pass@$k$ curves across all six benchmarks (2$\times$3 grid, ordered
-roughly by difficulty). The base model (gray) leads on every benchmark.
-Trained arms are competitive on in-distribution MATH-500 and HMMT Nov 2025,
-but regress substantially on harder OOD benchmarks. Curves remain roughly
-parallel on the log-scale $x$-axis, indicating the gap does not close with
-more samples.}
+\caption{Pass@$k$ curves across six benchmarks (2$\times$3 grid, ordered
+roughly by difficulty left-to-right, top-to-bottom). The base model (gray)
+leads on every benchmark. Trained arms are competitive on in-distribution
+MATH-500 and HMMT Nov 2025, but regress substantially on harder OOD benchmarks.
+Curves remain roughly parallel on the log-scale $x$-axis, indicating the gap
+does not close with more samples.}
 \label{fig:passk}
 \end{figure}
 
-As shown in Figure~\ref{fig:passk}, all trained arms perform comparably to the
-base model on in-distribution MATH-500 (pass@16: base 0.864, GRPO 0.711,
-Minority-CoT 0.683, Poly-EPO 0.707) and HMMT November 2025, where the gap is
-small. On harder OOD benchmarks (BeyondAIME, AIME, HMMT February), the base
-model leads substantially. On BeyondAIME at pass@16, the base model (0.144)
-outperforms the best trained arm by approximately $2.5\times$. Crucially, this
-gap does not close as $k$ increases, indicating that the trained models are not
-exploring solution strategies the base model finds with more samples.
+Figure~\ref{fig:passk} shows pass@$k$ across MATH-500 (in-distribution),
+HMMT November 2025, HMMT February 2025, BeyondAIME, AIME 2025, and AIME 2026.
+On in-distribution MATH-500, trained arms are competitive with base (pass@16:
+base 0.864 vs.\ GRPO 0.711, Poly-EPO 0.707, Minority-CoT 0.683). On HMMT
+November 2025, the gap is also small. On harder OOD benchmarks, however, the
+base model leads substantially: on BeyondAIME at pass@16, base (0.144)
+outperforms the best trained arm by $\approx 2.5\times$.
 
-Among trained arms, GRPO and Poly-EPO perform comparably on most benchmarks,
-with Minority-CoT slightly behind. The set-RL arms do not improve over standard
-GRPO despite being designed to find rare correct solutions.
+The gap does not close as $k$ increases --- pass@$k$ curves remain roughly
+parallel on the log scale from $k{=}1$ to $k{=}64$ --- indicating that trained
+models are not exploring solution strategies the base model finds with more
+samples. This is consistent with RL training narrowing the effective support of
+the model's solution distribution. Among trained arms, GRPO and Poly-EPO
+perform comparably on most benchmarks, with Minority-CoT slightly behind. The
+set-RL arms do not improve over GRPO despite being designed to find rare correct
+solutions.
 
 % ─────────────────────────────────────────────────────────────────────────────
-\subsection{CoT Diversity on MATH-500 and BeyondAIME}
+\subsection{CoT Diversity}
 \label{sec:results:cot}
 % ─────────────────────────────────────────────────────────────────────────────
 
-Pass@$k$ on single-answer integer benchmarks conflates correctness with solution
-diversity: if a model gets a problem right, all correct rollouts give the same
-answer, so distinct-correct-answer clusters is always 0 or 1 per problem. To
-measure whether the set-RL arms generate genuinely diverse \emph{reasoning
-strategies}, we use an LLM judge (Qwen3-4B-Instruct) to cluster each rollout
-by macro- and micro-strategy~\citep{polyepo}. Our metric is the average number
-of distinct correct CoT clusters per problem, computed over problems the model
-solved at least once (using all 64 rollouts). We evaluate on MATH-500
-(500 in-distribution problems) and BeyondAIME (100 OOD problems).
+Pass@$k$ cannot measure solution diversity on single-answer benchmarks: if a
+model gets a problem right, all correct rollouts give the same answer. To test
+whether the set-RL arms generate genuinely diverse \emph{reasoning strategies},
+we use an LLM judge (Qwen3-4B-Instruct) to cluster rollouts by macro- and
+micro-strategy~\citep{polyepo}, then report the average number of distinct
+correct CoT clusters per problem, averaged only over problems the model solved
+at least once (using all 64 rollouts).
 
 \begin{table}[h]
 \centering
-\caption{Distinct correct CoT clusters per solved problem on MATH-500 and
-BeyondAIME. Averaged only over problems with at least one correct rollout,
-using all 64 rollouts. Best per dataset in \textbf{bold}.}
+\caption{Distinct correct CoT clusters per solved problem. Averaged only over
+problems with at least one correct rollout, using all 64 rollouts. Best per
+dataset in \textbf{bold}.}
 \label{tab:cot}
 \small
 \setlength{\tabcolsep}{8pt}
@@ -114,166 +109,86 @@ using all 64 rollouts. Best per dataset in \textbf{bold}.}
 \end{tabular}
 \end{table}
 
-Table~\ref{tab:cot} and Figures~\ref{fig:cot}--\ref{fig:scatter} reveal two
-distinct patterns. On MATH-500 (Table~\ref{tab:cot}, top), the base model
-(1.179) leads narrowly over GRPO (1.152), with the set-RL arms below (Poly-EPO
-1.034, Minority-CoT 0.990). All four arms generate roughly one distinct correct
-reasoning approach per solved problem, reflecting that most MATH-500 problems
-have a single canonical solution method.
-
-On BeyondAIME (Table~\ref{tab:cot}, bottom), conditioning on solved problems
-reverses the ordering: GRPO (0.667) exceeds the base model (0.586), while the
-set-RL arms fall well below both (Minority-CoT 0.333, Poly-EPO 0.231). The
-set-RL arms rank last on the metric they were explicitly trained to maximize.
-
 \begin{figure}[h]
 \centering
 \includegraphics[width=0.9\linewidth]{fig2_cot_diversity.pdf}
-\caption{Distinct correct CoT clusters per solved problem on MATH-500 (left)
-and BeyondAIME (right). On MATH-500 the base model leads narrowly. On
-BeyondAIME, GRPO leads despite solving fewer problems overall, and the
-set-RL arms (Minority-CoT, Poly-EPO) are lowest on both benchmarks.}
+\caption{Distinct correct CoT clusters per solved problem on MATH-500
+(in-distribution, left) and BeyondAIME (OOD, right). On MATH-500 the base
+model leads narrowly. On BeyondAIME, GRPO leads despite solving fewer
+problems overall; the set-RL arms (Minority-CoT, Poly-EPO) are lowest on
+both benchmarks.}
 \label{fig:cot}
 \end{figure}
 
-\begin{figure}[h]
-\centering
-\includegraphics[width=\linewidth]{fig3_summary_k16.pdf}
-\caption{Pass@16 (left two panels) and distinct correct CoT clusters per solved
-problem (right two panels). GRPO outperforms the set-RL arms on both OOD
-correctness and per-problem reasoning diversity.}
-\label{fig:summary}
-\end{figure}
+Table~\ref{tab:cot} and Figure~\ref{fig:cot} reveal two distinct patterns. On
+MATH-500, the base model (1.179) leads narrowly over GRPO (1.152), with the
+set-RL arms below (Poly-EPO 1.034, Minority-CoT 0.990). All four arms generate
+roughly one distinct correct reasoning approach per solved problem, consistent
+with most MATH-500 problems having a single canonical solution method.
 
-\begin{figure}[h]
-\centering
-\includegraphics[width=0.9\linewidth]{fig4_correctness_vs_diversity.pdf}
-\caption{Correctness vs.\ distinct correct CoT clusters per solved problem.
-\emph{Left:} MATH-500 (pass@64 on $x$-axis). \emph{Right:} BeyondAIME
-(pass@16 on $x$-axis). On MATH-500 the trained arms share similar pass@64
-($\approx$0.80--0.93) yet span 0.19 units in diversity, showing the gap is
-not an artifact of solving fewer problems.}
-\label{fig:scatter}
-\end{figure}
+On BeyondAIME, conditioning on solved problems reverses the ordering: GRPO
+(0.667) \emph{exceeds} the base model (0.586), while the set-RL arms fall well
+below both (Minority-CoT 0.333, Poly-EPO 0.231). The set-RL arms rank last on
+the metric they were explicitly trained to maximize. This finding extends to the
+correctness axis: the OOD regression from pass@$k$ (Figure~\ref{fig:passk}) is
+primarily a loss of \textbf{breadth} (fewer problems solved) rather than
+\textbf{depth} (less diverse reasoning per solved problem) --- GRPO's per-problem
+diversity actually exceeds base on OOD data.
 
-% ─────────────────────────────────────────────────────────────────────────────
-\section{Discussion}
-\label{sec:discussion}
-% ─────────────────────────────────────────────────────────────────────────────
+A confound worth ruling out: the set-RL arms solve slightly fewer problems, which
+could reduce opportunities to observe multiple CoT clusters. However, on MATH-500
+all four arms solve 402--464 / 500 problems (a narrow 13\% range) yet span 0.19
+units in per-problem diversity (0.990--1.179). The diversity reduction in the
+set-RL arms reflects a genuine change in the solution-strategy distribution, not
+an artifact of lower solve rates.
 
 % ─────────────────────────────────────────────────────────────────────────────
-\subsection{RL Training Reduces OOD Generalization and Reasoning Diversity}
-\label{sec:discussion:collapse}
+\subsection{Why Set-RL Objectives Underperform GRPO}
+\label{sec:results:discussion}
 % ─────────────────────────────────────────────────────────────────────────────
 
-Pass@$k$ (Figure~\ref{fig:passk}) shows a clear and consistent story: RL
-training reduces OOD correctness for all objectives. The base model dominates
-at every $k$ on every OOD benchmark. The per-problem CoT diversity result
-(Figure~\ref{fig:cot}) is more nuanced. On in-distribution MATH-500, the base
-model (1.179) leads narrowly over GRPO (1.152). On OOD BeyondAIME, however,
-GRPO (0.667) actually \emph{exceeds} the base model (0.586) in per-problem
-reasoning diversity, suggesting that RL training need not suppress diverse
-solution strategies among the problems a model can solve --- it primarily
-reduces the number of problems it can solve at all.
-
-Figure~\ref{fig:scatter} illustrates this: on BeyondAIME (right panel),
-GRPO sits \emph{above} base in the diversity direction despite solving fewer
-problems. The tradeoff RL training induces is primarily one of
-\textbf{breadth} (fewer problems solved) rather than \textbf{depth} (less
-diverse reasoning per problem).
-
-% ─────────────────────────────────────────────────────────────────────────────
-\subsection{Set-RL Objectives Do Not Improve over GRPO}
-\label{sec:discussion:setrl}
-% ─────────────────────────────────────────────────────────────────────────────
-
-The central hypothesis motivating this work is that objectives which explicitly
-reward solution diversity (Minority-CoT, Poly-EPO) should produce models that
+The central hypothesis behind Minority-CoT and Poly-EPO is that rewarding
+diverse correct solutions within each training batch should produce models that
 explore more reasoning strategies at inference time. Our results do not support
-this hypothesis. On both MATH-500 and BeyondAIME, the set-RL arms rank below
-standard GRPO on per-problem CoT diversity (Table~\ref{tab:cot},
-Figure~\ref{fig:cot}). On BeyondAIME, the gap is large: GRPO (0.667) vs.
-Minority-CoT (0.333) and Poly-EPO (0.231). On OOD pass@$k$, GRPO and Poly-EPO
-are statistically indistinguishable (BeyondAIME pass@16: 0.057 vs.\ 0.058),
-with Minority-CoT slightly behind (Figure~\ref{fig:summary}).
+this hypothesis. On BeyondAIME, the gap is striking: GRPO (0.667) is $2\times$
+Minority-CoT (0.333) and $3\times$ Poly-EPO (0.231) in per-problem CoT
+diversity.
 
-The set-RL training signal --- rewarding diverse correct solutions within each
-batch --- does not translate into a measurable diversity advantage at evaluation
-time. One possible explanation is that the diversity reward is satisfied
-\emph{during training} by surface variation in rollouts (e.g., different
-intermediate steps or notation) rather than by genuinely distinct macro-strategies.
-If the LLM judge clusters such variations together at test time (as it should,
-given the strict clustering criteria), the diversity seen during training does
-not appear in our eval metric.
+One likely mechanism is a \textbf{mode-collapsing effect} of the minority
+voting objective. Minority-CoT rewards rollouts that reach the correct answer
+via the \emph{least common} reasoning cluster in each batch. If the model learns
+to reliably produce this minority-mode answer, it converges toward a narrow
+distribution concentrated on that approach, suppressing other valid strategies.
+The objective replaces one mode (the common answer) with another (the minority
+answer) rather than broadening the distribution.
 
-% ─────────────────────────────────────────────────────────────────────────────
-\subsection{Minority-CoT Appears to Actively Reduce Diversity}
-\label{sec:discussion:minority}
-% ─────────────────────────────────────────────────────────────────────────────
+A second possibility is that the diversity reward is satisfied during training
+by \emph{surface variation} (different notation, intermediate steps) rather than
+genuinely distinct macro-strategies. If the LLM judge correctly clusters such
+variants together at evaluation time, the training-time diversity does not
+appear in our metric.
 
-Among trained arms, Minority-CoT consistently achieves the \emph{lowest}
-per-problem CoT diversity on both benchmarks (Table~\ref{tab:cot},
-Figure~\ref{fig:cot}). On BeyondAIME, Minority-CoT (0.333) is less than half
-of GRPO (0.667). This is a surprising inversion: the objective designed to
-maximize correct-cluster diversity produces the least diverse model.
-
-A likely mechanism is a mode-collapsing effect of the minority voting objective.
-Minority-CoT rewards rollouts that reach the correct answer via the
-\emph{least common reasoning cluster} in each batch. If the model learns to
-reliably produce the ``minority mode'' answer --- a specific rare-but-correct
-approach to each problem type --- it may converge toward a narrow distribution
-concentrated around that mode, suppressing other valid strategies that would
-otherwise appear with moderate probability. In effect, the objective replaces
-one mode (the common answer) with another (the minority answer), rather than
-broadening the distribution.
-
-% ─────────────────────────────────────────────────────────────────────────────
-\subsection{Diversity Reduction Is Not an Artifact of Lower Correctness}
-\label{sec:discussion:confound}
-% ─────────────────────────────────────────────────────────────────────────────
-
-A potential confound is that trained arms solve fewer problems, giving fewer
-problems over which to measure diversity. The MATH-500 data rules this out. All
-four arms solve between 402 and 464 out of 500 problems --- a narrow 13\% range
---- yet span 0.19 units in per-problem CoT diversity (0.990--1.179). As shown
-in Figure~\ref{fig:scatter} (left panel), the three trained arms occupy nearly
-identical $x$-positions (pass@64 $\approx 0.80$--$0.93$) while spreading
-across 0.16 units vertically. The diversity reduction in the set-RL arms
-reflects a genuine change in the distribution over solution strategies, not an
-artifact of solving fewer problems.
-
-% ─────────────────────────────────────────────────────────────────────────────
-\subsection{Implications and Future Directions}
-\label{sec:discussion:implications}
-% ─────────────────────────────────────────────────────────────────────────────
-
-Our results show that, as implemented here, set-RL objectives (Minority-CoT,
-Poly-EPO) trained on Polaris problems with a 4B base model do not achieve their
-stated goal of improving reasoning diversity. Two directions seem most promising
-for future work:
+These results suggest two directions for future work:
 
 \begin{enumerate}[leftmargin=*, label=\arabic*.]
 
 \item \textbf{Training distribution.}
-Polaris problems may not provide sufficient natural answer diversity to generate
-a useful minority signal. Problems with multiple structurally distinct solution
+Polaris problems may not provide sufficient natural solution diversity for a
+useful minority signal. Problems with multiple structurally distinct solution
 approaches (e.g., combinatorics problems solvable by direct counting, generating
-functions, or recursion) could yield a richer cluster structure during training.
-Filtering the training set for problems with high judge-measured within-prompt
-diversity in base model rollouts may also help.
+functions, or recursion) could yield richer cluster structure during training.
 
 \item \textbf{Objective formulation.}
-The current cluster reward may be gamed by surface variation rather than
-strategic diversity. Strengthening the judge prompt to penalize superficially
-different but strategically identical rollouts, or introducing an answer-level
-diversity constraint in addition to the CoT cluster reward, could better align
-the training signal with the desired generalization behavior.
+Strengthening the judge prompt to penalize superficially different but
+strategically identical rollouts, or adding an answer-level diversity
+constraint, could better align the training signal with the desired
+generalization behavior.
 
 \end{enumerate}
 
-More broadly, our findings contribute to a growing body of evidence that RL
-training for math reasoning trades generalization for reliability. Whether this
-tradeoff is fundamental or addressable through better training data and
-objectives is an open question.
+More broadly, our findings contribute to growing evidence that RL training for
+math reasoning trades generalization breadth for in-distribution reliability.
+Whether this tradeoff is fundamental or addressable through better training data
+and objectives remains an open question.
 
 \end{document}
