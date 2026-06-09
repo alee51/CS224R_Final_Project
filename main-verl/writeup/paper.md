@@ -19,7 +19,7 @@
 | 1 | Introduction | **TODO** | Adapt poster `Problem` + `Prior Work` blocks (`poster-overleaf/poster.tex:81–101`). Frame: GRPO mode-collapse → set-RL → minority hypothesis → empirical refutation. |
 | 2 | Related Work | **TODO** | GRPO (Shao et al. 2024), Poly-EPO (Orney et al. 2026 — already in `reference.bib`), mode-collapse literature. Poster has 1-sentence Poly-EPO summary at `poster.tex:91–98`. |
 | 3 | Method | **DRAFTED** | `final_report.tex` Method section: GRPO baseline + shared marginal-over-subsets kernel + Minority-CoT / Poly-EPO-CoT subset scores + judge/CoT clustering. Cites `\citep{grpo}` and `\citet{polyepo}` — bib entry for GRPO (Shao et al. 2024) still needed. |
-| 4 | Experimental Setup | **TODO** | Training: `training.md`. Eval: `eval.md`. Both are audit-clean (configs verified against code). Poster `Experimental Setup` block (`poster.tex:127–138`) has the compact bullet list. |
+| 4 | Experimental Setup | **DRAFTED** | `final_report.tex` §Experimental Setup: §4.1 training (verl + PE recipe + 3 deviations: LR 3e-6, 1 epoch, 4×B200), §4.2 eval (4 arms × 6 OOD datasets, n=64, pass@k + CoT-div@k), §4.3 prelim experiments (1.7B→4B, CoT-vs-answer, prompt template, mathd∨sympy audit, LR bump). Set-RL framework citation still owed in §3 Method + §2 Related Work (kernel borrowed from Set-RL, not PE-original). |
 | 5 | Results | **DRAFTED** | `final_report.tex:54–220`. Source: Anastasia's `main-verl/eval/results/results_discussion.tex` (commit `ce5aea8`). Covers 3 OOD datasets pass@k + MATH-500/BeyondAIME CoT diversity. **Open: should HMMT splits be added (writeup has them; current draft drops them).** |
 | 6 | Discussion | **DRAFTED** | `final_report.tex:222–340`. 5 subsections (collapse, set-RL fails, minority-as-mode-collapse, confound rebuttal, future). |
 | 7 | Conclusion | **TODO (optional)** | Short — 2–3 sentences restating the three findings + framing for the diversity–correctness tradeoff. Could be dropped; §6.5 already does conclusion-y work. |
@@ -48,19 +48,18 @@
 - D4: Include training-time diagnostics from poster (rarity ≠ correctness, distinct-answers Δ)? Strengthens the minority-failure story but pushes length past 8 pp.
 - D5: Mention polyepo × aime26 = 0/1920 repetition collapse? (Real finding, `eval_complete.md:106`; currently buried in §Results.)
 
-## What awaits eval / data cleaning
+## Eval status — fully resolved
 
-**Polyepo × math500 reconciliation (Modal-side investigation 2026-06-08, agent run).**
-A working polyepo×math500 JSON exists on `abao:/vol/probes/eval_4b/polyepo_step400_math500_math500.json`, written 2026-06-08 00:31 PDT — Anastasia re-ran the GEN that Nancy's locked run had crashed on (Bug 5). She ran her CoT-diversity analysis from that same volume 40 min later (`cot_diversity_*` artifacts dated 01:10 PDT).
+Polyepo × math500 pass@k recovered from Anastasia's 2026-06-08 re-run
+(151 MiB JSON on abao). Saved `pass_at_k` reproduces from `n_correct` to
+<5e-5; cell is citation-safe. All 24 GEN cells in `comparison.md`.
+See [`results/CAVEATS.md`](results/CAVEATS.md) "Polyepo × math500 reconciliation"
+for the one-sentence provenance footnote the paper should include.
 
-**Caveat — schema parity not verified.** Size is **152 MiB vs. 21–44 GiB for sibling math500 files** (base 21.4 / minority 35.4 / grpo 43.8 GiB) — ~140× smaller. Most likely explanation: GEN run with logprobs stripped (locked spec is `n=64, logprobs=20` → ~50 GB; without logprobs, 152 MiB / 405 prompts / 64 rollouts ≈ 5.8 KiB/rollout = just text, math checks out). Less likely: another generation collapse like the polyepo×aime26 case.
+KL × polyepo × math500 was not re-run (Phase 3 ledger stays 17/18). Not
+needed for the paper.
 
-**Reconciliation policy:**
-- **CoT diversity numbers are safe to cite** — judge clustering only consumes rollout text. Use as-is.
-- **Pass@k for polyepo×math500 needs verification before headline use** — confirm n=64 rollouts × 500 prompts in the JSON before pulling into `comparison.md`. If verified, fill the missing cell; if rollout count is short, footnote it.
-- Open question to Anastasia: was the re-run intentional logprobs-strip, or did the GEN truncate?
-
-**No other blockers from data side.** All 23 cells in Nancy's writeup ledger remain valid; the 24th (polyepo×math500) is now recoverable for at least the CoT-diversity story.
+**No data-side blockers remain.**
 
 ## Open admin questions
 
