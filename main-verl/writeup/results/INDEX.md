@@ -11,12 +11,10 @@ block at bottom; raw numeric tables in between.
 | File | What |
 |---|---|
 | [eval_complete.md](eval_complete.md) | **Single canonical completion record** — Phase 1/3 ledger + headline finding + 3-verification grader story + §8 spec compliance + bug ledger + what's NOT in the eval. Read first. |
-| [comparison.md](comparison.md) | Cross-arm headline pass@k tables, 4 arms × 6 datasets. Polyepo×math500 still `_missing_` (re-run exists; see CAVEATS). |
-| [auc_at_k.md](auc_at_k.md) | AUC@k + per-(arm,dataset) pass@k ladder, k∈{1..64}. |
+| [comparison.md](comparison.md) | Cross-arm headline pass@k tables, 4 arms × 6 datasets. Polyepo×math500 row now filled from 2026-06-08 re-run (see CAVEATS for provenance). |
 | [coverage.md](coverage.md) | coverage / distinct_answers / entropy / majority @k. 5 datasets × 4 arms × k∈{1,2,4,8,16,32,64}. |
 | [diff_at_k_split.md](diff_at_k_split.md) | distinct_answers@k partitioned by solved vs unsolved. 2 partitions × 5 datasets × 4 arms × k∈{1,4,8,16,32,64}. |
-| [potential_at_k.md](potential_at_k.md) | Recoverable failure rate (budget-bound vs quality-bound). 5 datasets × 4 arms × k∈{1,4,8,16,32}. |
-| [reflective_actions.md](reflective_actions.md) | Per-rollout count of 7 "reflective" lexical phrases. 5 datasets × 4 arms × 7 phrases + totals. |
+| [reflective_actions.md](reflective_actions.md) | Per-rollout count of 7 "reflective" lexical phrases. 5 datasets × 4 arms × 7 phrases + totals. (Noise-prone — see CAVEATS §4.) |
 | [self_bleu.md](self_bleu.md) | Self-BLEU + distinct-1/2/3-grams on rollout text. 5 datasets × 4 arms; subsampled. |
 | [kl_summary.md](kl_summary.md) | Per-token KL(π_arm ‖ π_base) on rollouts. 3 arms × 6 datasets (polyepo×math500 skipped) × mean+median KL (bits). |
 | [grader_sanity_all.md](grader_sanity_all.md) | 3-way grader verification (gt-in-preds, rescore, math_dapo tripwire). 4 arms × 5 datasets × 5 checks. |

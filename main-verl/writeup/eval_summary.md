@@ -20,10 +20,9 @@ Full spec: [`eval.md`](eval.md).
 
 | metric | what it answers | source |
 |---|---|---|
-| **pass@k** | correctness in k attempts (k=1,2,4,8,16,32,64) | `results/comparison.md`, `results/auc_at_k.md` |
+| **pass@k** | correctness in k attempts (k=1,2,4,8,16,32,64) | `results/comparison.md` |
 | **coverage / entropy / majority@k** | how spread the answer distribution is | `results/coverage.md` |
 | **diff@k split** | does extra diversity go to wrong answers? | `results/diff_at_k_split.md` |
-| **potential@k** | budget-bound vs quality-bound failure | `results/potential_at_k.md` |
 | **self-BLEU + distinct-n** | rollout-text diversity | `results/self_bleu.md` |
 | **reflective_actions** | wait/however/verify lexical counts | `results/reflective_actions.md` |
 | **KL(π_arm ‖ π_base)** | per-token divergence from base (3 trained arms) | `results/kl_summary.md` |
@@ -35,9 +34,9 @@ Full spec: [`eval.md`](eval.md).
 ## Coverage
 
 ```
-GEN (rollouts):  ████████████████████████ 23/24 cells   (polyepo×math500 — re-run exists, schema unverified)
-KL  (per-token): ███████████████████░░░░░ 17/18 cells   (same gap)
-CoT diversity:   ████████░░░░░░░░░░░░░░░░  7/8 cells   (4 arms × {math500, beyondaime})
+GEN (rollouts):  ████████████████████████ 24/24 cells   (polyepo×math500 from 2026-06-08 re-run; see CAVEATS for provenance)
+KL  (per-token): ███████████████████░░░░░ 17/18 cells   (polyepo×math500 KL not re-run)
+CoT diversity:   ████████████████████████  8/8 cells   (4 arms × {math500, beyondaime})
 ```
 
 ## Headline: pass@64
@@ -47,20 +46,11 @@ CoT diversity:   ████████░░░░░░░░░░░░░
 | **base** | **0.333** | **0.200** | **0.290** | **0.200** | 0.133 | **0.928** |
 | grpo | 0.067 | 0.067 | 0.120 | 0.067 | **0.167** | 0.816 |
 | minority | 0.033 | 0.100 | 0.090 | 0.100 | **0.167** | 0.804 |
-| polyepo | 0.133 | 0.000⚠ | 0.130 | 0.167 | **0.167** | _missing_ |
+| polyepo | 0.133 | 0.000⚠ | 0.130 | 0.167 | **0.167** | 0.810 |
 
 Bold = winner per column. Base wins everywhere except **hmmt_nov25** — see
 the depth-vs-breadth crossover in [`results/CAVEATS.md`](results/CAVEATS.md).
 Polyepo × aime26 = 0/1920 is a real repetition collapse, not a grader bug.
-
-## Headline: AUC of pass@k over k ∈ {1..64}
-
-| arm | aime25 | aime26 | beyondaime | hmmt_feb25 | hmmt_nov25 | math500 |
-|---|---|---|---|---|---|---|
-| base | 14.566 | 9.360 | 12.180 | 7.322 | 7.685 | **54.799** |
-| grpo | 2.826 | 2.133 | 4.932 | 2.133 | 7.850 | 46.288 |
-| minority | 1.562 | 3.695 | 3.681 | 3.818 | 7.988 | 44.900 |
-| polyepo | 5.088 | 0.000 | 5.115 | 5.951 | 7.998 | _missing_ |
 
 ## Where to go next
 

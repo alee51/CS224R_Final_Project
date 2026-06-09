@@ -36,45 +36,48 @@ panel except on hmmt_nov25, where base saturates early and all 3 trained
 arms catch and slightly pass it by k=32. The story is qualitatively
 consistent across all five result files in `results/`.
 
-## Polyepo × math500 reconciliation (2026-06-08)
+## Polyepo × math500 reconciliation — RESOLVED (2026-06-08)
 
 `eval_complete.md` Bug 5 reports the original locked-config GEN crashed
-mid-write (2/500 prompts saved on 2026-06-02). A re-run JSON now exists on
-`abao:/vol/probes/eval_4b/polyepo_step400_math500_math500.json`, written
-2026-06-08 00:31 PDT — Anastasia ran it before her CoT-diversity pass at
-01:10 PDT.
+mid-write (2/500 prompts saved on 2026-06-02). Anastasia re-fired the
+cell on 2026-06-08; JSON now lives at
+`abao:/vol/probes/eval_4b/polyepo_step400_math500_math500.json` (151 MiB).
+Schema verified, cell is citation-safe.
 
-**Size anomaly:** 152 MiB vs. 21–44 GiB for the sibling math500 files
-(~140× smaller); likely a logprobs-stripped re-run that's still rich
-enough for CoT clustering.
+**Provenance footnote (use in paper):** "The polyepo × math500 cell comes
+from a 2026-06-08 re-run after the original 2026-06-02 GEN crashed mid-write.
+File is logprobs-stripped (151 MiB vs 21–44 GiB for siblings); the saved
+`pass_at_k` field reproduces from `n_correct` to <5e-5. Five of 500 prompts
+have 65 rollouts (retry artifact), driving the discrepancy."
 
-**Status:**
-- CoT diversity@k for polyepo×math500 is **safe to cite** (cluster
-  assignments only need rollout text).
-- Pass@k for polyepo×math500 **NOT yet reconciled into `comparison.md`** —
-  schema parity (n=64, prompt count) needs verification first. See
-  [`../paper.md`](../paper.md) "What awaits eval" for the open question.
+**Pass@k row** (from `comparison.md`):
+
+| pass@1 | pass@2 | pass@4 | pass@8 | pass@16 | pass@32 | pass@64 |
+|---|---|---|---|---|---|---|
+| 0.303 | 0.431 | 0.544 | 0.635 | 0.707 | 0.762 | 0.810 |
+
+**Open:** polyepo × math500 KL (Phase 3) was not re-run; KL ledger stays
+17/18. Not needed for the paper.
 
 ## Audit caveats
 
-### 1. Trained arms beat base on hmmt_nov25 (not just AUC: every k≥32)
-- `auc_at_k.md` lines 25–30: hmmt_nov25 AUC base=7.685 < grpo=7.850 <
-  minority=7.988 < polyepo=7.998.
-- The crossover is real in the pass@k ladder, not a trapezoid artifact:
-  at k=32 base=0.132 vs grpo=0.139, minority=0.141, polyepo=0.142
-  (`auc_at_k.md` lines 43, 48, 53, 58).
+### 1. Trained arms beat base on hmmt_nov25 at every k≥32
+- The crossover is real in the pass@k ladder: at k=32 base=0.132 vs
+  grpo=0.139, minority=0.141, polyepo=0.142 (`comparison.md` hmmt_nov25
+  table).
 - At k=64 the gap widens: base=0.133 (essentially flat from k=32) while
   trained arms all reach 0.167.
 - **Interpretation hypothesis** (NOT verified — flag for investigation):
   base's hmmt_nov25 pass@k saturates at ~0.13 because its early rollouts
   cover a small set of solvable prompts and the rest are quality-bound;
   trained arms have a flatter curve but reach more total prompts by k=64.
-  Compare to `potential_at_k.md` lines 68–71 — base has pot@8 = 0.000 on
-  hmmt_nov25 (failures are NOT budget-bound), while trained arms still
-  have 0.038–0.138 potential at k=16, consistent with this hypothesis.
+  See `../archive/potential_at_k.md` for the recoverable-failure analysis
+  that supports this — base has pot@8=0 on hmmt_nov25 (failures not
+  budget-bound) while trained arms still have 0.038–0.138 potential at
+  k=16.
 
 ### 2. polyepo / aime26 = 0 across the entire pass@k ladder — VERIFIED REAL (2026-06-04)
-- `auc_at_k.md` line 55: `pass@{1,2,4,8,16,32,64}` all 0.000 for
+- `comparison.md` aime26 table: `pass@{1,2,4,8,16,32,64}` all 0.000 for
   polyepo / aime26.
 - **30 prompts × 64 rollouts = 1920 rollouts with zero correct answers**,
   while polyepo solves prompts on aime25 (pass@64=0.133), beyondaime
@@ -96,8 +99,8 @@ enough for CoT clustering.
 - `diff_at_k_split.md` cross-confirms: polyepo/aime26 solved partition
   has n_partition=0 (line 47); unsolved has n_partition=30 (line 94) →
   polyepo never lands a correct answer on any aime26 prompt.
-- `potential_at_k.md` line 44: polyepo/aime26 pot@k = 0.000 for all
-  k, consistent (no prompts ever solved → no recoverable failures).
+- `../archive/potential_at_k.md` (archived): polyepo/aime26 pot@k = 0.000
+  for all k, consistent (no prompts ever solved → no recoverable failures).
 
 ### 3. Self-BLEU vs distinct-n direction disagreement
 - `self_bleu.md` aime26 block: grpo has the **lowest** Self-BLEU
@@ -139,12 +142,7 @@ enough for CoT clustering.
   means the first rollout's answer was empty/[INVALID]; not a real
   comparison.
 
-### 6. Monotonicity check on pass@k (sanity, no failures found)
-- All 23 pass@k rows in `auc_at_k.md` lines 39–62 are monotonically
-  non-decreasing in k. No violations. (pass@k is non-decreasing by
-  construction; finding a violation would have meant a corrupted JSON.)
-
-### 7. diff@k unsolved > solved on some cells (mild)
+### 6. diff@k unsolved > solved on some cells (mild)
 - `diff_at_k_split.md` aime25 base: solved diff@64=36.100 (line 35) vs
   unsolved=38.150 (line 82). The unsolved side is slightly more diverse,
   consistent with "model wanders more when it can't solve". Not a bug,

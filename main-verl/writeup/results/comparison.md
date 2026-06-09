@@ -70,23 +70,24 @@ for the n_correct distribution analysis.
 | **base** | **0.358** | **0.541** | **0.704** | **0.806** | **0.864** | **0.902** | **0.928** |
 | grpo | 0.299 | 0.427 | 0.542 | 0.636 | 0.711 | 0.769 | 0.816 |
 | minority | 0.265 | 0.388 | 0.504 | 0.602 | 0.683 | 0.750 | 0.804 |
-| polyepo | ⚠️ MISSING | — | — | — | — | — | — |
+| polyepo | 0.303 | 0.431 | 0.544 | 0.635 | 0.707 | 0.762 | 0.810 |
 
-**Polyepo math500 generation crashed mid-JSON-write.** All 32000 rollouts
-generated successfully (logs confirm "generated in 12597s") but the
-script hung during the json.dump call. Only 85.3 MiB of the expected
-50+ GB JSON was committed before the process was killed (Modal app
-`ap-h8zHYGx8IuvDhiPOfYtITd`). Per-prompt data is unrecoverable from
-the truncated file beyond prompt 2. Re-fire deferred — the 23 other
-cells are sufficient for the v1 poster story. See [eval_pipeline_bugs.md](eval_pipeline_bugs.md)
-for full diagnosis.
+**Polyepo×math500 provenance.** The original 2026-06-02 locked GEN crashed
+mid-`json.dump` (only 2/500 prompts saved; Bug 5 in [eval_pipeline_bugs.md](eval_pipeline_bugs.md)).
+Anastasia re-fired the cell on 2026-06-08; pass@k values above are the
+saved `pass_at_k` field from her re-run JSON (computed by the identical
+`run_eval.py:307-323` block as the other 23 cells). Schema diff vs siblings:
+file is 151 MiB (vs 21–44 GiB) due to logprobs-stripped writes; 5/500
+prompts have 65 rollouts (retry artifact) — discrepancy vs strict-n=64
+estimator is <5e-5, below reporting precision. See [CAVEATS.md](CAVEATS.md)
+"Polyepo × math500 reconciliation".
 
 **Same pattern as smallood:** base wins at every k. The trained-arm gap
 to base is *smaller* on math500 (~10–20 percentage points at most k) than
-on hard-OOD (where trained arms underperform base by 50–95%). Both
-GRPO and Minority converge to similar pass@64 (~0.81). The crossover
-seen on hmmt_nov25 does NOT happen here — base saturates around 0.93,
-trained arms saturate around 0.80, no overtaking.
+on hard-OOD (where trained arms underperform base by 50–95%). All three
+trained arms converge to similar pass@64: grpo 0.816, polyepo 0.810,
+minority 0.804. The crossover seen on hmmt_nov25 does NOT happen here —
+base saturates around 0.93, trained arms saturate around 0.80, no overtaking.
 
 ⚠️ **math_dapo tripwire on base × math500 = 58.3% agreement** (well below
 the 90% threshold). All 534 disagreements are `math+only` — the math
