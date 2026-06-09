@@ -16,3 +16,6 @@ main/data/probes/per_rollout_v2/
 
 # Eval JSONs + FSDP rank shards pulled local from Modal — large, ephemeral
 main-verl/eval/probes/
+
+# Overleaf paper clone — its own git repo
+paper-overleaf/
