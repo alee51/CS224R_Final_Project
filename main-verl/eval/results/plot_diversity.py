@@ -55,46 +55,50 @@ K_VALUES = [1, 2, 4, 8, 16, 32, 64]
 
 def load_passk():
     """Return {arm: {dataset: {k: val}}}"""
-    coverage = json.load(open(RESULTS_DIR / "coverage_results.json"))
+    raw = json.load(open(RESULTS_DIR / "passk_all.json"))
     out = {arm: {} for arm in ARMS}
-    for fname, entry in coverage.items():
-        label = entry.get("label", fname)
-        arm = label.split("_step")[0]
+    for arm, dsets in raw.items():
         if arm not in ARMS:
             continue
-        for ds_name, ds in entry.get("datasets", {}).items():
-            pak = ds.get("pass_at_k", {})
+        for ds_name, entry in dsets.items():
+            pak = entry.get("pass_at_k", {})
             out[arm][ds_name] = {int(k.split("@")[1]): v for k, v in pak.items()}
     return out
 
 
 def fig1_passk():
     passk = load_passk()
+    # 6 panels in 2×3 grid, ordered roughly by benchmark difficulty
     datasets = [
-        ("aime25",    "AIME 2025  (n=30)"),
-        ("aime26",    "AIME 2026  (n=30)"),
-        ("beyondaime","BeyondAIME  (n=100)"),
+        ("math500",    "MATH-500\n(n=500, in-dist.)"),
+        ("hmmt_nov25", "HMMT Nov 2025\n(n=30)"),
+        ("beyondaime", "BeyondAIME\n(n=100)"),
+        ("hmmt_feb25", "HMMT Feb 2025\n(n=30)"),
+        ("aime25",     "AIME 2025\n(n=30)"),
+        ("aime26",     "AIME 2026\n(n=30)"),
     ]
 
-    fig, axes = plt.subplots(1, 3, figsize=(12, 3.8), sharey=False)
-    fig.suptitle("Pass@k on OOD Benchmarks — Step 400 (4B)", y=1.01, fontsize=13)
+    fig, axes = plt.subplots(2, 3, figsize=(12, 7), sharey=False)
+    axes = axes.flatten()
+    fig.suptitle("Pass@k Across All Benchmarks — Step 400 (4B)", y=1.01, fontsize=13)
 
-    for ax, (ds_key, ds_title) in zip(axes, datasets):
+    for i, (ax, (ds_key, ds_title)) in enumerate(zip(axes, datasets)):
         for arm in ARMS:
             ys = [passk[arm].get(ds_key, {}).get(k, float("nan")) for k in K_VALUES]
             ax.plot(K_VALUES, ys, color=COLORS[arm], marker=MARKERS[arm],
                     label=LABELS[arm], clip_on=False)
-        ax.set_title(ds_title)
-        ax.set_xlabel("k (rollouts per problem)")
+        ax.set_title(ds_title, fontsize=10.5)
+        ax.set_xlabel("k (rollouts per problem)", fontsize=9)
         ax.set_xscale("log", base=2)
         ax.set_xticks(K_VALUES)
         ax.xaxis.set_major_formatter(ticker.ScalarFormatter())
         ax.yaxis.set_major_formatter(ticker.FuncFormatter(lambda x, _: f"{x:.2f}"))
         ax.set_ylim(bottom=0)
         ax.grid(axis="y", linewidth=0.4, alpha=0.6)
+        if i % 3 == 0:
+            ax.set_ylabel("Pass@k")
 
-    axes[0].set_ylabel("Pass@k")
-    axes[-1].legend(loc="upper left", frameon=True)
+    axes[2].legend(loc="upper left", frameon=True, fontsize=9)
     fig.tight_layout()
     out = RESULTS_DIR / "fig1_passk.pdf"
     fig.savefig(out, bbox_inches="tight")

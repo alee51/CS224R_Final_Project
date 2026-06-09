@@ -41,67 +41,36 @@ ordering.
 \label{sec:results:passk}
 % ─────────────────────────────────────────────────────────────────────────────
 
-We measure pass@$k$ on three out-of-distribution (OOD) benchmarks: AIME 2025
-(30 problems), AIME 2026 (30 problems), and BeyondAIME (100 problems). These
-benchmarks were not seen during training on Polaris and test generalization to
-harder competition-style mathematics.
-
-\begin{table}[h]
-\centering
-\caption{Pass@$k$ on OOD benchmarks (unbiased estimator over all $\binom{64}{k}$
-subsets). Best per column in \textbf{bold}.}
-\label{tab:passk}
-\small
-\setlength{\tabcolsep}{6pt}
-\begin{tabular}{llcccc}
-\toprule
-\textbf{Dataset} & \textbf{Arm} & \textbf{pass@1} & \textbf{pass@4} & \textbf{pass@16} & \textbf{pass@64} \\
-\midrule
-\multirow{4}{*}{AIME 2025}
-  & Base (Qwen3-4B) & \textbf{0.019} & \textbf{0.067} & \textbf{0.182} & \textbf{0.333} \\
-  & GRPO            & 0.003 & 0.012 & 0.034 & 0.067 \\
-  & Minority-CoT    & 0.002 & 0.006 & 0.020 & 0.033 \\
-  & Poly-EPO        & 0.006 & 0.020 & 0.056 & 0.133 \\
-\midrule
-\multirow{4}{*}{AIME 2026}
-  & Base (Qwen3-4B) & \textbf{0.019} & \textbf{0.062} & \textbf{0.128} & \textbf{0.200} \\
-  & GRPO            & 0.001 & 0.004 & 0.017 & 0.067 \\
-  & Minority-CoT    & 0.003 & 0.010 & 0.036 & 0.100 \\
-  & Poly-EPO        & 0.000 & 0.000 & 0.000 & 0.000 \\
-\midrule
-\multirow{4}{*}{BeyondAIME}
-  & Base (Qwen3-4B) & \textbf{0.018} & \textbf{0.059} & \textbf{0.144} & \textbf{0.290} \\
-  & GRPO            & 0.007 & 0.023 & 0.057 & 0.120 \\
-  & Minority-CoT    & 0.006 & 0.019 & 0.043 & 0.090 \\
-  & Poly-EPO        & 0.006 & 0.022 & 0.058 & 0.130 \\
-\bottomrule
-\end{tabular}
-\end{table}
-
-As shown in Table~\ref{tab:passk} and Figure~\ref{fig:passk}, all trained arms
-regress substantially on OOD benchmarks relative to the untrained base model.
-On BeyondAIME at pass@16, the base model (0.144) outperforms the best trained
-arm by approximately $2.5\times$ (GRPO/Poly-EPO $\approx 0.058$). Crucially,
-this gap does not close as $k$ increases: the pass@$k$ curves in
-Figure~\ref{fig:passk} remain roughly parallel on a log scale from $k=1$ to
-$k=64$, indicating that the trained models are not exploring solution strategies
-that the base model finds with more samples.
-
-Among the trained arms, GRPO and Poly-EPO perform comparably on BeyondAIME
-(pass@16: 0.057 vs.\ 0.058), with Minority-CoT slightly behind (0.043). The
-set-RL arms do not improve over standard GRPO despite being specifically designed
-to find rare correct solutions. Results on the 30-problem AIME splits are too
-noisy for reliable arm comparisons.
+We measure pass@$k$ on six benchmarks spanning in-distribution and OOD settings:
+MATH-500 (500 problems, in-distribution), HMMT November 2025 (30 problems),
+HMMT February 2025 (30 problems), BeyondAIME (100 problems), AIME 2025
+(30 problems), and AIME 2026 (30 problems). Results are shown in
+Figure~\ref{fig:passk}.
 
 \begin{figure}[h]
 \centering
 \includegraphics[width=\linewidth]{fig1_passk.pdf}
-\caption{Pass@$k$ curves on OOD benchmarks (AIME 2025, AIME 2026, BeyondAIME).
-The base model dominates at every $k$ on every dataset. Curves remain
-roughly parallel on the log-scale $x$-axis, indicating the gap does not close
-with more samples.}
+\caption{Pass@$k$ curves across all six benchmarks (2$\times$3 grid, ordered
+roughly by difficulty). The base model (gray) leads on every benchmark.
+Trained arms are competitive on in-distribution MATH-500 and HMMT Nov 2025,
+but regress substantially on harder OOD benchmarks. Curves remain roughly
+parallel on the log-scale $x$-axis, indicating the gap does not close with
+more samples.}
 \label{fig:passk}
 \end{figure}
+
+As shown in Figure~\ref{fig:passk}, all trained arms perform comparably to the
+base model on in-distribution MATH-500 (pass@16: base 0.864, GRPO 0.711,
+Minority-CoT 0.683, Poly-EPO 0.707) and HMMT November 2025, where the gap is
+small. On harder OOD benchmarks (BeyondAIME, AIME, HMMT February), the base
+model leads substantially. On BeyondAIME at pass@16, the base model (0.144)
+outperforms the best trained arm by approximately $2.5\times$. Crucially, this
+gap does not close as $k$ increases, indicating that the trained models are not
+exploring solution strategies the base model finds with more samples.
+
+Among trained arms, GRPO and Poly-EPO perform comparably on most benchmarks,
+with Minority-CoT slightly behind. The set-RL arms do not improve over standard
+GRPO despite being designed to find rare correct solutions.
 
 % ─────────────────────────────────────────────────────────────────────────────
 \subsection{CoT Diversity on MATH-500 and BeyondAIME}
