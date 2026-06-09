@@ -36,6 +36,67 @@ solved problem). All pass@$k$ metrics use the exact unbiased estimator averaged
 over all $\binom{n}{k}$ subsets of $k$ rollouts from $n = 64$ total per prompt.
 
 % ─────────────────────────────────────────────────────────────────────────────
+\subsection{Training Dynamics}
+\label{sec:results:training}
+% ─────────────────────────────────────────────────────────────────────────────
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.7\linewidth]{fig5_training_accuracy.pdf}
+\caption{Training pass@8 over 400 steps for all three RL arms. Faint traces
+are raw per-step values; bold curves are EMA-smoothed ($\alpha = 0.9$). All
+three arms begin from the same base model and converge to similar accuracy,
+with GRPO and Poly-EPO finishing slightly ahead of Minority-CoT.}
+\label{fig:train_acc}
+\end{figure}
+
+Figure~\ref{fig:train_acc} shows training accuracy (pass@8 on the Polaris
+training distribution) over 400 steps. All three arms start from the same
+Qwen3-4B-Base model and improve steadily, reaching a near-plateau by
+steps 200--250. At step 400, GRPO achieves the highest training pass@8
+(42.97\%), with Poly-EPO close behind (41.41\%) and Minority-CoT trailing
+by roughly 6 percentage points (36.72\%). The gap reflects Minority-CoT's
+stronger reweighting of rare-cluster rollouts: by concentrating gradient signal
+on the minority mode, it sacrifices some raw accuracy in exchange for
+rare-cluster exploitation.
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=\linewidth]{fig6_training_diversity.pdf}
+\caption{\emph{Left:} Fraction of rollouts discarded by the reward filter
+during training. GRPO ($\approx$60\%) filters $3\times$ more rollouts than
+the set arms ($\approx$17--20\%), indicating that set-arm training extracts
+more gradient signal per sampled rollout. \emph{Right:} $|U_\mathrm{correct}|$
+--- distinct correct CoT clusters per prompt on the training distribution
+(set arms only; GRPO is trivially 1.0 with no judge at training time). Both
+set arms sustain $>$1.0 clusters throughout training, confirming that the
+judge-based clustering reward successfully incentivises diverse correct
+solutions.}
+\label{fig:train_div}
+\end{figure}
+
+Figure~\ref{fig:train_div} (left) shows the rollout filtering rate: GRPO
+discards $\approx$60\% of sampled rollouts via the reward threshold, while
+Minority-CoT and Poly-EPO discard only $\approx$17--20\%. This $3\times$
+sample-efficiency gap arises because the set-arm objectives extract a gradient
+signal from rollouts across all correctness levels (through cluster
+assignments), whereas GRPO's binary reward discards most rollouts as
+off-policy.
+
+Figure~\ref{fig:train_div} (right) shows $|U_\mathrm{correct}|$ --- the
+average number of distinct correct CoT clusters per training prompt --- for
+the two set arms (GRPO is omitted as it uses no judge). Both Minority-CoT and
+Poly-EPO sustain $|U_\mathrm{correct}| > 1.0$ throughout training, confirming
+that the judge-based diversity reward successfully incentivises the model to
+find multiple valid reasoning approaches within each training batch. Poly-EPO
+(which rewards any distinct cluster) and Minority-CoT (which specifically
+rewards the rarest cluster) both maintain 1.1--1.2 clusters per prompt on
+average. This demonstrates that the training-time diversity objective is being
+optimized --- the failure to transfer to eval-time diversity (Section
+\ref{sec:results:cot}) is therefore not a training failure but a
+generalization failure.
+
+% ─────────────────────────────────────────────────────────────────────────────
 \subsection{Pass@\texorpdfstring{$k$}{k}}
 \label{sec:results:passk}
 % ─────────────────────────────────────────────────────────────────────────────
