@@ -106,43 +106,54 @@ def fig1_passk():
 # ── Figure 2: CoT Diversity@k ────────────────────────────────────────────────
 
 def load_cot():
-    cot = json.load(open(RESULTS_DIR / "cot_diversity_results.json"))
+    """Return {arm: {dataset: conditional_diversity}} where conditional_diversity =
+    avg distinct correct CoT clusters per prompt, averaging only over prompts
+    where the model got at least one rollout correct."""
+    raw = json.load(open(RESULTS_DIR / "cot_diversity_results.json"))
     out = {arm: {} for arm in ARMS}
-    for key, entry in cot.items():
+    for key, entry in raw.items():
         if "error" in entry:
             continue
         arm = entry["arm"]
         ds  = entry["dataset"]
-        agg = entry.get("mean_cot_diversity_at_k", {})
-        out[arm][ds] = {int(k.lstrip("@")): v for k, v in agg.items()}
+        n   = entry["n_prompts"]
+        nc  = entry["n_prompts_with_correct"]
+        div64 = entry.get("mean_cot_diversity_at_k", {}).get("@64", 0.0)
+        # Rescale from all-prompt average to correct-prompt-only average
+        out[arm][ds] = (div64 * n / nc) if nc > 0 else 0.0
     return out
 
 
 def fig2_cot():
+    """Bar chart: distinct correct CoT clusters per solved problem."""
     cot = load_cot()
     datasets = [
-        ("math500",    "MATH-500  (n=500, in-distribution)"),
-        ("beyondaime", "BeyondAIME  (n=100, OOD)"),
+        ("math500",    "MATH-500\n(in-distribution, n=500)"),
+        ("beyondaime", "BeyondAIME\n(OOD, n=100)"),
     ]
 
-    fig, axes = plt.subplots(1, 2, figsize=(9, 3.8))
-    fig.suptitle("CoT Diversity@k — Step 400 (4B)", y=1.01, fontsize=13)
+    fig, axes = plt.subplots(1, 2, figsize=(9, 4.2))
+    fig.suptitle("Distinct Correct CoT Clusters per Solved Problem — Step 400 (4B)",
+                 y=1.01, fontsize=13)
 
     for ax, (ds_key, ds_title) in zip(axes, datasets):
-        for arm in ARMS:
-            ys = [cot[arm].get(ds_key, {}).get(k, float("nan")) for k in K_VALUES]
-            ax.plot(K_VALUES, ys, color=COLORS[arm], marker=MARKERS[arm],
-                    label=LABELS[arm], clip_on=False)
+        vals = [cot[arm].get(ds_key, 0.0) for arm in ARMS]
+        bars = ax.bar(range(4), vals, color=[COLORS[a] for a in ARMS],
+                      width=0.6, edgecolor="white", linewidth=0.5)
         ax.set_title(ds_title)
-        ax.set_xlabel("k (rollouts per problem)")
-        ax.set_xscale("log", base=2)
-        ax.set_xticks(K_VALUES)
-        ax.xaxis.set_major_formatter(ticker.ScalarFormatter())
-        ax.set_ylim(bottom=0)
+        ax.set_xticks(range(4))
+        ax.set_xticklabels([LABELS[a].replace(" (Qwen3-4B)", "") for a in ARMS],
+                           rotation=15, ha="right", fontsize=10)
+        ax.set_ylim(bottom=0, top=max(vals) * 1.25 if max(vals) > 0 else 0.5)
+        ax.yaxis.set_major_formatter(ticker.FuncFormatter(lambda x, _: f"{x:.2f}"))
         ax.grid(axis="y", linewidth=0.4, alpha=0.6)
+        for bar, val in zip(bars, vals):
+            if val > 0:
+                ax.text(bar.get_x() + bar.get_width() / 2,
+                        bar.get_height() + max(vals) * 0.02,
+                        f"{val:.3f}", ha="center", va="bottom", fontsize=9)
 
-    axes[0].set_ylabel("E[distinct correct CoT clusters in k rollouts]")
-    axes[1].legend(loc="upper left", frameon=True)
+    axes[0].set_ylabel("Avg. distinct correct CoT clusters\n(over solved problems only)")
     fig.tight_layout()
     out = RESULTS_DIR / "fig2_cot_diversity.pdf"
     fig.savefig(out, bbox_inches="tight")
@@ -151,40 +162,43 @@ def fig2_cot():
     plt.close(fig)
 
 
-# ── Figure 3: Summary bar chart at k=16 ──────────────────────────────────────
+# ── Figure 3: Summary bar chart ───────────────────────────────────────────────
 
 def fig3_summary():
     passk = load_passk()
-    cot   = load_cot()
+    cot   = load_cot()  # now returns conditional (solved-problems-only) values
 
-    k = 16
     configs = [
-        # (label, source_dict, dataset_key, y_label, title)
-        ("Pass@16\nAIME25",      passk, "aime25",     "Pass@16"),
-        ("Pass@16\nBeyondAIME",  passk, "beyondaime",  "Pass@16"),
-        ("CoT div@16\nMATH-500", cot,   "math500",     "div@16"),
-        ("CoT div@16\nBeyondAIME", cot, "beyondaime",  "div@16"),
+        # (title, vals_fn, y_label)
+        ("Pass@16\nAIME25",
+         lambda: [passk[a].get("aime25", {}).get(16, 0.0) for a in ARMS],
+         "Pass@16"),
+        ("Pass@16\nBeyondAIME",
+         lambda: [passk[a].get("beyondaime", {}).get(16, 0.0) for a in ARMS],
+         "Pass@16"),
+        ("CoT clusters / solved problem\nMATH-500",
+         lambda: [cot[a].get("math500", 0.0) for a in ARMS],
+         "Distinct correct CoT clusters"),
+        ("CoT clusters / solved problem\nBeyondAIME",
+         lambda: [cot[a].get("beyondaime", 0.0) for a in ARMS],
+         "Distinct correct CoT clusters"),
     ]
 
-    fig, axes = plt.subplots(1, 4, figsize=(12, 3.8))
-    fig.suptitle("Diversity & Correctness at k=16 — Step 400 (4B)", y=1.01, fontsize=13)
+    fig, axes = plt.subplots(1, 4, figsize=(12, 4.0))
+    fig.suptitle("Correctness & CoT Diversity — Step 400 (4B)", y=1.01, fontsize=13)
 
-    for ax, (title, src, ds_key, ylabel) in zip(axes, configs):
-        vals = []
-        for arm in ARMS:
-            d = src[arm].get(ds_key, {})
-            vals.append(d.get(k, 0.0) if isinstance(d, dict) else 0.0)
+    for ax, (title, vals_fn, ylabel) in zip(axes, configs):
+        vals = vals_fn()
         bars = ax.bar(range(4), vals, color=[COLORS[a] for a in ARMS],
                       width=0.6, edgecolor="white", linewidth=0.5)
-        ax.set_title(title, fontsize=10.5)
+        ax.set_title(title, fontsize=10)
         ax.set_xticks(range(4))
         ax.set_xticklabels([LABELS[a].replace(" (Qwen3-4B)", "") for a in ARMS],
                            rotation=20, ha="right", fontsize=9)
         ax.set_ylabel(ylabel, fontsize=9)
-        ax.set_ylim(bottom=0, top=max(vals) * 1.25 if max(vals) > 0 else 0.1)
+        ax.set_ylim(bottom=0, top=max(vals) * 1.28 if max(vals) > 0 else 0.1)
         ax.yaxis.set_major_formatter(ticker.FuncFormatter(lambda x, _: f"{x:.3f}"))
         ax.grid(axis="y", linewidth=0.4, alpha=0.6)
-        # Value labels on bars
         for bar, val in zip(bars, vals):
             if val > 0:
                 ax.text(bar.get_x() + bar.get_width() / 2, bar.get_height() + max(vals) * 0.02,
@@ -238,14 +252,14 @@ def fig4_correctness_vs_diversity():
     for ax, passk_dict, ds_key, xlabel, title in panels:
         for arm in ARMS:
             x = passk_dict.get(arm, float("nan"))
-            y = cot[arm].get(ds_key, {}).get(16, float("nan"))
+            y = cot[arm].get(ds_key, 0.0)
             ax.scatter(x, y, color=COLORS[arm], marker=MARKERS[arm], s=120,
                        zorder=5, label=LABELS[arm])
             ax.annotate(LABELS[arm].replace(" (Qwen3-4B)", ""),
                         (x, y), textcoords="offset points", xytext=(7, 4),
                         fontsize=9, color=COLORS[arm])
         ax.set_xlabel(xlabel)
-        ax.set_ylabel("CoT Diversity@16")
+        ax.set_ylabel("Distinct correct CoT clusters\n(solved problems only)")
         ax.set_title(title)
         ax.set_xlim(left=0)
         ax.set_ylim(bottom=0)
